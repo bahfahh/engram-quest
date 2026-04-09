@@ -1,0 +1,10 @@
+{
+  "id": "engram-quest",
+  "name": "EngramQuest",
+  "version": "0.1.0",
+  "minAppVersion": "1.6.0",
+  "description": "The first AI-native learning system for Obsidian powered by modular Skills. Seamlessly integrate Claude Code, Gemini CLI, and Cursor to transform your notes into interactive Quest Maps and visual Memory Maps (Canvas). Master any topic with the advanced FSRS algorithm and triple-level active recall hints.",
+  "author": "powen",
+  "authorUrl": "",
+  "isDesktopOnly": false
+}

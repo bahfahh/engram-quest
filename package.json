@@ -1,0 +1,18 @@
+{
+  "name": "engram-quest",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Standalone source repo for the EngramQuest Obsidian plugin",
+  "main": "main.js",
+  "scripts": {
+    "dev": "node esbuild.config.mjs",
+    "build": "node esbuild.config.mjs --prod",
+    "check:bundle-parity": "node scripts/check-bundle-parity.mjs",
+    "sync:bundled-skills": "node scripts/sync-bundled-skills.js",
+    "sync:vault": "node scripts/sync-to-vault.mjs",
+    "build:sync": "node scripts/sync-bundled-skills.js && node esbuild.config.mjs --prod --sync"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.3"
+  }
+}
