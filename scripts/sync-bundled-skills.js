@@ -8,7 +8,7 @@ const defaultVaultRoot = path.resolve(repoRoot, '..', 'Obsidian_Note');
 const vaultRoot = process.env.ENGRAMQUEST_VAULT_ROOT
   ? path.resolve(process.env.ENGRAMQUEST_VAULT_ROOT)
   : defaultVaultRoot;
-const sourceRoot = path.join(repoRoot, '10.非筆記用資料夾', '開發計劃', 'skills');
+const sourceRoot = path.join(repoRoot, 'skills');
 const targetRoot = path.join(vaultRoot, '.obsidian', 'plugins', 'engram-quest', 'bundled-skills');
 
 function removeDirContents(dirPath) {

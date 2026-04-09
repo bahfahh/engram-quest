@@ -1,0 +1,12 @@
+node_modules/
+main.js
+data.json
+*.map
+!src/
+!src/main.js
+
+# ai
+AGENTS.md
+CLAUDE.md
+
+doc/
