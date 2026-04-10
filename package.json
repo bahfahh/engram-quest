@@ -6,11 +6,11 @@
   "main": "main.js",
   "scripts": {
     "dev": "node esbuild.config.mjs",
-    "build": "node esbuild.config.mjs --prod",
+    "build": "node scripts/sync-bundled-skills.js && node esbuild.config.mjs --prod",
     "check:bundle-parity": "node scripts/check-bundle-parity.mjs",
     "sync:bundled-skills": "node scripts/sync-bundled-skills.js",
     "sync:vault": "node scripts/sync-to-vault.mjs",
-    "build:sync": "node scripts/sync-bundled-skills.js && node esbuild.config.mjs --prod --sync"
+    "build:sync": "npm run build && node scripts/sync-to-vault.mjs"
   },
   "devDependencies": {
     "esbuild": "^0.25.3"

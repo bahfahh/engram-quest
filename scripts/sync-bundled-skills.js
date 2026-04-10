@@ -4,12 +4,12 @@ const fs = require('fs');
 const path = require('path');
 
 const repoRoot = path.resolve(__dirname, '..');
-const defaultVaultRoot = path.resolve(repoRoot, '..', 'Obsidian_Note');
-const vaultRoot = process.env.ENGRAMQUEST_VAULT_ROOT
-  ? path.resolve(process.env.ENGRAMQUEST_VAULT_ROOT)
-  : defaultVaultRoot;
 const sourceRoot = path.join(repoRoot, 'skills');
-const targetRoot = path.join(vaultRoot, '.obsidian', 'plugins', 'engram-quest', 'bundled-skills');
+const targetRoot = path.join(repoRoot, 'bundled-skills');
+
+function ensureDir(dirPath) {
+  fs.mkdirSync(dirPath, { recursive: true });
+}
 
 function removeDirContents(dirPath) {
   if (!fs.existsSync(dirPath)) return;
@@ -22,13 +22,14 @@ function removeDirContents(dirPath) {
 function copyRecursive(src, dest) {
   const stat = fs.statSync(src);
   if (stat.isDirectory()) {
-    fs.mkdirSync(dest, { recursive: true });
+    ensureDir(dest);
     for (const name of fs.readdirSync(src)) {
       copyRecursive(path.join(src, name), path.join(dest, name));
     }
     return;
   }
-  fs.mkdirSync(path.dirname(dest), { recursive: true });
+
+  ensureDir(path.dirname(dest));
   fs.copyFileSync(src, dest);
 }
 
@@ -37,7 +38,7 @@ function main() {
     throw new Error(`Source skills directory not found: ${sourceRoot}`);
   }
 
-  fs.mkdirSync(targetRoot, { recursive: true });
+  ensureDir(targetRoot);
   removeDirContents(targetRoot);
   copyRecursive(sourceRoot, targetRoot);
 

@@ -1,8 +1,9 @@
 #!/bin/bash
 # List all available AI-generated generic gamified icons
-PLUGIN_DIR=".obsidian/plugins/engram-quest"
-if [ -d "$PLUGIN_DIR/assets/quest-map/icons" ]; then
-    ls -1 "$PLUGIN_DIR/assets/quest-map/icons/" 2>/dev/null
+REPO_ROOT="$(cd "$(dirname "$0")/../../../../.." && pwd)"
+ICON_DIR="$REPO_ROOT/assets/quest-map/icons"
+if [ -d "$ICON_DIR" ]; then
+    ls -1 "$ICON_DIR/" 2>/dev/null
 else
     echo "Files not found. Use fallback emoji."
 fi
