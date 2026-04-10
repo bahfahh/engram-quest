@@ -57,25 +57,27 @@ Default behavior is AI-guided selection.
    - optional insight
    - one challenge
 5. Choose challenge type based on difficulty and source material.
-6. Add frontmatter tags when the topic has clear semantic tags.
-7. Save as `<source-note-name>-quest.md`.
+6. **Image challenges**: when a note image is worth testing, use `image-quiz` (all models). Only Gemini may use `image-occlusion` — and if doing so, run `scripts/occlusion_measure.py <image_path>` first to get accurate text bbox coordinates. If the script is unavailable (no Python/pytesseract), fall back to `image-quiz`.
+7. Add frontmatter tags when the topic has clear semantic tags.
+8. Save as `<source-note-name>-quest.md`.
 
 ## Difficulty Rules
 
 ### easy
 - Prefer `truefalse`, then `quiz`
 - May use `cloze` when the blank is obvious and teachable
+- May use `image-quiz` when a note image supports a good question
 - Include a hint
 - Keep distractors clearly teachable, not tricky
 
 ### medium
 - Prefer `quiz`, then `order`
-- May use `cloze` or `image-occlusion` when the source strongly supports them
+- May use `cloze`, `image-quiz`, or `image-occlusion` (Gemini only) when the source strongly supports them
 - Usually omit hints
 - Use plausible distractors
 
 ### hard
-- Prefer `match`, `cloze`, `image-occlusion`, then strict `input`
+- Prefer `match`, `cloze`, `image-quiz`, `image-occlusion` (Gemini only), then strict `input`
 - No hint unless absolutely necessary
 - The challenge should require stronger recall than medium
 - Include a `link` field when the format expects one
@@ -106,7 +108,9 @@ The parser splits on commas. Rephrase option text or accepted answers to avoid a
 ### Use flat fields for image-occlusion bbox
 
 Canonical format: use percentage-based coordinates with `region_left_pct`, `region_top_pct`, `region_width_pct`, `region_height_pct` (0–100, relative to image width/height).
-Pixel coords (`region_x`, `region_y`, `region_width`, `region_height`) are legacy-compatible but not preferred — they break when Obsidian CSS scales the image.
+Pixel coords (`region_x`, `region_y`, `region_width`, `region_height`) are legacy-compatible.
+
+Only Gemini should produce these coordinates (it has native bounding-box detection). Other models should use `image-quiz` instead.
 
 Correct:
 ```yaml
@@ -116,7 +120,7 @@ region_width_pct: 32
 region_height_pct: 28
 ```
 
-Legacy-compatible but not preferred:
+Legacy-compatible:
 ```yaml
 region_x: 295
 region_y: 292
@@ -195,7 +199,37 @@ Rules:
 - `sentence` should still read naturally after replacing the blank with `____`.
 - `answers` should contain acceptable user inputs.
 
-### image-occlusion
+### image-quiz
+```yaml
+challenge:
+  type: image-quiz
+  image: path/to/image.png
+  question: What role does the highlighted component play in this architecture?
+  options: [Load balancer, CDN, API gateway, Database proxy]
+  answer: 1
+  hint: Optional hint
+  link: relative/path/to/source.md
+```
+
+Rules:
+- Use `image-quiz` when a note image supports a good question. The image is displayed as visual context; no occlusion or bbox is needed.
+- All AI models (Claude, Gemini, Cursor, etc.) can generate this type.
+- `image` path rules: vault-relative or note-relative, matching the source note's embedded image usage. No plugin asset paths or OS absolute paths.
+- The question must require understanding the image — not something answerable without seeing it.
+- Supports `quiz` style (options + answer index) or `input` style (keywords).
+
+Input variant:
+```yaml
+challenge:
+  type: image-quiz
+  image: path/to/image.png
+  question: What valve sits between the left atrium and left ventricle?
+  keywords: [Mitral valve, mitral]
+  hint: Optional hint
+  link: relative/path/to/source.md
+```
+
+### image-occlusion (Gemini only)
 ```yaml
 challenge:
   type: image-occlusion
@@ -214,19 +248,23 @@ challenge:
 ```
 
 Rules:
-- `image` may be either a vault-relative path or a note-relative path that resolves from the current note.
-- Prefer the path style that already matches the source note's embedded image usage.
-- Do not use plugin asset paths or OS absolute paths.
-- `answer` is the canonical label.
-- `answers` holds acceptable user inputs.
+- **image-occlusion requires accurate bbox coordinates. Only Gemini (which has native bounding-box detection) should generate this type.** Claude, Cursor, and other models that cannot reliably produce pixel-accurate coordinates must use `image-quiz` instead.
+- **Coordinate workflow**: run `scripts/occlusion_measure.py <image_path>` to get OCR-detected text labels with pixel + pct coords. Pick the target label's bbox from the output. If the script is unavailable, Gemini may use its native bounding-box detection; all other models must fall back to `image-quiz`.
+- `image` path rules: same as image-quiz.
+- `answer` is the canonical label. `answers` holds acceptable user inputs.
 - `mode` should be `hide_all_guess_one` for v1.
-- Always use `region_left_pct`, `region_top_pct`, `region_width_pct`, `region_height_pct` (0–100). Estimate visually — "the Executor box is roughly 20% from the left, 22% from the top, spans about 32% wide and 28% tall".
-- Legacy `region_x`, `region_y`, `region_width`, `region_height` (pixel) remain supported as fallback but are not preferred — pixel coords break when Obsidian CSS scales the image.
+- Use `region_left_pct`, `region_top_pct`, `region_width_pct`, `region_height_pct` (0–100).
+- Legacy `region_x`, `region_y`, `region_width`, `region_height` (pixel) remain supported.
 - The bbox must cover the meaningful target, not the whole slide.
 
-## Image-Occlusion Selection Rules
+## Image Challenge Selection Rules
 
-Before generating image-occlusion, apply this filter in order. All three steps must pass.
+When a note contains images, decide between `image-quiz` and `image-occlusion`:
+
+**Model capability gate (mandatory)**
+
+- Gemini → may use `image-occlusion` or `image-quiz`
+- All other models (Claude, Cursor, etc.) → must use `image-quiz`. Do NOT generate `image-occlusion`.
 
 **Step 1 — Memory value test (mandatory)**
 
@@ -237,22 +275,22 @@ Ask: "Is this something the learner must memorize — something that would appea
 
 **Step 2 — Recall test (mandatory)**
 
-Ask: "If this region is hidden, must the learner retrieve the answer from memory — or can they just guess it from the surrounding image?"
+Ask: "If this image is shown, does the question require the learner to retrieve knowledge from memory?"
 
-- If the answer is obvious from the rest of the visible image → FAIL
-- Only PASS if hiding the region creates genuine retrieval demand
+- If the answer is obvious from the image alone without prior study → FAIL
+- Only PASS if the question creates genuine retrieval demand
 
 **Step 3 — Question design**
 
-The `prompt` must test understanding, not just label recognition. "這是什麼？" alone is not enough.
+The question must test understanding, not just label recognition. "這是什麼？" alone is not enough.
 
 Good: "What is the responsibility of this component?" / "Why is X used here instead of Y?" / "What is the output of this step?"
 Bad: "What is this hidden node?"
 
 **Fallback rule (mandatory)**
 
-If no target in the image passes Step 1 AND Step 2, do NOT generate image-occlusion for that chapter.
-Use `cloze` or `quiz` instead. Never force image-occlusion just because an image exists in the note.
+If no target in the image passes Step 1 AND Step 2, do NOT generate image-quiz or image-occlusion for that chapter.
+Use `cloze` or `quiz` instead. Never force an image challenge just because an image exists in the note.
 
 ## Chapter Design
 
