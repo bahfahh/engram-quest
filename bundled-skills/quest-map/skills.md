@@ -105,9 +105,18 @@ The parser splits on commas. Rephrase option text or accepted answers to avoid a
 
 ### Use flat fields for image-occlusion bbox
 
-Coordinates are **percentage-based (0–100)**, relative to the image's width and height.
+Canonical format: use original-image pixels with `region_x`, `region_y`, `region_width`, `region_height`.
+Legacy `region_*_pct` remains supported for compatibility, but is no longer preferred.
 
 Correct:
+```yaml
+region_x: 295
+region_y: 292
+region_width: 640
+region_height: 86
+```
+
+Legacy-compatible but not preferred (coordinates are percentage-based 0–100, relative to image width/height):
 ```yaml
 region_left_pct: 65
 region_top_pct: 15
@@ -115,9 +124,8 @@ region_width_pct: 22
 region_height_pct: 12
 ```
 
-Wrong (do not use pixel coordinates or nested structure):
+Wrong:
 ```yaml
-region_x: 295
 region:
   x: 295
 ```
@@ -197,19 +205,23 @@ challenge:
   answer: CloudFront CDN
   answers: [CloudFront CDN, CDN]
   reveal_answer: true
-  region_left_pct: 65
-  region_top_pct: 15
-  region_width_pct: 22
-  region_height_pct: 12
+  region_x: 295
+  region_y: 292
+  region_width: 640
+  region_height: 86
   hint: Optional hint
   link: relative/path/to/source.md
 ```
 
 Rules:
-- `image` must be a vault-relative path to an existing image.
+- `image` may be either a vault-relative path or a note-relative path that resolves from the current note.
+- Prefer the path style that already matches the source note's embedded image usage.
+- Do not use plugin asset paths or OS absolute paths.
 - `answer` is the canonical label.
 - `answers` holds acceptable user inputs.
 - `mode` should be `hide_all_guess_one` for v1.
+- Use `region_x`, `region_y`, `region_width`, `region_height` in original-image pixels whenever possible.
+- Legacy `region_*_pct` values remain supported for compatibility, but are no longer the preferred format.
 - `region_*_pct` values are 0–100, percentage of image width/height. Estimate visually — "the Advisor box is roughly 65% from the left, 15% from the top, spans about 22% wide and 12% tall".
 - The bbox must cover the meaningful target, not the whole slide.
 - Prefer labeled targets, organ names, architecture nodes, or comparison cells.

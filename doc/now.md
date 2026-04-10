@@ -9,6 +9,7 @@
 - Skills source lives under `skills/`.
 - `bundled-skills/` is a generated repo artifact, not the source of truth.
 - Runtime plugin is `../Obsidian_Note/.obsidian/plugins/engram-quest/`.
+- `image-occlusion` canonical bbox input is `region_x`, `region_y`, `region_width`, `region_height` in original-image pixels; legacy `region_*_pct` remains compatibility-only.
 - Planning docs live under `doc/開發計劃/`.
 
 ## Build / Deploy Contract
@@ -17,7 +18,7 @@
 - `npm run build` should work without an Obsidian vault.
 - `npm run sync:vault` copies repo artifacts into the runtime plugin directory.
 - `npm run build:sync` runs build first, then syncs the runtime.
-- `npm test` runs vitest against `tests/` directory (46 tests, all pass).
+- `npm test` runs vitest against `tests/` directory (60 tests, all pass).
 
 ## Current Architecture Truth
 - `src/main.js` is 61.3 KB (down from 185 KB original — 67% reduction).
@@ -52,10 +53,10 @@
 
 ## Testing
 - Framework: vitest
-- Test files: `tests/i18n.test.js` (23), `tests/fsrs.test.js` (20), `tests/review-session.test.js` (3)
+- Test files: `tests/i18n.test.js` (23), `tests/fsrs.test.js` (20), `tests/review-session.test.js` (3), `tests/quest-occlusion.test.js` (7), plus existing coverage in other test files
 - Obsidian API mock: `tests/__mocks__/obsidian.js` + `node_modules/obsidian/` stub
 - Run: `npm test`
-- All 46 tests pass.
+- All 60 tests pass.
 
 ## Important Failure Learned
 - Replacing active Hub/Help runtime with split modules previously broke the UI (`[object Object]`, layout corruption).

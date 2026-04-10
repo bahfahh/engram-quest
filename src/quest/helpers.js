@@ -11,6 +11,19 @@ function splitInlineList(text) {
   return match ? match[1].split(",").map((item) => item.trim()).filter(Boolean) : [];
 }
 
+function parseNumericField(text, prefix) {
+  let value = parseFloat(text.slice(prefix.length).trim());
+  return Number.isFinite(value) ? value : null;
+}
+
+function hasFiniteNumber(value) {
+  return typeof value === "number" && Number.isFinite(value);
+}
+
+function clampNumber(value, min, max) {
+  return Math.min(Math.max(value, min), max);
+}
+
 function parseQuestMap(markdown) {
   let fenced = String(markdown ?? "").match(/```quest-map\s*([\s\S]*?)```/i);
   if (fenced?.[1]) markdown = fenced[1];
@@ -92,10 +105,14 @@ function parseQuestMap(markdown) {
       else if (trimmed.startsWith("keywords:")) challenge.keywords = splitInlineList(trimmed);
       else if (trimmed.startsWith("answers:")) challenge.answers = splitInlineList(trimmed);
       else if (trimmed.startsWith("reveal_answer:")) challenge.reveal_answer = trimmed.slice(14).trim() === "true";
-      else if (trimmed.startsWith("region_left_pct:")) challenge.region_left_pct = parseFloat(trimmed.slice(16).trim());
-      else if (trimmed.startsWith("region_top_pct:")) challenge.region_top_pct = parseFloat(trimmed.slice(15).trim());
-      else if (trimmed.startsWith("region_width_pct:")) challenge.region_width_pct = parseFloat(trimmed.slice(17).trim());
-      else if (trimmed.startsWith("region_height_pct:")) challenge.region_height_pct = parseFloat(trimmed.slice(18).trim());
+      else if (trimmed.startsWith("region_x:")) challenge.region_x = parseNumericField(trimmed, "region_x:");
+      else if (trimmed.startsWith("region_y:")) challenge.region_y = parseNumericField(trimmed, "region_y:");
+      else if (trimmed.startsWith("region_width:")) challenge.region_width = parseNumericField(trimmed, "region_width:");
+      else if (trimmed.startsWith("region_height:")) challenge.region_height = parseNumericField(trimmed, "region_height:");
+      else if (trimmed.startsWith("region_left_pct:")) challenge.region_left_pct = parseNumericField(trimmed, "region_left_pct:");
+      else if (trimmed.startsWith("region_top_pct:")) challenge.region_top_pct = parseNumericField(trimmed, "region_top_pct:");
+      else if (trimmed.startsWith("region_width_pct:")) challenge.region_width_pct = parseNumericField(trimmed, "region_width_pct:");
+      else if (trimmed.startsWith("region_height_pct:")) challenge.region_height_pct = parseNumericField(trimmed, "region_height_pct:");
       else if (trimmed.startsWith("answer:")) {
         let answer = trimmed.slice(7).trim();
         if (answer === "true") challenge.answer = true;
@@ -131,6 +148,67 @@ function parseQuestMap(markdown) {
   return quest;
 }
 
+function resolveImageOcclusionRect(challenge, naturalWidth, naturalHeight) {
+  if (!challenge) return null;
+  if (!hasFiniteNumber(naturalWidth) || !hasFiniteNumber(naturalHeight) || naturalWidth <= 0 || naturalHeight <= 0) {
+    return null;
+  }
+
+  let usePixelRect = ["region_x", "region_y", "region_width", "region_height"].every((key) => hasFiniteNumber(challenge[key]));
+  let usePercentRect = ["region_left_pct", "region_top_pct", "region_width_pct", "region_height_pct"].every((key) => hasFiniteNumber(challenge[key]));
+  let leftPx;
+  let topPx;
+  let widthPx;
+  let heightPx;
+  let source;
+
+  if (usePixelRect) {
+    leftPx = challenge.region_x;
+    topPx = challenge.region_y;
+    widthPx = challenge.region_width;
+    heightPx = challenge.region_height;
+    source = "pixel";
+  } else if (usePercentRect) {
+    leftPx = challenge.region_left_pct / 100 * naturalWidth;
+    topPx = challenge.region_top_pct / 100 * naturalHeight;
+    widthPx = challenge.region_width_pct / 100 * naturalWidth;
+    heightPx = challenge.region_height_pct / 100 * naturalHeight;
+    source = "percent";
+  } else {
+    return null;
+  }
+
+  if (!hasFiniteNumber(leftPx) || !hasFiniteNumber(topPx) || !hasFiniteNumber(widthPx) || !hasFiniteNumber(heightPx)) {
+    return null;
+  }
+
+  let rightPx = leftPx + widthPx;
+  let bottomPx = topPx + heightPx;
+  let clampedLeft = clampNumber(leftPx, 0, naturalWidth);
+  let clampedTop = clampNumber(topPx, 0, naturalHeight);
+  let clampedRight = clampNumber(rightPx, 0, naturalWidth);
+  let clampedBottom = clampNumber(bottomPx, 0, naturalHeight);
+  let clampedWidth = clampedRight - clampedLeft;
+  let clampedHeight = clampedBottom - clampedTop;
+
+  if (!(clampedWidth > 0) || !(clampedHeight > 0)) {
+    return null;
+  }
+
+  return {
+    source,
+    wasClamped: clampedLeft !== leftPx || clampedTop !== topPx || clampedRight !== rightPx || clampedBottom !== bottomPx,
+    leftPx: clampedLeft,
+    topPx: clampedTop,
+    widthPx: clampedWidth,
+    heightPx: clampedHeight,
+    leftPct: clampedLeft / naturalWidth * 100,
+    topPct: clampedTop / naturalHeight * 100,
+    widthPct: clampedWidth / naturalWidth * 100,
+    heightPct: clampedHeight / naturalHeight * 100,
+  };
+}
+
 function retriggerShake(element) {
   element.classList.remove("qm-shake");
   element.offsetWidth;
@@ -164,12 +242,27 @@ function matchesExpectedAnswer(input, expectedAnswers) {
   });
 }
 
-function openQuestLink(app, path) {
-  if (!path) return;
-  if (app.vault.getAbstractFileByPath(path)) {
-    app.workspace.openLinkText(path, "", false);
+function resolveQuestPath(app, path, sourcePath) {
+  let targetPath = String(path ?? "").trim();
+  if (!targetPath) return null;
+
+  let exactMatch = app.vault.getAbstractFileByPath(targetPath);
+  if (exactMatch) return exactMatch;
+
+  if (sourcePath && app.metadataCache && typeof app.metadataCache.getFirstLinkpathDest === "function") {
+    return app.metadataCache.getFirstLinkpathDest(targetPath, sourcePath) || null;
+  }
+
+  return null;
+}
+
+function openQuestLink(app, path, sourcePath) {
+  let resolved = resolveQuestPath(app, path, sourcePath);
+  if (resolved?.path) {
+    app.workspace.openLinkText(resolved.path, sourcePath || "", false);
     return;
   }
+  if (!path) return;
   window.open("obsidian://open?file=" + encodeURIComponent(path));
 }
 
@@ -182,8 +275,9 @@ function renderClozeSentence(sentence, revealAnswer) {
   ));
 }
 
-function getQuestImageResource(app, path) {
-  return !path || !app.vault.getAbstractFileByPath(path) ? null : app.vault.adapter.getResourcePath(path);
+function getQuestImageResource(app, path, sourcePath) {
+  let resolved = resolveQuestPath(app, path, sourcePath);
+  return resolved?.path ? app.vault.adapter.getResourcePath(resolved.path) : null;
 }
 
 function getQuestTheme(themeName, nodeIndex, themes) {
@@ -206,10 +300,12 @@ module.exports = {
   questDifficultyPresets,
   splitInlineList,
   parseQuestMap,
+  resolveImageOcclusionRect,
   retriggerShake,
   normalizeAnswer,
   collectExpectedAnswers,
   matchesExpectedAnswer,
+  resolveQuestPath,
   openQuestLink,
   renderClozeSentence,
   getQuestImageResource,

@@ -1,6 +1,7 @@
 "use strict";
 
 const obsidian = require("obsidian");
+const { resolveImageOcclusionRect } = require("./helpers");
 
 function isZh(deps, settings) {
   return deps.getLanguage(settings) === "zh-tw";
@@ -16,7 +17,7 @@ function setSolved(buttons, onSolved) {
   setTimeout(() => onSolved(), 500);
 }
 
-function renderQuestChallenge(container, challenge, difficulty, onSolved, settings, app, deps) {
+function renderQuestChallenge(container, challenge, difficulty, onSolved, settings, app, sourcePath, deps) {
   let preset = deps.questDifficultyPresets[difficulty] || deps.questDifficultyPresets.medium;
   let retryCount = 0;
   let zh = isZh(deps, settings);
@@ -46,7 +47,7 @@ function renderQuestChallenge(container, challenge, difficulty, onSolved, settin
         limitNotice.createEl("button", {
           text: zh ? "開啟筆記" : "Open Note",
           attr: { style: "margin-left:auto;padding:6px 12px;border-radius:6px;background:#dc2626;color:white;border:none;cursor:pointer;font-size:12px;font-weight:600;white-space:nowrap" }
-        }).addEventListener("click", () => deps.openQuestLink(app, challenge.link));
+        }).addEventListener("click", () => deps.openQuestLink(app, challenge.link, sourcePath));
       }
     }
   }
@@ -224,7 +225,7 @@ function renderQuestChallenge(container, challenge, difficulty, onSolved, settin
   }
 
   if (challenge.type === "image" && challenge.image) {
-    let resource = deps.getQuestImageResource(app, challenge.image);
+    let resource = deps.getQuestImageResource(app, challenge.image, sourcePath);
     if (!resource) {
       wrapper.createEl("p", { text: zh ? "找不到題目圖片。" : "Image not found for this challenge.", attr: { style: "color:var(--text-muted)" } });
       return;
@@ -252,15 +253,31 @@ function renderQuestChallenge(container, challenge, difficulty, onSolved, settin
 
   if (challenge.type === "image-occlusion" && challenge.image) {
     let expected = deps.collectExpectedAnswers(challenge);
-    let resource = deps.getQuestImageResource(app, challenge.image);
+    let resource = deps.getQuestImageResource(app, challenge.image, sourcePath);
     let revealButton = null;
     let feedbackEl = null;
+    let geometryWarningEl = null;
 
     function getFeedback() {
       if (!feedbackEl) {
         feedbackEl = wrapper.createEl("div", { attr: { style: "margin-top:10px;padding:10px 14px;border-radius:8px;background:var(--background-secondary);border:1px solid var(--background-modifier-border);font-size:13px;color:var(--text-muted)" } });
       }
       return feedbackEl;
+    }
+
+    function setGeometryWarning(text) {
+      if (!text) {
+        if (geometryWarningEl) {
+          geometryWarningEl.remove();
+          geometryWarningEl = null;
+        }
+        return;
+      }
+
+      if (!geometryWarningEl) {
+        geometryWarningEl = wrapper.createEl("div", { attr: { style: "margin-bottom:12px;padding:12px 14px;border-radius:10px;background:#fff7ed;border:1px solid #fdba74;color:#9a3412;font-size:13px;line-height:1.5" } });
+      }
+      geometryWarningEl.textContent = text;
     }
 
     function revealAnswer() {
@@ -273,7 +290,7 @@ function renderQuestChallenge(container, challenge, difficulty, onSolved, settin
     }
 
     if (!resource) {
-      wrapper.createEl("div", { text: zh ? "找不到圖片檔案，請檢查圖片路徑。" : "Image file not found. Check the image path.", attr: { style: "padding:12px 14px;border-radius:10px;background:#fef2f2;border:1px solid #fca5a5;color:#dc2626;font-size:13px" } });
+      wrapper.createEl("div", { text: zh ? "找不到圖片檔案。請使用 vault-relative 路徑，或相對於目前筆記的 note-relative 路徑，例如 Folder/assets/image.png 或 assets/image.png。" : "Image file not found. Use a vault-relative path or a note-relative path from the current note, for example Folder/assets/image.png or assets/image.png.", attr: { style: "padding:12px 14px;border-radius:10px;background:#fef2f2;border:1px solid #fca5a5;color:#dc2626;font-size:13px" } });
       return;
     }
 
@@ -283,20 +300,46 @@ function renderQuestChallenge(container, challenge, difficulty, onSolved, settin
 
     let stage = wrapper.createEl("div", { attr: { style: "position:relative;width:min(100%,760px);margin-bottom:12px;border-radius:14px;overflow:hidden;border:1px solid var(--background-modifier-border);background:var(--background-secondary)" } });
     let img = stage.createEl("img", { attr: { src: resource, alt: challenge.prompt || challenge.answer || "image occlusion", style: "display:block;width:100%;height:auto" } });
-    let occluder = stage.createEl("div", { attr: { style: "position:absolute;background:rgba(15,23,42,0.82);border:2px solid rgba(255,255,255,0.85);border-radius:10px;display:flex;align-items:center;justify-content:center;color:#f8fafc;font-weight:700;font-size:13px;text-align:center;padding:6px;box-sizing:border-box" } });
+    let occluder = stage.createEl("div", { attr: { style: "position:absolute;background:rgba(15,23,42,0.82);border:2px solid rgba(255,255,255,0.85);border-radius:10px;display:none;align-items:center;justify-content:center;color:#f8fafc;font-weight:700;font-size:13px;text-align:center;padding:6px;box-sizing:border-box;pointer-events:none" } });
     occluder.textContent = zh ? "已遮蓋" : "Hidden";
 
-    occluder.style.left   = (challenge.region_left_pct  ?? 0)  + "%";
-    occluder.style.top    = (challenge.region_top_pct   ?? 0)  + "%";
-    occluder.style.width  = (challenge.region_width_pct ?? 10) + "%";
-    occluder.style.height = (challenge.region_height_pct?? 10) + "%";
+    function syncOccluder() {
+      let rect = resolveImageOcclusionRect(challenge, img.naturalWidth, img.naturalHeight);
+      if (!rect) {
+        occluder.style.display = "none";
+        setGeometryWarning(
+          zh
+            ? "這張 image-occlusion 缺少有效的遮罩座標。請提供 region_x / region_y / region_width / region_height，或使用相容的 region_*_pct。"
+            : "This image-occlusion challenge is missing a valid bbox. Provide region_x / region_y / region_width / region_height, or legacy region_*_pct values."
+        );
+        return;
+      }
+
+      occluder.style.display = "flex";
+      occluder.style.left = rect.leftPct + "%";
+      occluder.style.top = rect.topPct + "%";
+      occluder.style.width = rect.widthPct + "%";
+      occluder.style.height = rect.heightPct + "%";
+      if (rect.wasClamped) {
+        setGeometryWarning(
+          zh
+            ? "遮罩座標超出圖片邊界，已自動裁切到圖片範圍內。"
+            : "The occlusion bbox exceeded the image bounds and was clamped to the visible image area."
+        );
+      } else {
+        setGeometryWarning("");
+      }
+    }
+
+    img.addEventListener("load", syncOccluder);
+    if (img.complete) syncOccluder();
 
     let btnRow = wrapper.createEl("div", { attr: { style: "display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px" } });
     btnRow.createEl("button", { text: zh ? "查看原圖" : "View Source Image", attr: { style: "padding:8px 14px;border-radius:8px;background:#334155;color:white;border:none;cursor:pointer;font-size:12px;font-weight:700" } })
-      .addEventListener("click", () => deps.openQuestLink(app, challenge.image));
+      .addEventListener("click", () => deps.openQuestLink(app, challenge.image, sourcePath));
     if (challenge.link) {
       btnRow.createEl("button", { text: zh ? "開啟來源筆記" : "Open Source Note", attr: { style: "padding:8px 14px;border-radius:8px;background:#475569;color:white;border:none;cursor:pointer;font-size:12px;font-weight:700" } })
-        .addEventListener("click", () => deps.openQuestLink(app, challenge.link));
+        .addEventListener("click", () => deps.openQuestLink(app, challenge.link, sourcePath));
     }
 
     let inputRow = wrapper.createEl("div", { attr: { style: "display:flex;gap:8px;align-items:center;flex-wrap:wrap" } });
@@ -331,7 +374,7 @@ function renderQuestChallenge(container, challenge, difficulty, onSolved, settin
   }
 }
 
-function openQuestChapterModal(app, nodes, activeIndex, styleName, difficulty, settings, deps) {
+function openQuestChapterModal(app, nodes, activeIndex, styleName, difficulty, settings, sourcePath, deps) {
   let modal = new obsidian.Modal(app);
   let currentIndex = activeIndex;
   let theme = deps.getQuestTheme(styleName, currentIndex, {
@@ -383,7 +426,7 @@ function openQuestChapterModal(app, nodes, activeIndex, styleName, difficulty, s
         } else {
           modal.close();
         }
-      }, settings, app);
+      }, settings, app, sourcePath);
     }
 
     let footer = content.createEl("div", { attr: { style: "display:flex;align-items:center;justify-content:space-between;border-top:1px solid var(--background-modifier-border);padding-top:20px;margin-top:28px" } });
