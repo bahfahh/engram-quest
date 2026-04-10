@@ -13,7 +13,7 @@ description:
 
 ## Output Language Rule
 
-Important: generate user-facing output in the language that best matches the user's prompt or the source note.
+CRITICAL: Generate user-facing output in the language that best matches the user's prompt or the source note.
 
 - If the prompt explicitly asks for a language, follow the prompt.
 - Otherwise, match the source note language.
@@ -26,7 +26,7 @@ This rule applies to:
 
 1. The plugin scans vault notes.
 2. Any line with `question :: answer` is a flashcard.
-3. By default, the plugin scans notes with matching flashcard tag prefixes, default `flashcards`.
+3. The plugin scans notes whose tags match the user-configured flashcard tag prefix (default: `flashcards`). This prefix is user-configurable in plugin settings.
 4. If the user enables legacy `::` note scanning in plugin settings, untagged flashcard notes can also be included for migration.
 5. Hints are loaded from `.review-deck/hints/{note-name}.json`.
 6. SR progress is stored as `<!--SR:!YYYY-MM-DD,interval,stability,difficulty,state-->` (FSRS-4 format). Legacy SM-2 format (`<!--SR:!YYYY-MM-DD,interval,ease-->`) is read and auto-migrated on next rating. Do not manually insert SR comments.
@@ -35,10 +35,27 @@ This rule applies to:
 
 | Data | Path |
 |---|---|
+| Plugin settings | `.obsidian/plugins/engram-quest/data.json` |
 | Plugin config | `.review-deck/config.json` |
 | Hints | `.review-deck/hints/{note-name}.json` |
 | Cards | Any markdown note with `question :: answer` |
 | SR metadata | HTML comment after each card |
+
+## Output Scope
+
+CRITICAL: When completing any Setup Flow or Single Note Flow, strictly limit your output to:
+- Inserting card content into source notes
+- Generating hint JSON files
+
+PROHIBITED — do not create any of the following unless the user explicitly requests it:
+- Navigation pages
+- Dashboard files
+- Index files
+- Any file beyond card notes and hint JSON
+
+Code block examples in this document are syntax references only. Do not treat them as deliverables to create.
+
+Task is complete when cards and JSON hints are generated. Stop there.
 
 ## Trigger Mapping
 
@@ -51,21 +68,26 @@ This rule applies to:
 
 ## Setup Flow
 
-1. Ensure `.review-deck/config.json` exists.
-2. Find notes relevant to the topic across the vault.
-3. Prefer notes with matching flashcard tags such as `flashcards/<topic>`.
-4. Only use untagged `question :: answer` notes when the user explicitly wants legacy flashcard migration.
-5. Read each note and collect exact front text from `question :: answer`.
-6. Use `bash scripts/search_vault.sh "<query>" 20` when you need real vault context for L2.
-7. Generate `.review-deck/hints/{note-name}.json`.
-8. Report how many notes/cards were processed and how many L2 hints were left empty.
+CRITICAL: Follow these steps in order. Do not skip any step.
+
+1. Read `.obsidian/plugins/engram-quest/data.json` and extract the `flashcardTags` field. This is the user's configured tag prefix (e.g., `mycard`, `flashcards`, or multiple space-separated values). If the file does not exist or the field is empty, default to `flashcards`. Use this value — not a hardcoded string — for all tag operations in this session.
+2. Ensure `.review-deck/config.json` exists.
+3. Find notes relevant to the topic across the vault.
+4. CRITICAL: Notes **must** have YAML tags matching the prefix from step 1 to be detected by the plugin (e.g., `{prefix}/azure`). Do not process untagged notes unless the user explicitly requests legacy migration.
+5. Only use untagged `question :: answer` notes when the user explicitly wants legacy flashcard migration.
+6. Read each note and collect exact front text from `question :: answer`.
+7. CRITICAL: For each card, run `bash scripts/search_vault.sh "<card-keyword>" 20` to gather real vault context **before** writing any L2. Do not skip this search.
+8. Generate `.review-deck/hints/{note-name}.json`.
+9. CRITICAL: Before finishing, verify that every processed note has at least one tag matching the prefix from step 1. If missing, add it to the note's YAML frontmatter.
+10. Report: how many notes/cards were processed, how many L2 hints were left empty, and how many notes had the tag prefix added.
 
 ## Update Flow
 
-1. Find relevant notes again.
-2. Read existing hints JSON if present.
-3. Add hints only for new cards.
-4. Preserve existing hints when possible.
+1. Read `.obsidian/plugins/engram-quest/data.json` to get the `flashcardTags` prefix (same as Setup Flow step 1).
+2. Find relevant notes again.
+3. Read existing hints JSON if present.
+4. Add hints only for new cards.
+5. Preserve existing hints when possible.
 
 ## Single Note Flow
 
@@ -105,18 +127,36 @@ title: Azure Review
 ## L1 / L2 / L3 Design
 
 ### L1
-- Force active recall
-- Ask about a scenario, consequence, or tradeoff
-- Do not paraphrase the answer too directly
+CRITICAL: Force active recall through **strategic inquiry**. Do not write simple "what is" questions.
+
+Preferred patterns:
+- Consequences of getting it wrong: "If you use X instead of Y, what breaks?"
+- Application scenarios: "When would you reach for this in practice?"
+- Trade-off framing: "Why choose this over the alternative?"
+
+PROHIBITED in L1:
+- Questions that simply rephrase the answer
+- Pure definition questions ("What is X?")
+- Trivia questions ("Which color / name / number is X?")
 
 ### L2
-- Must come from real vault context
-- Prefer first-person notes, diary context, frustrations, or learning scenes
-- If no real context exists, set `l2` to an empty string
+CRITICAL: You **must** run `bash scripts/search_vault.sh "<card-keyword>" 20` before writing any L2. Do not skip this step.
+
+- L2 must come from actual vault results: first-person notes, diary entries, timestamps, expressed confusions, or past learning scenes.
+- Use personalized language: "On 2025/3/3 you noted...", "You once struggled with...", "You compared this to..."
+- If search returns no personal context, set `l2` to empty string.
+
+PROHIBITED in L2:
+- Generic textbook descriptions
+- Content invented without vault search results
 
 ### L3
-- Give 1 or 2 narrowing keywords
-- Do not reveal the answer directly
+- Give 1 or 2 structural narrowing keywords that point to the knowledge domain, not the answer.
+
+PROHIBITED in L3:
+- The answer itself or its spelling
+- Synonyms or direct definitions of the answer (e.g., if answer is "Orange", do not write "Fruit color" or "Red-yellow color")
+- Any keyword that makes the answer immediately obvious
 
 ## Card Quality Rules
 
