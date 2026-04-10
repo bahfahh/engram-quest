@@ -105,23 +105,23 @@ The parser splits on commas. Rephrase option text or accepted answers to avoid a
 
 ### Use flat fields for image-occlusion bbox
 
-Canonical format: use original-image pixels with `region_x`, `region_y`, `region_width`, `region_height`.
-Legacy `region_*_pct` remains supported for compatibility, but is no longer preferred.
+Canonical format: use percentage-based coordinates with `region_left_pct`, `region_top_pct`, `region_width_pct`, `region_height_pct` (0–100, relative to image width/height).
+Pixel coords (`region_x`, `region_y`, `region_width`, `region_height`) are legacy-compatible but not preferred — they break when Obsidian CSS scales the image.
 
 Correct:
+```yaml
+region_left_pct: 20
+region_top_pct: 22
+region_width_pct: 32
+region_height_pct: 28
+```
+
+Legacy-compatible but not preferred:
 ```yaml
 region_x: 295
 region_y: 292
 region_width: 640
 region_height: 86
-```
-
-Legacy-compatible but not preferred (coordinates are percentage-based 0–100, relative to image width/height):
-```yaml
-region_left_pct: 65
-region_top_pct: 15
-region_width_pct: 22
-region_height_pct: 12
 ```
 
 Wrong:
@@ -201,14 +201,14 @@ challenge:
   type: image-occlusion
   image: path/to/image.png
   mode: hide_all_guess_one
-  prompt: 這個被遮住的節點是什麼
+  prompt: What is the responsibility of this component?
   answer: CloudFront CDN
   answers: [CloudFront CDN, CDN]
   reveal_answer: true
-  region_x: 295
-  region_y: 292
-  region_width: 640
-  region_height: 86
+  region_left_pct: 20
+  region_top_pct: 22
+  region_width_pct: 32
+  region_height_pct: 28
   hint: Optional hint
   link: relative/path/to/source.md
 ```
@@ -220,30 +220,39 @@ Rules:
 - `answer` is the canonical label.
 - `answers` holds acceptable user inputs.
 - `mode` should be `hide_all_guess_one` for v1.
-- Use `region_x`, `region_y`, `region_width`, `region_height` in original-image pixels whenever possible.
-- Legacy `region_*_pct` values remain supported for compatibility, but are no longer the preferred format.
-- `region_*_pct` values are 0–100, percentage of image width/height. Estimate visually — "the Advisor box is roughly 65% from the left, 15% from the top, spans about 22% wide and 12% tall".
+- Always use `region_left_pct`, `region_top_pct`, `region_width_pct`, `region_height_pct` (0–100). Estimate visually — "the Executor box is roughly 20% from the left, 22% from the top, spans about 32% wide and 28% tall".
+- Legacy `region_x`, `region_y`, `region_width`, `region_height` (pixel) remain supported as fallback but are not preferred — pixel coords break when Obsidian CSS scales the image.
 - The bbox must cover the meaningful target, not the whole slide.
-- Prefer labeled targets, organ names, architecture nodes, or comparison cells.
 
 ## Image-Occlusion Selection Rules
 
-Good candidates:
-- labeled organs
-- architecture nodes
-- flowchart boxes
-- AWS/Azure comparison cells
-- map labels
-- diagram callouts
+Before generating image-occlusion, apply this filter in order. All three steps must pass.
 
-Bad candidates:
-- decorative icons
-- long paragraphs
-- empty space
-- whole sections when a smaller target exists
-- images the model cannot confidently understand
+**Step 1 — Memory value test (mandatory)**
 
-If image understanding is weak, do not force image-occlusion. Fall back to another challenge type.
+Ask: "Is this something the learner must memorize — something that would appear on a test or is a core concept they need to retain?"
+
+- PASS: specific architecture node names, organ labels, protocol names, algorithm names, values the learner would be tested on
+- FAIL: generic labels like "Input" / "Output" / "Model", model names that appear everywhere in the note, arrows, connectors, decorative icons, anything obvious from context
+
+**Step 2 — Recall test (mandatory)**
+
+Ask: "If this region is hidden, must the learner retrieve the answer from memory — or can they just guess it from the surrounding image?"
+
+- If the answer is obvious from the rest of the visible image → FAIL
+- Only PASS if hiding the region creates genuine retrieval demand
+
+**Step 3 — Question design**
+
+The `prompt` must test understanding, not just label recognition. "這是什麼？" alone is not enough.
+
+Good: "What is the responsibility of this component?" / "Why is X used here instead of Y?" / "What is the output of this step?"
+Bad: "What is this hidden node?"
+
+**Fallback rule (mandatory)**
+
+If no target in the image passes Step 1 AND Step 2, do NOT generate image-occlusion for that chapter.
+Use `cloze` or `quiz` instead. Never force image-occlusion just because an image exists in the note.
 
 ## Chapter Design
 
