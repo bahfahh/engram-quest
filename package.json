@@ -5,6 +5,7 @@
   "description": "Standalone source repo for the EngramQuest Obsidian plugin",
   "main": "main.js",
   "scripts": {
+    "test": "vitest run tests/",
     "dev": "node esbuild.config.mjs",
     "build": "node scripts/sync-bundled-skills.js && node esbuild.config.mjs --prod",
     "check:bundle-parity": "node scripts/check-bundle-parity.mjs",
@@ -13,6 +14,7 @@
     "build:sync": "npm run build && node scripts/sync-to-vault.mjs"
   },
   "devDependencies": {
-    "esbuild": "^0.25.3"
+    "esbuild": "^0.25.3",
+    "vitest": "^4.1.4"
   }
 }
