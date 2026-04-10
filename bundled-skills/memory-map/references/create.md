@@ -22,4 +22,18 @@ Build a new `-memory.canvas` file that helps the user understand and remember a 
 
 ## Output
 
-Save as `<source-note-name>-memory.canvas`.
+### Determine save location
+
+Before creating the canvas file:
+
+1. Read `.memory-map/config.json` if it exists.
+2. If `memoryMapFolder` is set (non-empty string), save the file there:
+   `<memoryMapFolder>/<source-note-name>-memory.canvas`
+   Create the folder if it does not exist.
+3. If the config file does not exist, or `memoryMapFolder` is empty or missing,
+   save next to the source note:
+   `<source-note-folder>/<source-note-name>-memory.canvas`
+
+### Save the file
+
+Save as `<source-note-name>-memory.canvas` in the resolved location above.

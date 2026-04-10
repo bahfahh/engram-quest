@@ -16,6 +16,19 @@ var pe = class extends I.PluginSettingTab {
     new I.Setting(e).setName(c(t, "SETTINGS_SR_SCAN_NAME")).setDesc(c(t, "SETTINGS_SR_SCAN_DESC")).addToggle(r => r.setValue(t.enableSRScan).onChange(async s => { this.plugin.settings.enableSRScan = s; await this.plugin.saveData(this.plugin.settings); })),
     new I.Setting(e).setName(c(t, "SETTINGS_MAX_INTERVAL_NAME")).setDesc(c(t, "SETTINGS_MAX_INTERVAL_DESC")).addText(r => r.setPlaceholder("36525").setValue(String(t.maxInterval)).onChange(async s => { let l = parseInt(s); !isNaN(l) && l >= 1 && (this.plugin.settings.maxInterval = l, await this.plugin.saveData(this.plugin.settings)); })),
     new I.Setting(e).setName(c(t, "SETTINGS_RETENTION_NAME")).setDesc(c(t, "SETTINGS_RETENTION_DESC")).addSlider(r => { var s; return r.setLimits(.7, .99, .01).setValue((s = t.requestedRetention) != null ? s : .9).setDynamicTooltip().onChange(async l => { this.plugin.settings.requestedRetention = l; await this.plugin.saveData(this.plugin.settings); }); }),
+    e.createEl("h3", { text: c(t, "SETTINGS_MEMORY_MAP") }),
+    new I.Setting(e).setName(c(t, "SETTINGS_MEMORY_MAP_FOLDER_NAME")).setDesc(c(t, "SETTINGS_MEMORY_MAP_FOLDER_DESC")).addText(r => {
+      r.setPlaceholder("Maps/MemoryMaps").setValue(t.memoryMapFolder || "").onChange(async s => {
+        this.plugin.settings.memoryMapFolder = s.trim();
+        await this.plugin.saveData(this.plugin.settings);
+        const adapter = this.app.vault.adapter;
+        try {
+          if (!await adapter.exists(".memory-map")) await this.app.vault.createFolder(".memory-map");
+          await adapter.write(".memory-map/config.json", JSON.stringify({ memoryMapFolder: this.plugin.settings.memoryMapFolder }, null, 2));
+        } catch (err) { console.error("EngramQuest: could not write .memory-map/config.json", err); }
+      });
+      r.inputEl.style.cssText = "width:200px;font-family:monospace;font-size:13px";
+    }),
     e.createEl("h3", { text: c(t, "SETTINGS_AI_SKILLS") }),
     new I.Setting(e).setName(c(t, "SETTINGS_AI_SKILLS")).setDesc(c(t, "SETTINGS_AI_SKILLS_DESC")).addButton(r => r.setButtonText(c(t, "SETTINGS_AI_SKILLS_BUTTON")).setCta().onClick(() => { if (!me()) { new I.Notice("EngramQuest installer assets are unavailable."); return; } new de(this.app, this.plugin).open(); })),
     new I.Setting(e).setName(c(t, "SETTINGS_AUTO_UPDATE_SKILLS_NAME")).setDesc(c(t, "SETTINGS_AUTO_UPDATE_SKILLS_DESC")).addToggle(r => r.setValue(!!t.autoUpdateInstalledSkills).onChange(async s => { this.plugin.settings.autoUpdateInstalledSkills = s; await this.plugin.saveData(this.plugin.settings); }));

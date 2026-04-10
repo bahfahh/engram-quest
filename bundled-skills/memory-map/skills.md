@@ -45,7 +45,7 @@ Choose the right reference before writing:
 1. Read the source note.
 2. Search the vault for related notes or context.
 3. Choose the best reference flow.
-4. Generate or update `<source-note-name>-memory.canvas`.
+4. Read `.memory-map/config.json` to determine the save folder, then generate or update `<source-note-name>-memory.canvas` in that location.
 5. Keep the canvas readable and stable.
 
 ## Output Rules
