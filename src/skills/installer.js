@@ -45,8 +45,8 @@ function createInstaller() {
       id: "cursor",
       label: "Cursor",
       kind: "rules",
-      baseDir: ".cursor/rules",
-      summary: "Project-local Cursor rules."
+      baseDir: ".cursor/skills",
+      summary: "Project-local Cursor skills."
     }
   };
   const BUNDLED_SKILLS_ROOT = ".obsidian/plugins/engram-quest/bundled-skills";

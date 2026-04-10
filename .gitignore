@@ -8,5 +8,6 @@ data.json
 # ai
 AGENTS.md
 CLAUDE.md
-
+.claude
 doc/
+!node_modules/obsidian

@@ -49,8 +49,8 @@ const TOOL_TARGETS = {
     id: 'cursor',
     label: 'Cursor',
     kind: 'rules',
-    baseDir: '.cursor/rules',
-    summary: 'Project-local Cursor rules.',
+    baseDir: '.cursor/skills',
+    summary: 'Project-local Cursor skills.',
   },
 };
 
