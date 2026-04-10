@@ -34,6 +34,7 @@
 - `src/review/decks.js`
 - `src/review/render.js`
 - `src/review/session.js` — Review session modal (`Q` class)
+- `src/hub/settings.js` — Settings tab (`pe` class)
 - `src/i18n/index.js` — i18n dictionary + translation helpers (Se, L, Ze, c, C)
 - `src/fsrs/index.js` — FSRS-5 algorithm (pure math, no Obsidian dependency)
 - `src/styles/index.js` — plugin CSS string (He)
@@ -42,7 +43,6 @@
 - Hub modal shell and tab switching (`ne` class)
 - Help modal (`fe` class)
 - Skills install/preview modals (`ce`, `de` classes)
-- Settings tab (`pe` class)
 - Plugin bootstrap and `onload` (`he` class)
 - Harness map data (q[], ae, H[]) and legacy `engram-quest` block processor
 
