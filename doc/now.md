@@ -17,12 +17,12 @@
 - `npm run build` should work without an Obsidian vault.
 - `npm run sync:vault` copies repo artifacts into the runtime plugin directory.
 - `npm run build:sync` runs build first, then syncs the runtime.
-- `npm test` runs vitest against `tests/` directory (43 tests, all pass).
+- `npm test` runs vitest against `tests/` directory (46 tests, all pass).
 
 ## Current Architecture Truth
-- The repo is in active incremental modularization.
-- `src/main.js` is still the active owner for Hub/UI/Settings/Skills/Help behavior.
-- Extracted modules exist under `src/skills/`, `src/harness/`, `src/quest/`, `src/review/`, `src/i18n/`, `src/fsrs/`, `src/styles/`.
+- `src/main.js` is 87.7 KB (down from 185 KB original — 53% reduction).
+- Active incremental modularization is ongoing.
+- Remaining inline residue in `src/main.js` is interleaved with must-keep items; full cleanup deferred.
 
 ## What Was Successfully Split
 - `src/skills/installer.js`
@@ -33,38 +33,54 @@
 - `src/review/helpers.js`
 - `src/review/decks.js`
 - `src/review/render.js`
+- `src/review/modal.js`
 - `src/review/session.js` — Review session modal (`Q` class)
-- `src/hub/settings.js` — Settings tab (`pe` class)
-- `src/i18n/index.js` — i18n dictionary + translation helpers (Se, L, Ze, c, C)
+- `src/i18n/index.js` — i18n dictionary + translation helpers
 - `src/fsrs/index.js` — FSRS-5 algorithm (pure math, no Obsidian dependency)
-- `src/styles/index.js` — plugin CSS string (He)
+- `src/styles/index.js` — plugin CSS string
+- `src/hub/settings.js` — Settings tab (`pe` class)
+- `src/hub/skills.js` — Skills install/preview modals (`ce`, `de`) + installer helpers
+- `src/hub/help.js` — Help modal (`fe` class)
 
 ## What Is Still Active In `src/main.js`
-- Hub modal shell and tab switching (`ne` class)
-- Help modal (`fe` class)
-- Skills install/preview modals (`ce`, `de` classes)
-- Plugin bootstrap and `onload` (`he` class)
-- Harness map data (q[], ae, H[]) and legacy `engram-quest` block processor
+- Legacy `engram-quest` block processor (`ze`, `Ee`, `ue`, `Ge`, `B`, `qe`, `Pe`)
+- Harness map data (`q[]`, `ae`, `H[]`, `Ue`)
+- Quest theme colors (`Y`)
+- Inline residue of already-extracted modules (overridden by reassignment section at bottom)
+- Hub modal shell and tab switching (`ne` class) — largest remaining block
+- Plugin bootstrap and `onload` (`he` class) — do not touch
 
 ## Testing
 - Framework: vitest
-- Test files: `tests/i18n.test.js` (23 tests), `tests/fsrs.test.js` (20 tests), `tests/review-session.test.js` (3 tests)
-- Obsidian API mock: `tests/__mocks__/obsidian.js` (aliased via `vitest.config.js`)
+- Test files: `tests/i18n.test.js` (23), `tests/fsrs.test.js` (20), `tests/review-session.test.js` (3)
+- Obsidian API mock: `tests/__mocks__/obsidian.js` + `node_modules/obsidian/` stub
 - Run: `npm test`
-- All 46 tests pass as of 2026-04-10.
+- All 46 tests pass.
 
 ## Important Failure Learned
-- Replacing active Hub/Help runtime with the split `src/hub/modal.js` and `src/hub/help.js` broke the UI.
-- The visible result was `[object Object]` and layout corruption.
-- The issue is active UI ownership and runtime compatibility, not bundle parity.
+- Replacing active Hub/Help runtime with split modules previously broke the UI (`[object Object]`, layout corruption).
+- Root cause: active UI ownership and runtime compatibility, not bundle parity.
+- Help modal was successfully extracted on 2026-04-10 without issues (i18n now independent).
 
 ## Current Safe Baseline
-- Keep Hub/Help/Review session/Settings on the old active path inside `src/main.js`.
-- Fix runtime bugs from the current working baseline instead of swapping the whole Hub implementation.
-- Next safe extractions: Settings tab (`pe`), Skills modals (`ce`, `de`), Review session modal (`Q`).
+- Hub modal (`ne`) is the last major UI block. Defer until ready.
+- Fix runtime bugs from the current working baseline.
+- Next safe extractions: Hub modal (`ne`), or cleanup of inline residue (Option B from analysis).
 
 ## Backup
 - `tmp/refactor-backup/main.js.bak` — original before any refactor
 - `tmp/refactor-backup/main-post-i18n.js.bak` — after i18n extraction
-- `tmp/refactor-backup/main-post-styles.js.bak` — after CSS extraction + review session extraction (current baseline)
+- `tmp/refactor-backup/main-post-fsrs.js.bak` — after FSRS extraction
+- `tmp/refactor-backup/main-post-styles.js.bak` — after CSS + review session extraction
+- `tmp/refactor-backup/main-post-session.js.bak` — after settings tab extraction
+- `tmp/refactor-backup/main-post-settings.js.bak` — after skills modals extraction
+- `tmp/refactor-backup/main-post-skills.js.bak` — after help modal extraction (current baseline)
 - Do not remove backups until confirmed stable.
+
+## Structure Change Already Done
+- `10.非筆記用資料夾/` has been renamed to `doc/`.
+- Skills source has been moved from `doc/開發計劃/skills/` to `skills/`.
+
+## Document Convention
+- `doc/now.md` only records currently true facts.
+- When architecture or build flow changes, update: `AGENTS.md`, `CLAUDE.md`, `README.md`, `doc/now.md`.

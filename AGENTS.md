@@ -31,19 +31,22 @@
 - `src/review/decks.js`
 - `src/review/render.js`
 - `src/review/modal.js`
-- `src/i18n/index.js` — i18n 字典 + 翻譯函式（Se, L, Ze, c, C）
+- `src/review/session.js` — Review session modal（Q class）
+- `src/i18n/index.js` — i18n 字典 + 翻譯函式
 - `src/fsrs/index.js` — FSRS-5 演算法（純數學，無 Obsidian 依賴）
-- `src/styles/index.js` — 插件 CSS 字串（He）
+- `src/styles/index.js` — 插件 CSS 字串
+- `src/hub/settings.js` — Settings tab（pe class）
+- `src/hub/skills.js` — Skills install/preview modals（ce, de）+ 安裝 helpers
+- `src/hub/help.js` — Help modal（fe class）
 
 ## 仍在 `src/main.js` 的部分
 
-- Hub modal shell 與 tab 切換（`ne` class）
-- Help modal（`fe` class）
-- Review session modal（`Q` class）
-- Skills install/preview modals（`ce`, `de` class）
-- Settings tab（`pe` class）
-- Plugin bootstrap 與 `onload`（`he` class）
-- Harness map 資料（q[], ae, H[]）與 legacy `engram-quest` block processor
+- Legacy `engram-quest` block processor（ze, Ee, ue, Ge, B, qe, Pe）
+- Harness map 資料（q[], ae, H[], Ue）
+- Quest theme colors（Y）
+- 已拆模組的 inline 殘留（由底部 reassignment section 覆蓋）
+- Hub modal shell 與 tab 切換（`ne` class）— 最後大型 UI 區塊
+- Plugin bootstrap 與 `onload`（`he` class）— 不動
 
 ## 開發原則
 
@@ -57,9 +60,10 @@
 ## 測試
 
 - Framework: vitest
-- 測試檔: `tests/i18n.test.js`（23 tests）、`tests/fsrs.test.js`（20 tests）
+- 測試檔: `tests/i18n.test.js`（23 tests）、`tests/fsrs.test.js`（20 tests）、`tests/review-session.test.js`（3 tests）
+- Obsidian API mock: `tests/__mocks__/obsidian.js` + `node_modules/obsidian/` stub
 - 執行: `npm test`
-- 目前 43 tests 全部 pass。
+- 目前 46 tests 全部 pass。
 - 新增模組時應同步新增對應測試。
 
 ## Skills 與建置
