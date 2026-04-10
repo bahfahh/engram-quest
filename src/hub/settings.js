@@ -1,15 +1,7 @@
 "use strict";
 const I = require("obsidian");
 const { t: c } = require("../i18n");
-const G = require("../skills/installer")();
-
-function me() {
-  return !!G && typeof G.getInstallEntries === "function" && Object.keys(G.TOOL_TARGETS || {}).length > 0;
-}
-
-// de (SkillsInstallModal) is still in main.js; injected after both modules load
-let de;
-function injectDeps(deps) { de = deps.de; }
+const { SkillsInstallModal: de, isInstallerAvailable: me } = require("./skills");
 
 var pe = class extends I.PluginSettingTab {
   constructor(e, t) { super(e, t); this.plugin = t; }
@@ -30,4 +22,4 @@ var pe = class extends I.PluginSettingTab {
   }
 };
 
-module.exports = { SettingsTab: pe, injectDeps };
+module.exports = { SettingsTab: pe };

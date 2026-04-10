@@ -247,6 +247,96 @@ function renderQuestChallenge(container, challenge, difficulty, onSolved, settin
         handleWrong(stage);
       }
     });
+    return;
+  }
+
+  if (challenge.type === "image-occlusion" && challenge.image) {
+    let expected = deps.collectExpectedAnswers(challenge);
+    let resource = deps.getQuestImageResource(app, challenge.image);
+    let revealButton = null;
+    let feedbackEl = null;
+
+    function getFeedback() {
+      if (!feedbackEl) {
+        feedbackEl = wrapper.createEl("div", { attr: { style: "margin-top:10px;padding:10px 14px;border-radius:8px;background:var(--background-secondary);border:1px solid var(--background-modifier-border);font-size:13px;color:var(--text-muted)" } });
+      }
+      return feedbackEl;
+    }
+
+    function revealAnswer() {
+      occluder.style.background = "rgba(34,197,94,0.82)";
+      occluder.style.borderColor = "#22c55e";
+      occluder.style.color = "#052e16";
+      occluder.textContent = expected.join(" / ");
+      getFeedback().textContent = (zh ? "正確答案：" : "Correct answer: ") + expected.join(" / ");
+      if (revealButton) revealButton.disabled = true;
+    }
+
+    if (!resource) {
+      wrapper.createEl("div", { text: zh ? "找不到圖片檔案，請檢查圖片路徑。" : "Image file not found. Check the image path.", attr: { style: "padding:12px 14px;border-radius:10px;background:#fef2f2;border:1px solid #fca5a5;color:#dc2626;font-size:13px" } });
+      return;
+    }
+
+    if (challenge.prompt) {
+      wrapper.createEl("p", { text: challenge.prompt, attr: { style: "font-size:14px;font-weight:600;color:var(--text-normal);margin-bottom:12px;line-height:1.5" } });
+    }
+
+    let stage = wrapper.createEl("div", { attr: { style: "position:relative;width:min(100%,760px);margin-bottom:12px;border-radius:14px;overflow:hidden;border:1px solid var(--background-modifier-border);background:var(--background-secondary)" } });
+    let img = stage.createEl("img", { attr: { src: resource, alt: challenge.prompt || challenge.answer || "image occlusion", style: "display:block;width:100%;height:auto" } });
+    let occluder = stage.createEl("div", { attr: { style: "position:absolute;background:rgba(15,23,42,0.82);border:2px solid rgba(255,255,255,0.85);border-radius:10px;display:flex;align-items:center;justify-content:center;color:#f8fafc;font-weight:700;font-size:13px;text-align:center;padding:6px;box-sizing:border-box" } });
+    occluder.textContent = zh ? "已遮蓋" : "Hidden";
+
+    function positionOccluder() {
+      let W = img.naturalWidth || img.width || 1;
+      let H = img.naturalHeight || img.height || 1;
+      occluder.style.left   = ((challenge.region_x      || 0) / W * 100) + "%";
+      occluder.style.top    = ((challenge.region_y      || 0) / H * 100) + "%";
+      occluder.style.width  = ((challenge.region_width  || 120) / W * 100) + "%";
+      occluder.style.height = ((challenge.region_height || 60)  / H * 100) + "%";
+    }
+    if (img.complete) {
+      positionOccluder();
+    } else {
+      img.addEventListener("load", positionOccluder, { once: true });
+    }
+
+    let btnRow = wrapper.createEl("div", { attr: { style: "display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px" } });
+    btnRow.createEl("button", { text: zh ? "查看原圖" : "View Source Image", attr: { style: "padding:8px 14px;border-radius:8px;background:#334155;color:white;border:none;cursor:pointer;font-size:12px;font-weight:700" } })
+      .addEventListener("click", () => deps.openQuestLink(app, challenge.image));
+    if (challenge.link) {
+      btnRow.createEl("button", { text: zh ? "開啟來源筆記" : "Open Source Note", attr: { style: "padding:8px 14px;border-radius:8px;background:#475569;color:white;border:none;cursor:pointer;font-size:12px;font-weight:700" } })
+        .addEventListener("click", () => deps.openQuestLink(app, challenge.link));
+    }
+
+    let inputRow = wrapper.createEl("div", { attr: { style: "display:flex;gap:8px;align-items:center;flex-wrap:wrap" } });
+    let input = inputRow.createEl("input", { attr: { type: "text", placeholder: zh ? "輸入被遮住的答案" : "Type the occluded answer", class: "qm-ch-input" } });
+    let submitBtn = inputRow.createEl("button", { text: zh ? "送出" : "Submit", attr: { style: "padding:10px 20px;border-radius:8px;background:var(--interactive-accent);color:white;border:none;cursor:pointer;font-size:13px;font-weight:700;white-space:nowrap" } });
+
+    let submit = () => {
+      let val = input.value.trim();
+      if (!val) return;
+      if (deps.matchesExpectedAnswer(val, expected)) {
+        input.style.borderColor = "#22c55e";
+        submitBtn.style.background = "#22c55e";
+        revealAnswer();
+        getFeedback().textContent = zh ? "答對了" : "Correct";
+        input.disabled = true;
+        submitBtn.disabled = true;
+        setTimeout(() => onSolved(), 500);
+      } else {
+        handleWrong(input);
+        getFeedback().textContent = zh ? "答案不正確。你可以再試一次，或直接顯示答案。" : "That is not correct. Try once more or reveal the answer.";
+        if (challenge.reveal_answer !== false && !revealButton) {
+          revealButton = inputRow.createEl("button", { text: deps.translateKey(settings, "SHOW_ANSWER"), attr: { style: "padding:10px 16px;border-radius:8px;background:#475569;color:white;border:none;cursor:pointer;font-size:13px;font-weight:700;white-space:nowrap" } });
+          revealButton.addEventListener("click", revealAnswer);
+        }
+      }
+    };
+    submitBtn.addEventListener("click", submit);
+    input.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") submit();
+    });
+    return;
   }
 }
 
