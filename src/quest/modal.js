@@ -286,19 +286,10 @@ function renderQuestChallenge(container, challenge, difficulty, onSolved, settin
     let occluder = stage.createEl("div", { attr: { style: "position:absolute;background:rgba(15,23,42,0.82);border:2px solid rgba(255,255,255,0.85);border-radius:10px;display:flex;align-items:center;justify-content:center;color:#f8fafc;font-weight:700;font-size:13px;text-align:center;padding:6px;box-sizing:border-box" } });
     occluder.textContent = zh ? "已遮蓋" : "Hidden";
 
-    function positionOccluder() {
-      let W = img.naturalWidth || img.width || 1;
-      let H = img.naturalHeight || img.height || 1;
-      occluder.style.left   = ((challenge.region_x      || 0) / W * 100) + "%";
-      occluder.style.top    = ((challenge.region_y      || 0) / H * 100) + "%";
-      occluder.style.width  = ((challenge.region_width  || 120) / W * 100) + "%";
-      occluder.style.height = ((challenge.region_height || 60)  / H * 100) + "%";
-    }
-    if (img.complete) {
-      positionOccluder();
-    } else {
-      img.addEventListener("load", positionOccluder, { once: true });
-    }
+    occluder.style.left   = (challenge.region_left_pct  ?? 0)  + "%";
+    occluder.style.top    = (challenge.region_top_pct   ?? 0)  + "%";
+    occluder.style.width  = (challenge.region_width_pct ?? 10) + "%";
+    occluder.style.height = (challenge.region_height_pct?? 10) + "%";
 
     let btnRow = wrapper.createEl("div", { attr: { style: "display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px" } });
     btnRow.createEl("button", { text: zh ? "查看原圖" : "View Source Image", attr: { style: "padding:8px 14px;border-radius:8px;background:#334155;color:white;border:none;cursor:pointer;font-size:12px;font-weight:700" } })

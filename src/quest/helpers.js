@@ -92,10 +92,10 @@ function parseQuestMap(markdown) {
       else if (trimmed.startsWith("keywords:")) challenge.keywords = splitInlineList(trimmed);
       else if (trimmed.startsWith("answers:")) challenge.answers = splitInlineList(trimmed);
       else if (trimmed.startsWith("reveal_answer:")) challenge.reveal_answer = trimmed.slice(14).trim() === "true";
-      else if (trimmed.startsWith("region_x:")) challenge.region_x = parseFloat(trimmed.slice(9).trim());
-      else if (trimmed.startsWith("region_y:")) challenge.region_y = parseFloat(trimmed.slice(9).trim());
-      else if (trimmed.startsWith("region_width:")) challenge.region_width = parseFloat(trimmed.slice(13).trim());
-      else if (trimmed.startsWith("region_height:")) challenge.region_height = parseFloat(trimmed.slice(14).trim());
+      else if (trimmed.startsWith("region_left_pct:")) challenge.region_left_pct = parseFloat(trimmed.slice(16).trim());
+      else if (trimmed.startsWith("region_top_pct:")) challenge.region_top_pct = parseFloat(trimmed.slice(15).trim());
+      else if (trimmed.startsWith("region_width_pct:")) challenge.region_width_pct = parseFloat(trimmed.slice(17).trim());
+      else if (trimmed.startsWith("region_height_pct:")) challenge.region_height_pct = parseFloat(trimmed.slice(18).trim());
       else if (trimmed.startsWith("answer:")) {
         let answer = trimmed.slice(7).trim();
         if (answer === "true") challenge.answer = true;
@@ -110,7 +110,7 @@ function parseQuestMap(markdown) {
         if (match) challenge.pairs.push(match[1].split(",").map((item) => item.trim()));
       }
 
-      let challengeKeys = ["type:", "question:", "statement:", "sentence:", "prompt:", "hint:", "link:", "image:", "mode:", "options:", "items:", "keywords:", "answers:", "answer:", "reveal_answer:", "region_x:", "region_y:", "region_width:", "region_height:", "pairs:", "- ["];
+      let challengeKeys = ["type:", "question:", "statement:", "sentence:", "prompt:", "hint:", "link:", "image:", "mode:", "options:", "items:", "keywords:", "answers:", "answer:", "reveal_answer:", "region_x:", "region_y:", "region_width:", "region_height:", "region_left_pct:", "region_top_pct:", "region_width_pct:", "region_height_pct:", "pairs:", "- ["];
       if (indent <= 4 && !challengeKeys.some((prefix) => trimmed.startsWith(prefix))) {
         inChallenge = false;
       }

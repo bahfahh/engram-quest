@@ -105,16 +105,19 @@ The parser splits on commas. Rephrase option text or accepted answers to avoid a
 
 ### Use flat fields for image-occlusion bbox
 
+Coordinates are **percentage-based (0–100)**, relative to the image's width and height.
+
 Correct:
 ```yaml
-region_x: 295
-region_y: 292
-region_width: 640
-region_height: 86
+region_left_pct: 65
+region_top_pct: 15
+region_width_pct: 22
+region_height_pct: 12
 ```
 
-Wrong:
+Wrong (do not use pixel coordinates or nested structure):
 ```yaml
+region_x: 295
 region:
   x: 295
 ```
@@ -194,10 +197,10 @@ challenge:
   answer: CloudFront CDN
   answers: [CloudFront CDN, CDN]
   reveal_answer: true
-  region_x: 295
-  region_y: 292
-  region_width: 640
-  region_height: 86
+  region_left_pct: 65
+  region_top_pct: 15
+  region_width_pct: 22
+  region_height_pct: 12
   hint: Optional hint
   link: relative/path/to/source.md
 ```
@@ -207,6 +210,7 @@ Rules:
 - `answer` is the canonical label.
 - `answers` holds acceptable user inputs.
 - `mode` should be `hide_all_guess_one` for v1.
+- `region_*_pct` values are 0–100, percentage of image width/height. Estimate visually — "the Advisor box is roughly 65% from the left, 15% from the top, spans about 22% wide and 12% tall".
 - The bbox must cover the meaningful target, not the whole slide.
 - Prefer labeled targets, organ names, architecture nodes, or comparison cells.
 
