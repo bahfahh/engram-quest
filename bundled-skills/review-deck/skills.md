@@ -66,28 +66,58 @@ Task is complete when cards and JSON hints are generated. Stop there.
 | Add cards to a topic | Edit note content + update hints |
 | Make a review-deck from a note | Single Note Flow |
 
+## Scan Record
+
+The file `.review-deck/scan-record.json` tracks which notes have already been processed by AI to avoid duplicate card creation.
+
+Schema:
+```json
+{
+  "lastScan": "2026-04-10T10:00:00.000Z",
+  "notes": {
+    "Folder/Note.md": {
+      "processedAt": "2026-04-10T10:00:00.000Z",
+      "mtime": 1712750400000,
+      "cards": 12
+    }
+  }
+}
+```
+
+- `lastScan`: ISO 8601 timestamp of last completed AI processing session
+- `notes[path].mtime`: file mtime in milliseconds at time of processing
+- `notes[path].cards`: number of cards found in that note at time of processing
+
+To get a file's current mtime in milliseconds: `bash scripts/get_mtime.sh "path/to/note.md"`
+
 ## Setup Flow
 
 CRITICAL: Follow these steps in order. Do not skip any step.
 
+0. Load scan record: read `.review-deck/scan-record.json` if it exists. If missing, treat as `{ "lastScan": null, "notes": {} }`.
 1. Read `.obsidian/plugins/engram-quest/data.json` and extract the `flashcardTags` field. This is the user's configured tag prefix (e.g., `mycard`, `flashcards`, or multiple space-separated values). If the file does not exist or the field is empty, default to `flashcards`. Use this value — not a hardcoded string — for all tag operations in this session.
 2. Ensure `.review-deck/config.json` exists.
 3. Find notes relevant to the topic across the vault.
 4. CRITICAL: Notes **must** have YAML tags matching the prefix from step 1 to be detected by the plugin (e.g., `{prefix}/azure`). Do not process untagged notes unless the user explicitly requests legacy migration.
 5. Only use untagged `question :: answer` notes when the user explicitly wants legacy flashcard migration.
-6. Read each note and collect exact front text from `question :: answer`.
-7. CRITICAL: For each card, run `bash scripts/search_vault.sh "<card-keyword>" 20` to gather real vault context **before** writing any L2. Do not skip this search.
-8. Generate `.review-deck/hints/{note-name}.json`.
-9. CRITICAL: Before finishing, verify that every processed note has at least one tag matching the prefix from step 1. If missing, add it to the note's YAML frontmatter.
-10. Report: how many notes/cards were processed, how many L2 hints were left empty, and how many notes had the tag prefix added.
+6. For each note found: run `bash scripts/get_mtime.sh "<note-path>"` to get current mtime. If the note is already in scan-record AND mtime matches, skip it — it has not changed since last processing. Only read and process notes that are new or have a changed mtime.
+7. Read each non-skipped note and collect exact front text from `question :: answer`.
+8. CRITICAL: For each card in non-skipped notes, run `bash scripts/search_vault.sh "<card-keyword>" 20` to gather real vault context **before** writing any L2. Do not skip this search.
+9. Generate `.review-deck/hints/{note-name}.json`.
+10. CRITICAL: Before finishing, verify that every processed note has at least one tag matching the prefix from step 1. If missing, add it to the note's YAML frontmatter.
+11. Update `.review-deck/scan-record.json`: set `lastScan` to current ISO timestamp; for each processed note set `processedAt`, `mtime`, and `cards`; preserve all existing entries for skipped notes; write the file back.
+12. Report: how many notes were skipped (already up-to-date), how many were processed, how many cards total, how many L2 hints were left empty, and how many notes had the tag prefix added.
 
 ## Update Flow
 
 1. Read `.obsidian/plugins/engram-quest/data.json` to get the `flashcardTags` prefix (same as Setup Flow step 1).
-2. Find relevant notes again.
-3. Read existing hints JSON if present.
-4. Add hints only for new cards.
-5. Preserve existing hints when possible.
+2. Load scan record: read `.review-deck/scan-record.json` if it exists.
+3. Find relevant notes again.
+4. For each note: run `bash scripts/get_mtime.sh "<note-path>"` and compare to scan-record. Skip notes whose mtime has not changed since last processing.
+5. Read existing hints JSON if present for non-skipped notes.
+6. Add hints only for new cards in non-skipped notes.
+7. Preserve existing hints when possible.
+8. Update `.review-deck/scan-record.json` with processed notes (same as Setup Flow step 11).
 
 ## Single Note Flow
 
