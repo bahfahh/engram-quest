@@ -46,7 +46,7 @@ Choose the right reference before writing:
 1. Read the source note.
 2. Search the vault for related notes or context.
 3. Choose the best reference flow.
-4. Read `.memory-map/config.json` to determine the save folder, then generate or update `<source-note-name>-memory.canvas` in that location.
+4. Read `.memory-map/config.json` — this is a **config file only**, not an output folder. Extract the `memoryMapFolder` value, then follow `references/create.md` → Output section for the exact save location. Never save canvas files inside `.memory-map/`.
 5. Keep the canvas readable and stable.
 
 ## Output Rules
