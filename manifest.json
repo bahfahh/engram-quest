@@ -3,7 +3,7 @@
   "name": "EngramQuest",
   "version": "1.0.0",
   "minAppVersion": "1.6.0",
-  "description": "Transform notes into interactive Quest Maps and visual Memory Maps using AI Skills. Integrate Claude Code, Gemini CLI, and Cursor to master any topic with FSRS-powered spaced repetition and triple-level active recall hints.",
+  "description": "Turn notes into gamified Quest Maps, visual Memory Maps (Canvas), and flashcard Review Decks powered by AI Skills. Supports Claude Code, Gemini CLI, and Cursor. Features FSRS spaced repetition, active recall, memory retention, and AI hints.",
   "author": "powen",
   "authorUrl": "https://github.com/bahfahh",
   "fundingUrl": "https://ko-fi.com/wen_aidev",
