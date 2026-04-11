@@ -1,5 +1,13 @@
 "use strict";
 
+function getDeckAchievement(rate) {
+  if (rate >= 95) return { icon: "🏆", key: "DECK_TIER_LEGEND", color: "#f59e0b" };
+  if (rate >= 80) return { icon: "👑", key: "DECK_TIER_MASTER", color: "#a855f7" };
+  if (rate >= 50) return { icon: "⭐", key: "DECK_TIER_EXPERT", color: "#3b82f6" };
+  if (rate >= 20) return { icon: "🔥", key: "DECK_TIER_RISING", color: "#f97316" };
+  return { icon: "🌱", key: "DECK_TIER_NOVICE", color: "#10b981" };
+}
+
 function getBadge(status, translateKey, settings) {
   if (status === "due") return translateKey(settings, "DUE");
   if (status === "mastered") return translateKey(settings, "MASTERED");
@@ -32,6 +40,7 @@ function renderReviewDeck(cards, config, themes, translateKey, getReviewStatus) 
     <span>${translateKey(config.settings, "DUE")}: ${due}</span>
     <span>${translateKey(config.settings, "MASTERED")}: ${mastered}</span>
     <span>${translateKey(config.settings, "RATE")}: ${rate}%</span>
+    <span class="rd-achievement" style="margin-left:auto;color:${getDeckAchievement(rate).color}">${getDeckAchievement(rate).icon} ${translateKey(config.settings, getDeckAchievement(rate).key)}</span>
   </div>`;
 
   if (config.title) {
@@ -69,5 +78,6 @@ function renderReviewDeck(cards, config, themes, translateKey, getReviewStatus) 
 }
 
 module.exports = {
+  getDeckAchievement,
   renderReviewDeck
 };
