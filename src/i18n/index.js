@@ -142,6 +142,12 @@ const DICT = {
     SETTINGS_MEMORY_MAP_FOLDER_DESC: "Folder where -memory.canvas files are saved. Leave empty to save next to the source note. Example: Maps/MemoryMaps",
     SETTINGS_AUTO_UPDATE_SKILLS_NAME: "Auto update installed skills",
     SETTINGS_AUTO_UPDATE_SKILLS_DESC: "If EngramQuest already installed managed skills or rules in this vault, update them automatically when the plugin loads.",
+    DELETE: "Delete",
+    DELETE_CONFIRM_TITLE: "Delete \"{name}\"?",
+    DELETE_CONFIRM_FILE: "The file will be moved to system trash.",
+    DELETE_CONFIRM_DECK: "This will trash {count} source note(s). Flashcard data in those files will be removed.",
+    DELETE_CONFIRM_BTN: "Delete",
+    DELETE_CANCEL_BTN: "Cancel",
   },
   "zh-tw": {
     LANGUAGE: "語言",
@@ -284,6 +290,12 @@ const DICT = {
     SETTINGS_MEMORY_MAP_FOLDER_DESC: "設定 -memory.canvas 的儲存資料夾。留空則存在來源筆記旁。範例：Maps/MemoryMaps",
     SETTINGS_AUTO_UPDATE_SKILLS_NAME: "自動更新已安裝的 skills",
     SETTINGS_AUTO_UPDATE_SKILLS_DESC: "如果這個 vault 已安裝由 EngramQuest 管理的 skills 或 rules，插件載入時會自動更新。",
+    DELETE: "刪除",
+    DELETE_CONFIRM_TITLE: "刪除「{name}」？",
+    DELETE_CONFIRM_FILE: "檔案將被移至系統垃圾桶。",
+    DELETE_CONFIRM_DECK: "這將移除 {count} 個來源筆記，其中的 flashcard 資料也會一併刪除。",
+    DELETE_CONFIRM_BTN: "刪除",
+    DELETE_CANCEL_BTN: "取消",
   },
 };
 
