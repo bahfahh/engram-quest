@@ -126,6 +126,13 @@ var fe=class extends I.Modal{constructor(e,t){super(e),this.plugin=t}onClose(){v
             <p>複習進度會寫在卡片筆記的 SR comment 中：<code>&lt;!--SR:!YYYY-MM-DD,interval,stability,difficulty,state--&gt;</code></p>
             <p><strong>Q8：手機可以用嗎？</strong></p>
             <p>Review Deck 可以。Quest Map 與 Memory Map 目前仍較適合桌面版。</p>
+            <p><strong>Q9：手機上的插件不會自動更新怎麼辦？</strong></p>
+            <p>插件的 <code>main.js</code> 存在 vault 的 <code>.obsidian/plugins/engram-quest/</code> 裡。只要 vault 有用 git 同步（Obsidian Git 插件），電腦端更新後 push，手機端 pull 就會自動拿到新版本。如果手機沒更新，請確認：</p>
+            <ol>
+              <li>vault 的 <code>.gitignore</code> 沒有把 <code>/.obsidian/plugins/engram-quest/</code> 整個排除</li>
+              <li>手機的 Obsidian Git 插件有開啟 auto-pull</li>
+              <li>pull 完後在 Obsidian 設定中停用再啟用插件，或重啟 App</li>
+            </ol>
           `}]),t==="en"&&(h=[{icon:"🚀",title:"Get Started",tag:"First Time",html:`
             <p><strong>Step 1: Install AI Skills</strong></p>
             <ol>
@@ -209,6 +216,13 @@ What is a derivative? :: Instantaneous rate of change at a point</pre></li>
             <p>In SR comments below each card: <code>&lt;!--SR:!YYYY-MM-DD,interval,stability,difficulty,state--&gt;</code></p>
             <p><strong>Q8. Does this work on mobile?</strong></p>
             <p>Review Deck works on mobile. Quest Map and Memory Map are still best on desktop.</p>
+            <p><strong>Q9. Why doesn't the plugin update on my phone?</strong></p>
+            <p>The plugin's <code>main.js</code> lives inside your vault at <code>.obsidian/plugins/engram-quest/</code>. As long as your vault is synced via git (Obsidian Git plugin), updates pushed from desktop will be pulled to mobile automatically. If your phone isn't getting updates, check:</p>
+            <ol>
+              <li>Your vault <code>.gitignore</code> is not excluding <code>/.obsidian/plugins/engram-quest/</code> entirely</li>
+              <li>The Obsidian Git plugin on mobile has auto-pull enabled</li>
+              <li>After pulling, disable and re-enable the plugin in Settings, or restart the app</li>
+            </ol>
           `}]),h.splice(Math.max(h.length-1,0),0,{icon:"🤖",title:t==="zh-tw"?"AI 設定":"AI Setup",tag:c(e,"HELP_AI_SETUP_TAG"),html:`
         <p>${c(e,"SKILLS_AI_SETUP_COPY")}</p>
         <table>
