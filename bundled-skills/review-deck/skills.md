@@ -97,16 +97,17 @@ CRITICAL: Follow these steps in order. Do not skip any step.
 0. Load scan record: read `.review-deck/scan-record.json` if it exists. If missing, treat as `{ "lastScan": null, "notes": {} }`.
 1. Read `.obsidian/plugins/engram-quest/data.json` and extract the `flashcardTags` field. This is the user's configured tag prefix (e.g., `mycard`, `flashcards`, or multiple space-separated values). If the file does not exist or the field is empty, default to `flashcards`. Use this value — not a hardcoded string — for all tag operations in this session.
 2. Ensure `.review-deck/config.json` exists.
-3. Find notes relevant to the topic across the vault.
-4. CRITICAL: Notes **must** have YAML tags matching the prefix from step 1 to be detected by the plugin (e.g., `{prefix}/azure`). Do not process untagged notes unless the user explicitly requests legacy migration.
-5. Only use untagged `question :: answer` notes when the user explicitly wants legacy flashcard migration.
-6. For each note found: run `bash scripts/get_mtime.sh "<note-path>"` to get current mtime. If the note is already in scan-record AND mtime matches, skip it — it has not changed since last processing. Only read and process notes that are new or have a changed mtime.
-7. Read each non-skipped note and collect exact front text from `question :: answer`.
-8. CRITICAL: For each card in non-skipped notes, run `bash scripts/search_vault.sh "<card-keyword>" 20` to gather real vault context **before** writing any L2. Do not skip this search.
-9. Generate `.review-deck/hints/{note-name}.json`.
-10. CRITICAL: Before finishing, verify that every processed note has at least one tag matching the prefix from step 1. If missing, add it to the note's YAML frontmatter.
-11. Update `.review-deck/scan-record.json`: set `lastScan` to current ISO timestamp; for each processed note set `processedAt`, `mtime`, and `cards`; preserve all existing entries for skipped notes; write the file back.
-12. Report: how many notes were skipped (already up-to-date), how many were processed, how many cards total, how many L2 hints were left empty, and how many notes had the tag prefix added.
+3. Check for a pre-existing knowledge index or graph in the vault (e.g. `graphify-out/GRAPH_REPORT.md`, `graph.json`). If found, use its key concepts and community structure to prioritize which notes to process first and to identify high-value card candidates. This supplements — not replaces — the tag-based note discovery below.
+4. Find notes relevant to the topic across the vault.
+5. CRITICAL: Notes **must** have YAML tags matching the prefix from step 1 to be detected by the plugin (e.g., `{prefix}/azure`). Do not process untagged notes unless the user explicitly requests legacy migration.
+6. Only use untagged `question :: answer` notes when the user explicitly wants legacy flashcard migration.
+7. For each note found: run `bash scripts/get_mtime.sh "<note-path>"` to get current mtime. If the note is already in scan-record AND mtime matches, skip it — it has not changed since last processing. Only read and process notes that are new or have a changed mtime.
+8. Read each non-skipped note and collect exact front text from `question :: answer`.
+9. CRITICAL: For each card in non-skipped notes, run `bash scripts/search_vault.sh "<card-keyword>" 20` to gather real vault context **before** writing any L2. Do not skip this search.
+10. Generate `.review-deck/hints/{note-name}.json`.
+11. CRITICAL: Before finishing, verify that every processed note has at least one tag matching the prefix from step 1. If missing, add it to the note's YAML frontmatter.
+12. Update `.review-deck/scan-record.json`: set `lastScan` to current ISO timestamp; for each processed note set `processedAt`, `mtime`, and `cards`; preserve all existing entries for skipped notes; write the file back.
+13. Report: how many notes were skipped (already up-to-date), how many were processed, how many cards total, how many L2 hints were left empty, and how many notes had the tag prefix added.
 
 ## Update Flow
 

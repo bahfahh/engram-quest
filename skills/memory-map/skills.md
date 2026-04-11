@@ -42,6 +42,7 @@ Choose the right reference before writing:
 
 ## Workflow
 
+0. Check for a pre-existing knowledge index or graph in the vault (e.g. `graphify-out/graph.json`, `GRAPH_REPORT.md`). If found, use its concept relationships as association edges and community structure as chunk groupings — this replaces or reduces the vault search in step 2.
 1. Read the source note.
 2. Search the vault for related notes or context.
 3. Choose the best reference flow.

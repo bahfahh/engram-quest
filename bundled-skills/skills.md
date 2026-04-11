@@ -15,6 +15,10 @@ Each module has its own skill file and optional references/scripts.
 2. Follow the skill exactly before asking the user for missing details.
 3. If the skill is unclear, fix the skill instead of inventing a new workflow.
 
+## Knowledge Index Awareness
+
+Before reading raw vault files, check if the vault already contains a pre-existing knowledge index or graph (e.g. `graphify-out/GRAPH_REPORT.md`, `graph.json`, or similar structured report / index files). If one exists, read it first and use its structure — key concepts, relationships, community groupings — to accelerate content generation. Only fall back to reading raw notes for details the index does not cover. If no index is found, proceed with the original workflow.
+
 ## Portability Rules
 
 These skills are shipped to end users. They must stay generic.

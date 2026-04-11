@@ -35,6 +35,8 @@ Match the language of the user's prompt and source notes. If notes are in Tradit
 
 ## Step 1: Find Cards
 
+Before searching raw files, check for a pre-existing knowledge index or graph in the vault (e.g. `graphify-out/GRAPH_REPORT.md`, `graph.json`). If found, use its community structure to inform card grouping — cards from the same knowledge community can be taught together even if they span multiple source notes.
+
 Parse the user's command for a tag or topic:
 
 ```

@@ -1,13 +1,9 @@
 ---
 name: quest-map
 description: >
-  Generate quest-map YAML markdown for the Obsidian EngramQuest plugin.
-  Trigger when the user asks to make a quest-map from a note or topic.
-  Supports easy, medium, and hard difficulty.
-  Save the result as <source-note-name>-quest.md.
-
-  User guide trigger:
-  If the user asks how quest-map works in EngramQuest, read references/user-guide.md and answer.
+  Generate quest-map YAML for the Obsidian EngramQuest plugin.
+  Trigger when the user asks to make a quest-map from a note or topic, or asks how quest-map works (read references/user-guide.md and answer).
+  Supports easy, medium, and hard difficulty. Save result as <source-note-name>-quest.md.
 ---
 
 # Quest Map Skill
@@ -41,6 +37,7 @@ Default behavior is AI-guided selection.
 
 ## Generation Flow
 
+0. Check for a pre-existing knowledge index or graph in the vault (e.g. `graphify-out/GRAPH_REPORT.md`, `graph.json`). If found, read it first — use its key concepts as boss-challenge candidates, community groupings to inform chapter splits, and relationship edges to shape challenge content. Skip raw-file discovery for anything the index already covers.
 1. Read the source note or user-provided topic.
 2. Use the cheapest discovery path first:
    - obvious topic folders
@@ -48,6 +45,7 @@ Default behavior is AI-guided selection.
    - note links
    - embedded vault images
    - targeted Obsidian CLI search only when needed
+   - run `scripts/list_quest_icons.sh` to discover available named icon files when the topic's icon is non-obvious; fall back to emoji if the script returns nothing
 3. Split the material into 3 to 5 chapters.
 4. For each chapter generate:
    - title
@@ -172,6 +170,8 @@ challenge:
     - [Concept A, Description A]
     - [Concept B, Description B]
 ```
+
+`pairs` defines both the prompts and their correct answers. No separate `answer` field is needed.
 
 ### input
 ```yaml
@@ -330,14 +330,16 @@ nodes:
 
 ## Style Guide
 
-Supported styles:
+Choose the style that fits the topic's mood. When in doubt, `cyber` is a safe default for technical content.
 
-- `sky-island`
-- `ocean`
-- `forest`
-- `galaxy`
-- `dungeon`
-- `space`
-- `cyber`
+| Style | Best fit |
+|---|---|
+| `sky-island` | airy, philosophical, or conceptual topics |
+| `ocean` | flow-based, layered, or biological systems |
+| `forest` | organic, ecological, or living systems |
+| `galaxy` | abstract, large-scale, or cosmological ideas |
+| `dungeon` | gamified, challenge-heavy, or narrative content |
+| `space` | technology, science, or futurism |
+| `cyber` | programming, AI, architecture, or data systems |
 
 Write `style` inside the code block, not only in frontmatter.
