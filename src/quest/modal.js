@@ -7,6 +7,30 @@ function isZh(deps, settings) {
   return deps.getLanguage(settings) === "zh-tw";
 }
 
+async function markNodeCompleted(app, sourcePath, nodeId) {
+  if (!sourcePath || !nodeId) return;
+  let file = app.vault.getAbstractFileByPath(sourcePath);
+  if (!file) return;
+  let content = await app.vault.read(file);
+  let lines = content.split('\n');
+  let nodeLineIdx = -1, nodeIndentLen = 0;
+  for (let i = 0; i < lines.length; i++) {
+    let trimmed = lines[i].trim();
+    let indent = lines[i].length - lines[i].trimStart().length;
+    if (trimmed === `- id: ${nodeId}` && indent <= 2) { nodeLineIdx = i; nodeIndentLen = indent; break; }
+  }
+  if (nodeLineIdx === -1) return;
+  let propIndent = ' '.repeat(nodeIndentLen + 2);
+  for (let i = nodeLineIdx + 1; i < lines.length; i++) {
+    let trimmed = lines[i].trim();
+    let indent = lines[i].length - lines[i].trimStart().length;
+    if (trimmed.startsWith('- id:') && indent <= nodeIndentLen) break;
+    if (trimmed.startsWith('completed:')) { lines[i] = propIndent + 'completed: true'; await app.vault.modify(file, lines.join('\n')); return; }
+  }
+  lines.splice(nodeLineIdx + 1, 0, propIndent + 'completed: true');
+  await app.vault.modify(file, lines.join('\n'));
+}
+
 function setSolved(buttons, onSolved) {
   buttons.forEach((button) => {
     button.disabled = true;
@@ -188,13 +212,23 @@ function renderQuestChallenge(container, challenge, difficulty, onSolved, settin
     let input = controls.createEl("input", { attr: { type: "text", placeholder: zh ? "輸入填空答案" : "Type the cloze answer", class: "qm-ch-input" } });
     let button = controls.createEl("button", { text: zh ? "送出" : "Submit", attr: { class: "qm-ch-btn", style: "width:auto;padding:10px 18px" } });
     let result = wrapper.createEl("div", { attr: { style: "margin-top:10px;font-size:13px;color:var(--text-muted)" } });
+    let revealButton = null;
+    let revealAnswer = () => {
+      sentence.innerHTML = deps.renderClozeSentence(challenge.sentence, true);
+      result.textContent = (zh ? "正確答案：" : "Correct answer: ") + expected.join(" / ");
+      if (revealButton) revealButton.disabled = true;
+    };
     let submit = () => {
       if (deps.matchesExpectedAnswer(input.value, expected)) {
-        sentence.innerHTML = deps.renderClozeSentence(challenge.sentence, true);
-        result.textContent = (zh ? "正確答案：" : "Correct answer: ") + expected.join(" / ");
+        revealAnswer();
         setSolved([button], onSolved);
       } else {
         handleWrong(button);
+        result.textContent = zh ? "答案不正確。你可以再試一次，或直接顯示答案。" : "That is not correct. Try once more or reveal the answer.";
+        if (challenge.reveal_answer !== false && !revealButton) {
+          revealButton = controls.createEl("button", { text: deps.translateKey(settings, "SHOW_ANSWER"), attr: { style: "padding:10px 16px;border-radius:8px;background:#475569;color:white;border:none;cursor:pointer;font-size:13px;font-weight:700;white-space:nowrap" } });
+          revealButton.addEventListener("click", revealAnswer);
+        }
       }
     };
     button.addEventListener("click", submit);
@@ -420,6 +454,7 @@ function openQuestChapterModal(app, nodes, activeIndex, styleName, difficulty, s
 
     if (node.challenge) {
       deps.renderQuestChallenge(content, node.challenge, difficulty, () => {
+        markNodeCompleted(app, sourcePath, node.id);
         if (currentIndex < nodes.length - 1) {
           currentIndex += 1;
           render();
@@ -440,9 +475,11 @@ function openQuestChapterModal(app, nodes, activeIndex, styleName, difficulty, s
     });
     next.addEventListener("click", () => {
       if (currentIndex < nodes.length - 1) {
+        if (!nodes[currentIndex].challenge) markNodeCompleted(app, sourcePath, nodes[currentIndex].id);
         currentIndex += 1;
         render();
       } else {
+        if (!nodes[currentIndex].challenge) markNodeCompleted(app, sourcePath, nodes[currentIndex].id);
         modal.close();
       }
     });

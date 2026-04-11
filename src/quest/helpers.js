@@ -140,6 +140,7 @@ function parseQuestMap(markdown) {
       else if (trimmed.startsWith("summary:")) node.summary = trimmed.slice(8).trim();
       else if (trimmed.startsWith("insight:")) node.insight = trimmed.slice(8).trim();
       else if (trimmed.startsWith("boss:")) node.boss = trimmed.includes("true");
+      else if (trimmed.startsWith("completed:")) node.completed = trimmed.includes("true");
     }
   }
 
