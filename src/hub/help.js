@@ -28,192 +28,188 @@ var fe=class extends I.Modal{constructor(e,t){super(e),this.plugin=t}onClose(){v
       .lh-help-intro p { margin:0; font-size:13.5px; color:#374151; line-height:1.6; }
       .lh-help-chips { display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
       .lh-help-chip { padding:4px 12px; border-radius:99px; font-size:12px; font-weight:600; }
+      .lh-help-acc-body pre { background:#f3f4f6; padding:8px 10px; border-radius:6px; font-size:12px; margin:6px 0; overflow-x:auto; white-space:pre-wrap; }
     `,a.id="lh-help-styles",document.head.appendChild(a);let o=r.createEl("div",{attr:{style:"flex:1;overflow-y:auto;padding:20px;font-size:14px;line-height:1.6"}}),i=o.createEl("div",{attr:{class:"lh-help-intro"}});i.innerHTML=t==="zh-tw"?`
-      <p><strong>EngramQuest</strong> \u63D0\u4F9B\u4E09\u500B AI-native \u5B78\u7FD2\u6A21\u7D44\u3002\u5148\u7528 AI \u5EFA\u7ACB\u5167\u5BB9\uFF0C\u518D\u76F4\u63A5\u5728\u63D2\u4EF6\u5167\u5B78\u7FD2\u3002</p>
+      <p><strong>EngramQuest</strong> 讓你用 AI 快速建立學習內容，直接在 Obsidian 裡學習。</p>
       <div class="lh-help-chips">
-        <span class="lh-help-chip" style="background:#dbeafe;color:#1d4ed8">Review Deck</span>
-        <span class="lh-help-chip" style="background:#d1fae5;color:#065f46">Quest Map</span>
-        <span class="lh-help-chip" style="background:#ede9fe;color:#5b21b6">Memory Map</span>
+        <span class="lh-help-chip" style="background:#dbeafe;color:#1d4ed8">🃏 Review Deck — 長期記憶，FSRS 排程</span>
+        <span class="lh-help-chip" style="background:#d1fae5;color:#065f46">🗺️ Quest Map — 結構化學習地圖</span>
+        <span class="lh-help-chip" style="background:#ede9fe;color:#5b21b6">🧠 Memory Map — 視覺化概念地圖</span>
       </div>
     `:`
-      <p><strong>EngramQuest</strong> gives you three AI-native learning modules. Use AI to build the content, then learn directly in the plugin.</p>
+      <p><strong>EngramQuest</strong> lets you use AI to build learning content and study it directly in Obsidian.</p>
       <div class="lh-help-chips">
-        <span class="lh-help-chip" style="background:#dbeafe;color:#1d4ed8">Review Deck</span>
-        <span class="lh-help-chip" style="background:#d1fae5;color:#065f46">Quest Map</span>
-        <span class="lh-help-chip" style="background:#ede9fe;color:#5b21b6">Memory Map</span>
+        <span class="lh-help-chip" style="background:#dbeafe;color:#1d4ed8">🃏 Review Deck — Long-term memory</span>
+        <span class="lh-help-chip" style="background:#d1fae5;color:#065f46">🗺️ Quest Map — Structured learning</span>
+        <span class="lh-help-chip" style="background:#ede9fe;color:#5b21b6">🧠 Memory Map — Visual concept map</span>
       </div>
-    `;let d='<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>',f=0,h=[];t==="zh-tw"&&(h=[{icon:"\u{1F680}",title:"\u958B\u59CB\u4F7F\u7528",tag:"First Run",html:`
-            <p><strong>Step 1\uFF1A\u5B89\u88DD AI Skills</strong></p>
+    `;let d='<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>',f=0,h=[];t==="zh-tw"&&(h=[{icon:"🚀",title:"開始使用",tag:"First Run",html:`
+            <p><strong>Step 1：安裝 AI Skills</strong></p>
             <ol>
-              <li>\u5230 Obsidian \u8A2D\u5B9A\u4E2D\u7684 <strong>EngramQuest -> AI Skills</strong></li>
-              <li>\u9078\u64C7\u4F60\u4F7F\u7528\u7684 AI \u5DE5\u5177\uFF1AClaude Code / Codex / Gemini CLI / Cursor</li>
-              <li>\u5B89\u88DD\u5F8C\uFF0CAI \u6703\u66F4\u6E05\u695A EngramQuest \u7684\u683C\u5F0F\u8207\u5DE5\u4F5C\u6D41\u7A0B</li>
+              <li>Obsidian 設定 → <strong>EngramQuest → AI Skills</strong></li>
+              <li>選你用的工具：Claude Code / Codex / Gemini CLI / Cursor</li>
+              <li>安裝後 AI 就知道怎麼幫你建立三個模組的內容</li>
             </ol>
-            <p><strong>Step 2\uFF1A\u8ACB AI \u5EFA\u7ACB\u5167\u5BB9</strong></p>
-            <div class="lh-help-sub" style="border-color:#2563eb"><div class="lh-help-sub-icon">🃏</div><div>\u5E6B\u6211\u5EFA\u7ACB Azure \u7684 Review Deck</div></div>
-            <div class="lh-help-sub" style="border-color:#059669"><div class="lh-help-sub-icon">🗺️</div><div>\u628A <em>[note].md</em> \u505A\u6210 quest-map medium</div></div>
-            <div class="lh-help-sub" style="border-color:#7c3aed"><div class="lh-help-sub-icon">🧠</div><div>\u5E6B <em>[note].md</em> \u5EFA\u7ACB memory-map</div></div>
-            <p><strong>Step 3\uFF1A\u56DE\u5230 Hub \u4F7F\u7528</strong></p>
-            <p style="margin:4px 0">\u9EDE\u5074\u908A\u6B04\u7684 EngramQuest \u5716\u793A\uFF0C\u5207\u5230\u5C0D\u61C9\u5206\u9801\u5F8C\u76F4\u63A5\u958B\u59CB\u5B78\u7FD2\u3002</p>
+            <p><strong>Step 2：跟 AI 說</strong></p>
+            <div class="lh-help-sub" style="border-color:#2563eb"><div class="lh-help-sub-icon">🃏</div><div>「把 tag:math 的筆記都做成 Review Deck」<br>「把和行銷相關的筆記做成 Review Deck」</div></div>
+            <div class="lh-help-sub" style="border-color:#059669"><div class="lh-help-sub-icon">🗺️</div><div>「把微積分.md 做成 quest-map medium」<br>「把 tag:math 的筆記合成一個 quest-map hard」</div></div>
+            <div class="lh-help-sub" style="border-color:#7c3aed"><div class="lh-help-sub-icon">🧠</div><div>「幫作業系統概論.md 建立 memory-map」<br>「把和網路協定相關的筆記做成 memory-map」</div></div>
+            <p><strong>Step 3：開 Hub 開始學</strong></p>
+            <p style="margin:4px 0">點側邊欄的 EngramQuest 圖示 → 切到對應分頁 → 開始學習。</p>
           `},{icon:"🃏",title:"Review Deck",tag:c(e,"HELP_REVIEW_TAG"),html:`
-            <p>Review Deck \u662F EngramQuest \u7684\u9577\u671F\u8A18\u61B6\u6A21\u7D44\uFF0C\u4F7F\u7528 FSRS \u6392\u7A0B\u3002</p>
-            <p><strong>\u91CD\u8981\uFF1AAI \u8B80\u4F86\u6E90</strong> \u548C <strong>\u63D2\u4EF6\u6383\u63CF\u7D50\u679C</strong> \u662F\u5169\u4EF6\u4E0D\u540C\u7684\u4E8B\u3002</p>
-            <ul>
-              <li>AI \u8B80\u4F86\u6E90\u7B46\u8A18\u6642\uFF0C\u4E0D\u8981\u6C42\u4F86\u6E90\u7B46\u8A18\u5148\u6709 <code>flashcards</code> tag\u3002</li>
-              <li>AI \u53EF\u4EE5\u5148\u8B80\u53D6 vault \u88E1\u548C\u4E3B\u984C\u76F8\u95DC\u7684\u4E00\u822C\u7B46\u8A18\uFF0C\u4F8B\u5982 Azure \u7B46\u8A18\u3001\u6559\u5B78\u7B46\u8A18\u3001\u6574\u7406\u7B46\u8A18\u3002</li>
-              <li>\u4F46\u63D2\u4EF6\u9810\u8A2D\u6383\u63CF Review Deck \u6642\uFF0C\u6703\u512A\u5148\u770B\u7B26\u5408 flashcard tag \u524D\u7DB4\u7684\u5361\u7247\u7B46\u8A18\u3002</li>
-              <li>\u76EE\u524D\u9810\u8A2D tag prefix \u662F <code>flashcards</code>\u3002</li>
-            </ul>
-            <p><strong>AI \u7522\u751F Review Deck \u6642\uFF0C\u61C9\u8A72\u8F38\u51FA\uFF1A</strong></p>
-            <ul>
-              <li><code>question :: answer</code></li>
-              <li>\u5C0D\u61C9 tag\uFF0C\u4F8B\u5982 <code>#flashcards/azure</code></li>
-            </ul>
-            <p><strong>\u4F7F\u7528\u65B9\u5F0F\uFF1A</strong></p>
             <ol>
-              <li>\u5C0D AI \u8AAA\uFF1A<em>\u5E6B\u6211\u5EFA\u7ACB Azure \u7684 Review Deck</em></li>
-              <li>AI \u5148\u8B80\u53D6 vault \u4E2D\u8207 Azure \u6709\u95DC\u7684\u4F86\u6E90\u7B46\u8A18</li>
-              <li>AI \u5EFA\u7ACB\u6216\u66F4\u65B0\u53EF\u88AB\u63D2\u4EF6\u8FA8\u8B58\u7684\u5361\u7247\u7B46\u8A18</li>
-              <li>\u56DE\u5230 Hub \u7684 Review Deck \u958B\u59CB\u8907\u7FD2</li>
+              <li>跟 AI 說：「把 tag:math 的筆記做成 Review Deck」</li>
+              <li>AI 建立卡片筆記（含 <code>#flashcards/math</code> tag 和 <code>question :: answer</code> 格式）</li>
+              <li>開 Hub → Review Deck → 開始複習</li>
             </ol>
-            <p><strong>\u76F8\u5BB9\u6A21\u5F0F\uFF1A</strong>\u5982\u679C\u4F60\u6709\u820A\u5F0F <code>::</code> \u5361\u7247\u7B46\u8A18\uFF0C\u53EF\u4EE5\u5230\u8A2D\u5B9A\u4E2D\u958B\u555F legacy <code>::</code> \u6383\u63CF\u3002\u9019\u662F\u9077\u79FB\u6A21\u5F0F\uFF0C\u4E0D\u662F\u65B0\u624B\u9810\u8A2D\u3002</p>
+            <div class="lh-help-sub"><div class="lh-help-sub-icon">💡</div><div>你的一般筆記不需要有任何 tag，AI 可以直接讀取。AI <strong>產生的卡片筆記</strong>才需要有 <code>#flashcards/...</code> tag，插件才能偵測到。</div></div>
+            <p><strong>相容模式：</strong>如果你有舊式 <code>::</code> 卡片筆記，可以到設定中開啟 legacy <code>::</code> 掃描。這是遷移模式，不是新手預設。</p>
           `},{icon:"🗺️",title:"Quest Map",tag:c(e,"HELP_QUEST_TAG"),html:`
-            <p>Quest Map \u6703\u628A\u7B46\u8A18\u8B8A\u6210\u53EF\u4E92\u52D5\u7684\u5B78\u7FD2\u5730\u5716\uFF0C\u9069\u5408\u505A\u7D50\u69CB\u5316\u5B78\u7FD2\u8207\u4E3B\u52D5\u56DE\u60F3\u3002</p>
-            <p><strong>\u4F7F\u7528\u65B9\u5F0F\uFF1A</strong></p>
             <ol>
-              <li>\u5C0D AI \u8AAA\uFF1A<em>\u628A [note].md \u505A\u6210 quest-map medium</em></li>
-              <li>\u56DE\u5230 Hub \u7684 Quest Map \u5206\u9801</li>
-              <li>\u4F9D\u5E8F\u9EDE\u958B\u7BC0\u9EDE\u8207\u6311\u6230</li>
+              <li>跟 AI 說：「把微積分.md 做成 quest-map medium」</li>
+              <li>AI 建立學習地圖</li>
+              <li>開 Hub → Quest Map → 依序點開節點和挑戰</li>
             </ol>
             <table>
-              <tr><th>\u96E3\u5EA6</th><th>\u9069\u5408\u60C5\u5883</th></tr>
-              <tr><td><strong>easy</strong></td><td>\u521D\u6B21\u63A5\u89F8</td></tr>
-              <tr><td><strong>medium</strong></td><td>\u77E5\u8B58\u978F\u56FA</td></tr>
-              <tr><td><strong>hard</strong></td><td>\u81EA\u6211\u6E2C\u9A57</td></tr>
+              <tr><th>難度</th><th>適合</th></tr>
+              <tr><td><strong>easy</strong></td><td>初次接觸</td></tr>
+              <tr><td><strong>medium</strong></td><td>知識鞏固</td></tr>
+              <tr><td><strong>hard</strong></td><td>自我測驗</td></tr>
             </table>
           `},{icon:"🧠",title:"Memory Map",tag:c(e,"HELP_MEMORY_TAG"),html:`
-            <p>Memory Map \u6703\u628A\u62BD\u8C61\u6982\u5FF5\u8F49\u6210\u8996\u89BA\u5316\u95DC\u806F\u5730\u5716\uFF0C\u9069\u5408\u7406\u89E3\u95DC\u806F\u3001\u5EFA\u7ACB chunking\u3001\u52A0\u6DF1\u8A18\u61B6\u3002</p>
-            <p><strong>\u4F7F\u7528\u65B9\u5F0F\uFF1A</strong></p>
             <ol>
-              <li>\u5C0D AI \u8AAA\uFF1A<em>\u5E6B [note].md \u5EFA\u7ACB memory-map</em></li>
-              <li>\u56DE\u5230 Hub \u7684 Memory Map \u5206\u9801\u67E5\u770B</li>
-              <li>\u4E5F\u53EF\u4EE5\u5F9E Review Deck \u5361\u7247\u4E2D\u9EDE\u9032\u5C0D\u61C9\u7684 Memory Map</li>
+              <li>跟 AI 說：「幫作業系統概論.md 建立 memory-map」</li>
+              <li>AI 建立視覺化概念地圖</li>
+              <li>開 Hub → Memory Map 查看（也可以從 Review Deck 卡片直接點進來）</li>
             </ol>
-          `},{icon:"\u{1F52C}",title:"Learning Science",tag:c(e,"HELP_SCIENCE_TAG"),html:`
-            <div class="lh-help-sub"><div class="lh-help-sub-icon">SR</div><div><strong>Spaced Repetition</strong><br>\u5728\u5FEB\u5FD8\u8A18\u6642\u8907\u7FD2\uFF0C\u63D0\u5347\u6548\u7387\u3002Review Deck \u4F7F\u7528 FSRS \u81EA\u52D5\u5B89\u6392\u4E0B\u6B21\u8907\u7FD2\u3002</div></div>
-            <div class="lh-help-sub"><div class="lh-help-sub-icon">RP</div><div><strong>Retrieval Practice</strong><br>\u5148\u56DE\u60F3\uFF0C\u518D\u770B\u7B54\u6848\uFF0C\u6BD4\u91CD\u8B80\u66F4\u6709\u6548\u3002Review Deck \u8207 Quest Map \u90FD\u6703\u5F37\u8FEB\u4E3B\u52D5\u56DE\u60F3\u3002</div></div>
-            <div class="lh-help-sub"><div class="lh-help-sub-icon">EE</div><div><strong>Elaborative Encoding</strong><br>\u628A\u62BD\u8C61\u6587\u5B57\u8B8A\u6210\u5177\u9AD4\u7D50\u69CB\uFF0C\u66F4\u5BB9\u6613\u8A18\u4F4F\u3002Memory Map \u5C31\u662F\u5728\u505A\u9019\u4EF6\u4E8B\u3002</div></div>
-          `},{icon:"\u2699\uFE0F",title:"\u8A2D\u5B9A",tag:c(e,"HELP_SETTINGS_TAG"),html:`
-            <p>\u5230 Obsidian \u8A2D\u5B9A\u4E2D\u7684 <strong>EngramQuest</strong> \u53EF\u8ABF\u6574\u4EE5\u4E0B\u9805\u76EE\uFF1A</p>
-            <table>
-              <tr><th>\u8A2D\u5B9A</th><th>\u9810\u8A2D\u503C</th><th>\u8AAA\u660E</th></tr>
-              <tr><td>Flashcard tag prefixes</td><td><code>flashcards</code></td><td>\u6307\u5B9A\u54EA\u4E9B tag \u524D\u7DB4\u6703\u88AB\u8996\u70BA Review Deck \u5361\u7247\u4F86\u6E90\uFF0C\u4F8B\u5982 <code>#flashcards/azure</code></td></tr>
-              <tr><td>Include legacy <code>::</code> notes</td><td>Off</td><td>\u8B93\u6C92\u6709 tag \u7684\u820A <code>::</code> \u5361\u7247\u4E5F\u80FD\u88AB\u6383\u63CF\u3002\u9019\u662F\u9077\u79FB\u6A21\u5F0F\uFF0C\u4E0D\u662F\u65B0\u624B\u9810\u8A2D\u3002</td></tr>
-              <tr><td>Max review interval</td><td>36525</td><td>\u6700\u5927\u8907\u7FD2\u9593\u9694\u5929\u6578</td></tr>
-              <tr><td>Requested retention</td><td>0.9</td><td>FSRS \u76EE\u6A19\u4FDD\u7559\u7387\uFF0C\u8D8A\u9AD8\u4EE3\u8868\u8907\u7FD2\u8D8A\u983B\u7E41</td></tr>
-            </table>
-          `},{icon:"\u2753",title:"FAQ",tag:c(e,"HELP_FAQ_TAG"),html:`
-            <p><strong>Q1\uFF1A\u6C92\u6709\u5B89\u88DD Skills \u4E5F\u80FD\u7528\u55CE\uFF1F</strong></p>
-            <p>\u53EF\u4EE5\u3002\u4F60\u53EF\u4EE5\u624B\u52D5\u5EFA\u7ACB <code>question :: answer</code> \u5361\u7247\uFF0C\u4E26\u52A0\u4E0A\u50CF <code>#flashcards/azure</code> \u9019\u7A2E tag\u3002</p>
-            <p><strong>Q2\uFF1A\u5982\u679C\u4F86\u6E90\u7B46\u8A18\u6C92\u6709\u4EFB\u4F55 tag\uFF0CAI \u9084\u8B80\u5F97\u5230\u55CE\uFF1F</strong></p>
-            <p>\u53EF\u4EE5\u3002AI \u8B80\u4F86\u6E90\u7B46\u8A18\u6642\uFF0C\u4E0D\u8981\u6C42\u4F86\u6E90\u7B46\u8A18\u5148\u6709 <code>flashcards</code> tag\uFF1B\u4F46\u6700\u5F8C\u8981\u8B93\u63D2\u4EF6\u6383\u63CF\u5F97\u5230\uFF0CAI \u4ECD\u61C9\u8F38\u51FA\u6210\u53EF\u8FA8\u8B58\u7684\u5361\u7247\u683C\u5F0F\u3002</p>
-            <p><strong>Q3\uFF1A\u70BA\u4EC0\u9EBC\u6211\u770B\u4E0D\u5230 Review Deck\uFF1F</strong></p>
-            <p>\u5E38\u898B\u539F\u56E0\u6709\uFF1A\u9084\u6C92\u6709\u5EFA\u7ACB\u5361\u7247\u7B46\u8A18\u3001\u5361\u7247\u7B46\u8A18\u6C92\u6709\u7B26\u5408\u76EE\u524D\u8A2D\u5B9A\u7684 tag prefix\uFF0C\u6216\u4F60\u671F\u5F85\u7684\u662F\u820A\u5F0F <code>::</code> \u6383\u63CF\u4F46 legacy \u6A21\u5F0F\u9084\u6C92\u958B\u3002</p>
-            <p><strong>Q4\uFF1A\u6211\u6709\u4E00\u822C Azure \u7B46\u8A18\uFF0C\u6C92\u6709\u4EFB\u4F55 tag\u3002\u8981\u600E\u9EBC\u505A Review Deck\uFF1F</strong></p>
-            <p>\u76F4\u63A5\u5C0D AI \u8AAA\uFF1A<em>\u5E6B\u6211\u5EFA\u7ACB Azure \u7684 Review Deck</em>\u3002AI \u53EF\u4EE5\u5148\u8B80\u4E00\u822C Azure \u7B46\u8A18\u7576\u4F86\u6E90\uFF0C\u4F46\u6700\u5F8C\u8F38\u51FA\u61C9\u8A72\u5BEB\u6210 <code>question :: answer</code>\uFF0C\u4E26\u52A0\u4E0A\u50CF <code>#flashcards/azure</code> \u7684 tag\u3002\u56DE\u5230 Hub \u7684 Review Deck \u5C31\u80FD\u770B\u5230\u3002</p>
-            <p><strong>Q5\uFF1A\u6211\u60F3\u624B\u52D5\u505A\u5361\u7247\uFF0C\u4E0D\u9760 AI\u3002\u8981\u600E\u9EBC\u505A\uFF1F</strong></p>
-            <p>\u5EFA\u4E00\u7BC7\u7B46\u8A18\uFF0C\u7528 <code>question :: answer</code> \u5BEB\u5361\u7247\uFF0C\u4E26\u52A0\u4E0A\u50CF <code>#flashcards/fsrs</code> \u7684 tag\u3002\u56DE\u5230 Hub \u7684 Review Deck \u5C31\u80FD\u770B\u5230\u9019\u500B deck\u3002</p>
-            <p><strong>Q6\uFF1A\u6211\u6709\u5F88\u591A\u820A <code>::</code> \u5361\u7247\uFF0C\u4F46\u6C92\u6709 tag\u3002\u8981\u600E\u9EBC\u9077\u79FB\uFF1F</strong></p>
-            <p>\u5230\u8A2D\u5B9A\u6253\u958B <code>Include legacy :: notes</code>\uFF0C\u4FDD\u7559\u539F\u672C\u7684 <code>question :: answer</code> \u683C\u5F0F\uFF0C\u518D\u56DE\u5230 Hub \u7684 Review Deck \u6AA2\u67E5\u662F\u5426\u5DF2\u88AB\u7D0D\u5165\u3002\u82E5\u8981\u9577\u671F\u7DAD\u8B77\uFF0C\u5EFA\u8B70\u4E4B\u5F8C\u6162\u6162\u88DC\u4E0A <code>#flashcards/...</code> tag\u3002</p>
-            <p><strong>Q7\uFF1AReview Deck \u9032\u5EA6\u5B58\u5728\u54EA\u88E1\uFF1F</strong></p>
-            <p>\u8907\u7FD2\u9032\u5EA6\u6703\u5BEB\u5728\u4F86\u6E90\u7B46\u8A18\u7684 SR comment \u4E2D\uFF1A<code>&lt;!--SR:!YYYY-MM-DD,interval,stability,difficulty,state--&gt;</code></p>
-            <p><strong>Q8\uFF1A\u624B\u6A5F\u53EF\u4EE5\u7528\u55CE\uFF1F</strong></p>
-            <p>Review Deck \u53EF\u4EE5\u3002Quest Map \u8207 Memory Map \u76EE\u524D\u4ECD\u8F03\u9069\u5408\u684C\u9762\u7248\u3002</p>
-          `}]),t==="en"&&(h=[{icon:"\u{1F680}",title:"Get Started",tag:"First Time",html:`
+          `},{icon:"🔬",title:"Learning Science",tag:c(e,"HELP_SCIENCE_TAG"),html:`
+            <div class="lh-help-sub"><div class="lh-help-sub-icon">SR</div><div><strong>Spaced Repetition</strong><br>在快忘記時複習，提升效率。Review Deck 使用 FSRS 自動安排下次複習。</div></div>
+            <div class="lh-help-sub"><div class="lh-help-sub-icon">RP</div><div><strong>Retrieval Practice</strong><br>先回想，再看答案，比重讀更有效。Review Deck 與 Quest Map 都會強迫主動回想。</div></div>
+            <div class="lh-help-sub"><div class="lh-help-sub-icon">EE</div><div><strong>Elaborative Encoding</strong><br>把抽象文字變成具體結構，更容易記住。Memory Map 就是在做這件事。</div></div>
+          `},{icon:"⚙️",title:"設定",tag:c(e,"HELP_SETTINGS_TAG"),html:`
+            <p>到 Obsidian 設定中的 <strong>EngramQuest</strong> 調整。</p>
+            <p><strong>Flashcard tag prefixes</strong>（預設：<code>flashcards</code>）</p>
+            <p>決定哪些筆記會被插件掃描為 Review Deck 卡片。</p>
+            <ul>
+              <li>預設 <code>flashcards</code> → <code>#flashcards/math</code>、<code>#flashcards/行銷</code> 會被偵測到</li>
+              <li>改成 <code>cards</code> → 只有 <code>#cards/math</code> 會被偵測，<code>#flashcards/math</code> 就不會</li>
+              <li>可以設多個，用逗號分隔，例如 <code>flashcards, cards, anki</code></li>
+            </ul>
+            <p><strong>讓插件偵測到的條件（兩個都要滿足）：</strong></p>
+            <ol>
+              <li>筆記裡有 <code>question :: answer</code> 格式的卡片，例如：<pre>#flashcards/數學
+
+畢氏定理是什麼 :: 直角三角形中，a² + b² = c²
+導數的定義 :: 函數在某點的瞬時變化率</pre></li>
+              <li>筆記有符合前綴的 tag，例如 <code>#flashcards/數學</code>（如上例第一行）</li>
+            </ol>
+            <p><strong>Include legacy <code>::</code> notes</strong>（預設：Off）</p>
+            <p>開啟後，沒有任何 tag 的舊式 <code>::</code> 筆記也會被掃描。遷移模式，新手不需要開。</p>
+            <p><strong>Max review interval</strong>（預設：36525 天）</p>
+            <p>FSRS 排程的最大間隔上限。調小可以讓熟悉的卡片仍保持定期出現。</p>
+            <p><strong>Requested retention</strong>（預設：0.9）</p>
+            <p>FSRS 目標記憶保留率。越高複習越頻繁，越低間隔越長。</p>
+          `},{icon:"❓",title:"FAQ",tag:c(e,"HELP_FAQ_TAG"),html:`
+            <p><strong>Q1：沒有安裝 Skills 也能用嗎？</strong></p>
+            <p>可以。你可以手動建立 <code>question :: answer</code> 卡片，並加上像 <code>#flashcards/math</code> 這種 tag。</p>
+            <p><strong>Q2：如果來源筆記沒有任何 tag，AI 還讀得到嗎？</strong></p>
+            <p>可以。AI 讀來源筆記時，不要求來源筆記先有 <code>flashcards</code> tag；但最後要讓插件掃描得到，AI 仍應輸出成可辨識的卡片格式。</p>
+            <p><strong>Q3：為什麼我看不到 Review Deck？</strong></p>
+            <p>常見原因有：還沒有建立卡片筆記、卡片筆記沒有符合目前設定的 tag prefix，或你期待的是舊式 <code>::</code> 掃描但 legacy 模式還沒開。</p>
+            <p><strong>Q4：我有一般筆記，沒有任何 tag。要怎麼做 Review Deck？</strong></p>
+            <p>直接對 AI 說：「把和[主題]相關的筆記做成 Review Deck」。AI 可以先讀一般筆記當來源，但最後輸出應該寫成 <code>question :: answer</code>，並加上對應 tag。回到 Hub 的 Review Deck 就能看到。</p>
+            <p><strong>Q5：我想手動做卡片，不靠 AI。要怎麼做？</strong></p>
+            <p>建一篇筆記，加上 <code>#flashcards/主題</code> tag，然後用 <code>question :: answer</code> 寫卡片。回到 Hub 的 Review Deck 就能看到。</p>
+            <p><strong>Q6：我有很多舊 <code>::</code> 卡片，但沒有 tag。要怎麼遷移？</strong></p>
+            <p>到設定打開 <code>Include legacy :: notes</code>，保留原本的 <code>question :: answer</code> 格式，再回到 Hub 的 Review Deck 檢查是否已被納入。若要長期維護，建議之後慢慢補上 <code>#flashcards/...</code> tag。</p>
+            <p><strong>Q7：Review Deck 進度存在哪裡？</strong></p>
+            <p>複習進度會寫在卡片筆記的 SR comment 中：<code>&lt;!--SR:!YYYY-MM-DD,interval,stability,difficulty,state--&gt;</code></p>
+            <p><strong>Q8：手機可以用嗎？</strong></p>
+            <p>Review Deck 可以。Quest Map 與 Memory Map 目前仍較適合桌面版。</p>
+          `}]),t==="en"&&(h=[{icon:"🚀",title:"Get Started",tag:"First Time",html:`
             <p><strong>Step 1: Install AI Skills</strong></p>
             <ol>
-              <li>Open Obsidian Settings -> <strong>EngramQuest -> AI Skills</strong></li>
-              <li>Choose your AI tool: Claude Code / Codex / Gemini CLI / Cursor</li>
-              <li>After install, your AI will understand EngramQuest formats more reliably</li>
+              <li>Open Obsidian Settings → <strong>EngramQuest → AI Skills</strong></li>
+              <li>Choose your tool: Claude Code / Codex / Gemini CLI / Cursor</li>
+              <li>After install, AI knows how to build content for all three modules</li>
             </ol>
-            <p><strong>Step 2: Ask AI to build content</strong></p>
-            <div class="lh-help-sub" style="border-color:#2563eb"><div class="lh-help-sub-icon">🃏</div><div>"Create a review deck about Azure"</div></div>
-            <div class="lh-help-sub" style="border-color:#059669"><div class="lh-help-sub-icon">🗺️</div><div>"Turn <em>[note].md</em> into a quest-map medium"</div></div>
-            <div class="lh-help-sub" style="border-color:#7c3aed"><div class="lh-help-sub-icon">🧠</div><div>"Create a memory-map for <em>[note].md</em>"</div></div>
-            <p><strong>Step 3: Open the Hub and learn</strong></p>
-            <p style="margin:4px 0">Click the EngramQuest ribbon icon, switch tabs, and start learning.</p>
+            <p><strong>Step 2: Ask AI</strong></p>
+            <div class="lh-help-sub" style="border-color:#2563eb"><div class="lh-help-sub-icon">🃏</div><div>"Turn notes tagged with math into a Review Deck"<br>"Make a Review Deck from all notes about marketing"</div></div>
+            <div class="lh-help-sub" style="border-color:#059669"><div class="lh-help-sub-icon">🗺️</div><div>"Turn calculus.md into a quest-map medium"<br>"Combine tag:math notes into a quest-map hard"</div></div>
+            <div class="lh-help-sub" style="border-color:#7c3aed"><div class="lh-help-sub-icon">🧠</div><div>"Create a memory-map for OS-overview.md"<br>"Make a memory-map from notes about network protocols"</div></div>
+            <p><strong>Step 3: Open Hub and learn</strong></p>
+            <p style="margin:4px 0">Click the EngramQuest ribbon icon → switch tabs → start learning.</p>
           `},{icon:"🃏",title:"Review Deck",tag:c(e,"HELP_REVIEW_TAG"),html:`
-            <p>Review Deck is EngramQuest's long-term memory module and uses FSRS scheduling.</p>
-            <p><strong>Important:</strong> <em>what AI reads as source</em> and <em>what the plugin scans by default</em> are not the same thing.</p>
-            <ul>
-              <li>AI can read ordinary source notes even if they do not have a <code>flashcards</code> tag.</li>
-              <li>For example, if you ask for an Azure review deck, AI can first read your general Azure notes across the vault.</li>
-              <li>But the plugin scans Review Deck cards by matching flashcard tag prefixes by default.</li>
-              <li>The current default tag prefix is <code>flashcards</code>.</li>
-            </ul>
-            <p><strong>When AI writes the result back, it should output:</strong></p>
-            <ul>
-              <li><code>question :: answer</code></li>
-              <li>a matching tag such as <code>#flashcards/azure</code></li>
-            </ul>
-            <p><strong>Typical flow:</strong></p>
             <ol>
-              <li>Ask AI: "Create a review deck about Azure"</li>
-              <li>AI reads relevant Azure notes across the vault</li>
-              <li>AI creates or updates plugin-readable card notes</li>
-              <li>Open Hub -> Review Deck and start reviewing</li>
+              <li>Ask AI: "Turn notes tagged with math into a Review Deck"</li>
+              <li>AI creates card notes (with <code>#flashcards/math</code> tag and <code>question :: answer</code> format)</li>
+              <li>Open Hub → Review Deck → start reviewing</li>
             </ol>
-            <p><strong>Migration mode:</strong> if you already have old plain <code>::</code> flashcard notes, enable legacy <code>::</code> scanning in Settings. This is optional and off by default.</p>
+            <div class="lh-help-sub"><div class="lh-help-sub-icon">💡</div><div>Your source notes don't need any tag — AI can read them directly. Only the card notes AI generates need a <code>#flashcards/...</code> tag for the plugin to detect them.</div></div>
+            <p><strong>Migration mode:</strong> if you have old plain <code>::</code> flashcard notes, enable legacy <code>::</code> scanning in Settings. Optional, off by default.</p>
           `},{icon:"🗺️",title:"Quest Map",tag:c(e,"HELP_QUEST_TAG"),html:`
-            <p>Convert notes into chapter-based maps with interactive challenges.</p>
-            <p><strong>How to use it:</strong></p>
             <ol>
-              <li>Ask AI: "Turn <em>[note].md</em> into a quest-map medium"</li>
-              <li>Open Hub -> Quest Map and click nodes to progress</li>
+              <li>Ask AI: "Turn calculus.md into a quest-map medium"</li>
+              <li>AI builds the learning map</li>
+              <li>Open Hub → Quest Map → click nodes to progress</li>
             </ol>
             <table>
-              <tr><th>Difficulty</th><th>Format</th><th>Best for</th></tr>
-              <tr><td><strong>easy</strong></td><td>True/false, multiple choice (with hints)</td><td>First exposure</td></tr>
-              <tr><td><strong>medium</strong></td><td>Multiple choice, ordering (no hints)</td><td>Reinforcing knowledge</td></tr>
-              <tr><td><strong>hard</strong></td><td>Matching, fill-in (3 attempt limit)</td><td>Self-testing mastery</td></tr>
+              <tr><th>Difficulty</th><th>Best for</th></tr>
+              <tr><td><strong>easy</strong></td><td>First exposure</td></tr>
+              <tr><td><strong>medium</strong></td><td>Reinforcing knowledge</td></tr>
+              <tr><td><strong>hard</strong></td><td>Self-testing mastery</td></tr>
             </table>
           `},{icon:"🧠",title:"Memory Map",tag:c(e,"HELP_MEMORY_TAG"),html:`
-            <p>Visualize hard-to-remember concepts as a canvas map. It helps break misconceptions and build intuition.</p>
-            <p><strong>Use it when:</strong> a concept keeps slipping, feels abstract, or is easy to confuse with something else.</p>
-            <p><strong>How to use it:</strong></p>
             <ol>
-              <li>Ask AI: "Create a memory-map for <em>[note].md</em>"</li>
-              <li>Open Hub -> Memory Map to view it, or click "Memory Map" on a review card</li>
+              <li>Ask AI: "Create a memory-map for OS-overview.md"</li>
+              <li>AI builds the visual concept map</li>
+              <li>Open Hub → Memory Map (or click into it from a Review Deck card)</li>
             </ol>
-          `},{icon:"\u{1F52C}",title:"Why It Works",tag:c(e,"HELP_SCIENCE_TAG"),html:`
+          `},{icon:"🔬",title:"Why It Works",tag:c(e,"HELP_SCIENCE_TAG"),html:`
             <div class="lh-help-sub"><div class="lh-help-sub-icon">SR</div><div><strong>Spaced Repetition</strong><br>Review at the point of near-forgetting. FSRS calculates the next interval automatically.</div></div>
             <div class="lh-help-sub"><div class="lh-help-sub-icon">RP</div><div><strong>Retrieval Practice</strong><br>Active recall is more effective than re-reading. Review Deck and Quest Map force retrieval before the answer appears.</div></div>
             <div class="lh-help-sub"><div class="lh-help-sub-icon">EE</div><div><strong>Elaborative Encoding</strong><br>Concrete images and structures are easier to remember than abstract text. Memory Map turns concepts into visual structure.</div></div>
-          `},{icon:"\u2699\uFE0F",title:"Settings",tag:c(e,"HELP_SETTINGS_TAG"),html:`
-            <p>Open Obsidian Settings -> <strong>EngramQuest</strong> to configure:</p>
-            <table>
-              <tr><th>Setting</th><th>Default</th><th>What it does</th></tr>
-              <tr><td>Flashcard tag prefixes</td><td><code>flashcards</code></td><td>Defines which tag prefixes count as Review Deck cards, for example <code>#flashcards/azure</code></td></tr>
-              <tr><td>Include legacy <code>::</code> notes</td><td>Off</td><td>Migration mode for existing flashcard-note users. When enabled, untagged <code>::</code> notes can also become decks.</td></tr>
-              <tr><td>Max review interval</td><td>36525 days</td><td>Caps the interval so mastered cards still reappear</td></tr>
-              <tr><td>Requested retention</td><td>0.9</td><td>Higher means more frequent reviews to keep recall probability high</td></tr>
-            </table>
-          `},{icon:"\u2753",title:"FAQ",tag:c(e,"HELP_FAQ_TAG"),html:`
+          `},{icon:"⚙️",title:"Settings",tag:c(e,"HELP_SETTINGS_TAG"),html:`
+            <p>Open Obsidian Settings → <strong>EngramQuest</strong> to configure.</p>
+            <p><strong>Flashcard tag prefixes</strong> (default: <code>flashcards</code>)</p>
+            <p>Determines which notes are scanned as Review Deck cards.</p>
+            <ul>
+              <li>Default <code>flashcards</code> → <code>#flashcards/math</code>, <code>#flashcards/marketing</code> are detected</li>
+              <li>Change to <code>cards</code> → only <code>#cards/math</code> is detected; <code>#flashcards/math</code> is not</li>
+              <li>Multiple prefixes: comma-separated, e.g. <code>flashcards, cards, anki</code></li>
+            </ul>
+            <p><strong>To be detected, a note needs both:</strong></p>
+            <ol>
+              <li><code>question :: answer</code> format cards, for example:<pre>#flashcards/math
+
+What is the Pythagorean theorem? :: In a right triangle, a² + b² = c²
+What is a derivative? :: Instantaneous rate of change at a point</pre></li>
+              <li>A matching tag prefix, e.g. <code>#flashcards/math</code> (first line of the example above)</li>
+            </ol>
+            <p><strong>Include legacy <code>::</code> notes</strong> (default: Off)</p>
+            <p>When on, untagged <code>::</code> notes are also scanned. Migration mode, not needed for new users.</p>
+            <p><strong>Max review interval</strong> (default: 36525 days)</p>
+            <p>Cap on FSRS scheduling. Lower it to keep well-known cards appearing periodically.</p>
+            <p><strong>Requested retention</strong> (default: 0.9)</p>
+            <p>FSRS target retention rate. Higher = more frequent reviews; lower = longer intervals.</p>
+          `},{icon:"❓",title:"FAQ",tag:c(e,"HELP_FAQ_TAG"),html:`
             <p><strong>Q1. Can I use this without installing Skills?</strong></p>
-            <p>Yes. You can write cards manually using <code>question :: answer</code> and add a matching tag such as <code>#flashcards/azure</code>.</p>
+            <p>Yes. You can write cards manually using <code>question :: answer</code> and add a matching tag such as <code>#flashcards/math</code>.</p>
             <p><strong>Q2. Can AI read source notes that do not have tags?</strong></p>
             <p>Yes. AI can read ordinary source notes without <code>flashcards</code> tags. But to make the plugin scan the result by default, AI should still write the output back as plugin-readable cards.</p>
             <p><strong>Q3. Why can't I see a Review Deck?</strong></p>
             <p>Common reasons: no card note has been created yet, the card note does not match the current tag prefix setting, or you expected old plain <code>::</code> notes to be included without enabling legacy scan.</p>
-            <p><strong>Q4. I have general Azure notes with no tags. How do I make a Review Deck?</strong></p>
-            <p>Ask AI: <em>Create a review deck about Azure</em>. AI can read ordinary Azure notes as source, but the final output should still be written back as <code>question :: answer</code> plus a matching tag such as <code>#flashcards/azure</code>. Then open Hub -> Review Deck.</p>
-            <p><strong>Q5. I want to make cards manually without AI. How do I do it?</strong></p>
-            <p>Create a note, write cards using <code>question :: answer</code>, and add a matching tag such as <code>#flashcards/fsrs</code>. Then open Hub -> Review Deck.</p>
+            <p><strong>Q4. I have general notes with no tags. How do I make a Review Deck?</strong></p>
+            <p>Ask AI: "Make a Review Deck from notes about [topic]". AI can read ordinary notes as source, but the final output should still be written back as <code>question :: answer</code> plus a matching tag. Then open Hub → Review Deck.</p>
+            <p><strong>Q5. I want to make cards manually without AI. How?</strong></p>
+            <p>Create a note, add a <code>#flashcards/topic</code> tag, then write cards using <code>question :: answer</code>. Open Hub → Review Deck to see them.</p>
             <p><strong>Q6. I already have many old <code>::</code> cards without tags. How do I migrate?</strong></p>
-            <p>Turn on <code>Include legacy :: notes</code> in Settings, keep the existing <code>question :: answer</code> format, and reopen Hub -> Review Deck. For long-term maintenance, it is still better to gradually add <code>#flashcards/...</code> tags.</p>
-            <p><strong>Q7. Where is review progress stored?</strong><br>In SR comments below each card: <code>&lt;!--SR:!YYYY-MM-DD,interval,stability,difficulty,state--&gt;</code>.</p>
-            <p><strong>Q8. Does this work on mobile?</strong><br>Review Deck works on mobile. Quest Map and Memory Map are still best on desktop.</p>
-          `}]),h.splice(Math.max(h.length-1,0),0,{icon:"\u{1F916}",title:t==="zh-tw"?"AI 設定":"AI Setup",tag:c(e,"HELP_AI_SETUP_TAG"),html:`
+            <p>Turn on <code>Include legacy :: notes</code> in Settings, keep the existing <code>question :: answer</code> format, and reopen Hub → Review Deck. For long-term maintenance, gradually add <code>#flashcards/...</code> tags.</p>
+            <p><strong>Q7. Where is review progress stored?</strong></p>
+            <p>In SR comments below each card: <code>&lt;!--SR:!YYYY-MM-DD,interval,stability,difficulty,state--&gt;</code></p>
+            <p><strong>Q8. Does this work on mobile?</strong></p>
+            <p>Review Deck works on mobile. Quest Map and Memory Map are still best on desktop.</p>
+          `}]),h.splice(Math.max(h.length-1,0),0,{icon:"🤖",title:t==="zh-tw"?"AI 設定":"AI Setup",tag:c(e,"HELP_AI_SETUP_TAG"),html:`
         <p>${c(e,"SKILLS_AI_SETUP_COPY")}</p>
         <table>
           <tr><th>Tool</th><th>Path</th></tr>
