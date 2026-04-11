@@ -133,6 +133,22 @@ var fe=class extends I.Modal{constructor(e,t){super(e),this.plugin=t}onClose(){v
               <li>手機的 Obsidian Git 插件有開啟 auto-pull</li>
               <li>pull 完後在 Obsidian 設定中停用再啟用插件，或重啟 App</li>
             </ol>
+            <p><strong>Q10：筆記很雜亂或內容非常多，不知道從哪裡開始怎麼辦？</strong></p>
+            <p>不用先整理。直接請 AI 幫你掃描並列出筆記的主題分類，再從列表中挑你想學的方向：</p>
+            <div class="lh-help-sub"><div class="lh-help-sub-icon">💬</div><div>「幫我列出 vault 裡所有筆記的主題分類」<br>「列出和[科目]相關的所有筆記標題」</div></div>
+            <p>看到列表後，直接指定你要的筆記讓 AI 建立內容：</p>
+            <div class="lh-help-sub"><div class="lh-help-sub-icon">💬</div><div>「用第 3 項的筆記做成 Quest Map medium」<br>「把行銷相關的那幾篇做成 Review Deck」</div></div>
+            <p>如果筆記本身也很零散，可以先請 AI 整理分類再建立：</p>
+            <div class="lh-help-sub"><div class="lh-help-sub-icon">💬</div><div>「先把這些筆記整理成結構化的大綱，再建立 Quest Map」</div></div>
+            <p><strong>Q11：AI 產生的內容我不滿意，想要客製化怎麼做？</strong></p>
+            <p>可以在 AI 設定檔（<code>CLAUDE.md</code>、<code>GEMINI.md</code>、<code>AGENTS.md</code>）裡加入自訂指令，AI 就會照著你的規則產生內容。</p>
+            <pre>建立 Review Deck 時，每張卡片都必須附上一個實際應用的例句。
+字卡難度不要太基礎，需包含分析與應用層次的問題。
+所有卡片問題請用繁體中文撰寫。</pre>
+            <p><strong>Q12：AI 產生的 Map 我想放在特定資料夾，怎麼做？</strong></p>
+            <p>同樣在 AI 設定檔中加入路徑規則，AI 建立檔案時就會遵守。</p>
+            <pre>建立 Quest Map 時，檔案必須存放在 Quest_Map/ 資料夾底下。
+所有 Memory Map 請存到 Maps/Memory/ 目錄。</pre>
           `}]),t==="en"&&(h=[{icon:"🚀",title:"Get Started",tag:"First Time",html:`
             <p><strong>Step 1: Install AI Skills</strong></p>
             <ol>
@@ -223,6 +239,22 @@ What is a derivative? :: Instantaneous rate of change at a point</pre></li>
               <li>The Obsidian Git plugin on mobile has auto-pull enabled</li>
               <li>After pulling, disable and re-enable the plugin in Settings, or restart the app</li>
             </ol>
+            <p><strong>Q10. My notes are messy or there's way too much content. Where do I even start?</strong></p>
+            <p>No need to tidy up first. Ask AI to scan and list the topics across your notes, then pick what you want to learn:</p>
+            <div class="lh-help-sub"><div class="lh-help-sub-icon">💬</div><div>"List all the topic categories in my vault"<br>"List all note titles related to [subject]"</div></div>
+            <p>Once you have the list, point AI at what you want:</p>
+            <div class="lh-help-sub"><div class="lh-help-sub-icon">💬</div><div>"Turn item 3 from that list into a Quest Map medium"<br>"Make a Review Deck from the marketing-related notes"</div></div>
+            <p>If the notes themselves are fragmented, ask AI to organize them first:</p>
+            <div class="lh-help-sub"><div class="lh-help-sub-icon">💬</div><div>"Organize these notes into a structured outline, then build a Quest Map"</div></div>
+            <p><strong>Q11. I'm not satisfied with the AI output. How do I customize it?</strong></p>
+            <p>Add custom instructions to your AI config files (<code>CLAUDE.md</code>, <code>GEMINI.md</code>, <code>AGENTS.md</code>). AI will follow your rules when generating content.</p>
+            <pre>When building a Review Deck, every card must include a real-world application example.
+Keep card difficulty at an advanced level — include analysis and application questions.
+Write all card questions in formal academic English.</pre>
+            <p><strong>Q12. I want AI-generated maps saved to a specific folder. How?</strong></p>
+            <p>Add a path rule to your AI config files and AI will respect it when creating files.</p>
+            <pre>All Quest Maps must be saved under the Quest_Map/ folder.
+Store all Memory Maps in the Maps/Memory/ directory.</pre>
           `}]),h.splice(Math.max(h.length-1,0),0,{icon:"🤖",title:t==="zh-tw"?"AI 設定":"AI Setup",tag:c(e,"HELP_AI_SETUP_TAG"),html:`
         <p>${c(e,"SKILLS_AI_SETUP_COPY")}</p>
         <table>
