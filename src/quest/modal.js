@@ -418,6 +418,20 @@ function openQuestChapterModal(app, nodes, activeIndex, styleName, difficulty, s
     "sky-island": { colors: [{ g1: "#7dd3fc", g2: "#38bdf8" }] }
   });
 
+  function showComplete() {
+    let zh = isZh(deps, settings);
+    modal.contentEl.empty();
+    modal.modalEl.style.cssText = "width:min(92vw,480px);max-width:none;max-height:90vh;overflow:hidden;display:flex;flex-direction:column";
+    modal.contentEl.style.cssText = "padding:0;flex:1;display:flex;flex-direction:column;overflow:hidden;min-height:0";
+    let wrap = modal.contentEl.createEl("div", { attr: { style: "flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 32px;text-align:center;gap:16px;" } });
+    wrap.createEl("div", { attr: { style: "font-size:64px;line-height:1;" } }).textContent = "🏆";
+    wrap.createEl("div", { attr: { style: "font-size:22px;font-weight:800;color:var(--text-normal);" } }).textContent = deps.t ? deps.t(settings, "QUEST_COMPLETE") : (zh ? "Quest 通關！🏆" : "Quest Complete! 🏆");
+    wrap.createEl("div", { attr: { style: "font-size:13px;color:var(--text-muted);line-height:1.6;max-width:260px;" } }).textContent = `${nodes.length} ${zh ? "個章節全部完成" : "chapters completed"}`;
+    let btn = wrap.createEl("button", { attr: { style: "margin-top:12px;border-radius:99px;padding:14px 32px;font-size:15px;font-weight:700;cursor:pointer;border:none;background:linear-gradient(135deg,#4f46e5,#818cf8);color:#fff;box-shadow:0 4px 16px rgba(79,70,229,0.4);" } });
+    btn.textContent = zh ? "關閉" : "Close";
+    btn.addEventListener("click", () => modal.close());
+  }
+
   function render() {
     let node = nodes[currentIndex];
     let zh = isZh(deps, settings);
@@ -459,7 +473,7 @@ function openQuestChapterModal(app, nodes, activeIndex, styleName, difficulty, s
           currentIndex += 1;
           render();
         } else {
-          modal.close();
+          showComplete();
         }
       }, settings, app, sourcePath);
     }
@@ -480,7 +494,7 @@ function openQuestChapterModal(app, nodes, activeIndex, styleName, difficulty, s
         render();
       } else {
         if (!nodes[currentIndex].challenge) markNodeCompleted(app, sourcePath, nodes[currentIndex].id);
-        modal.close();
+        showComplete();
       }
     });
   }
