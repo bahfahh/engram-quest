@@ -105,6 +105,23 @@ CRITICAL: Follow these steps in order. Do not skip any step.
 8. Read each non-skipped note and collect exact front text from `question :: answer`.
 9. CRITICAL: For each card in non-skipped notes, run `bash scripts/search_vault.sh "<card-keyword>" 20` to gather real vault context **before** writing any L2. Do not skip this search.
 10. Generate `.review-deck/hints/{note-name}.json`.
+    CRITICAL: `cards` MUST be an object (dict/map), NOT an array.
+    Keys are the exact `front` text of each card (must match `question :: answer` verbatim).
+    Required format:
+    ```json
+    {
+      "note": "path/to/source.md",
+      "generated": "YYYY-MM-DD",
+      "cards": {
+        "Exact front text of card 1": { "l1": "...", "l2": "...", "l3": "..." },
+        "Exact front text of card 2": { "l1": "...", "l2": "", "l3": "..." }
+      }
+    }
+    ```
+    WRONG — do NOT use array format:
+    ```json
+    { "cards": [{ "front": "...", "l1": "..." }] }
+    ```
 11. CRITICAL: Before finishing, verify that every processed note has at least one tag matching the prefix from step 1. If missing, add it to the note's YAML frontmatter.
 12. Update `.review-deck/scan-record.json`: set `lastScan` to current ISO timestamp; for each processed note set `processedAt`, `mtime`, and `cards`; preserve all existing entries for skipped notes; write the file back.
 13. Report: how many notes were skipped (already up-to-date), how many were processed, how many cards total, how many L2 hints were left empty, and how many notes had the tag prefix added.

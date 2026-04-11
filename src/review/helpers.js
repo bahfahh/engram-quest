@@ -154,8 +154,13 @@ function parseReviewDeckBlock(markdown) {
 
 function mergeReviewHints(cards, hintPayload) {
   if (!(hintPayload != null && hintPayload.cards)) return;
+  let hintsDict = hintPayload.cards;
+  if (Array.isArray(hintPayload.cards)) {
+    hintsDict = {};
+    hintPayload.cards.forEach((c) => { if (c.front) hintsDict[c.front] = c; });
+  }
   cards.forEach((card) => {
-    let hint = hintPayload.cards[card.front];
+    let hint = hintsDict[card.front];
     if (!hint) return;
     card.hint_l1 = hint.l1 || "";
     card.hint_l2 = hint.l2 || "";
