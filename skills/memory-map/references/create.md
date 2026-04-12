@@ -34,6 +34,26 @@ Before creating the canvas file:
    save next to the source note:
    `<source-note-folder>/<source-note-name>-memory.canvas`
 
+### Canvas node sizing rules
+
+**Text node height estimation:**
+- `## heading` line: ~42px each
+- Regular text line (including **bold**, list items): ~30px each
+- Node internal padding: 32px total (16px top + 16px bottom)
+- Formula: `height = (heading_lines × 42) + (body_lines × 30) + 32`
+- When uncertain, **overestimate generously** — too large is fine, too small breaks layout
+
+**Node width:**
+- Default width: 220px for short nodes, 280px for nodes with longer content
+- Never go below 180px
+
+**Group bounding box:**
+- Add 60px padding on all four sides around child nodes
+- `group_x = min(nodes.x) - 60`
+- `group_y = min(nodes.y) - 60`
+- `group_width = (max(nodes.x + nodes.width) - min(nodes.x)) + 120`
+- `group_height = (max(nodes.y + nodes.height) - min(nodes.y)) + 120`
+
 ### Save the file
 
 Save as `<source-note-name>-memory.canvas` in the resolved location above.
