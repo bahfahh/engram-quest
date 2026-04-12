@@ -1,6 +1,32 @@
 "use strict";
 
+async function migrateReviewDeckFolder(adapter) {
+  if (await adapter.exists("engram-review/hints")) return;
+  if (!(await adapter.exists(".review-deck"))) return;
+  await adapter.mkdir("engram-review");
+  await adapter.mkdir("engram-review/hints");
+  if (await adapter.exists(".review-deck/hints")) {
+    let listed = await adapter.list(".review-deck/hints");
+    for (let filePath of listed.files) {
+      let content = await adapter.read(filePath);
+      await adapter.write("engram-review/hints/" + filePath.split("/").pop(), content);
+    }
+  }
+  for (let name of ["config.json", "scan-record.json"]) {
+    let src = `.review-deck/${name}`;
+    if (await adapter.exists(src)) {
+      await adapter.write(`engram-review/${name}`, await adapter.read(src));
+    }
+  }
+  console.debug("engram-review: migration from .review-deck/ complete; old folder left for manual cleanup");
+}
+
 async function scanReviewDecks(app, settings, reviewHelpers) {
+  try {
+    await migrateReviewDeckFolder(app.vault.adapter);
+  } catch (e) {
+    console.warn("engram-review: migration failed, continuing without it", e);
+  }
   let files = app.vault.getMarkdownFiles();
   let deckMap = {};
 
@@ -38,7 +64,7 @@ async function scanReviewDecks(app, settings, reviewHelpers) {
 
     let noteName = file.name.replace(/\.md$/i, "");
     try {
-      let hintPath = `.review-deck/hints/${noteName}.json`;
+      let hintPath = `engram-review/hints/${noteName}.json`;
       if (await app.vault.adapter.exists(hintPath)) {
         reviewHelpers.mergeReviewHints(cards, JSON.parse(await app.vault.adapter.read(hintPath)));
       }
@@ -58,5 +84,6 @@ async function scanReviewDecks(app, settings, reviewHelpers) {
 }
 
 module.exports = {
+  migrateReviewDeckFolder,
   scanReviewDecks
 };

@@ -11,3 +11,4 @@ CLAUDE.md
 .claude
 doc/
 !node_modules/obsidian
+debug/

@@ -2,7 +2,7 @@
 name: review-deck
 description: 
   Manage review-deck data for the Obsidian EngramQuest plugin.
-  Trigger when the user asks to create, update, or explain a review deck,
+  Trigger when the user asks to create, update, explain, edit, or delete a review deck,
   flashcard hints, or review-deck setup.
 
   User guide trigger:
@@ -28,7 +28,7 @@ This rule applies to:
 2. Any line with `question :: answer` is a flashcard.
 3. The plugin scans notes whose tags match the user-configured flashcard tag prefix (default: `flashcards`). This prefix is user-configurable in plugin settings.
 4. If the user enables legacy `::` note scanning in plugin settings, untagged flashcard notes can also be included for migration.
-5. Hints are loaded from `.review-deck/hints/{note-name}.json`.
+5. Hints are loaded from `engram-review/hints/{note-name}.json`.
 6. SR progress is stored as `<!--SR:!YYYY-MM-DD,interval,stability,difficulty,state-->` (FSRS-4 format). Legacy SM-2 format (`<!--SR:!YYYY-MM-DD,interval,ease-->`) is read and auto-migrated on next rating. Do not manually insert SR comments.
 
 ## Data Locations
@@ -36,8 +36,9 @@ This rule applies to:
 | Data | Path |
 |---|---|
 | Plugin settings | `.obsidian/plugins/engram-quest/data.json` |
-| Plugin config | `.review-deck/config.json` |
-| Hints | `.review-deck/hints/{note-name}.json` |
+| Plugin config | `engram-review/config.json` |
+| Hints | `engram-review/hints/{note-name}.json` |
+| Scan record | `engram-review/scan-record.json` |
 | Cards | Any markdown note with `question :: answer` |
 | SR metadata | HTML comment after each card |
 
@@ -65,10 +66,14 @@ Task is complete when cards and JSON hints are generated. Stop there.
 | Update hints for a topic | Update Flow |
 | Add cards to a topic | Edit note content + update hints |
 | Make a review-deck from a note | Single Note Flow |
+| Fix / correct a card | Edit Flow |
+| Change a card's question or answer | Edit Flow |
+| Delete a card | Delete Flow |
+| Remove hints for a note | Delete Flow |
 
 ## Scan Record
 
-The file `.review-deck/scan-record.json` tracks which notes have already been processed by AI to avoid duplicate card creation.
+The file `engram-review/scan-record.json` tracks which notes have already been processed by AI to avoid duplicate card creation.
 
 Schema:
 ```json
@@ -94,9 +99,9 @@ To get a file's current mtime in milliseconds: `bash scripts/get_mtime.sh "path/
 
 CRITICAL: Follow these steps in order. Do not skip any step.
 
-0. Load scan record: read `.review-deck/scan-record.json` if it exists. If missing, treat as `{ "lastScan": null, "notes": {} }`.
+0. Load scan record: read `engram-review/scan-record.json` if it exists. If missing, treat as `{ "lastScan": null, "notes": {} }`.
 1. Read `.obsidian/plugins/engram-quest/data.json` and extract the `flashcardTags` field. This is the user's configured tag prefix (e.g., `mycard`, `flashcards`, or multiple space-separated values). If the file does not exist or the field is empty, default to `flashcards`. Use this value — not a hardcoded string — for all tag operations in this session.
-2. Ensure `.review-deck/config.json` exists.
+2. Ensure `engram-review/config.json` exists.
 3. Check for a pre-existing knowledge index or graph in the vault (e.g. `graphify-out/GRAPH_REPORT.md`, `graph.json`). If found, use its key concepts and community structure to prioritize which notes to process first and to identify high-value card candidates. This supplements — not replaces — the tag-based note discovery below.
 4. Find notes relevant to the topic across the vault.
 5. CRITICAL: Notes **must** have YAML tags matching the prefix from step 1 to be detected by the plugin (e.g., `{prefix}/azure`). Do not process untagged notes unless the user explicitly requests legacy migration.
@@ -104,7 +109,7 @@ CRITICAL: Follow these steps in order. Do not skip any step.
 7. For each note found: run `bash scripts/get_mtime.sh "<note-path>"` to get current mtime. If the note is already in scan-record AND mtime matches, skip it — it has not changed since last processing. Only read and process notes that are new or have a changed mtime.
 8. Read each non-skipped note and collect exact front text from `question :: answer`.
 9. CRITICAL: For each card in non-skipped notes, run `bash scripts/search_vault.sh "<card-keyword>" 20` to gather real vault context **before** writing any L2. Do not skip this search.
-10. Generate `.review-deck/hints/{note-name}.json`.
+10. Generate `engram-review/hints/{note-name}.json`.
     CRITICAL: `cards` MUST be an object (dict/map), NOT an array.
     Keys are the exact `front` text of each card (must match `question :: answer` verbatim).
     Required format:
@@ -123,19 +128,61 @@ CRITICAL: Follow these steps in order. Do not skip any step.
     { "cards": [{ "front": "...", "l1": "..." }] }
     ```
 11. CRITICAL: Before finishing, verify that every processed note has at least one tag matching the prefix from step 1. If missing, add it to the note's YAML frontmatter.
-12. Update `.review-deck/scan-record.json`: set `lastScan` to current ISO timestamp; for each processed note set `processedAt`, `mtime`, and `cards`; preserve all existing entries for skipped notes; write the file back.
+12. Update `engram-review/scan-record.json`: set `lastScan` to current ISO timestamp; for each processed note set `processedAt`, `mtime`, and `cards`; preserve all existing entries for skipped notes; write the file back.
 13. Report: how many notes were skipped (already up-to-date), how many were processed, how many cards total, how many L2 hints were left empty, and how many notes had the tag prefix added.
 
 ## Update Flow
 
 1. Read `.obsidian/plugins/engram-quest/data.json` to get the `flashcardTags` prefix (same as Setup Flow step 1).
-2. Load scan record: read `.review-deck/scan-record.json` if it exists.
+2. Load scan record: read `engram-review/scan-record.json` if it exists.
 3. Find relevant notes again.
 4. For each note: run `bash scripts/get_mtime.sh "<note-path>"` and compare to scan-record. Skip notes whose mtime has not changed since last processing.
 5. Read existing hints JSON if present for non-skipped notes.
 6. Add hints only for new cards in non-skipped notes.
 7. Preserve existing hints when possible.
-8. Update `.review-deck/scan-record.json` with processed notes (same as Setup Flow step 11).
+8. Update `engram-review/scan-record.json` with processed notes (same as Setup Flow step 11).
+
+## Edit Flow
+
+Use when the user wants to fix or change an existing card's front text, back text, or hints.
+
+1. Identify the target note. If the user doesn't specify, ask which note the card is in.
+2. Read the source note and find the `question :: answer` line matching the card to edit.
+3. Apply the change in the source note:
+   - If editing front text: replace the text before `::`. The SR comment on the next line stays unchanged.
+   - If editing back text: replace the text after `::`.
+   - If editing both: replace the full `question :: answer` line.
+4. Read `engram-review/hints/{note-name}.json`.
+   - If the front text changed: rename the key in `cards` to match the new front text exactly.
+   - Update `l1`, `l2`, `l3` values if the user requested hint changes, or if the front change makes existing hints inaccurate.
+5. Write both the updated source note and the updated hints JSON.
+6. Update `engram-review/scan-record.json`: update `mtime` for the affected note.
+7. Report: which card was changed, what changed (front / back / hints), and confirm both files were updated.
+
+CRITICAL: The key in `engram-review/hints/{note-name}.json` must always exactly match the front text in the source note. If they diverge, the plugin cannot load the hint.
+
+## Delete Flow
+
+Use when the user wants to remove one or more cards entirely, or remove hints for a note.
+
+### Delete a card
+
+1. Identify the target note and the card(s) to delete.
+2. Read the source note. Find the `question :: answer` line(s) to remove.
+3. Remove the card line and its SR comment (the `<!--SR:!...-->` line immediately after, if present).
+4. Write the updated source note.
+5. Read `engram-review/hints/{note-name}.json`. Remove the key matching the deleted card's front text.
+6. If no keys remain in `cards`, delete the entire hint file.
+7. Update `engram-review/scan-record.json`: update `mtime` and `cards` count for the affected note. If the note now has 0 cards, remove its entry from `notes`.
+8. Report: which card(s) were deleted, whether the hint file was updated or removed.
+
+### Remove all hints for a note
+
+1. Delete `engram-review/hints/{note-name}.json`.
+2. Remove the note's entry from `engram-review/scan-record.json`.
+3. Report: hint file removed, scan-record updated.
+
+CRITICAL: Never delete the source note itself unless the user explicitly asks to delete the note file.
 
 ## Single Note Flow
 
