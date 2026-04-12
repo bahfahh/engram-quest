@@ -197,6 +197,7 @@ CRITICAL: You **must** run `bash scripts/search_vault.sh "<card-keyword>" 20` be
 PROHIBITED in L2:
 - Generic textbook descriptions
 - Content invented without vault search results
+- Inference expansion: if vault uses a vague term (e.g. "a plugin", "a website", "a project"), keep it vague — do not replace it with a specific name or inferred identity. Only use words that literally appear in the vault search results.
 
 ### L3
 - Give 1 or 2 structural narrowing keywords that point to the knowledge domain, not the answer.
