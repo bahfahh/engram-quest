@@ -18,10 +18,18 @@ async function saveTagSourceCard(app, card, newData) {
   const file = app.vault.getAbstractFileByPath(card.notePath);
   if (file) {
     let content = await app.vault.read(file);
-    content = content.replace(
-      new RegExp(`^([ \t]*)${escapeRegExp(card.front)}([ \t]*)::(.*)$`, "m"),
-      `$1${newData.front}$2:: ${newData.back}`
+    // Match "front :: back" — use function replacement to avoid $ interpretation issues
+    const re = new RegExp(
+      `^([ \t]*)${escapeRegExp(card.front)}([ \t]*)::[ \t]*${escapeRegExp(card.back)}[ \t]*$`,
+      "m"
     );
+    if (re.test(content)) {
+      content = content.replace(re, () => `${newData.front} :: ${newData.back}`);
+    } else {
+      // Fallback: match by front only (in case back has trailing whitespace differences)
+      const reFront = new RegExp(`^([ \t]*)${escapeRegExp(card.front)}([ \t]*)::(.*)$`, "m");
+      content = content.replace(reFront, () => `${newData.front} :: ${newData.back}`);
+    }
     await app.vault.modify(file, content);
   }
 

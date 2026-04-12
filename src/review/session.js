@@ -74,6 +74,10 @@ var Q=class extends I.Modal{
     let d=i.createEl("div",{attr:{class:"lh-rc-top"}});
     d.createEl("span",{text:this.deckName,attr:{class:"lh-rc-badge"}});
     this.browseOnly&&d.createEl("span",{text:c(t,"BROWSE_ONLY"),attr:{class:"lh-rc-badge"}});
+    // Edit button — top-right of card
+    let editTopBtn=d.createEl("button",{attr:{class:"lh-rc-edit-btn"}});
+    editTopBtn.textContent="✏️ "+c(t,"EDIT_CARD");
+    editTopBtn.addEventListener("click",()=>this._renderEditForm(e));
     if(e.emoji){ i.createEl("span",{attr:{class:"lh-rc-emoji"}}).textContent=e.emoji; }
     i.createEl("div",{text:e.front,attr:{class:"lh-rc-question"}});
 
@@ -167,11 +171,6 @@ var Q=class extends I.Modal{
       let k=g.createEl("button",{attr:{class:"lh-pill-btn lh-pill-memory"}});
       k.innerHTML=`${c(t,"MEMORY_MAP")}`;
       w?k.addEventListener("click",()=>{this.app.workspace.openLinkText(S,"",false);}):(k.disabled=true,k.style.opacity="0.38",k.style.cursor="not-allowed");
-
-      // Edit button
-      let editBtn=g.createEl("button",{attr:{class:"lh-pill-btn lh-pill-edit"}});
-      editBtn.textContent=c(t,"EDIT_CARD");
-      editBtn.addEventListener("click",()=>this._renderEditForm(e));
 
       let y=p.createEl("div",{attr:{class:"lh-footer-meta"}});
       let b=y.createEl("button",{attr:{class:"lh-pill-reset"}});
