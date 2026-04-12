@@ -122,4 +122,12 @@ describe("DICT completeness", () => {
     const missing = enKeys.filter(k => !zhKeys.has(k));
     expect(missing).toEqual([]);
   });
+
+  it("edit keys exist in both locales", () => {
+    const editKeys = ["EDIT_CARD", "EDIT_SAVE", "EDIT_CANCEL", "EDIT_FRONT", "EDIT_BACK", "EDIT_HINTS"];
+    for (const key of editKeys) {
+      expect(DICT.en[key]).toBeTruthy();
+      expect(DICT["zh-tw"][key]).toBeTruthy();
+    }
+  });
 });

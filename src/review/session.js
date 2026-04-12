@@ -3,6 +3,7 @@ const I = require("obsidian");
 const { computeFsrs: P } = require("../fsrs");
 const { t: c, tAlt: C, getLocale: _getLocale } = require("../i18n");
 const { anySrPattern: ge, getReviewStatus: $ } = require("./helpers");
+const { saveTagSourceCard, saveInlineCard } = require("./edit");
 const W_ref = { get locale() { try { return I.moment && I.moment.locale && I.moment.locale(); } catch(e) { return "en"; } } };
 function L(s) { return _getLocale(s, W_ref.locale); }
 
@@ -167,6 +168,11 @@ var Q=class extends I.Modal{
       k.innerHTML=`${c(t,"MEMORY_MAP")}`;
       w?k.addEventListener("click",()=>{this.app.workspace.openLinkText(S,"",false);}):(k.disabled=true,k.style.opacity="0.38",k.style.cursor="not-allowed");
 
+      // Edit button
+      let editBtn=g.createEl("button",{attr:{class:"lh-pill-btn lh-pill-edit"}});
+      editBtn.textContent=c(t,"EDIT_CARD");
+      editBtn.addEventListener("click",()=>this._renderEditForm(e));
+
       let y=p.createEl("div",{attr:{class:"lh-footer-meta"}});
       let b=y.createEl("button",{attr:{class:"lh-pill-reset"}});
       b.textContent="Reset";
@@ -181,6 +187,76 @@ var Q=class extends I.Modal{
     let v=Math.round(this.idx/this.cards.length*100);
     u.createEl("div",{attr:{class:"lh-review-prog-bar",style:`width:${v}%`}});
     h.createEl("span",{text:`${this.idx+1} / ${this.cards.length}`,attr:{class:"lh-review-badge"}});
+  }
+
+  _renderEditForm(e){
+    let t=this.plugin.settings;
+    this.contentEl.empty();
+
+    // Nav (minimal — just back arrow)
+    let nav=this.contentEl.createEl("div",{attr:{class:"lh-review-nav"}});
+    nav.createEl("span",{text:c(t,"HUB_TITLE"),attr:{class:"lh-review-logo"}});
+    let backBtn=nav.createEl("button",{attr:{class:"lh-review-back"}});
+    backBtn.innerHTML=`← ${c(t,"BACK")}`;
+    backBtn.addEventListener("click",()=>this.renderCard());
+
+    // Form body
+    let body=this.contentEl.createEl("div",{attr:{class:"lh-edit-form"}});
+
+    function field(labelKey, value){
+      let wrap=body.createEl("div",{attr:{class:"lh-edit-field"}});
+      wrap.createEl("label",{text:c(t,labelKey),attr:{class:"lh-edit-label"}});
+      let ta=wrap.createEl("textarea",{attr:{class:"lh-edit-textarea"}});
+      ta.value=value||"";
+      return ta;
+    }
+
+    let taFront=field("EDIT_FRONT", e.front);
+    let taBack=field("EDIT_BACK", e.back);
+
+    // Hints section
+    let hintsWrap=body.createEl("div",{attr:{class:"lh-edit-hints-section"}});
+    hintsWrap.createEl("div",{text:c(t,"EDIT_HINTS")+" (L1 / L2 / L3)",attr:{class:"lh-edit-hints-label"}});
+    let taL1=hintsWrap.createEl("textarea",{attr:{class:"lh-edit-textarea lh-edit-hint-ta",placeholder:"L1"}});
+    taL1.value=e.hint_l1||"";
+    let taL2=hintsWrap.createEl("textarea",{attr:{class:"lh-edit-textarea lh-edit-hint-ta",placeholder:"L2"}});
+    taL2.value=e.hint_l2||"";
+    let taL3=hintsWrap.createEl("textarea",{attr:{class:"lh-edit-textarea lh-edit-hint-ta",placeholder:"L3"}});
+    taL3.value=e.hint_l3||"";
+
+    // Action buttons
+    let btnRow=body.createEl("div",{attr:{class:"lh-edit-btn-row"}});
+    let saveBtn=btnRow.createEl("button",{attr:{class:"lh-edit-save-btn"}});
+    saveBtn.textContent=c(t,"EDIT_SAVE");
+    saveBtn.addEventListener("click",async()=>{
+      const newData={
+        front: taFront.value.trim(),
+        back: taBack.value.trim(),
+        hint_l1: taL1.value.trim(),
+        hint_l2: taL2.value.trim(),
+        hint_l3: taL3.value.trim(),
+      };
+      if(!newData.front||!newData.back) return;
+      saveBtn.disabled=true;
+      try {
+        if(e.notePath){
+          await saveTagSourceCard(this.app, e, newData);
+        } else {
+          // inline card: find source via active MarkdownView
+          const view=this.app.workspace.getActiveViewOfType&&this.app.workspace.getActiveViewOfType(I.MarkdownView);
+          const sourcePath=view&&view.file&&view.file.path;
+          if(sourcePath) await saveInlineCard(this.app, sourcePath, e, newData);
+        }
+        // Update in-memory card
+        e.front=newData.front; e.back=newData.back;
+        e.hint_l1=newData.hint_l1; e.hint_l2=newData.hint_l2; e.hint_l3=newData.hint_l3;
+      } catch(err){ console.error("review-edit: save failed",err); }
+      this.renderCard();
+    });
+
+    let cancelBtn=btnRow.createEl("button",{attr:{class:"lh-edit-cancel-btn"}});
+    cancelBtn.textContent=c(t,"EDIT_CANCEL");
+    cancelBtn.addEventListener("click",()=>this.renderCard());
   }
 }
 

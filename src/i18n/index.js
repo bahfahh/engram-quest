@@ -149,6 +149,12 @@ const DICT = {
     DELETE_CONFIRM_DECK: "This will trash {count} source note(s). Flashcard data in those files will be removed.",
     DELETE_CONFIRM_BTN: "Delete",
     DELETE_CANCEL_BTN: "Cancel",
+    EDIT_CARD: "Edit",
+    EDIT_SAVE: "Save",
+    EDIT_CANCEL: "Cancel",
+    EDIT_FRONT: "Question",
+    EDIT_BACK: "Answer",
+    EDIT_HINTS: "Hints",
   },
   "zh-tw": {
     LANGUAGE: "語言",
@@ -299,6 +305,12 @@ const DICT = {
     DELETE_CONFIRM_DECK: "這將移除 {count} 個來源筆記，其中的 flashcard 資料也會一併刪除。",
     DELETE_CONFIRM_BTN: "刪除",
     DELETE_CANCEL_BTN: "取消",
+    EDIT_CARD: "編輯",
+    EDIT_SAVE: "儲存",
+    EDIT_CANCEL: "取消",
+    EDIT_FRONT: "題目",
+    EDIT_BACK: "答案",
+    EDIT_HINTS: "提示",
   },
 };
 
