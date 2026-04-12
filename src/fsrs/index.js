@@ -1,5 +1,9 @@
 "use strict";
 
+function getLocalDateStr(d = new Date()) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
 // FSRS-5 weights
 const W = [.4072,1.1829,3.1262,15.4722,7.2102,.5316,1.0651,.0589,1.533,.1544,1.004,1.9813,.0953,.2975,2.2042,.2407,2.9466];
 
@@ -118,7 +122,7 @@ function computeFsrs(rating, card, settings) {
   const due = new Date();
   due.setDate(due.getDate() + interval);
 
-  return { due: due.toISOString().split("T")[0], interval, stability, difficulty, state, repetitions: reps };
+  return { due: getLocalDateStr(due), interval, stability, difficulty, state, repetitions: reps };
 }
 
 module.exports = { W, DECAY, FACTOR, retrievability, intervalFromRetention, initStability, initDifficulty, clampDifficulty, nextDifficulty, nextStabilityReview, nextStabilityForgot, normalizeFsrsCard, computeFsrs };

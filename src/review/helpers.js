@@ -1,5 +1,9 @@
 "use strict";
 
+function getLocalDateStr(d = new Date()) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
 const advancedSrPattern = /<!--SR:!(\d{4}-\d{2}-\d{2}),(\d+),([\d.]+),([\d.]+),(\d)-->/;
 const legacySrPattern = /<!--SR:!(\d{4}-\d{2}-\d{2}),(\d+),(\d+)-->/;
 const anySrPattern = /<!--SR:![\d\-.,]+-->/;
@@ -39,7 +43,7 @@ function parseSrComment(comment) {
 
 function getReviewStatus(srMeta) {
   if (!srMeta || srMeta.state === 0) return "unseen";
-  let today = new Date().toISOString().split("T")[0];
+  let today = getLocalDateStr();
   if (srMeta.due <= today) return "due";
   if (srMeta.state === 1 || srMeta.state === 3) return "learning";
   return (srMeta.stability ?? srMeta.interval) >= 21 ? "mastered" : "learning";

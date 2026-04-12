@@ -1,5 +1,9 @@
 "use strict";
 
+function getLocalDateStr(d = new Date()) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
 function getDeckAchievement(rate) {
   if (rate >= 95) return { icon: "🏆", key: "DECK_TIER_LEGEND", color: "#f59e0b" };
   if (rate >= 80) return { icon: "👑", key: "DECK_TIER_MASTER", color: "#a855f7" };
@@ -25,7 +29,7 @@ function getThemeColors(themes, styleName, index) {
 }
 
 function renderReviewDeck(cards, config, themes, translateKey, getReviewStatus) {
-  let today = new Date().toISOString().split("T")[0];
+  let today = getLocalDateStr();
   let total = cards.length;
   let due = cards.filter((card) => card.srMeta && card.srMeta.due <= today).length;
   let mastered = cards.filter((card) => {

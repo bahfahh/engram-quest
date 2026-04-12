@@ -146,7 +146,11 @@ var fe=class extends I.Modal{constructor(e,t){super(e),this.plugin=t}onClose(){v
             <pre>建立 Review Deck 時，每張卡片都必須附上一個實際應用的例句。
 字卡難度不要太基礎，需包含分析與應用層次的問題。
 所有卡片問題請用繁體中文撰寫。</pre>
-            <p><strong>Q12：AI 產生的 Map 我想放在特定資料夾，怎麼做？</strong></p>
+            <p><strong>Q12：如何讓 AI 每次建立 Review Deck 時都依照我想要的固定模式？</strong></p>
+            <p>用你習慣的任何語法在筆記中標記重要答案，例如 Obsidian 高亮 <code>==文字==</code>、粗體 <code>**文字**</code>，或任何自訂記號都可以。接著在 AI 設定檔（<code>CLAUDE.md</code>、<code>GEMINI.md</code> 或 <code>AGENTS.md</code>）中加入對應指令，告訴 AI 把那個記號當作卡片答案：</p>
+            <pre>IMPORTANT: When building a Review Deck, every highlighted ==text== must be turned into a review card.</pre>
+            <p>用你自己最順手的標記方式就好，AI 會照著規則一致執行。</p>
+            <p><strong>Q13：AI 產生的 Map 我想放在特定資料夾，怎麼做？</strong></p>
             <p>同樣在 AI 設定檔中加入路徑規則，AI 建立檔案時就會遵守。</p>
             <pre>建立 Quest Map 時，檔案必須存放在 Quest_Map/ 資料夾底下。
 所有 Memory Map 請存到 Maps/Memory/ 目錄。</pre>
@@ -253,7 +257,11 @@ What is a derivative? :: Instantaneous rate of change at a point</pre></li>
             <pre>When building a Review Deck, every card must include a real-world application example.
 Keep card difficulty at an advanced level — include analysis and application questions.
 Write all card questions in formal academic English.</pre>
-            <p><strong>Q12. I want AI-generated maps saved to a specific folder. How?</strong></p>
+            <p><strong>Q12. How can I make AI always follow a specific pattern when building a Review Deck?</strong></p>
+            <p>Mark key answers in your notes using any syntax you prefer — for example, Obsidian's highlight <code>==text==</code>, bold <code>**text**</code>, or any custom marker. Then add a rule to your AI config file (<code>CLAUDE.md</code>, <code>GEMINI.md</code>, or <code>AGENTS.md</code>) telling it to treat that marker as a card answer:</p>
+            <pre>IMPORTANT: When building a Review Deck, every highlighted ==text== must be turned into a review card.</pre>
+            <p>Use whatever convention fits your note-taking style — the AI will follow it consistently.</p>
+            <p><strong>Q13. I want AI-generated maps saved to a specific folder. How?</strong></p>
             <p>Add a path rule to your AI config files and AI will respect it when creating files.</p>
             <pre>All Quest Maps must be saved under the Quest_Map/ folder.
 Store all Memory Maps in the Maps/Memory/ directory.</pre>
