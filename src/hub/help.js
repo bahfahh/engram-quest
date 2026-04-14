@@ -120,7 +120,14 @@ var fe=class extends I.Modal{constructor(e,t){super(e),this.plugin=t}onClose(){v
             <p><strong>Q4：我有一般筆記，沒有任何 tag。要怎麼做 Review Deck？</strong></p>
             <p>直接對 AI 說：「把和[主題]相關的筆記做成 Review Deck」。AI 會讀取你的筆記，在 <code>engram-review/ai-cards/</code> 建立含 tag 的卡片檔，不會動你的原始筆記。回到 Hub 的 Review Deck 就能看到。</p>
             <p><strong>Q5：我想手動做卡片，不靠 AI。要怎麼做？</strong></p>
-            <p>建一篇筆記，加上 <code>#flashcards/主題</code> tag，然後用 <code>question :: answer</code> 寫卡片。回到 Hub 的 Review Deck 就能看到。</p>
+            <p>建一篇筆記，加上 <code>#flashcards/主題</code> tag，然後用以下任一格式寫卡片：</p>
+            <pre>#flashcards/產品分析
+
+什麼是 PMF？ :: Product-Market Fit，產品與市場需求高度吻合的狀態
+
+Q: 如何驗證 PMF？
+A: 透過留存率、NPS 和自發性口碑三個指標交叉確認</pre>
+            <p>兩種格式（<code>::</code> 和 <code>Q:/A:</code>）可以混用在同一篇筆記裡。回到 Hub 的 Review Deck 就能看到。</p>
             <p><strong>Q6：我有很多舊 <code>::</code> 卡片，但沒有 tag。要怎麼遷移？</strong></p>
             <p>到設定打開 <code>Include legacy :: notes</code>，保留原本的 <code>question :: answer</code> 格式，再回到 Hub 的 Review Deck 檢查是否已被納入。若要長期維護，建議之後慢慢補上 <code>#flashcards/...</code> tag。</p>
             <p><strong>Q7：Review Deck 進度存在哪裡？</strong></p>
@@ -233,7 +240,14 @@ What is a derivative? :: Instantaneous rate of change at a point</pre></li>
             <p><strong>Q4. I have general notes with no tags. How do I make a Review Deck?</strong></p>
             <p>Ask AI: "Make a Review Deck from notes about [topic]". AI reads your notes and creates card files in <code>engram-review/ai-cards/</code> with the correct tags — your original notes are never modified. Open Hub → Review Deck to see them.</p>
             <p><strong>Q5. I want to make cards manually without AI. How?</strong></p>
-            <p>Create a note, add a <code>#flashcards/topic</code> tag, then write cards using <code>question :: answer</code>. Open Hub → Review Deck to see them.</p>
+            <p>Create a note, add a <code>#flashcards/topic</code> tag, then write cards using either format:</p>
+            <pre>#flashcards/product-analysis
+
+What is PMF? :: Product-Market Fit — when a product strongly satisfies market demand
+
+Q: How do you validate PMF?
+A: Cross-check retention rate, NPS, and organic word-of-mouth</pre>
+            <p>Both formats (<code>::</code> and <code>Q:/A:</code>) can be mixed in the same note. Open Hub → Review Deck to see them.</p>
             <p><strong>Q6. I already have many old <code>::</code> cards without tags. How do I migrate?</strong></p>
             <p>Turn on <code>Include legacy :: notes</code> in Settings, keep the existing <code>question :: answer</code> format, and reopen Hub → Review Deck. For long-term maintenance, gradually add <code>#flashcards/...</code> tags.</p>
             <p><strong>Q7. Where is review progress stored?</strong></p>
