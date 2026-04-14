@@ -124,6 +124,8 @@ CRITICAL: Follow these steps in order. Do not skip any step.
    to gather personal vault context. One search per concept is sufficient.
    Collect all results before proceeding to card generation.
 10. Generate `engram-review/hints/{note-name}.json`.
+    If the file already exists (re-run), overwrite it entirely with fresh hints based on current cards.
+    Do NOT merge with old hints — the card set may have changed.
     CRITICAL: `cards` MUST be an object (dict/map), NOT an array.
     Keys are the exact `front` text of each card (must match `question :: answer` verbatim).
     Required format:
@@ -137,6 +139,7 @@ CRITICAL: Follow these steps in order. Do not skip any step.
       }
     }
     ```
+    CRITICAL: `"note"` MUST be the full vault-relative path of the source note (e.g. `"Study/Azure Notes.md"`), NOT just the filename. This is required for Memory Map resolution to work correctly for notes in subfolders.
     WRONG — do NOT use array format:
     ```json
     { "cards": [{ "front": "...", "l1": "..." }] }
