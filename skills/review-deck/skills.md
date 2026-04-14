@@ -29,7 +29,7 @@ This rule applies to:
 3. The plugin scans notes whose tags match the user-configured flashcard tag prefix (default: `flashcards`). This prefix is user-configurable in plugin settings.
 4. If the user enables legacy `::` note scanning in plugin settings, untagged flashcard notes can also be included for migration.
 5. Hints are loaded from `engram-review/hints/{note-name}.json`.
-6. SR progress is stored as `<!--SR:!YYYY-MM-DD,interval,stability,difficulty,state-->` (FSRS-4 format). Legacy SM-2 format (`<!--SR:!YYYY-MM-DD,interval,ease-->`) is read and auto-migrated on next rating. Do not manually insert SR comments.
+6. SR progress is stored in `engram-review/sr/{note-name}.json`. Legacy SR comments in notes are auto-migrated on plugin load.
 
 ## Data Locations
 
@@ -40,23 +40,24 @@ This rule applies to:
 | Hints | `engram-review/hints/{note-name}.json` |
 | Scan record | `engram-review/scan-record.json` |
 | Cards | Any markdown note with `question :: answer` |
-| SR metadata | HTML comment after each card |
+| AI-generated cards | engram-review/ai-cards/{note-name}.md |
+| SR schedules | engram-review/sr/{note-name}.json |
 
 ## Output Scope
 
 CRITICAL: When completing any Setup Flow or Single Note Flow, strictly limit your output to:
-- Inserting card content into source notes
-- Generating hint JSON files
+- Generating AI card files at `engram-review/ai-cards/{note-name}.md`
+- Generating hint JSON files at `engram-review/hints/{note-name}.json`
 
-PROHIBITED — do not create any of the following unless the user explicitly requests it:
-- Navigation pages
-- Dashboard files
-- Index files
-- Any file beyond card notes and hint JSON
+PROHIBITED — do not do any of the following:
+- Modifying source notes to insert card content
+- Adding flashcard tags to source notes without user confirmation
+- Writing <!--SR:!...--> comments anywhere
+- Creating navigation pages, dashboard files, or index files
 
 Code block examples in this document are syntax references only. Do not treat them as deliverables to create.
 
-Task is complete when cards and JSON hints are generated. Stop there.
+Task is complete when AI card files and JSON hints are generated. Stop there.
 
 ## Trigger Mapping
 
@@ -107,9 +108,24 @@ CRITICAL: Follow these steps in order. Do not skip any step.
 5. CRITICAL: Notes **must** have YAML tags matching the prefix from step 1 to be detected by the plugin (e.g., `{prefix}/azure`). Do not process untagged notes unless the user explicitly requests legacy migration.
 6. Only use untagged `question :: answer` notes when the user explicitly wants legacy flashcard migration.
 7. For each note found: run `bash scripts/get_mtime.sh "<note-path>"` to get current mtime. If the note is already in scan-record AND mtime matches, skip it — it has not changed since last processing. Only read and process notes that are new or have a changed mtime.
-8. Read each non-skipped note and collect exact front text from `question :: answer`.
-9. CRITICAL: For each card in non-skipped notes, run `bash scripts/search_vault.sh "<card-keyword>" 20` to gather real vault context **before** writing any L2. Do not skip this search.
+8. Read each non-skipped note and identify:
+   a. Key concepts/topics covered in the note
+   b. Existing user-written `question :: answer` cards (read-only — do NOT modify the source note)
+   c. Whether AI needs to generate new cards (note has no cards)
+
+   - If the note already has user-written cards → only read them, proceed to generate hints
+   - If the note has no cards → AI generates cards, saves to `engram-review/ai-cards/{note-name}.md`
+     - frontmatter must include the flashcard tag matching the source note's tag
+     - do NOT insert cards into the source note
+
+9. Before generating cards, identify the key concepts/topics in each non-skipped note.
+   For each distinct concept (not per-card), run:
+   `bash scripts/search_vault.sh "<concept-keyword>" 20`
+   to gather personal vault context. One search per concept is sufficient.
+   Collect all results before proceeding to card generation.
 10. Generate `engram-review/hints/{note-name}.json`.
+    If the file already exists (re-run), overwrite it entirely with fresh hints based on current cards.
+    Do NOT merge with old hints — the card set may have changed.
     CRITICAL: `cards` MUST be an object (dict/map), NOT an array.
     Keys are the exact `front` text of each card (must match `question :: answer` verbatim).
     Required format:
@@ -123,11 +139,12 @@ CRITICAL: Follow these steps in order. Do not skip any step.
       }
     }
     ```
+    CRITICAL: `"note"` MUST be the full vault-relative path of the source note (e.g. `"Study/Azure Notes.md"`), NOT just the filename. This is required for Memory Map resolution to work correctly for notes in subfolders.
     WRONG — do NOT use array format:
     ```json
     { "cards": [{ "front": "...", "l1": "..." }] }
     ```
-11. CRITICAL: Before finishing, verify that every processed note has at least one tag matching the prefix from step 1. If missing, add it to the note's YAML frontmatter.
+11. CRITICAL: Before finishing, verify that every processed note has at least one tag matching the prefix from step 1. If any note is missing the tag, report those notes to the user and ask for confirmation before adding tags — do NOT add tags silently.
 12. Update `engram-review/scan-record.json`: set `lastScan` to current ISO timestamp; for each processed note set `processedAt`, `mtime`, and `cards`; preserve all existing entries for skipped notes; write the file back.
 13. Report: how many notes were skipped (already up-to-date), how many were processed, how many cards total, how many L2 hints were left empty, and how many notes had the tag prefix added.
 
@@ -149,15 +166,17 @@ Use when the user wants to fix or change an existing card's front text, back tex
 1. Identify the target note. If the user doesn't specify, ask which note the card is in.
 2. Read the source note and find the `question :: answer` line matching the card to edit.
 3. Apply the change in the source note:
-   - If editing front text: replace the text before `::`. The SR comment on the next line stays unchanged.
+   - If editing front text: replace the text before `::`.
    - If editing back text: replace the text after `::`.
    - If editing both: replace the full `question :: answer` line.
+   - SR scheduling data is stored in `engram-review/sr/` — do NOT look for or modify SR comments in the markdown file.
 4. Read `engram-review/hints/{note-name}.json`.
    - If the front text changed: rename the key in `cards` to match the new front text exactly.
    - Update `l1`, `l2`, `l3` values if the user requested hint changes, or if the front change makes existing hints inaccurate.
 5. Write both the updated source note and the updated hints JSON.
-6. Update `engram-review/scan-record.json`: update `mtime` for the affected note.
-7. Report: which card was changed, what changed (front / back / hints), and confirm both files were updated.
+6. If the front text changed: read `engram-review/sr/{note-name}.json`, rename the key matching the old front text to the new front text, and write the file back. Skip if the file does not exist or the key is not present.
+7. Update `engram-review/scan-record.json`: update `mtime` for the affected note.
+8. Report: which card was changed, what changed (front / back / hints), and confirm all files were updated.
 
 CRITICAL: The key in `engram-review/hints/{note-name}.json` must always exactly match the front text in the source note. If they diverge, the plugin cannot load the hint.
 
@@ -169,10 +188,10 @@ Use when the user wants to remove one or more cards entirely, or remove hints fo
 
 1. Identify the target note and the card(s) to delete.
 2. Read the source note. Find the `question :: answer` line(s) to remove.
-3. Remove the card line and its SR comment (the `<!--SR:!...-->` line immediately after, if present).
+3. Remove the card line. There are no SR comments in markdown files — do NOT look for them.
 4. Write the updated source note.
-5. Read `engram-review/hints/{note-name}.json`. Remove the key matching the deleted card's front text.
-6. If no keys remain in `cards`, delete the entire hint file.
+5. Read `engram-review/hints/{note-name}.json`. Remove the key matching the deleted card's front text. If no keys remain in `cards`, delete the entire hint file.
+6. Read `engram-review/sr/{note-name}.json`. Remove the key matching the deleted card's front text. If the file exists and the key is present, write it back without that key.
 7. Update `engram-review/scan-record.json`: update `mtime` and `cards` count for the affected note. If the note now has 0 cards, remove its entry from `notes`.
 8. Report: which card(s) were deleted, whether the hint file was updated or removed.
 
@@ -231,8 +250,7 @@ Preferred patterns:
 
 PROHIBITED in L1:
 - Questions that simply rephrase the answer
-- Pure definition questions ("What is X?")
-- Trivia questions ("Which color / name / number is X?")
+- Questions that give away the answer
 
 ### L2
 CRITICAL: You **must** run `bash scripts/search_vault.sh "<card-keyword>" 20` before writing any L2. Do not skip this step.
@@ -256,10 +274,23 @@ PROHIBITED in L3:
 
 ## Card Quality Rules
 
-- Test understanding, not trivia
-- Prefer consequences, contrasts, and common confusions
-- Avoid duplicate cards for the same idea
-- Keep answers short enough to verify recall quickly
+### Card Front（問題）必須符合
+
+**自含性**：不看源筆記也能理解在問什麼
+- 必須包含框架/概念名稱和足夠的情境
+- PROHIBITED：缺少主語的問題（「AI 工作流四個階段依序為？」→ 哪個工作流？）
+- 正確示例：「在 Skill 標準化工作流中，如何判斷該升級為零 Token 腳本？」
+
+**測理解而非細節**：
+- PROHIBITED：問數字（幾個？）、問清單順序（依序為？）、問名稱
+- 正確做法：Q 給出已知數字/結構，A 測實質內容
+- 錯誤示例：「Text-to-MAM 將記憶操作收斂為幾個原子操作？」
+- 正確示例：「Text-to-MAM 將記憶操作收斂為 12 個原子操作分三個階段，各階段職責是？」
+
+### Card Back（答案）必須符合
+
+- 是實質內容，不是數字或名稱
+- 答對代表真的理解，不只是剛看過
 
 ## Style Selection
 

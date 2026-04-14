@@ -1,5 +1,7 @@
 "use strict";
 
+const { anySrPattern, parseSrComment, saveSrData } = require("./helpers");
+
 async function migrateReviewDeckFolder(adapter) {
   if (await adapter.exists("engram-review/hints")) return;
   if (!(await adapter.exists(".review-deck"))) return;
@@ -21,6 +23,62 @@ async function migrateReviewDeckFolder(adapter) {
   console.debug("engram-review: migration from .review-deck/ complete; old folder left for manual cleanup");
 }
 
+async function migrateSrCommentsToJson(app) {
+  const configPath = "engram-review/config.json";
+  try {
+    if (await app.vault.adapter.exists(configPath)) {
+      const config = JSON.parse(await app.vault.adapter.read(configPath));
+      if (config.srMigrated) return;
+    }
+  } catch {}
+
+  const files = app.vault.getMarkdownFiles();
+  for (const file of files) {
+    let content = await app.vault.read(file);
+    const lines = content.split("\n");
+    const srData = {};
+    const newLines = [];
+    let modified = false;
+
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      const sep = line.indexOf("::");
+      if (sep > 0) {
+        const front = line.slice(0, sep).trim();
+        const back = line.slice(sep + 2).trim();
+        if (front && back && i + 1 < lines.length && anySrPattern.test(lines[i + 1])) {
+          const srMeta = parseSrComment(lines[i + 1].trim());
+          if (srMeta) srData[front] = { ...srMeta, repetitions: srMeta.repetitions ?? 1 };
+          newLines.push(line);
+          i++; // skip SR comment line
+          modified = true;
+          continue;
+        }
+      }
+      newLines.push(line);
+    }
+
+    if (modified) {
+      await app.vault.modify(file, newLines.join("\n"));
+      await saveSrData(app.vault.adapter, file.path, srData);
+    }
+  }
+
+  // Mark migration complete
+  try {
+    await app.vault.adapter.mkdir("engram-review").catch(() => {});
+    let config = {};
+    if (await app.vault.adapter.exists(configPath)) {
+      config = JSON.parse(await app.vault.adapter.read(configPath));
+    }
+    config.srMigrated = true;
+    await app.vault.adapter.write(configPath, JSON.stringify(config, null, 2));
+  } catch (e) {
+    console.warn("engram-review: could not write srMigrated flag", e);
+  }
+  console.debug("engram-review: SR comment migration complete");
+}
+
 async function scanReviewDecks(app, settings, reviewHelpers) {
   try {
     await migrateReviewDeckFolder(app.vault.adapter);
@@ -29,6 +87,7 @@ async function scanReviewDecks(app, settings, reviewHelpers) {
   }
   let files = app.vault.getMarkdownFiles();
   let deckMap = {};
+  let srMissingFiles = [];
 
   for (let file of files) {
     let content = await app.vault.read(file);
@@ -64,16 +123,35 @@ async function scanReviewDecks(app, settings, reviewHelpers) {
 
     let noteName = file.name.replace(/\.md$/i, "");
     try {
+      const { srFileName } = reviewHelpers;
+      const newSrPath = `engram-review/sr/${srFileName(file.path)}.json`;
+      const legacySrPath = `engram-review/sr/${noteName}.json`;
+      const srExists = await app.vault.adapter.exists(newSrPath) || await app.vault.adapter.exists(legacySrPath);
+      let srData = await reviewHelpers.loadSrData(app.vault.adapter, file.path);
+      reviewHelpers.mergeSrIntoCards(cards, srData);
+      // Detect SR loss: SR file existed before (hints present) but not found at current path
+      if (!srExists) {
+        const hintPath = `engram-review/hints/${noteName}.json`;
+        const hintExists = await app.vault.adapter.exists(hintPath);
+        if (hintExists) srMissingFiles.push(file.name);
+      }
+    } catch {}
+
+    try {
       let hintPath = `engram-review/hints/${noteName}.json`;
       if (await app.vault.adapter.exists(hintPath)) {
-        reviewHelpers.mergeReviewHints(cards, JSON.parse(await app.vault.adapter.read(hintPath)));
+        const hintsPayload = JSON.parse(await app.vault.adapter.read(hintPath));
+        reviewHelpers.mergeReviewHints(cards, hintsPayload);
+        if (file.path.startsWith("engram-review/ai-cards/") && hintsPayload.note) {
+          cards.forEach(card => { card.sourceNotePath = hintsPayload.note; });
+        }
       }
     } catch {}
 
     deckMap[deckName].cards.push(...cards);
   }
 
-  return Object.values(deckMap)
+  const result = Object.values(deckMap)
     .map((deck) => {
       let due = deck.cards.filter((card) => reviewHelpers.getReviewStatus(card.srMeta) === "due").length;
       let unseen = deck.cards.filter((card) => reviewHelpers.getReviewStatus(card.srMeta) === "unseen").length;
@@ -81,9 +159,12 @@ async function scanReviewDecks(app, settings, reviewHelpers) {
       return { ...deck, due, unseen, total };
     })
     .sort((left, right) => right.due - left.due || right.total - left.total);
+  result.srMissingFiles = srMissingFiles;
+  return result;
 }
 
 module.exports = {
   migrateReviewDeckFolder,
+  migrateSrCommentsToJson,
   scanReviewDecks
 };

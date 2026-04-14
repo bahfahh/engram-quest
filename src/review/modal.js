@@ -1,10 +1,7 @@
 "use strict";
 
 const obsidian = require("obsidian");
-
-function escapeRegExp(text) {
-  return text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-}
+const { loadSrData, saveSrData } = require("./helpers");
 
 function openReviewCardModal(app, card, onDone, settings, deps) {
   let modal = new obsidian.Modal(app);
@@ -72,35 +69,25 @@ function openReviewCardModal(app, card, onDone, settings, deps) {
         button.createEl("small", { text: `${rating.calc.interval}${deps.translate(settings, "DAYS")}` });
         button.addEventListener("click", async () => {
           let result = deps.computeFsrs(rating.q, srMeta, settings);
-          let comment = `<!--SR:!${result.due},${result.interval},${result.stability},${result.difficulty},${result.state}-->`;
 
           if (card.notePath) {
             try {
-              let file = app.vault.getAbstractFileByPath(card.notePath);
-              if (file) {
-                let content = await app.vault.read(file);
-                if (card.srComment && deps.anySrPattern.test(card.srComment)) {
-                  content = content.replace(card.srComment, comment);
-                } else {
-                  let pairPattern = new RegExp(`(${escapeRegExp(card.front)}\\s*::\\s*${escapeRegExp(card.back)})`);
-                  content = content.replace(pairPattern, `$1\n${comment}`);
-                }
-                await app.vault.modify(file, content);
-              }
+              let srData = await loadSrData(app.vault.adapter, card.notePath);
+              srData[card.front] = {
+                due: result.due, interval: result.interval, stability: result.stability,
+                difficulty: result.difficulty, state: result.state, repetitions: result.repetitions
+              };
+              await saveSrData(app.vault.adapter, card.notePath, srData);
             } catch (error) {
               console.error("review-deck: write FSRS meta failed", error);
             }
           }
 
           card.srMeta = {
-            due: result.due,
-            interval: result.interval,
-            stability: result.stability,
-            difficulty: result.difficulty,
-            state: result.state,
-            repetitions: result.repetitions
+            due: result.due, interval: result.interval, stability: result.stability,
+            difficulty: result.difficulty, state: result.state, repetitions: result.repetitions
           };
-          card.srComment = comment;
+          card.srComment = "";
           srMeta = card.srMeta;
           modal.close();
           if (onDone) onDone();

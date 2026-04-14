@@ -2,7 +2,7 @@
 const I = require("obsidian");
 const { computeFsrs: P } = require("../fsrs");
 const { t: c, tAlt: C, getLocale: _getLocale } = require("../i18n");
-const { anySrPattern: ge, getReviewStatus: $ } = require("./helpers");
+const { anySrPattern: ge, getReviewStatus: $, loadSrData, saveSrData } = require("./helpers");
 const { saveTagSourceCard, saveInlineCard } = require("./edit");
 const W_ref = { get locale() { try { return I.moment && I.moment.locale && I.moment.locale(); } catch(e) { return "en"; } } };
 function L(s) { return _getLocale(s, W_ref.locale); }
@@ -129,22 +129,14 @@ var Q=class extends I.Modal{
             g.querySelectorAll(".lh-rating-btn").forEach(b=>{ b.style.opacity="0.5"; b.style.pointerEvents="none"; });
 
             let w=P(E.q,p,t);
-            let k=`<!--SR:!${w.due},${w.interval},${w.stability},${w.difficulty},${w.state}-->`;
             if(e.notePath) try {
-              let y=this.app.vault.getAbstractFileByPath(e.notePath);
-              if(y){
-                let b=await this.app.vault.read(y);
-                if(e.srComment&&ge.test(e.srComment)) b=b.replace(e.srComment,k);
-                else {
-                  let T=e.front.replace(/[.*+?^${}()|[\]\\]/g,"\\$&"),_=e.back.replace(/[.*+?^${}()|[\]\\]/g,"\\$&");
-                  b=b.replace(new RegExp(`(${T}\\s*::\\s*${_})`),`$1\n${k}`);
-                }
-                await this.app.vault.modify(y,b);
-              }
+              let srData=await loadSrData(this.app.vault.adapter,e.notePath);
+              srData[e.front]={due:w.due,interval:w.interval,stability:w.stability,difficulty:w.difficulty,state:w.state,repetitions:w.repetitions};
+              await saveSrData(this.app.vault.adapter,e.notePath,srData);
             } catch(y){ console.error("review-deck write failed",y); }
 
             e.srMeta={due:w.due,interval:w.interval,stability:w.stability,difficulty:w.difficulty,state:w.state,repetitions:w.repetitions};
-            e.srComment=k;
+            e.srComment="";
             this.idx++;
             // Task 6: show completion screen instead of closing
             if(this.idx>=this.cards.length){ this._renderComplete(); return; }
@@ -166,11 +158,19 @@ var Q=class extends I.Modal{
       if(!m||this.hintLevel>=3){ x.disabled=true; x.style.opacity="0.38"; x.style.cursor="not-allowed"; }
       else x.addEventListener("click",()=>{this.hintLevel++;this._renderCardContent(e);});
 
-      let S=e.notePath?e.notePath.replace(/\.md$/i,"-memory.canvas"):null;
+      let _isAiCard=e.notePath&&e.notePath.startsWith("engram-review/ai-cards/");
+      let _mmFolder=this.plugin.settings.memoryMapFolder;
+      let S=null;
+      if(e.notePath){if(_mmFolder){let nn=(e.sourceNotePath||e.notePath).split("/").pop().replace(/\.md$/i,"");S=`${_mmFolder}/${nn}-memory.canvas`;}else if(!_isAiCard){S=e.notePath.replace(/\.md$/i,"-memory.canvas");}else if(e.sourceNotePath){// sourceNotePath may be full path or bare filename — derive canvas name and use openLinkText for resolution
+        let _srcBase=e.sourceNotePath.replace(/\.md$/i,"-memory.canvas");
+        // If sourceNotePath contains a folder, use it directly; otherwise let Obsidian resolve by name
+        S=_srcBase;}}
       let w=S?this.app.vault.getAbstractFileByPath(S):null;
+      // Fallback: if full path not found, try resolving by basename via Obsidian link resolution
+      if(!w&&S){let _bn=S.split("/").pop();let _resolved=this.app.metadataCache.getFirstLinkpathDest(_bn,"");if(_resolved)w=_resolved;}
       let k=g.createEl("button",{attr:{class:"lh-pill-btn lh-pill-memory"}});
       k.innerHTML=`${c(t,"MEMORY_MAP")}`;
-      w?k.addEventListener("click",()=>{this.app.workspace.openLinkText(S,"",false);}):(k.disabled=true,k.style.opacity="0.38",k.style.cursor="not-allowed");
+      w?k.addEventListener("click",()=>{this.app.workspace.openLinkText(w.path,"",false);}):(k.disabled=true,k.style.opacity="0.38",k.style.cursor="not-allowed");
 
       let y=p.createEl("div",{attr:{class:"lh-footer-meta"}});
       let b=y.createEl("button",{attr:{class:"lh-pill-reset"}});

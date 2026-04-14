@@ -27,6 +27,21 @@ Quest Map challenges must serve active recall.
 - Only blank high-value memory targets: core terms, critical differences, required steps, easy-to-confuse concepts, and architecture nodes.
 - For image occlusion, only mask meaningful labeled targets or meaningful visual regions. Do not mask decorative areas, whitespace, or low-value text.
 
+## Challenge Quality Rules
+
+### Challenge Question 必須符合
+
+**自含性**：不看源筆記也能理解在問什麼
+- 必須包含框架/概念名稱和足夠的情境
+- PROHIBITED：缺少主語的問題（「四個階段依序為？」→ 哪個框架的四個階段？）
+- 正確示例：「在 FSRS 演算法中，stability 參數代表什麼？」
+
+**測理解而非細節**：
+- PROHIBITED：問數字（幾個？）、問清單順序（依序為？）、問名稱
+- Cloze 不 blank 數字或名稱，只 blank 實質概念
+- 錯誤示例：`sentence: FSRS 有 {{c1::17}} 個參數`
+- 正確示例：`sentence: FSRS 的 stability 參數代表 {{c1::記憶在遺忘前能維持的時間長度}}`
+
 ## User Prompt Priority
 
 Default behavior is AI-guided selection.

@@ -26,8 +26,9 @@ Review Deck is the flashcard and spaced-repetition module in EngramQuest.
 
 ## Storage
 
-- Hints live in `engram-review/hints/`
-- Review progress lives in SR comments in the source note
+- AI-generated cards: `engram-review/ai-cards/`
+- Hints: `engram-review/hints/`
+- Review progress (SR schedules): `engram-review/sr/`
 
 ## Editing and deleting cards
 
@@ -37,4 +38,4 @@ You can ask an AI tool to fix or remove cards at any time:
 - To delete a card: "Delete the card [front text] from [note name]"
 - To remove all hints for a note: "Remove hints for [note name]"
 
-The AI will update both the source note and the hints JSON in `engram-review/hints/`.
+The AI will update the source note, the hints JSON in `engram-review/hints/`, and (if the card's front text changed) the SR schedule key in `engram-review/sr/`.

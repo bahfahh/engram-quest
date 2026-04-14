@@ -52,22 +52,29 @@ function getReviewStatus(srMeta) {
 function parseFlashcards(markdown) {
   let lines = markdown.split("\n");
   let cards = [];
+  let inFencedBlock = false;
 
   for (let index = 0; index < lines.length; index++) {
     let line = lines[index];
+
+    // Track fenced code blocks (``` or ~~~)
+    if (/^[ \t]*(`{3,}|~{3,})/.test(line)) {
+      inFencedBlock = !inFencedBlock;
+      continue;
+    }
+    if (inFencedBlock) continue;
+
     let separatorIndex = line.indexOf("::");
     if (separatorIndex < 1) continue;
 
-    let front = line.slice(0, separatorIndex).trim();
+    // Skip lines where :: is inside inline code
+    const beforeSep = line.slice(0, separatorIndex);
+    const backticksBefore = (beforeSep.match(/`/g) || []).length;
+    if (backticksBefore % 2 !== 0) continue;
+
+    let front = beforeSep.trim();
     let back = line.slice(separatorIndex + 2).trim();
     if (!front || !back) continue;
-
-    let srMeta = null;
-    let srComment = "";
-    if (index + 1 < lines.length && anySrPattern.test(lines[index + 1])) {
-      srComment = lines[index + 1].trim();
-      srMeta = parseSrComment(srComment);
-    }
 
     cards.push({
       front,
@@ -76,13 +83,44 @@ function parseFlashcards(markdown) {
       hint_l1: "",
       hint_l2: "",
       hint_l3: "",
-      srMeta,
-      srComment,
+      srMeta: null,
+      srComment: "",
       notePath: null
     });
   }
 
   return cards;
+}
+
+function srFileName(notePath) {
+  // Use full path as key to avoid collision between same-name notes in different folders
+  return notePath.replace(/\//g, "__").replace(/\.md$/i, "");
+}
+
+async function loadSrData(adapter, notePath) {
+  const newPath = `engram-review/sr/${srFileName(notePath)}.json`;
+  if (await adapter.exists(newPath)) {
+    try { return JSON.parse(await adapter.read(newPath)); } catch { return {}; }
+  }
+  // Legacy fallback: old files were named by noteName only (before path-based fix)
+  const legacyPath = `engram-review/sr/${notePath.split("/").pop().replace(/\.md$/i, "")}.json`;
+  if (await adapter.exists(legacyPath)) {
+    try { return JSON.parse(await adapter.read(legacyPath)); } catch { return {}; }
+  }
+  return {};
+}
+
+async function saveSrData(adapter, notePath, srData) {
+  const srPath = `engram-review/sr/${srFileName(notePath)}.json`;
+  await adapter.mkdir("engram-review/sr").catch(() => {});
+  await adapter.write(srPath, JSON.stringify(srData, null, 2));
+}
+
+function mergeSrIntoCards(cards, srData) {
+  cards.forEach((card) => {
+    const sr = srData[card.front];
+    if (sr) card.srMeta = sr;
+  });
 }
 
 function parseReviewDeckBlock(markdown) {
@@ -174,7 +212,7 @@ function mergeReviewHints(cards, hintPayload) {
 
 function matchFlashcardTagPrefix(tags, flashcardTags) {
   let prefixes = (flashcardTags || "")
-    .split(/[\s\n]+/)
+    .split(/[\s,\n]+/)
     .map((tag) => tag.replace(/^#/, "").trim().toLowerCase())
     .filter(Boolean);
   if (prefixes.length === 0) return null;
@@ -203,5 +241,9 @@ module.exports = {
   parseFlashcards,
   parseReviewDeckBlock,
   mergeReviewHints,
-  matchFlashcardTagPrefix
+  matchFlashcardTagPrefix,
+  srFileName,
+  loadSrData,
+  saveSrData,
+  mergeSrIntoCards
 };

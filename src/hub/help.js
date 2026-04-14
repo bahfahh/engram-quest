@@ -124,7 +124,7 @@ var fe=class extends I.Modal{constructor(e,t){super(e),this.plugin=t}onClose(){v
             <p><strong>Q6：我有很多舊 <code>::</code> 卡片，但沒有 tag。要怎麼遷移？</strong></p>
             <p>到設定打開 <code>Include legacy :: notes</code>，保留原本的 <code>question :: answer</code> 格式，再回到 Hub 的 Review Deck 檢查是否已被納入。若要長期維護，建議之後慢慢補上 <code>#flashcards/...</code> tag。</p>
             <p><strong>Q7：Review Deck 進度存在哪裡？</strong></p>
-            <p>複習進度會寫在卡片筆記的 SR comment 中：<code>&lt;!--SR:!YYYY-MM-DD,interval,stability,difficulty,state--&gt;</code></p>
+            <p>複習進度存放在 <code>engram-review/sr/{筆記名稱}.json</code>，不會寫入使用者筆記。</p>
             <p><strong>Q8：手機可以用嗎？</strong></p>
             <p>Review Deck 可以。Quest Map 與 Memory Map 目前仍較適合桌面版。</p>
             <p><strong>Q9：手機上的插件不會自動更新怎麼辦？</strong></p>
@@ -235,7 +235,7 @@ What is a derivative? :: Instantaneous rate of change at a point</pre></li>
             <p><strong>Q6. I already have many old <code>::</code> cards without tags. How do I migrate?</strong></p>
             <p>Turn on <code>Include legacy :: notes</code> in Settings, keep the existing <code>question :: answer</code> format, and reopen Hub → Review Deck. For long-term maintenance, gradually add <code>#flashcards/...</code> tags.</p>
             <p><strong>Q7. Where is review progress stored?</strong></p>
-            <p>In SR comments below each card: <code>&lt;!--SR:!YYYY-MM-DD,interval,stability,difficulty,state--&gt;</code></p>
+            <p>Review progress is stored in <code>engram-review/sr/{note-name}.json</code> and never written into your notes.</p>
             <p><strong>Q8. Does this work on mobile?</strong></p>
             <p>Review Deck works on mobile. Quest Map and Memory Map are still best on desktop.</p>
             <p><strong>Q9. Why doesn't the plugin update on my phone?</strong></p>

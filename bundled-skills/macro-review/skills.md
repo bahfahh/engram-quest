@@ -152,39 +152,40 @@ including the one they asked about.
 
 ---
 
-## Step 4: Write FSRS Comments Back
+## Step 4: Write SR Data Back
 
-After receiving each group's rating, immediately write FSRS scheduling comments
-into the source markdown file before moving to the next group.
+After receiving each group's rating, immediately write SR scheduling data
+into `engram-review/sr/{note-name}.json` before moving to the next group.
 
-### FSRS values for new (unseen) cards
+For each card in the group, update the JSON file at `engram-review/sr/{note-name}.json`
+where `{note-name}` is the filename (without `.md`) of the card's source file.
 
-Calculate today's date as `YYYY-MM-DD`. Tomorrow = today + 1 day. Easy due = today + 4 days.
+The JSON is a flat object where each key is the card's front text:
 
-| Rating | Comment to insert |
-|--------|-------------------|
-| Good (1) | `<!--SR:!{tomorrow},1,3.126,5.315,2-->` |
-| Hard (2) | `<!--SR:!{tomorrow},1,1.183,6.508,2-->` |
-| Again (3) | `<!--SR:!{tomorrow},1,0.407,3.286,1-->` |
+```json
+{
+  "card front text": {
+    "due": "YYYY-MM-DD",
+    "interval": 1,
+    "stability": 3.126,
+    "difficulty": 5.315,
+    "state": 2,
+    "repetitions": 1
+  }
+}
+```
 
-### For due cards (already have SR comment)
+Calculate today's date as `YYYY-MM-DD`. Tomorrow = today + 1 day.
 
-If the card has an existing `<!--SR:!...-->` comment (any format), **replace** it
-with a new FSRS comment. Use the same values as for new cards (treat as a reset):
-- Good → `<!--SR:!{tomorrow},1,3.126,5.315,2-->`
-- Hard → `<!--SR:!{tomorrow},1,1.183,6.508,2-->`
-- Again → `<!--SR:!{tomorrow},1,0.407,3.286,1-->`
+| Rating | Values to write |
+|--------|----------------|
+| Good (1) | due=tomorrow, interval=1, stability=3.126, difficulty=5.315, state=2, repetitions=1 |
+| Hard (2) | due=tomorrow, interval=1, stability=1.183, difficulty=6.508, state=2, repetitions=1 |
+| Again (3) | due=tomorrow, interval=1, stability=0.407, difficulty=3.286, state=1, repetitions=1 |
 
-### How to insert
+If the file already exists, read it first and merge — only update keys for cards in this group, preserve all other keys.
 
-For each card line in the note file:
-
-1. **If card has no SR comment below it**: insert the comment on the next line
-   immediately after the `question :: answer` line.
-
-2. **If card has an existing SR comment**: replace that line with the new comment.
-
-Use the Edit tool to modify the file. Apply all cards in one group in a single file edit.
+PROHIBITED: Do NOT write `<!--SR:!...-->` comments into any markdown file.
 
 ---
 

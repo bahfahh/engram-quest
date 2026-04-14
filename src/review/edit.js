@@ -1,5 +1,7 @@
 "use strict";
 
+const { loadSrData, saveSrData } = require("./helpers");
+
 function escapeRegExp(s) {
   return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
@@ -51,6 +53,20 @@ async function saveTagSourceCard(app, card, newData) {
     await app.vault.adapter.write(hintPath, JSON.stringify(hints, null, 2));
   } catch (e) {
     console.warn("review-edit: hints update failed", e);
+  }
+
+  // 3. Update sr JSON key if front text changed
+  if (card.front !== newData.front) {
+    try {
+      const srData = await loadSrData(app.vault.adapter, card.notePath);
+      if (srData[card.front]) {
+        srData[newData.front] = srData[card.front];
+        delete srData[card.front];
+        await saveSrData(app.vault.adapter, card.notePath, srData);
+      }
+    } catch (e) {
+      console.warn("review-edit: sr update failed", e);
+    }
   }
 }
 
