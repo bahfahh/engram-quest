@@ -141,7 +141,7 @@ CRITICAL: Follow these steps in order. Do not skip any step.
       }
     }
     ```
-    CRITICAL: `"note"` MUST be the full vault-relative path of the source note (e.g. `"Study/Azure Notes.md"`), NOT just the filename. This is required for Memory Map resolution to work correctly for notes in subfolders.
+    CRITICAL: `"note"` MUST be the full vault-relative path of the **source note** (e.g. `"Study/Azure Notes.md"`), NOT the ai-cards file path. The plugin uses this field to resolve `sourceNotePath` back to the original note for Memory Map linking. Writing the ai-cards path here breaks that resolution.
     WRONG — do NOT use array format:
     ```json
     { "cards": [{ "front": "...", "l1": "..." }] }
@@ -167,22 +167,24 @@ CRITICAL: Follow these steps in order. Do not skip any step.
 
 Use when the user wants to fix or change an existing card's front text, back text, or hints.
 
-1. Identify the target note. If the user doesn't specify, ask which note the card is in.
-2. Read the source note and find the `question :: answer` line matching the card to edit.
-3. Apply the change in the source note:
+1. Identify the target card. If the user doesn't specify, ask which note/deck the card is in.
+2. Determine card type:
+   - **User-written card**: the `question :: answer` line lives in the source note.
+   - **AI-generated card**: the `question :: answer` line lives in `engram-review/ai-cards/{note-name}.md`.
+   Check `engram-review/ai-cards/` first; if the card is found there, it is AI-generated.
+3. Find and update the `question :: answer` line in the correct file (ai-cards file or source note):
    - If editing front text: replace the text before `::`.
    - If editing back text: replace the text after `::`.
-   - If editing both: replace the full `question :: answer` line.
    - SR scheduling data is stored in `engram-review/sr/` — do NOT look for or modify SR comments in the markdown file.
 4. Read `engram-review/hints/{note-name}.json`.
    - If the front text changed: rename the key in `cards` to match the new front text exactly.
    - Update `l1`, `l2`, `l3` values if the user requested hint changes, or if the front change makes existing hints inaccurate.
-5. Write both the updated source note and the updated hints JSON.
+5. Write both the updated card file and the updated hints JSON.
 6. If the front text changed: read `engram-review/sr/{note-name}.json`, rename the key matching the old front text to the new front text, and write the file back. Skip if the file does not exist or the key is not present.
 7. Update `engram-review/scan-record.json`: update `mtime` for the affected note.
 8. Report: which card was changed, what changed (front / back / hints), and confirm all files were updated.
 
-CRITICAL: The key in `engram-review/hints/{note-name}.json` must always exactly match the front text in the source note. If they diverge, the plugin cannot load the hint.
+CRITICAL: The key in `engram-review/hints/{note-name}.json` must always exactly match the front text in the card file. If they diverge, the plugin cannot load the hint.
 
 ## Delete Flow
 
@@ -190,10 +192,12 @@ Use when the user wants to remove one or more cards entirely, or remove hints fo
 
 ### Delete a card
 
-1. Identify the target note and the card(s) to delete.
-2. Read the source note. Find the `question :: answer` line(s) to remove.
-3. Remove the card line. There are no SR comments in markdown files — do NOT look for them.
-4. Write the updated source note.
+1. Identify the target card(s) to delete.
+2. Determine card type (same as Edit Flow step 2): check `engram-review/ai-cards/` first.
+3. Remove the `question :: answer` line from the correct file:
+   - **AI-generated card**: remove the line from `engram-review/ai-cards/{note-name}.md`. If the file becomes empty (no cards left), delete the entire ai-cards file.
+   - **User-written card**: remove the line from the source note. There are no SR comments in markdown files — do NOT look for them.
+4. Write the updated file.
 5. Read `engram-review/hints/{note-name}.json`. Remove the key matching the deleted card's front text. If no keys remain in `cards`, delete the entire hint file.
 6. Read `engram-review/sr/{note-name}.json`. Remove the key matching the deleted card's front text. If the file exists and the key is present, write it back without that key.
 7. Update `engram-review/scan-record.json`: update `mtime` and `cards` count for the affected note. If the note now has 0 cards, remove its entry from `notes`.
