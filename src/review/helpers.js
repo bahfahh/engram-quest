@@ -64,6 +64,17 @@ function parseFlashcards(markdown) {
     }
     if (inFencedBlock) continue;
 
+    // Q/A style: Q: question \n A: answer
+    const qaMatch = line.match(/^Q:\s*(.+)/i);
+    if (qaMatch && index + 1 < lines.length) {
+      const aMatch = lines[index + 1].match(/^A:\s*(.+)/i);
+      if (aMatch) {
+        cards.push({ front: qaMatch[1].trim(), back: aMatch[1].trim(), emoji: "", hint_l1: "", hint_l2: "", hint_l3: "", srMeta: null, srComment: "", notePath: null });
+        index++;
+        continue;
+      }
+    }
+
     let separatorIndex = line.indexOf("::");
     if (separatorIndex < 1) continue;
 
