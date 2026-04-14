@@ -61,6 +61,9 @@ EngramQuest is built on three pillars of cognitive science:
 **Q: Where is my progress stored?**  
 **A:** All data is stored as standard Markdown comments (SR comments) directly in your notes. You own your data forever.
 
+**Q: Does EngramQuest support Anki?**  
+**A:** Yes. You can pair it with the **Obsidian_to_Anki** community plugin. AI-generated cards use the `question :: answer` format and include a `TARGET DECK` field in the frontmatter — both are natively compatible with Obsidian_to_Anki. Just install Obsidian_to_Anki + AnkiConnect, enable RemNote-style (`::`) syntax in its settings, and sync. Your cards will appear in Anki automatically.
+
 **Q: How can I make the AI always follow a specific pattern when building a Review Deck?**  
 **A:** Mark key answers in your notes using any syntax you prefer — for example, Obsidian's highlight syntax `==text==`, bold `**text**`, or any custom marker. Then add a rule to your AI config file (e.g. `CLAUDE.md`, `GEMINI.md`, or `AGENTS.md`) telling it to treat that marker as a card answer:
 > `IMPORTANT: When building a Review Deck, every highlighted ==text== must be turned into a review card.`
@@ -124,6 +127,9 @@ EngramQuest 結合了三大學習科學原理：
 
 **Q: 我的學習進度存哪裡？**  
 **A:** 所有的複習數據都以標準 Markdown 註釋形式存放在你的筆記中，資料永遠屬於你，不依賴任何雲端服務。
+
+**Q: EngramQuest 支援 Anki 嗎？**  
+**A:** 支援。可搭配 **Obsidian_to_Anki** 社群插件使用。AI 生成的卡片採用 `question :: answer` 格式，frontmatter 也包含 `TARGET DECK` 欄位，兩者都與 Obsidian_to_Anki 原生相容。只需安裝 Obsidian_to_Anki + AnkiConnect，在設定中開啟 RemNote style（`::` 語法），同步後卡片就會自動出現在 Anki 中。
 
 **Q: 如何讓 AI 每次建立 Review Deck 時都依照我想要的固定模式？**  
 **A:** 使用你習慣的任何語法在筆記中標記重要答案，例如 Obsidian 高亮 `==文字==`、粗體 `**文字**`，或任何自訂記號都可以。接著在你的 AI 設定檔（例如 `CLAUDE.md`、`GEMINI.md` 或 `AGENTS.md`）中加入對應指令，告訴 AI 把那個記號當作卡片答案：
