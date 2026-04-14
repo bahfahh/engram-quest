@@ -118,6 +118,7 @@ CRITICAL: Follow these steps in order. Do not skip any step.
    - If the note already has user-written cards → only read them, proceed to generate hints
    - If the note has no cards → AI generates cards, saves to `engram-review/ai-cards/{note-name}.md`
      - frontmatter must include a tag matching the prefix from step 1 (e.g. `flashcards/topic`)
+     - frontmatter must also include `TARGET DECK: {topic}` where `{topic}` is the sub-path after the prefix (e.g. tag `flashcards/backend/architecture` → `TARGET DECK: backend/architecture`). This enables Obsidian_to_Anki compatibility.
      - do NOT insert cards into the source note
 
 9. Before generating cards, identify the key concepts/topics in each non-skipped note.
