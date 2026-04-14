@@ -60,10 +60,10 @@ var fe=class extends I.Modal{constructor(e,t){super(e),this.plugin=t}onClose(){v
           `},{icon:"🃏",title:"Review Deck",tag:c(e,"HELP_REVIEW_TAG"),html:`
             <ol>
               <li>跟 AI 說：「把 tag:math 的筆記做成 Review Deck」</li>
-              <li>AI 建立卡片筆記（含 <code>#flashcards/math</code> tag 和 <code>question :: answer</code> 格式）</li>
+              <li>AI 讀取你的筆記，在 <code>engram-review/ai-cards/</code> 建立卡片檔（含 <code>#flashcards/math</code> tag 和 <code>question :: answer</code> 格式）</li>
               <li>開 Hub → Review Deck → 開始複習</li>
             </ol>
-            <div class="lh-help-sub"><div class="lh-help-sub-icon">💡</div><div>你的一般筆記不需要有任何 tag，AI 可以直接讀取。AI <strong>產生的卡片筆記</strong>才需要有 <code>#flashcards/...</code> tag，插件才能偵測到。</div></div>
+            <div class="lh-help-sub"><div class="lh-help-sub-icon">💡</div><div>你的一般筆記不需要有任何 tag，AI 可以直接讀取。AI <strong>產生的卡片檔</strong>存在 <code>engram-review/ai-cards/</code>，不會修改你的原始筆記。卡片檔需要有 <code>#flashcards/...</code> tag，插件才能偵測到。</div></div>
             <p><strong>相容模式：</strong>如果你有舊式 <code>::</code> 卡片筆記，可以到設定中開啟 legacy <code>::</code> 掃描。這是遷移模式，不是新手預設。</p>
           `},{icon:"🗺️",title:"Quest Map",tag:c(e,"HELP_QUEST_TAG"),html:`
             <ol>
@@ -114,11 +114,11 @@ var fe=class extends I.Modal{constructor(e,t){super(e),this.plugin=t}onClose(){v
             <p><strong>Q1：沒有安裝 Skills 也能用嗎？</strong></p>
             <p>可以。你可以手動建立 <code>question :: answer</code> 卡片，並加上像 <code>#flashcards/math</code> 這種 tag。</p>
             <p><strong>Q2：如果來源筆記沒有任何 tag，AI 還讀得到嗎？</strong></p>
-            <p>可以。AI 讀來源筆記時，不要求來源筆記先有 <code>flashcards</code> tag；但最後要讓插件掃描得到，AI 仍應輸出成可辨識的卡片格式。</p>
+            <p>可以。AI 讀來源筆記時，不要求來源筆記先有 <code>flashcards</code> tag。AI 產生的卡片會存到 <code>engram-review/ai-cards/</code>，不會動你的原始筆記。</p>
             <p><strong>Q3：為什麼我看不到 Review Deck？</strong></p>
             <p>常見原因有：還沒有建立卡片筆記、卡片筆記沒有符合目前設定的 tag prefix，或你期待的是舊式 <code>::</code> 掃描但 legacy 模式還沒開。</p>
             <p><strong>Q4：我有一般筆記，沒有任何 tag。要怎麼做 Review Deck？</strong></p>
-            <p>直接對 AI 說：「把和[主題]相關的筆記做成 Review Deck」。AI 可以先讀一般筆記當來源，但最後輸出應該寫成 <code>question :: answer</code>，並加上對應 tag。回到 Hub 的 Review Deck 就能看到。</p>
+            <p>直接對 AI 說：「把和[主題]相關的筆記做成 Review Deck」。AI 會讀取你的筆記，在 <code>engram-review/ai-cards/</code> 建立含 tag 的卡片檔，不會動你的原始筆記。回到 Hub 的 Review Deck 就能看到。</p>
             <p><strong>Q5：我想手動做卡片，不靠 AI。要怎麼做？</strong></p>
             <p>建一篇筆記，加上 <code>#flashcards/主題</code> tag，然後用 <code>question :: answer</code> 寫卡片。回到 Hub 的 Review Deck 就能看到。</p>
             <p><strong>Q6：我有很多舊 <code>::</code> 卡片，但沒有 tag。要怎麼遷移？</strong></p>
@@ -171,10 +171,10 @@ var fe=class extends I.Modal{constructor(e,t){super(e),this.plugin=t}onClose(){v
           `},{icon:"🃏",title:"Review Deck",tag:c(e,"HELP_REVIEW_TAG"),html:`
             <ol>
               <li>Ask AI: "Turn notes tagged with math into a Review Deck"</li>
-              <li>AI creates card notes (with <code>#flashcards/math</code> tag and <code>question :: answer</code> format)</li>
+              <li>AI reads your notes and creates card files in <code>engram-review/ai-cards/</code> (with <code>#flashcards/math</code> tag and <code>question :: answer</code> format)</li>
               <li>Open Hub → Review Deck → start reviewing</li>
             </ol>
-            <div class="lh-help-sub"><div class="lh-help-sub-icon">💡</div><div>Your source notes don't need any tag — AI can read them directly. Only the card notes AI generates need a <code>#flashcards/...</code> tag for the plugin to detect them.</div></div>
+            <div class="lh-help-sub"><div class="lh-help-sub-icon">💡</div><div>Your source notes don't need any tag — AI can read them directly. The card files AI generates are saved to <code>engram-review/ai-cards/</code> and are never written into your original notes. Those card files need a <code>#flashcards/...</code> tag for the plugin to detect them.</div></div>
             <p><strong>Migration mode:</strong> if you have old plain <code>::</code> flashcard notes, enable legacy <code>::</code> scanning in Settings. Optional, off by default.</p>
           `},{icon:"🗺️",title:"Quest Map",tag:c(e,"HELP_QUEST_TAG"),html:`
             <ol>
@@ -225,11 +225,11 @@ What is a derivative? :: Instantaneous rate of change at a point</pre></li>
             <p><strong>Q1. Can I use this without installing Skills?</strong></p>
             <p>Yes. You can write cards manually using <code>question :: answer</code> and add a matching tag such as <code>#flashcards/math</code>.</p>
             <p><strong>Q2. Can AI read source notes that do not have tags?</strong></p>
-            <p>Yes. AI can read ordinary source notes without <code>flashcards</code> tags. But to make the plugin scan the result by default, AI should still write the output back as plugin-readable cards.</p>
+            <p>Yes. AI can read ordinary source notes without <code>flashcards</code> tags. The generated cards are saved to <code>engram-review/ai-cards/</code> — your original notes are never modified.</p>
             <p><strong>Q3. Why can't I see a Review Deck?</strong></p>
             <p>Common reasons: no card note has been created yet, the card note does not match the current tag prefix setting, or you expected old plain <code>::</code> notes to be included without enabling legacy scan.</p>
             <p><strong>Q4. I have general notes with no tags. How do I make a Review Deck?</strong></p>
-            <p>Ask AI: "Make a Review Deck from notes about [topic]". AI can read ordinary notes as source, but the final output should still be written back as <code>question :: answer</code> plus a matching tag. Then open Hub → Review Deck.</p>
+            <p>Ask AI: "Make a Review Deck from notes about [topic]". AI reads your notes and creates card files in <code>engram-review/ai-cards/</code> with the correct tags — your original notes are never modified. Open Hub → Review Deck to see them.</p>
             <p><strong>Q5. I want to make cards manually without AI. How?</strong></p>
             <p>Create a note, add a <code>#flashcards/topic</code> tag, then write cards using <code>question :: answer</code>. Open Hub → Review Deck to see them.</p>
             <p><strong>Q6. I already have many old <code>::</code> cards without tags. How do I migrate?</strong></p>

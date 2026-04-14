@@ -11,6 +11,13 @@ description:
 
 # Review Deck Skill
 
+## Terminology
+
+- **source note**: the user's original note in the vault — content source, read-only for AI
+- **ai-cards file**: a card file AI creates at `engram-review/ai-cards/{note-name}.md`
+
+For full plugin architecture details (scanning logic, tag matching, data paths), read `references/plugin-architecture.md`.
+
 ## Output Language Rule
 
 CRITICAL: Generate user-facing output in the language that best matches the user's prompt or the source note.
@@ -24,24 +31,19 @@ This rule applies to:
 
 ## How the Plugin Works
 
-1. The plugin scans vault notes.
-2. Any line with `question :: answer` is a flashcard.
-3. The plugin scans notes whose tags match the user-configured flashcard tag prefix (default: `flashcards`). This prefix is user-configurable in plugin settings.
-4. If the user enables legacy `::` note scanning in plugin settings, untagged flashcard notes can also be included for migration.
-5. Hints are loaded from `engram-review/hints/{note-name}.json`.
-6. SR progress is stored in `engram-review/sr/{note-name}.json`. Legacy SR comments in notes are auto-migrated on plugin load.
+The plugin scans every `.md` file in the vault (including `engram-review/ai-cards/`).
+A file becomes a deck when it has **both**: `question :: answer` lines **and** a tag matching the configured prefix.
+For full scanning logic, see `references/plugin-architecture.md`.
 
 ## Data Locations
 
 | Data | Path |
 |---|---|
 | Plugin settings | `.obsidian/plugins/engram-quest/data.json` |
-| Plugin config | `engram-review/config.json` |
 | Hints | `engram-review/hints/{note-name}.json` |
 | Scan record | `engram-review/scan-record.json` |
-| Cards | Any markdown note with `question :: answer` |
-| AI-generated cards | engram-review/ai-cards/{note-name}.md |
-| SR schedules | engram-review/sr/{note-name}.json |
+| AI-generated cards | `engram-review/ai-cards/{note-name}.md` |
+| SR schedules | `engram-review/sr/{note-name}.json` |
 
 ## Output Scope
 
@@ -74,7 +76,7 @@ Task is complete when AI card files and JSON hints are generated. Stop there.
 
 ## Scan Record
 
-The file `engram-review/scan-record.json` tracks which notes have already been processed by AI to avoid duplicate card creation.
+The file `engram-review/scan-record.json` tracks which source notes have already been read by AI to avoid duplicate card creation.
 
 Schema:
 ```json
@@ -105,7 +107,7 @@ CRITICAL: Follow these steps in order. Do not skip any step.
 2. Ensure `engram-review/config.json` exists.
 3. Check for a pre-existing knowledge index or graph in the vault (e.g. `graphify-out/GRAPH_REPORT.md`, `graph.json`). If found, use its key concepts and community structure to prioritize which notes to process first and to identify high-value card candidates. This supplements — not replaces — the tag-based note discovery below.
 4. Find notes relevant to the topic across the vault.
-5. CRITICAL: Notes **must** have YAML tags matching the prefix from step 1 to be detected by the plugin (e.g., `{prefix}/azure`). Do not process untagged notes unless the user explicitly requests legacy migration.
+5. Note discovery does NOT require source notes to have flashcard tags. AI can read any source note as content input. The flashcard tag is only required on the **file the plugin will scan** (see Terminology). For AI-generated cards, AI sets the tag on the ai-cards output file.
 6. Only use untagged `question :: answer` notes when the user explicitly wants legacy flashcard migration.
 7. For each note found: run `bash scripts/get_mtime.sh "<note-path>"` to get current mtime. If the note is already in scan-record AND mtime matches, skip it — it has not changed since last processing. Only read and process notes that are new or have a changed mtime.
 8. Read each non-skipped note and identify:
@@ -115,7 +117,7 @@ CRITICAL: Follow these steps in order. Do not skip any step.
 
    - If the note already has user-written cards → only read them, proceed to generate hints
    - If the note has no cards → AI generates cards, saves to `engram-review/ai-cards/{note-name}.md`
-     - frontmatter must include the flashcard tag matching the source note's tag
+     - frontmatter must include a tag matching the prefix from step 1 (e.g. `flashcards/topic`)
      - do NOT insert cards into the source note
 
 9. Before generating cards, identify the key concepts/topics in each non-skipped note.
@@ -144,8 +146,10 @@ CRITICAL: Follow these steps in order. Do not skip any step.
     ```json
     { "cards": [{ "front": "...", "l1": "..." }] }
     ```
-11. CRITICAL: Before finishing, verify that every processed note has at least one tag matching the prefix from step 1. If any note is missing the tag, report those notes to the user and ask for confirmation before adding tags — do NOT add tags silently.
-12. Update `engram-review/scan-record.json`: set `lastScan` to current ISO timestamp; for each processed note set `processedAt`, `mtime`, and `cards`; preserve all existing entries for skipped notes; write the file back.
+11. CRITICAL: Before finishing, verify tag coverage based on card flow:
+    - **User-written cards** (cards live in the source note): verify the **source note** has at least one tag matching the prefix from step 1. If missing, report to user and ask before adding — do NOT add silently.
+    - **AI-generated cards** (cards live in `engram-review/ai-cards/`): verify the **ai-cards file** has the tag in its frontmatter. This should already be set at creation time (step 8). No user confirmation needed. Do NOT check or modify source notes for tags in this flow.
+12. Update `engram-review/scan-record.json`: set `lastScan` to current ISO timestamp; for each note that was read and processed, set `processedAt`, `mtime`, and `cards`; preserve all existing entries for skipped notes; write the file back.
 13. Report: how many notes were skipped (already up-to-date), how many were processed, how many cards total, how many L2 hints were left empty, and how many notes had the tag prefix added.
 
 ## Update Flow
