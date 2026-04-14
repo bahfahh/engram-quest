@@ -72,8 +72,9 @@ function parseFlashcards(markdown) {
     const backticksBefore = (beforeSep.match(/`/g) || []).length;
     if (backticksBefore % 2 !== 0) continue;
 
-    let front = beforeSep.trim();
-    let back = line.slice(separatorIndex + 2).trim();
+    const stripMd = s => s.replace(/^[*_=]+|[*_=]+$/g, "").trim();
+    let front = stripMd(beforeSep.trim());
+    let back = stripMd(line.slice(separatorIndex + 2).trim());
     if (!front || !back) continue;
 
     cards.push({
