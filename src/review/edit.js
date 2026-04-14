@@ -1,6 +1,6 @@
 "use strict";
 
-const { loadSrData, saveSrData } = require("./helpers");
+const { loadSrData, saveSrData, srFileName } = require("./helpers");
 
 function escapeRegExp(s) {
   return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -128,7 +128,62 @@ async function saveInlineCard(app, sourcePath, card, newData) {
   await app.vault.modify(file, content);
 }
 
-module.exports = { saveTagSourceCard, saveInlineCard, replaceCardInBlock, deleteTagSourceCard };
+module.exports = { saveTagSourceCard, saveInlineCard, replaceCardInBlock, deleteTagSourceCard, deleteDeckCards };
+
+/**
+ * Delete all cards belonging to a deck.
+ * - AI cards (engram-review/ai-cards/): trash the whole file
+ * - Hand-written cards (user source notes): remove only the matching `front :: back` lines
+ * - Always cleans up SR and hints for every notePath in the deck
+ * @param {object} app
+ * @param {object} deck - deck object with cards[]
+ */
+async function deleteDeckCards(app, deck) {
+  const paths = [...new Set(deck.cards.map(c => c.notePath).filter(Boolean))];
+
+  for (const p of paths) {
+    const isAiCard = p.startsWith('engram-review/ai-cards/');
+
+    if (isAiCard) {
+      // Trash the whole AI card file
+      const f = app.vault.getAbstractFileByPath(p);
+      if (f) await app.fileManager.trashFile(f);
+    } else {
+      // Remove only the matching :: lines from user source note
+      const file = app.vault.getAbstractFileByPath(p);
+      if (file) {
+        const cardsInFile = deck.cards.filter(c => c.notePath === p);
+        let content = await app.vault.read(file);
+        for (const card of cardsInFile) {
+          const re = new RegExp(
+            `^[ \t]*${escapeRegExp(card.front)}[ \t]*::[ \t]*${escapeRegExp(card.back)}[ \t]*\n?`,
+            'm'
+          );
+          if (re.test(content)) {
+            content = content.replace(re, '');
+          } else {
+            const reFront = new RegExp(`^[ \t]*${escapeRegExp(card.front)}[ \t]*::.*\n?`, 'm');
+            content = content.replace(reFront, '');
+          }
+        }
+        await app.vault.modify(file, content);
+      }
+    }
+
+    // Clean SR
+    try {
+      const srFile = app.vault.getAbstractFileByPath(`engram-review/sr/${srFileName(p)}.json`);
+      if (srFile) await app.fileManager.trashFile(srFile);
+    } catch (e) { console.warn('deleteDeckCards: sr cleanup failed', e); }
+
+    // Clean hints
+    try {
+      const nn = p.split('/').pop().replace(/\.md$/i, '');
+      const hintFile = app.vault.getAbstractFileByPath(`engram-review/hints/${nn}.json`);
+      if (hintFile) await app.fileManager.trashFile(hintFile);
+    } catch (e) { console.warn('deleteDeckCards: hints cleanup failed', e); }
+  }
+}
 
 /**
  * Delete a single AI-generated card from its source file, SR, and hints.
