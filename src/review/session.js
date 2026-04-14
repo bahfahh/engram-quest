@@ -74,12 +74,26 @@ var Q=class extends I.Modal{
     let d=i.createEl("div",{attr:{class:"lh-rc-top"}});
     d.createEl("span",{text:this.deckName,attr:{class:"lh-rc-badge"}});
     this.browseOnly&&d.createEl("span",{text:c(t,"BROWSE_ONLY"),attr:{class:"lh-rc-badge"}});
-    // Edit button — top-right of card
-    let editTopBtn=d.createEl("button",{attr:{class:"lh-rc-edit-btn"}});
+    // Right-side button group
+    let btnGroup=d.createEl("div",{attr:{style:"display:flex;align-items:center;gap:4px;margin-left:auto;"}});
+    // Copy button
+    let copyTopBtn=btnGroup.createEl("button",{attr:{class:"lh-rc-edit-btn"}});
+    copyTopBtn.textContent="📋 Copy";
+    copyTopBtn.title="Copy";
+    copyTopBtn.addEventListener("click",()=>{
+      let parts=[e.front];
+      if(e.hint_l1) parts.push("L1: "+e.hint_l1);
+      if(e.hint_l2) parts.push("L2: "+e.hint_l2);
+      if(e.hint_l3) parts.push("L3: "+e.hint_l3);
+      parts.push("A: "+e.back);
+      navigator.clipboard.writeText(parts.join("\n")).then(()=>{ copyTopBtn.textContent="✅ Copied"; setTimeout(()=>copyTopBtn.textContent="📋 Copy",1500); });
+    });
+    // Edit button
+    let editTopBtn=btnGroup.createEl("button",{attr:{class:"lh-rc-edit-btn"}});
     editTopBtn.textContent="✏️ "+c(t,"EDIT_CARD");
     editTopBtn.addEventListener("click",()=>this._renderEditForm(e));
     // Delete button
-    let delTopBtn=d.createEl("button",{attr:{class:"lh-rc-edit-btn",style:"margin-left:6px;color:#ef4444;"}});
+    let delTopBtn=btnGroup.createEl("button",{attr:{class:"lh-rc-edit-btn",style:"color:#ef4444;"}});
     delTopBtn.innerHTML="🗑️";
     delTopBtn.title=c(t,"DELETE");
     delTopBtn.addEventListener("click",()=>this._renderDeleteConfirm(e));
