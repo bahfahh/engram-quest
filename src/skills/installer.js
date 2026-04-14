@@ -59,6 +59,7 @@ function createInstaller() {
     "review-deck": [
       { source: "review-deck/skills.md", target: "SKILL.md" },
       { source: "review-deck/references/user-guide.md", target: "references/user-guide.md" },
+      { source: "review-deck/references/plugin-architecture.md", target: "references/plugin-architecture.md" },
       { source: "review-deck/scripts/search_vault.sh", target: "scripts/search_vault.sh" }
     ],
     "memory-map": [
