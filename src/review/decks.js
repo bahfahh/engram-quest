@@ -87,7 +87,6 @@ async function scanReviewDecks(app, settings, reviewHelpers) {
   }
   let files = app.vault.getMarkdownFiles();
   let deckMap = {};
-  let srMissingFiles = [];
 
   for (let file of files) {
     let content = await app.vault.read(file);
@@ -123,18 +122,8 @@ async function scanReviewDecks(app, settings, reviewHelpers) {
 
     let noteName = file.name.replace(/\.md$/i, "");
     try {
-      const { srFileName } = reviewHelpers;
-      const newSrPath = `engram-review/sr/${srFileName(file.path)}.json`;
-      const legacySrPath = `engram-review/sr/${noteName}.json`;
-      const srExists = await app.vault.adapter.exists(newSrPath) || await app.vault.adapter.exists(legacySrPath);
       let srData = await reviewHelpers.loadSrData(app.vault.adapter, file.path);
       reviewHelpers.mergeSrIntoCards(cards, srData);
-      // Detect SR loss: SR file existed before (hints present) but not found at current path
-      if (!srExists) {
-        const hintPath = `engram-review/hints/${noteName}.json`;
-        const hintExists = await app.vault.adapter.exists(hintPath);
-        if (hintExists) srMissingFiles.push(file.name);
-      }
     } catch {}
 
     try {
@@ -151,7 +140,7 @@ async function scanReviewDecks(app, settings, reviewHelpers) {
     deckMap[deckName].cards.push(...cards);
   }
 
-  const result = Object.values(deckMap)
+  return Object.values(deckMap)
     .map((deck) => {
       let due = deck.cards.filter((card) => reviewHelpers.getReviewStatus(card.srMeta) === "due").length;
       let unseen = deck.cards.filter((card) => reviewHelpers.getReviewStatus(card.srMeta) === "unseen").length;
@@ -159,8 +148,6 @@ async function scanReviewDecks(app, settings, reviewHelpers) {
       return { ...deck, due, unseen, total };
     })
     .sort((left, right) => right.due - left.due || right.total - left.total);
-  result.srMissingFiles = srMissingFiles;
-  return result;
 }
 
 module.exports = {
