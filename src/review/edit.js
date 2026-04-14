@@ -128,4 +128,58 @@ async function saveInlineCard(app, sourcePath, card, newData) {
   await app.vault.modify(file, content);
 }
 
-module.exports = { saveTagSourceCard, saveInlineCard, replaceCardInBlock };
+module.exports = { saveTagSourceCard, saveInlineCard, replaceCardInBlock, deleteTagSourceCard };
+
+/**
+ * Delete a single AI-generated card from its source file, SR, and hints.
+ * Only operates on files under engram-review/ai-cards/ — never touches user notes.
+ * @param {object} app - Obsidian app
+ * @param {object} card - card to delete (must have notePath, front, back)
+ */
+async function deleteTagSourceCard(app, card) {
+  if (!card.notePath) return;
+
+  // 1. Remove the `front :: back` line from the ai-cards file
+  const file = app.vault.getAbstractFileByPath(card.notePath);
+  if (file) {
+    let content = await app.vault.read(file);
+    const re = new RegExp(
+      `^[ \t]*${escapeRegExp(card.front)}[ \t]*::[ \t]*${escapeRegExp(card.back)}[ \t]*\n?`,
+      "m"
+    );
+    if (re.test(content)) {
+      content = content.replace(re, "");
+    } else {
+      // Fallback: match by front only
+      const reFront = new RegExp(`^[ \t]*${escapeRegExp(card.front)}[ \t]*::.*\n?`, "m");
+      content = content.replace(reFront, "");
+    }
+    await app.vault.modify(file, content);
+  }
+
+  // 2. Remove SR key
+  try {
+    const srData = await loadSrData(app.vault.adapter, card.notePath);
+    if (srData[card.front]) {
+      delete srData[card.front];
+      await saveSrData(app.vault.adapter, card.notePath, srData);
+    }
+  } catch (e) {
+    console.warn("review-edit: sr delete failed", e);
+  }
+
+  // 3. Remove hints key
+  const noteName = card.notePath.split("/").pop().replace(/\.md$/i, "");
+  const hintPath = `engram-review/hints/${noteName}.json`;
+  try {
+    if (await app.vault.adapter.exists(hintPath)) {
+      const hints = JSON.parse(await app.vault.adapter.read(hintPath));
+      if (hints.cards && hints.cards[card.front]) {
+        delete hints.cards[card.front];
+        await app.vault.adapter.write(hintPath, JSON.stringify(hints, null, 2));
+      }
+    }
+  } catch (e) {
+    console.warn("review-edit: hints delete failed", e);
+  }
+}

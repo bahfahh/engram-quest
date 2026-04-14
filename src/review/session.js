@@ -3,7 +3,7 @@ const I = require("obsidian");
 const { computeFsrs: P } = require("../fsrs");
 const { t: c, tAlt: C, getLocale: _getLocale } = require("../i18n");
 const { anySrPattern: ge, getReviewStatus: $, loadSrData, saveSrData } = require("./helpers");
-const { saveTagSourceCard, saveInlineCard } = require("./edit");
+const { saveTagSourceCard, saveInlineCard, deleteTagSourceCard } = require("./edit");
 const W_ref = { get locale() { try { return I.moment && I.moment.locale && I.moment.locale(); } catch(e) { return "en"; } } };
 function L(s) { return _getLocale(s, W_ref.locale); }
 
@@ -78,6 +78,11 @@ var Q=class extends I.Modal{
     let editTopBtn=d.createEl("button",{attr:{class:"lh-rc-edit-btn"}});
     editTopBtn.textContent="✏️ "+c(t,"EDIT_CARD");
     editTopBtn.addEventListener("click",()=>this._renderEditForm(e));
+    // Delete button
+    let delTopBtn=d.createEl("button",{attr:{class:"lh-rc-edit-btn",style:"margin-left:6px;color:#ef4444;"}});
+    delTopBtn.innerHTML="🗑️";
+    delTopBtn.title=c(t,"DELETE");
+    delTopBtn.addEventListener("click",()=>this._renderDeleteConfirm(e));
     if(e.emoji){ i.createEl("span",{attr:{class:"lh-rc-emoji"}}).textContent=e.emoji; }
     i.createEl("div",{text:e.front,attr:{class:"lh-rc-question"}});
 
@@ -257,6 +262,49 @@ var Q=class extends I.Modal{
     cancelBtn.textContent=c(t,"EDIT_CANCEL");
     cancelBtn.addEventListener("click",()=>this.renderCard());
   }
+  _renderDeleteConfirm(e){
+    let t=this.plugin.settings;
+    const isAiCard=e.notePath&&e.notePath.startsWith("engram-review/ai-cards/");
+
+    // Hand-written card: show redirect notice, don't delete
+    if(!isAiCard){
+      const sourceNote=e.notePath||"";
+      const modal=new I.Modal(this.app);
+      modal.modalEl.style.cssText="width:min(92vw,400px);padding:0;border-radius:16px;overflow:hidden;";
+      const wrap=modal.contentEl;
+      wrap.style.cssText="padding:24px;display:flex;flex-direction:column;gap:14px;";
+      wrap.createEl("div",{text:"✏️ "+c(t,"EDIT_CARD"),attr:{style:"font-size:16px;font-weight:700;color:var(--text-normal,#111);"}});
+      wrap.createEl("div",{text:`這是「${sourceNote}」的手寫筆記卡片，請直接在筆記中刪除對應的 question :: answer 行。`,attr:{style:"font-size:13px;color:var(--text-muted,#6b7280);line-height:1.6;"}});
+      const btnRow=wrap.createEl("div",{attr:{style:"display:flex;gap:8px;justify-content:flex-end;"}});
+      btnRow.createEl("button",{text:c(t,"DELETE_CANCEL_BTN"),attr:{style:"padding:7px 16px;border-radius:8px;border:1px solid #d1d5db;background:#fff;cursor:pointer;font-size:13px;"}}).addEventListener("click",()=>modal.close());
+      const openBtn=btnRow.createEl("button",{text:"開啟筆記",attr:{style:"padding:7px 16px;border-radius:8px;border:none;background:#6366f1;color:#fff;cursor:pointer;font-size:13px;font-weight:600;"}});
+      openBtn.addEventListener("click",()=>{ modal.close(); this.app.workspace.openLinkText(sourceNote,"",false); });
+      modal.open();
+      return;
+    }
+
+    // AI card: confirm then delete
+    const modal=new I.Modal(this.app);
+    modal.modalEl.style.cssText="width:min(92vw,400px);padding:0;border-radius:16px;overflow:hidden;";
+    const wrap=modal.contentEl;
+    wrap.style.cssText="padding:24px;display:flex;flex-direction:column;gap:14px;";
+    wrap.createEl("div",{text:c(t,"DELETE_CONFIRM_TITLE").replace("{name}",e.front),attr:{style:"font-size:16px;font-weight:700;color:var(--text-normal,#111);"}});
+    wrap.createEl("div",{text:c(t,"DELETE_CONFIRM_FILE"),attr:{style:"font-size:13px;color:var(--text-muted,#6b7280);line-height:1.6;"}});
+    const btnRow=wrap.createEl("div",{attr:{style:"display:flex;gap:8px;justify-content:flex-end;"}});
+    btnRow.createEl("button",{text:c(t,"DELETE_CANCEL_BTN"),attr:{style:"padding:7px 16px;border-radius:8px;border:1px solid #d1d5db;background:#fff;cursor:pointer;font-size:13px;"}}).addEventListener("click",()=>modal.close());
+    const delBtn=btnRow.createEl("button",{text:c(t,"DELETE_CONFIRM_BTN"),attr:{style:"padding:7px 16px;border-radius:8px;border:none;background:#ef4444;color:#fff;cursor:pointer;font-size:13px;font-weight:600;"}});
+    delBtn.addEventListener("click",async()=>{
+      modal.close();
+      try { await deleteTagSourceCard(this.app,e); } catch(err){ console.error("review-delete failed",err); }
+      // Remove card from in-memory array and continue session
+      this.cards.splice(this.idx,1);
+      if(this.cards.length===0){ this._renderComplete(); return; }
+      if(this.idx>=this.cards.length) this.idx=this.cards.length-1;
+      this.renderCard();
+    });
+    modal.open();
+  }
+
 }
 
 module.exports = { ReviewSessionModal: Q };
