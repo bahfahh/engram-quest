@@ -1,11 +1,9 @@
 ---
 name: memory-map
-description: >
-  Generate or update memory-map canvas files for the Obsidian EngramQuest plugin.
-  Trigger when the user asks to create, update, or explain a memory map in EngramQuest.
-
-  User guide trigger:
-  If the user asks how memory-map works in EngramQuest, read references/user-guide.md and answer.
+description: |
+  Generate or update memory-map Canvas files for the EngramQuest plugin.
+  Trigger when the user asks to create, update, or explain a memory map, or asks how memory-map works.
+  Use this skill whenever the user mentions memory maps, visual knowledge maps, or wants to build a Canvas map for retention — even if they do not use the exact term "memory-map".
 ---
 
 # Memory Map Skill
@@ -44,7 +42,11 @@ Choose the right reference before writing:
 
 0. Check for a pre-existing knowledge index or graph in the vault (e.g. `graphify-out/graph.json`, `GRAPH_REPORT.md`). If found, use its concept relationships as association edges and community structure as chunk groupings — this replaces or reduces the vault search in step 2.
 1. Read the source note.
-2. Search the vault for related notes or context.
+2. Search the vault for related notes or context using this priority:
+   a. Step 0 already found a graph index → use it directly. Skip this step.
+   b. No index: `obsidian search query="<key concepts from source note>" format=json`
+   c. Obsidian CLI not available: `bash scripts/search_vault.sh "<key concepts>" 30`
+   d. Source note is self-contained and no associations are needed → skip this step.
 3. Choose the best reference flow.
 4. Read `.memory-map/config.json` — this is a **config file only**, not an output folder. Extract the `memoryMapFolder` value, then follow `references/create.md` → Output section for the exact save location. Never save canvas files inside `.memory-map/`.
 5. Keep the canvas readable and stable.

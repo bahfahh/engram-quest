@@ -54,13 +54,16 @@ function createInstaller() {
     "quest-map": [
       { source: "quest-map/skills.md", target: "SKILL.md" },
       { source: "quest-map/references/user-guide.md", target: "references/user-guide.md" },
+      { source: "quest-map/references/obsidian-cli.md", target: "references/obsidian-cli.md" },
       { source: "quest-map/scripts/list_quest_icons.sh", target: "scripts/list_quest_icons.sh" }
     ],
     "review-deck": [
       { source: "review-deck/skills.md", target: "SKILL.md" },
       { source: "review-deck/references/user-guide.md", target: "references/user-guide.md" },
       { source: "review-deck/references/plugin-architecture.md", target: "references/plugin-architecture.md" },
-      { source: "review-deck/scripts/search_vault.sh", target: "scripts/search_vault.sh" }
+      { source: "review-deck/references/obsidian-cli.md", target: "references/obsidian-cli.md" },
+      { source: "review-deck/scripts/search_vault.sh", target: "scripts/search_vault.sh" },
+      { source: "review-deck/scripts/get_mtime.sh", target: "scripts/get_mtime.sh" }
     ],
     "memory-map": [
       { source: "memory-map/skills.md", target: "SKILL.md" },
@@ -68,6 +71,7 @@ function createInstaller() {
       { source: "memory-map/references/update.md", target: "references/update.md" },
       { source: "memory-map/references/explain.md", target: "references/explain.md" },
       { source: "memory-map/references/user-guide.md", target: "references/user-guide.md" },
+      { source: "memory-map/references/obsidian-cli.md", target: "references/obsidian-cli.md" },
       { source: "memory-map/scripts/search_vault.sh", target: "scripts/search_vault.sh" }
     ]
   };

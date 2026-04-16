@@ -1,13 +1,11 @@
 ---
 name: macro-review
-description: |
-  Knowledge condensation review for the Obsidian EngramQuest plugin (Pro feature).
-  Trigger when the user says /macro-review, mentions having too many unseen cards,
-  wants to batch-learn a topic, or says phrases like "幫我學完 azure 的卡片",
-  "知識濃縮", "大量卡片", "一次學完", "macro review".
-  This skill teaches cards in clusters like a human teacher would, then writes
-  FSRS scheduling data directly back to the vault notes so the plugin reflects
-  the learning immediately.
+description:
+  Knowledge condensation review for the EngramQuest plugin (Pro feature).
+  Trigger when the user invokes /macro-review, mentions having too many unseen or overdue cards,
+  wants to batch-learn a topic, or wants to clear a backlog of flashcards in one session.
+  Use this skill whenever the user wants to learn a large set of cards at once, do a bulk review,
+  or get through all cards on a topic quickly — even if they do not explicitly say "macro review".
 ---
 
 # Macro Review Skill
@@ -45,7 +43,14 @@ Parse the user's command for a tag or topic:
 幫我學完 azure 的卡片
 ```
 
-Use `bash scripts/search_vault.sh "<tag-or-topic>" 30` to find relevant notes.
+Find relevant notes using this priority.
+IMPORTANT: When vault search is needed, use Obsidian CLI (`obsidian search`). For full syntax, query operators, and fallback rules, see `references/obsidian-cli.md`.
+- If a flashcard tag was given (e.g. `azure`, `flashcards/azure`):
+  `obsidian search query="tag:#flashcards/<tag>" format=json`
+- If topic-only (no explicit tag):
+  `obsidian search query="<topic>" format=json`
+- If Obsidian CLI is not available (command fails):
+  `bash scripts/search_vault.sh "<tag-or-topic>" 30`
 
 Then read each note and extract all `question :: answer` lines. For each card, check
 whether the line immediately below contains `<!--SR:!...-->` (any format).

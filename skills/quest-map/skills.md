@@ -1,9 +1,9 @@
 ---
 name: quest-map
-description: >
-  Generate quest-map YAML for the Obsidian EngramQuest plugin.
-  Trigger when the user asks to make a quest-map from a note or topic, or asks how quest-map works (read references/user-guide.md and answer).
-  Supports easy, medium, and hard difficulty. Save result as <source-note-name>-quest.md.
+description: 
+  Generate quest-map YAML for the EngramQuest plugin.
+  Trigger when the user asks to create a quest map from a note or topic, or asks how quest-map works.
+  Use this skill whenever the user wants to gamify notes into interactive challenges, create a quest from study material, or turn any topic into an easy/medium/hard quest — even if they do not say "quest-map" explicitly.
 ---
 
 # Quest Map Skill
@@ -29,18 +29,18 @@ Quest Map challenges must serve active recall.
 
 ## Challenge Quality Rules
 
-### Challenge Question 必須符合
+### Challenge Question Requirements
 
-**自含性**：不看源筆記也能理解在問什麼
-- 必須包含框架/概念名稱和足夠的情境
-- PROHIBITED：缺少主語的問題（「四個階段依序為？」→ 哪個框架的四個階段？）
-- 正確示例：「在 FSRS 演算法中，stability 參數代表什麼？」
+**Self-contained**: the question must be understandable without reading the source note.
+- Must include the framework/concept name and enough context.
+- PROHIBITED: questions lacking a clear subject ("What are the four stages in order?" → which framework's four stages?)
+- Good example: "In the FSRS algorithm, what does the stability parameter represent?"
 
-**測理解而非細節**：
-- PROHIBITED：問數字（幾個？）、問清單順序（依序為？）、問名稱
-- Cloze 不 blank 數字或名稱，只 blank 實質概念
-- 錯誤示例：`sentence: FSRS 有 {{c1::17}} 個參數`
-- 正確示例：`sentence: FSRS 的 stability 參數代表 {{c1::記憶在遺忘前能維持的時間長度}}`
+**Test understanding, not trivia**:
+- PROHIBITED: asking for a count ("How many?"), list order, or bare names.
+- Cloze: do not blank numbers or names — only blank substantive concepts.
+- Bad example: `sentence: FSRS has {{c1::17}} parameters`
+- Good example: `sentence: FSRS's stability parameter represents {{c1::how long a memory can be retained before forgetting}}`
 
 ## User Prompt Priority
 
@@ -59,7 +59,10 @@ Default behavior is AI-guided selection.
    - frontmatter tags
    - note links
    - embedded vault images
-   - targeted Obsidian CLI search only when needed
+   - targeted Obsidian CLI search only when needed.
+       IMPORTANT: When vault search is needed, use Obsidian CLI (`obsidian search`). For full syntax, query operators, and fallback rules, see `references/obsidian-cli.md`.
+       `obsidian search query="<topic> <key concept>" format=json`
+       Use this when the source note lacks enough context or related notes are expected. Skip if the note is self-contained or the graph index already covers the topic.
    - run `scripts/list_quest_icons.sh` to discover available named icon files when the topic's icon is non-obvious; fall back to emoji if the script returns nothing
 3. Split the material into 3 to 5 chapters.
 4. For each chapter generate:

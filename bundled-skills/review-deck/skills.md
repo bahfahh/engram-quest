@@ -1,15 +1,20 @@
 ---
 name: review-deck
-description: 
-  Manage review-deck data for the Obsidian EngramQuest plugin.
+description:
+  Manage review-deck data for the EngramQuest plugin.
   Trigger when the user asks to create, update, explain, edit, or delete a review deck,
-  flashcard hints, or review-deck setup.
-
-  User guide trigger:
-  If the user asks how review-deck works in EngramQuest, read references/user-guide.md and answer.
+  flashcard hints, or review-deck setup, or asks how review-deck works.
+  Use this skill whenever the user wants to build or manage flashcard decks in EngramQuest — even if they do not use the exact term "review-deck".
 ---
 
 # Review Deck Skill
+
+## Reference Routing
+
+| Goal | Action |
+|---|---|
+| User asks how review-deck works | Read `references/user-guide.md` and answer |
+| All other tasks | Follow the flows below |
 
 ## Terminology
 
@@ -103,10 +108,17 @@ To get a file's current mtime in milliseconds: `bash scripts/get_mtime.sh "path/
 CRITICAL: Follow these steps in order. Do not skip any step.
 
 0. Load scan record: read `engram-review/scan-record.json` if it exists. If missing, treat as `{ "lastScan": null, "notes": {} }`.
-1. Read `.obsidian/plugins/engram-quest/data.json` and extract the `flashcardTags` field. This is the user's configured tag prefix (e.g., `mycard`, `flashcards`, or multiple space-separated values). If the file does not exist or the field is empty, default to `flashcards`. Use this value — not a hardcoded string — for all tag operations in this session.
+1. Read `.obsidian/plugins/engram-quest/data.json` using:
+   `obsidian read path=".obsidian/plugins/engram-quest/data.json"`
+   Extract the `flashcardTags` field. This is the user's configured tag prefix (e.g., `mycard`, `flashcards`, or multiple space-separated values). If the file does not exist or the field is empty, default to `flashcards`. Use this value — not a hardcoded string — for all tag operations in this session.
 2. Ensure `engram-review/config.json` exists.
 3. Check for a pre-existing knowledge index or graph in the vault (e.g. `graphify-out/GRAPH_REPORT.md`, `graph.json`). If found, use its key concepts and community structure to prioritize which notes to process first and to identify high-value card candidates. This supplements — not replaces — the tag-based note discovery below.
-4. Find notes relevant to the topic across the vault.
+4. Determine scope and choose the appropriate discovery path:
+   - If the user specifies a single note → read it directly. Skip discovery entirely.
+   - Otherwise:
+     a. Check for a graph index (`graphify-out/GRAPH_REPORT.md` or `graph.json`). If found, read it — use its note paths and key concepts directly. No further search needed.
+     b. If no graph index → `obsidian search query="path:<topic> OR tag:#<topic>" format=json`
+     c. If `obsidian search` fails (CLI not available) → `bash scripts/search_vault.sh "<topic>" 30`
 5. Note discovery does NOT require source notes to have flashcard tags. AI can read any source note as content input. The flashcard tag is only required on the **file the plugin will scan** (see Terminology). For AI-generated cards, AI sets the tag on the ai-cards output file.
 6. Only use untagged `question :: answer` notes when the user explicitly wants legacy flashcard migration.
 7. For each note found: run `bash scripts/get_mtime.sh "<note-path>"` to get current mtime. If the note is already in scan-record AND mtime matches, skip it — it has not changed since last processing. Only read and process notes that are new or have a changed mtime.
@@ -121,11 +133,11 @@ CRITICAL: Follow these steps in order. Do not skip any step.
      - frontmatter must also include `TARGET DECK: {topic}` where `{topic}` is the sub-path after the prefix (e.g. tag `flashcards/backend/architecture` → `TARGET DECK: backend/architecture`). This enables Obsidian_to_Anki compatibility.
      - do NOT insert cards into the source note
 
-9. Before generating cards, identify the key concepts/topics in each non-skipped note.
-   For each distinct concept (not per-card), run:
-   `bash scripts/search_vault.sh "<concept-keyword>" 20`
-   to gather personal vault context. One search per concept is sufficient.
-   Collect all results before proceeding to card generation.
+9. Before generating cards, collect all L2 search keywords from every card to be generated across all non-skipped notes.
+   Combine into a single call:
+   `bash scripts/search_vault.sh "<kw1 kw2 kw3 ...>" 50`
+   One call covers all cards. Split into 2–3 batches only if keywords exceed 15.
+   Match results back to each card's concept before writing L2.
 10. Generate `engram-review/hints/{note-name}.json`.
     If the file already exists (re-run), overwrite it entirely with fresh hints based on current cards.
     Do NOT merge with old hints — the card set may have changed.
@@ -262,7 +274,7 @@ PROHIBITED in L1:
 - Questions that give away the answer
 
 ### L2
-CRITICAL: You **must** run `bash scripts/search_vault.sh "<card-keyword>" 20` before writing any L2. Do not skip this step.
+CRITICAL: L2 must come from a vault search. Use the batched search from Step 9 — do NOT run a separate `search_vault.sh` call per card. Match each card's keyword against the already-collected batch results before writing L2.
 
 - L2 must come from actual vault results: first-person notes, diary entries, timestamps, expressed confusions, or past learning scenes.
 - Use personalized language: "On 2025/3/3 you noted...", "You once struggled with...", "You compared this to..."
@@ -283,23 +295,23 @@ PROHIBITED in L3:
 
 ## Card Quality Rules
 
-### Card Front（問題）必須符合
+### Card Front Requirements
 
-**自含性**：不看源筆記也能理解在問什麼
-- 必須包含框架/概念名稱和足夠的情境
-- PROHIBITED：缺少主語的問題（「AI 工作流四個階段依序為？」→ 哪個工作流？）
-- 正確示例：「在 Skill 標準化工作流中，如何判斷該升級為零 Token 腳本？」
+**Self-contained**: the question must be understandable without reading the source note.
+- Must include the framework/concept name and enough context.
+- PROHIBITED: questions lacking a clear subject ("What are the four AI workflow stages in order?" → which workflow?)
+- Good example: "In the Skill standardization workflow, how do you decide whether to upgrade to a zero-token script?"
 
-**測理解而非細節**：
-- PROHIBITED：問數字（幾個？）、問清單順序（依序為？）、問名稱
-- 正確做法：Q 給出已知數字/結構，A 測實質內容
-- 錯誤示例：「Text-to-MAM 將記憶操作收斂為幾個原子操作？」
-- 正確示例：「Text-to-MAM 將記憶操作收斂為 12 個原子操作分三個階段，各階段職責是？」
+**Test understanding, not trivia**:
+- PROHIBITED: asking for a count ("How many?"), list order, or bare names.
+- Correct approach: give the known number/structure in the question; test the substance in the answer.
+- Bad example: "How many atomic operations does Text-to-MAM consolidate memory operations into?"
+- Good example: "Text-to-MAM consolidates memory operations into 12 atomic operations across three phases — what is the responsibility of each phase?"
 
-### Card Back（答案）必須符合
+### Card Back Requirements
 
-- 是實質內容，不是數字或名稱
-- 答對代表真的理解，不只是剛看過
+- Must be substantive content, not just a number or a name.
+- A correct answer should demonstrate genuine understanding, not just recent exposure.
 
 ## Style Selection
 
