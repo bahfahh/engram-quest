@@ -10,7 +10,7 @@ LIMIT="${2:-20}"
 PATTERN=$(echo "$QUERY" | tr ' ' '\n' | sed 's/[.[\*^$()+?{}|\\]/\\&/g' | paste -sd '|')
 
 # Find vault root (4 levels up from scripts/)
-VAULT_ROOT="$(cd "$(dirname "$0")/../../../.." && pwd)"
+VAULT_ROOT="$(cd "$(dirname "$0")/../../../../.." && pwd)"
 
 grep -ri --include="*.md" \
   --exclude-dir=".obsidian" \

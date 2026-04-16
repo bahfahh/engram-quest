@@ -1,6 +1,6 @@
 ---
 name: macro-review
-description: |
+description:
   Knowledge condensation review for the EngramQuest plugin (Pro feature).
   Trigger when the user invokes /macro-review, mentions having too many unseen or overdue cards,
   wants to batch-learn a topic, or wants to clear a backlog of flashcards in one session.
@@ -43,7 +43,8 @@ Parse the user's command for a tag or topic:
 幫我學完 azure 的卡片
 ```
 
-Find relevant notes using this priority:
+Find relevant notes using this priority.
+IMPORTANT: When vault search is needed, use Obsidian CLI (`obsidian search`). For full syntax, query operators, and fallback rules, see `references/obsidian-cli.md`.
 - If a flashcard tag was given (e.g. `azure`, `flashcards/azure`):
   `obsidian search query="tag:#flashcards/<tag>" format=json`
 - If topic-only (no explicit tag):

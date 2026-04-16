@@ -1,6 +1,6 @@
 ---
 name: quest-map
-description: |
+description: 
   Generate quest-map YAML for the EngramQuest plugin.
   Trigger when the user asks to create a quest map from a note or topic, or asks how quest-map works.
   Use this skill whenever the user wants to gamify notes into interactive challenges, create a quest from study material, or turn any topic into an easy/medium/hard quest — even if they do not say "quest-map" explicitly.
@@ -59,7 +59,8 @@ Default behavior is AI-guided selection.
    - frontmatter tags
    - note links
    - embedded vault images
-   - targeted Obsidian CLI search only when needed:
+   - targeted Obsidian CLI search only when needed.
+       IMPORTANT: When vault search is needed, use Obsidian CLI (`obsidian search`). For full syntax, query operators, and fallback rules, see `references/obsidian-cli.md`.
        `obsidian search query="<topic> <key concept>" format=json`
        Use this when the source note lacks enough context or related notes are expected. Skip if the note is self-contained or the graph index already covers the topic.
    - run `scripts/list_quest_icons.sh` to discover available named icon files when the topic's icon is non-obvious; fall back to emoji if the script returns nothing

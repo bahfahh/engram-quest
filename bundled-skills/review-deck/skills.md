@@ -1,6 +1,6 @@
 ---
 name: review-deck
-description:
+description: 
   Manage review-deck data for the EngramQuest plugin.
   Trigger when the user asks to create, update, explain, edit, or delete a review deck,
   flashcard hints, or review-deck setup, or asks how review-deck works.
@@ -114,6 +114,7 @@ CRITICAL: Follow these steps in order. Do not skip any step.
 2. Ensure `engram-review/config.json` exists.
 3. Check for a pre-existing knowledge index or graph in the vault (e.g. `graphify-out/GRAPH_REPORT.md`, `graph.json`). If found, use its key concepts and community structure to prioritize which notes to process first and to identify high-value card candidates. This supplements — not replaces — the tag-based note discovery below.
 4. Determine scope and choose the appropriate discovery path:
+   IMPORTANT: When vault search is needed, use Obsidian CLI (`obsidian search`). For full syntax, query operators, and fallback rules, see `references/obsidian-cli.md`.
    - If the user specifies a single note → read it directly. Skip discovery entirely.
    - Otherwise:
      a. Check for a graph index (`graphify-out/GRAPH_REPORT.md` or `graph.json`). If found, read it — use its note paths and key concepts directly. No further search needed.
