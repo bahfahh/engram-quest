@@ -64,15 +64,44 @@ function parseFlashcards(markdown) {
     }
     if (inFencedBlock) continue;
 
-    // Q/A style: Q: question \n A: answer
+    // Q/A style: Q: question \n A: answer (multi-line answer supported)
     const qaMatch = line.match(/^Q:\s*(.+)/i);
-    if (qaMatch && index + 1 < lines.length) {
-      const aMatch = lines[index + 1].match(/^A:\s*(.+)/i);
+    if (qaMatch) {
+      let aLineIdx = index + 1;
+      while (aLineIdx < lines.length && lines[aLineIdx].trim() === "") aLineIdx++;
+      const aMatch = aLineIdx < lines.length ? lines[aLineIdx].match(/^A:\s*(.*)/i) : null;
       if (aMatch) {
-        cards.push({ front: qaMatch[1].trim(), back: aMatch[1].trim(), emoji: "", hint_l1: "", hint_l2: "", hint_l3: "", srMeta: null, srComment: "", notePath: null });
-        index++;
-        continue;
+        let backLines = [aMatch[1]];
+        let j = aLineIdx + 1;
+        while (j < lines.length) {
+          if (/^Q:\s*/i.test(lines[j])) break;
+          if (/^[ \t]*(`{3,}|~{3,})/.test(lines[j])) break;
+          backLines.push(lines[j]);
+          j++;
+        }
+        while (backLines.length > 0 && backLines[backLines.length - 1].trim() === "") backLines.pop();
+        const back = backLines.join("\n").trim();
+        if (back) {
+          cards.push({ front: qaMatch[1].trim(), back, emoji: "", hint_l1: "", hint_l2: "", hint_l3: "", srMeta: null, srComment: "", notePath: null });
+          index = j - 1;
+          continue;
+        }
       }
+    }
+
+    // Cloze deletion: {{c1::text}} or {{c1::text::hint}}
+    if (/\{\{c\d+::/.test(line)) {
+      const clozeRe = /\{\{c(\d+)::([^}:]*?)(?:::([^}]*?))?\}\}/g;
+      const clozeMatches = [...line.matchAll(clozeRe)];
+      const groups = [...new Set(clozeMatches.map(m => m[1]))];
+      for (const group of groups) {
+        const front = line.replace(clozeRe, (_, g, text, hint) => g === group ? (hint ? `[${hint}]` : "[...]") : text);
+        const back = line.replace(clozeRe, (_, _g, text) => text);
+        if (front.trim() && back.trim()) {
+          cards.push({ front: front.trim(), back: back.trim(), emoji: "", hint_l1: "", hint_l2: "", hint_l3: "", srMeta: null, srComment: "", notePath: null });
+        }
+      }
+      continue;
     }
 
     let separatorIndex = line.indexOf("::");
@@ -82,6 +111,9 @@ function parseFlashcards(markdown) {
     const beforeSep = line.slice(0, separatorIndex);
     const backticksBefore = (beforeSep.match(/`/g) || []).length;
     if (backticksBefore % 2 !== 0) continue;
+
+    // Skip lines that look like cloze (already handled above, guard against partial match)
+    if (/\{\{c\d+::/.test(beforeSep)) continue;
 
     const stripMd = s => s.replace(/^[*_=]+|[*_=]+$/g, "").trim();
     let front = stripMd(beforeSep.trim());

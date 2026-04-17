@@ -98,10 +98,14 @@ var fe=class extends I.Modal{constructor(e,t){super(e),this.plugin=t}onClose(){v
             </ul>
             <p><strong>讓插件偵測到的條件（兩個都要滿足）：</strong></p>
             <ol>
-              <li>筆記裡有 <code>question :: answer</code> 格式的卡片，例如：<pre>#flashcards/數學
+              <li>筆記裡有卡片（<code>::</code>、<code>Q:/A:</code>、Cloze 三種格式均支援），例如：<pre>#flashcards/數學
 
 畢氏定理是什麼 :: 直角三角形中，a² + b² = c²
-導數的定義 :: 函數在某點的瞬時變化率</pre></li>
+
+Q: 導數的定義？
+A: 函數在某點的瞬時變化率
+
+{{c1::微積分}} 是高中數學最重要的一門學科</pre></li>
               <li>筆記有符合前綴的 tag，例如 <code>#flashcards/數學</code>（如上例第一行）</li>
             </ol>
             <p><strong>Include legacy <code>::</code> notes</strong>（預設：Off）</p>
@@ -120,14 +124,37 @@ var fe=class extends I.Modal{constructor(e,t){super(e),this.plugin=t}onClose(){v
             <p><strong>Q4：我有一般筆記，沒有任何 tag。要怎麼做 Review Deck？</strong></p>
             <p>直接對 AI 說：「把和[主題]相關的筆記做成 Review Deck」。AI 會讀取你的筆記，在 <code>engram-review/ai-cards/</code> 建立含 tag 的卡片檔，不會動你的原始筆記。回到 Hub 的 Review Deck 就能看到。</p>
             <p><strong>Q5：我想手動做卡片，不靠 AI。要怎麼做？</strong></p>
-            <p>建一篇筆記，加上 <code>#flashcards/主題</code> tag，然後用以下任一格式寫卡片：</p>
-            <pre>#flashcards/產品分析
+            <p><strong>Step 1：加 tag（決定放到哪個 Deck）</strong></p>
+            <p>在筆記任意位置加上 <code>#flashcards/主題</code>。斜線後面的名稱就是 Deck 的名字。</p>
+            <ul>
+              <li><code>#flashcards/英文</code> → 建立「英文」Deck</li>
+              <li><code>#flashcards/math</code> → 建立「math」Deck</li>
+              <li>前綴預設是 <code>flashcards</code>，可在設定中改成其他名稱（如 <code>cards</code>、<code>anki</code>）</li>
+            </ul>
+            <p><strong>Step 2：寫卡片（支援三種格式，可自由混用）</strong></p>
+            <pre>#flashcards/學習科學
 
-什麼是 PMF？ :: Product-Market Fit，產品與市場需求高度吻合的狀態
+畢氏定理 :: a² + b² = c²
 
-Q: 如何驗證 PMF？
-A: 透過留存率、NPS 和自發性口碑三個指標交叉確認</pre>
-            <p>兩種格式（<code>::</code> 和 <code>Q:/A:</code>）可以混用在同一篇筆記裡。回到 Hub 的 Review Deck 就能看到。</p>
+Q: 間隔重複的原理是什麼？
+A: 在快忘記時複習，可以用最少時間達到最高記憶保留率。
+   每次成功回想後，下次複習的間隔會自動拉長。
+
+{{c1::間隔重複}} 是最有效的長期記憶方法之一
+法國首都 {{c1::巴黎}}，日本首都 {{c2::東京}}</pre>
+            <table>
+              <tr><th>格式</th><th>適合</th><th>寫法</th></tr>
+              <tr><td><code>::</code> 問答</td><td>簡短答案，一行</td><td><code>問題 :: 答案</code></td></tr>
+              <tr><td><code>Q:/A:</code> 問答</td><td>答案有多行或列點</td><td><code>Q: 問題</code> 換行 <code>A: 答案（可多行）</code></td></tr>
+              <tr><td>Cloze 填空</td><td>填空記憶，同 Anki 語法</td><td><code>{{c1::答案}}</code> 或 <code>{{c1::答案::提示}}</code></td></tr>
+            </table>
+            <p><strong>Cloze 補充說明：</strong></p>
+            <ul>
+              <li>每個 <code>{{cX::答案}}</code> 自動產生一張卡，正面顯示 <code>[...]</code>，背面顯示答案</li>
+              <li>同一行有多個填空（c1、c2…），每個各自產生一張卡</li>
+              <li>有提示版：<code>{{c1::巴黎::首都}}</code> → 正面顯示 <code>[首都]</code></li>
+            </ul>
+            <p>回到 Hub 的 Review Deck 就能看到所有卡片。</p>
             <p><strong>Q6：我有很多舊 <code>::</code> 卡片，但沒有 tag。要怎麼遷移？</strong></p>
             <p>到設定打開 <code>Include legacy :: notes</code>，保留原本的 <code>question :: answer</code> 格式，再回到 Hub 的 Review Deck 檢查是否已被納入。若要長期維護，建議之後慢慢補上 <code>#flashcards/...</code> tag。</p>
             <p><strong>Q7：Review Deck 進度存在哪裡？</strong></p>
@@ -218,10 +245,15 @@ A: 透過留存率、NPS 和自發性口碑三個指標交叉確認</pre>
             </ul>
             <p><strong>To be detected, a note needs both:</strong></p>
             <ol>
-              <li><code>question :: answer</code> format cards, for example:<pre>#flashcards/math
+              <li>Cards in any supported format (<code>::</code>, <code>Q:/A:</code>, or Cloze), for example:<pre>#flashcards/math
 
 What is the Pythagorean theorem? :: In a right triangle, a² + b² = c²
-What is a derivative? :: Instantaneous rate of change at a point</pre></li>
+
+Q: What is a derivative?
+A: The instantaneous rate of change of a function at a point.
+   Formally: lim(h→0) [f(x+h) − f(x)] / h
+
+{{c1::Calculus}} is built on limits, derivatives, and integrals</pre></li>
               <li>A matching tag prefix, e.g. <code>#flashcards/math</code> (first line of the example above)</li>
             </ol>
             <p><strong>Include legacy <code>::</code> notes</strong> (default: Off)</p>
@@ -240,14 +272,37 @@ What is a derivative? :: Instantaneous rate of change at a point</pre></li>
             <p><strong>Q4. I have general notes with no tags. How do I make a Review Deck?</strong></p>
             <p>Ask AI: "Make a Review Deck from notes about [topic]". AI reads your notes and creates card files in <code>engram-review/ai-cards/</code> with the correct tags — your original notes are never modified. Open Hub → Review Deck to see them.</p>
             <p><strong>Q5. I want to make cards manually without AI. How?</strong></p>
-            <p>Create a note, add a <code>#flashcards/topic</code> tag, then write cards using either format:</p>
-            <pre>#flashcards/product-analysis
+            <p><strong>Step 1: Add a tag (sets the Deck name)</strong></p>
+            <p>Add <code>#flashcards/topic</code> anywhere in your note. The name after the slash becomes the Deck name.</p>
+            <ul>
+              <li><code>#flashcards/english</code> → creates an "english" Deck</li>
+              <li><code>#flashcards/math</code> → creates a "math" Deck</li>
+              <li>Default prefix is <code>flashcards</code>; change it in Settings (e.g. <code>cards</code>, <code>anki</code>)</li>
+            </ul>
+            <p><strong>Step 2: Write cards (3 formats, freely mixable)</strong></p>
+            <pre>#flashcards/learning-science
 
-What is PMF? :: Product-Market Fit — when a product strongly satisfies market demand
+Pythagorean theorem :: a² + b² = c²
 
-Q: How do you validate PMF?
-A: Cross-check retention rate, NPS, and organic word-of-mouth</pre>
-            <p>Both formats (<code>::</code> and <code>Q:/A:</code>) can be mixed in the same note. Open Hub → Review Deck to see them.</p>
+Q: What is spaced repetition?
+A: Reviewing just before you forget — maximizes long-term retention
+   with minimum study time. Intervals grow after each successful recall.
+
+{{c1::Spaced repetition}} is one of the most effective memory techniques
+Capitals: France {{c1::Paris}}, Japan {{c2::Tokyo}}</pre>
+            <table>
+              <tr><th>Format</th><th>Best for</th><th>Syntax</th></tr>
+              <tr><td><code>::</code> Q&amp;A</td><td>Short answers, one line</td><td><code>question :: answer</code></td></tr>
+              <tr><td><code>Q:/A:</code> Q&amp;A</td><td>Multi-line or bullet answers</td><td><code>Q: question</code> newline <code>A: answer (multiple lines ok)</code></td></tr>
+              <tr><td>Cloze</td><td>Fill-in-the-blank, same as Anki</td><td><code>{{c1::answer}}</code> or <code>{{c1::answer::hint}}</code></td></tr>
+            </table>
+            <p><strong>Cloze notes:</strong></p>
+            <ul>
+              <li>Each <code>{{cX::answer}}</code> generates one card — front shows <code>[...]</code>, back reveals the answer</li>
+              <li>Multiple clozes on one line (c1, c2…) each produce their own card</li>
+              <li>Optional hint: <code>{{c1::Paris::capital}}</code> → front shows <code>[capital]</code> instead of <code>[...]</code></li>
+            </ul>
+            <p>Open Hub → Review Deck to see all cards.</p>
             <p><strong>Q6. I already have many old <code>::</code> cards without tags. How do I migrate?</strong></p>
             <p>Turn on <code>Include legacy :: notes</code> in Settings, keep the existing <code>question :: answer</code> format, and reopen Hub → Review Deck. For long-term maintenance, gradually add <code>#flashcards/...</code> tags.</p>
             <p><strong>Q7. Where is review progress stored?</strong></p>

@@ -111,6 +111,12 @@ async function scanReviewDecks(app, settings, reviewHelpers) {
 
     tags = [...new Set(tags.filter(Boolean))];
     let matchedDeck = reviewHelpers.matchFlashcardTagPrefix(tags, settings.flashcardTags);
+    // If cache didn't yield a match, extract inline tags directly from content as fallback
+    if (!matchedDeck) {
+      const inlineTags = [...content.matchAll(/(^|\s)#([\w][\w/-]*)/gm)].map(m => m[2]);
+      const contentTags = [...new Set(inlineTags.filter(Boolean))];
+      matchedDeck = reviewHelpers.matchFlashcardTagPrefix(contentTags, settings.flashcardTags);
+    }
     if (!(settings.enableSRScan ?? false) && !matchedDeck) continue;
 
     let deckName = matchedDeck || file.parent?.name || "flashcards";
