@@ -137,17 +137,25 @@ A: 函數在某點的瞬時變化率
 畢氏定理 :: a² + b² = c²
 
 Q: 間隔重複的原理是什麼？
-A: 在快忘記時複習，可以用最少時間達到最高記憶保留率。
-   每次成功回想後，下次複習的間隔會自動拉長。
+A:
+1.在快忘記時複習，效果最佳
+2.每次成功回想後，下次複習的間隔自動拉長
 
 {{c1::間隔重複}} 是最有效的長期記憶方法之一
 法國首都 {{c1::巴黎}}，日本首都 {{c2::東京}}</pre>
             <table>
               <tr><th>格式</th><th>適合</th><th>寫法</th></tr>
               <tr><td><code>::</code> 問答</td><td>簡短答案，一行</td><td><code>問題 :: 答案</code></td></tr>
-              <tr><td><code>Q:/A:</code> 問答</td><td>答案有多行或列點</td><td><code>Q: 問題</code> 換行 <code>A: 答案（可多行）</code></td></tr>
+              <tr><td><code>Q:/A:</code> 問答</td><td>答案有多行或列點</td><td><code>Q: 問題</code> 換行 <code>A: 答案</code>（答案可以從下一行開始，可有多行）</td></tr>
               <tr><td>Cloze 填空</td><td>填空記憶，同 Anki 語法</td><td><code>{{c1::答案}}</code> 或 <code>{{c1::答案::提示}}</code></td></tr>
             </table>
+            <p><strong>Q:/A: 邊界規則：</strong></p>
+            <ul>
+              <li><code>A:</code> 後面可以不寫任何東西，答案從下一行開始</li>
+              <li>答案裡有一個空行沒關係，會繼續收集</li>
+              <li><strong>連續兩個空行</strong>代表卡片結束</li>
+              <li>遇到下一個 <code>Q:</code> 或 Cloze 行也會自動結束</li>
+            </ul>
             <p><strong>Cloze 補充說明：</strong></p>
             <ul>
               <li>每個 <code>{{cX::答案}}</code> 自動產生一張卡，正面顯示 <code>[...]</code>，背面顯示答案</li>
@@ -285,17 +293,25 @@ A: The instantaneous rate of change of a function at a point.
 Pythagorean theorem :: a² + b² = c²
 
 Q: What is spaced repetition?
-A: Reviewing just before you forget — maximizes long-term retention
-   with minimum study time. Intervals grow after each successful recall.
+A:
+1. Review just before you forget — best timing for retention
+2. Each successful recall pushes the next review further out
 
 {{c1::Spaced repetition}} is one of the most effective memory techniques
 Capitals: France {{c1::Paris}}, Japan {{c2::Tokyo}}</pre>
             <table>
               <tr><th>Format</th><th>Best for</th><th>Syntax</th></tr>
               <tr><td><code>::</code> Q&amp;A</td><td>Short answers, one line</td><td><code>question :: answer</code></td></tr>
-              <tr><td><code>Q:/A:</code> Q&amp;A</td><td>Multi-line or bullet answers</td><td><code>Q: question</code> newline <code>A: answer (multiple lines ok)</code></td></tr>
+              <tr><td><code>Q:/A:</code> Q&amp;A</td><td>Multi-line or bullet answers</td><td><code>Q: question</code> → <code>A: answer</code> (answer can start on the next line; multiple lines ok)</td></tr>
               <tr><td>Cloze</td><td>Fill-in-the-blank, same as Anki</td><td><code>{{c1::answer}}</code> or <code>{{c1::answer::hint}}</code></td></tr>
             </table>
+            <p><strong>Q:/A: boundary rules:</strong></p>
+            <ul>
+              <li><code>A:</code> can be empty — the answer starts on the next line</li>
+              <li>A single blank line inside the answer is fine; collection continues</li>
+              <li><strong>Two consecutive blank lines</strong> end the card</li>
+              <li>The next <code>Q:</code> line or a Cloze line also ends the answer automatically</li>
+            </ul>
             <p><strong>Cloze notes:</strong></p>
             <ul>
               <li>Each <code>{{cX::answer}}</code> generates one card — front shows <code>[...]</code>, back reveals the answer</li>

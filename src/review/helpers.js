@@ -73,11 +73,21 @@ function parseFlashcards(markdown) {
       if (aMatch) {
         let backLines = [aMatch[1]];
         let j = aLineIdx + 1;
+        let blankRun = 0;
         while (j < lines.length) {
           if (/^Q:\s*/i.test(lines[j])) break;
           if (/^[ \t]*(`{3,}|~{3,})/.test(lines[j])) break;
-          backLines.push(lines[j]);
-          j++;
+          if (/\{\{c\d+::/.test(lines[j])) break; // cloze card on next line — stop here
+          if (lines[j].trim() === "") {
+            blankRun++;
+            if (blankRun >= 2) break; // two blank lines = card boundary
+            backLines.push(lines[j]);
+            j++;
+          } else {
+            blankRun = 0;
+            backLines.push(lines[j]);
+            j++;
+          }
         }
         while (backLines.length > 0 && backLines[backLines.length - 1].trim() === "") backLines.pop();
         const back = backLines.join("\n").trim();

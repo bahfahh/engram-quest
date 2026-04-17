@@ -33,7 +33,7 @@ Capitals: France {{c1::Paris}}, Japan {{c2::Tokyo}}
 | Format | Best for | Syntax |
 |---|---|---|
 | `::` Q&A | Short answers, one line | `question :: answer` |
-| `Q:/A:` Q&A | Multi-line or bullet answers | `Q: question` → newline → `A: answer (multiple lines ok)` |
+| `Q:/A:` Q&A | Multi-line or bullet answers | `Q: question` → `A:` (answer can start on next line; single blank line within answer is ok; **two blank lines** end the card) |
 | `{{c1::}}` Cloze | Fill-in-the-blank, Anki-compatible | `{{c1::answer}}` or `{{c1::answer::hint}}` |
 
 **Tag format:** `#flashcards/topic` — the name after the slash is the Deck name. Change the prefix (`flashcards`) in Settings.
@@ -126,7 +126,7 @@ A: 在快忘記時複習，可以用最少時間達到最高記憶保留率。
 | 格式 | 適合 | 寫法 |
 |---|---|---|
 | `::` 問答 | 簡短答案，一行 | `問題 :: 答案` |
-| `Q:/A:` 問答 | 答案有多行或列點 | `Q: 問題` → 換行 → `A: 答案（可多行）` |
+| `Q:/A:` 問答 | 答案有多行或列點 | `Q: 問題` → `A:` 後可空（答案從下行開始）；答案裡一個空行沒問題；**兩個連續空行**代表卡片結束 |
 | `{{c1::}}` 填空 | 填空記憶，Anki 相容語法 | `{{c1::答案}}` 或 `{{c1::答案::提示}}` |
 
 **Tag 格式：** `#flashcards/主題` — 斜線後的名稱就是 Deck 的名字。前綴（`flashcards`）可在設定中修改。
