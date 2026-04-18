@@ -153,9 +153,9 @@ function renderQuestChallenge(container, challenge, difficulty, onSolved, settin
 
   if (challenge.type === "match" && Array.isArray(challenge.pairs)) {
     wrapper.createEl("p", { text: zh ? "配對題：先點左邊，再點右邊。" : "Match the pairs: click left, then right.", attr: { style: "font-size:13px;color:var(--text-muted);margin-bottom:12px" } });
-    let grid = wrapper.createEl("div", { attr: { style: "display:grid;grid-template-columns:1fr 1fr;gap:8px" } });
-    let left = grid.createEl("div", { attr: { style: "display:flex;flex-direction:column;gap:6px" } });
-    let right = grid.createEl("div", { attr: { style: "display:flex;flex-direction:column;gap:6px" } });
+    let grid = wrapper.createEl("div", { attr: { style: "display:grid;grid-template-columns:1fr 1fr;gap:8px;min-width:0" } });
+    let left = grid.createEl("div", { attr: { style: "display:flex;flex-direction:column;gap:6px;min-width:0" } });
+    let right = grid.createEl("div", { attr: { style: "display:flex;flex-direction:column;gap:6px;min-width:0" } });
     let order = challenge.pairs.map((_, index) => index).sort(() => Math.random() - 0.5);
     let selected = null;
     let solved = 0;
