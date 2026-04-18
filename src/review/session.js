@@ -77,6 +77,11 @@ var Q=class extends I.Modal{
     let a=r.createEl("button",{attr:{class:"lh-review-back"}});
     a.innerHTML=`← ${c(t,"BACK")}`;
     a.addEventListener("click",()=>{ this.close(); this.onBack&&this.onBack(); });
+    // Minimize button
+    let minBtn=r.createEl("button",{attr:{class:"lh-review-back",style:"font-size:16px;padding:4px 8px;margin-left:4px;"}});
+    minBtn.textContent="⏬";
+    minBtn.title="Minimize";
+    minBtn.addEventListener("click",()=>this._minimize());
 
     // Card body
     let i=this.contentEl.createEl("div",{attr:{class:"lh-review-body"}}).createEl("div",{attr:{class:"lh-review-card"}});
@@ -226,6 +231,28 @@ var Q=class extends I.Modal{
     let v=Math.round(this.idx/this.cards.length*100);
     u.createEl("div",{attr:{class:"lh-review-prog-bar",style:`width:${v}%`}});
     h.createEl("span",{text:`${this.idx+1} / ${this.cards.length}`,attr:{class:"lh-review-badge"}});
+  }
+
+  _minimize(){
+    this.containerEl.style.display="none";
+    if(this._fab) return; // already exists
+    let fab=document.createElement("div");
+    fab.className="engram-fab";
+    fab.textContent="📖";
+    fab.title="Resume Review";
+    fab.style.cssText="position:fixed;bottom:24px;right:24px;width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#4f46e5,#818cf8);color:#fff;display:flex;align-items:center;justify-content:center;font-size:22px;cursor:pointer;z-index:9999;box-shadow:0 4px 16px rgba(79,70,229,0.45);user-select:none;-webkit-tap-highlight-color:transparent;transition:transform 0.15s;";
+    fab.addEventListener("mouseenter",()=>{fab.style.transform="scale(1.12)";});
+    fab.addEventListener("mouseleave",()=>{fab.style.transform="scale(1)";});
+    fab.addEventListener("click",()=>this._restore());
+    document.body.appendChild(fab);
+    this._fab=fab;
+  }
+  _restore(){
+    this.containerEl.style.display="";
+    if(this._fab){this._fab.remove();this._fab=null;}
+  }
+  onClose(){
+    if(this._fab){this._fab.remove();this._fab=null;}
   }
 
   _renderEditForm(e){
