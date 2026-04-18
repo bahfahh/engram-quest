@@ -88,9 +88,9 @@ var Q=class extends I.Modal{
     let d=i.createEl("div",{attr:{class:"lh-rc-top"}});
     d.createEl("span",{text:this.deckName,attr:{class:"lh-rc-badge"}});
     this.browseOnly&&d.createEl("span",{text:c(t,"BROWSE_ONLY"),attr:{class:"lh-rc-badge"}});
-    // Source note buttons — for AI cards show sourceNotePath only, for hand-written show notePath
+    // Source note buttons — for AI cards show sourceNotePaths only, for hand-written show notePath
     let _isAi=e.notePath&&e.notePath.startsWith("engram-review/ai-cards/");
-    let notePaths=_isAi?[e.sourceNotePath].filter(Boolean):[...new Set([e.notePath,e.sourceNotePath].filter(Boolean))];
+    let notePaths=_isAi?(e.sourceNotePaths||[e.sourceNotePath].filter(Boolean)):[...new Set([e.notePath,e.sourceNotePath].filter(Boolean))];
     if(notePaths.length>0){
       let srcWrap=d.createEl("div",{attr:{style:"display:flex;align-items:center;gap:4px;margin-left:auto;flex-shrink:1;min-width:0;"}});
       notePaths.forEach(np=>{

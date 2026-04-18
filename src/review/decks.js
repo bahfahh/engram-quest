@@ -137,8 +137,20 @@ async function scanReviewDecks(app, settings, reviewHelpers) {
       if (await app.vault.adapter.exists(hintPath)) {
         const hintsPayload = JSON.parse(await app.vault.adapter.read(hintPath));
         reviewHelpers.mergeReviewHints(cards, hintsPayload);
-        if (file.path.startsWith("engram-review/ai-cards/") && hintsPayload.note) {
-          cards.forEach(card => { card.sourceNotePath = hintsPayload.note; });
+        if (file.path.startsWith("engram-review/ai-cards/")) {
+          const fileNotes = hintsPayload.note
+            ? (Array.isArray(hintsPayload.note) ? hintsPayload.note : [hintsPayload.note])
+            : [];
+          cards.forEach(card => {
+            const cardHint = hintsPayload.cards?.[card.front];
+            const cardSource = cardHint?.source;
+            // source:null = AI-creative card, explicitly no source note
+            if (cardHint && "source" in cardHint) {
+              card.sourceNotePaths = cardSource === null ? [] : (Array.isArray(cardSource) ? cardSource : [cardSource]);
+            } else {
+              card.sourceNotePaths = fileNotes;
+            }
+          });
         }
       }
     } catch {}

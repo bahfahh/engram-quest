@@ -169,7 +169,20 @@ CRITICAL: Follow these steps in order. Do not skip any step.
       }
     }
     ```
-    CRITICAL: `"note"` MUST be the full vault-relative path of the **source note** (e.g. `"Study/Azure Notes.md"`), NOT the ai-cards file path. The plugin uses this field to resolve `sourceNotePath` back to the original note for Memory Map linking. Writing the ai-cards path here breaks that resolution.
+    **Card-level `source` field (use when a card comes from a different note than the file-level `note`):**
+    ```json
+    {
+      "note": "Study/Azure.md",
+      "generated": "YYYY-MM-DD",
+      "cards": {
+        "What is VNet?":   { "l1": "...", "l2": "...", "l3": "...", "source": "Study/Azure.md" },
+        "What is subnet?": { "l1": "...", "l2": "...", "l3": "...", "source": ["Study/Azure.md", "Study/Network.md"] }
+      }
+    }
+    ```
+    - `source`: card-level override for the source note button. String or array of vault-relative paths.
+    - If card is derived from a note, set `source` to that note's path. If card is AI-creative (no specific source), omit `source` or set `null` to suppress the button.
+    CRITICAL: `"note"` (file-level) MUST be the full vault-relative path of the **primary source note** (e.g. `"Study/Azure Notes.md"`), NOT the ai-cards file path. The plugin uses this field to resolve the source note for Memory Map linking. Writing the ai-cards path here breaks that resolution.
     WRONG — do NOT use array format:
     ```json
     { "cards": [{ "front": "...", "l1": "..." }] }
