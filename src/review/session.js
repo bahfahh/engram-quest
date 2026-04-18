@@ -240,7 +240,7 @@ var Q=class extends I.Modal{
     fab.className="engram-fab";
     fab.textContent="📖";
     fab.title="Resume Review";
-    fab.style.cssText="position:fixed;bottom:24px;right:24px;width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#4f46e5,#818cf8);color:#fff;display:flex;align-items:center;justify-content:center;font-size:22px;cursor:pointer;z-index:9999;box-shadow:0 4px 16px rgba(79,70,229,0.45);user-select:none;-webkit-tap-highlight-color:transparent;transition:transform 0.15s;";
+    fab.style.cssText="position:fixed;bottom:80px;right:20px;width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#4f46e5,#818cf8);color:#fff;display:flex;align-items:center;justify-content:center;font-size:22px;cursor:pointer;z-index:9999;box-shadow:0 4px 16px rgba(79,70,229,0.45);user-select:none;-webkit-tap-highlight-color:transparent;transition:transform 0.15s;";
     fab.addEventListener("mouseenter",()=>{fab.style.transform="scale(1.12)";});
     fab.addEventListener("mouseleave",()=>{fab.style.transform="scale(1)";});
     fab.addEventListener("click",()=>this._restore());
