@@ -18,7 +18,7 @@ function makeCard(overrides = {}) {
 }
 
 const fakeApp = { vault: { getAbstractFileByPath: () => null, read: async () => "", modify: async () => {} } };
-const fakePlugin = { settings: { language: "en", requestedRetention: 0.9, maxInterval: 36500 } };
+const fakePlugin = { settings: { language: "en", requestedRetention: 0.9, maxInterval: 36500 }, saveData: async () => {} };
 
 describe("ReviewSessionModal construction", () => {
   it("initialises with correct defaults", () => {

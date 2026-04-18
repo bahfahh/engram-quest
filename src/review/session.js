@@ -17,6 +17,9 @@ var Q=class extends I.Modal{
   }
 
   onOpen(){
+    // Save initial progress on open
+    this.plugin.settings._reviewProgress={deck:this.deckName,idx:this.idx};
+    this.plugin.saveData(this.plugin.settings);
     this.modalEl.addClass("lh-hub");
     this.modalEl.style.cssText="width:min(95vw,700px);max-width:none;height:min(90vh,640px);max-height:none;padding:0;overflow:hidden;border-radius:24px";
     this.modalEl.style.setProperty("--background-primary","#ffffff","important");
@@ -31,12 +34,18 @@ var Q=class extends I.Modal{
 
   renderCard(){
     this.hintLevel=0; this.answerShown=false; this._rating_locked=false;
+    // Save progress
+    this.plugin.settings._reviewProgress={deck:this.deckName,idx:this.idx};
+    this.plugin.saveData(this.plugin.settings);
     this._renderCardContent(this.cards[this.idx]);
   }
 
   // Task 6: completion screen
   _renderComplete(){
     let t=this.plugin.settings;
+    // Clear progress
+    delete this.plugin.settings._reviewProgress;
+    this.plugin.saveData(this.plugin.settings);
     this.contentEl.empty();
     let wrap=this.contentEl.createEl("div",{attr:{class:"lh-complete-screen",style:"flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;text-align:center;gap:16px;"}});
     wrap.createEl("div",{attr:{style:"font-size:56px;line-height:1;"}}).textContent="🎉";
@@ -74,8 +83,20 @@ var Q=class extends I.Modal{
     let d=i.createEl("div",{attr:{class:"lh-rc-top"}});
     d.createEl("span",{text:this.deckName,attr:{class:"lh-rc-badge"}});
     this.browseOnly&&d.createEl("span",{text:c(t,"BROWSE_ONLY"),attr:{class:"lh-rc-badge"}});
+    // Source note buttons — for AI cards show sourceNotePath only, for hand-written show notePath
+    let _isAi=e.notePath&&e.notePath.startsWith("engram-review/ai-cards/");
+    let notePaths=_isAi?[e.sourceNotePath].filter(Boolean):[...new Set([e.notePath,e.sourceNotePath].filter(Boolean))];
+    if(notePaths.length>0){
+      let srcWrap=d.createEl("div",{attr:{style:"display:flex;align-items:center;gap:4px;margin-left:auto;flex-shrink:1;min-width:0;"}});
+      notePaths.forEach(np=>{
+        let name=np.split("/").pop().replace(/\.md$/i,"");
+        let btn=srcWrap.createEl("button",{attr:{class:"lh-rc-edit-btn",style:"font-size:11px;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#6366f1;",title:np}});
+        btn.textContent="📄 "+name;
+        btn.addEventListener("click",(ev)=>{ev.stopPropagation();this.app.workspace.openLinkText(np,"",false);});
+      });
+    }
     // Right-side button group
-    let btnGroup=d.createEl("div",{attr:{style:"display:flex;align-items:center;gap:4px;margin-left:auto;"}});
+    let btnGroup=d.createEl("div",{attr:{style:"display:flex;align-items:center;gap:4px;flex-shrink:0;"}});
     // Copy button
     let copyTopBtn=btnGroup.createEl("button",{attr:{class:"lh-rc-edit-btn"}});
     copyTopBtn.textContent="📋 Copy";
