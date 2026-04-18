@@ -11,6 +11,7 @@ export class Setting { setName() { return this; } setDesc() { return this; } add
 export class Notice { constructor(msg) {} }
 export function normalizePath(p) { return p; }
 export const moment = { locale: () => "en" };
+export const MarkdownRenderer = { renderMarkdown: () => {} };
 
 class MockEl {
   constructor() { this.style = {}; this.classList = { add() {}, remove() {}, toggle() {}, contains() { return false; } }; this.dataset = {}; }
