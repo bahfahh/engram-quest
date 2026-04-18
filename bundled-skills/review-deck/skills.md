@@ -133,6 +133,20 @@ CRITICAL: Follow these steps in order. Do not skip any step.
      - frontmatter must include a tag matching the prefix from step 1 (e.g. `flashcards/topic`)
      - frontmatter must also include `TARGET DECK: {topic}` where `{topic}` is the sub-path after the prefix (e.g. tag `flashcards/backend/architecture` → `TARGET DECK: backend/architecture`). This enables Obsidian_to_Anki compatibility.
      - do NOT insert cards into the source note
+     - **Card format rules:**
+       - Default format: `question :: answer` (single line, plain text)
+       - If the question OR answer contains code snippets, use `Q:/A:` multi-line format and wrap code in fenced code blocks with the appropriate language tag. Example:
+         ```
+         Q: 以下哪種寫法才是真正並行？
+         A: 寫法 B 是並行，因為兩個 Task 同時啟動：
+         ```csharp
+         var sqlTask = RunSql(...);
+         var vectorTask = context.CallActivity(...);
+         var sqlRows = await sqlTask;
+         var vectorRows = await vectorTask;
+         ```
+         ```
+       - Never inline code directly into a `question :: answer` single-line card — it will not render correctly.
 
 9. Before generating cards, collect all L2 search keywords from every card to be generated across all non-skipped notes.
    Combine into a single call:

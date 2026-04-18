@@ -124,21 +124,24 @@ var Q=class extends I.Modal{
     delTopBtn.title=c(t,"DELETE");
     delTopBtn.addEventListener("click",()=>this._renderDeleteConfirm(e));
     if(e.emoji){ i.createEl("span",{attr:{class:"lh-rc-emoji"}}).textContent=e.emoji; }
-    i.createEl("div",{text:e.front,attr:{class:"lh-rc-question"}});
+    let qEl=i.createEl("div",{attr:{class:"lh-rc-question"}});
+    I.MarkdownRenderer.renderMarkdown(e.front||"",qEl,e.notePath||"",null);
 
     // Hints
     let f=[{key:"hint_l1",cls:"lh-hint-l1",label:"L1 · Active Recall"},{key:"hint_l2",cls:"lh-hint-l2",label:"L2 · Contextual Anchor"},{key:"hint_l3",cls:"lh-hint-l3",label:"L3 · Narrowing Hint"}];
     for(let p=0;p<this.hintLevel;p++){
       let g=f[p],E=i.createEl("div",{attr:{class:`lh-hint ${g.cls}`}});
       E.createEl("div",{text:g.label,attr:{class:"lh-hint-label"}});
-      E.createEl("div",{text:e[g.key]||C("NO_HINT",t),attr:{class:"lh-hint-text"}});
+      let hintEl=E.createEl("div",{attr:{class:"lh-hint-text"}});
+      I.MarkdownRenderer.renderMarkdown(e[g.key]||C("NO_HINT",t),hintEl,e.notePath||"",null);
     }
 
     // Answer block
     if(this.answerShown){
       let p=i.createEl("div",{attr:{class:"lh-answer-block"}});
       p.createEl("div",{text:c(t,"ANSWER"),attr:{class:"lh-answer-label"}});
-      p.createEl("div",{text:e.back,attr:{class:"lh-answer-text"}});
+      let answerEl=p.createEl("div",{attr:{class:"lh-answer-text"}});
+      I.MarkdownRenderer.renderMarkdown(e.back||"",answerEl,e.notePath||"",null);
       this.browseOnly&&i.createEl("div",{text:c(t,"BROWSE_NOTE"),attr:{class:"lh-browse-note"}});
     }
 
@@ -279,6 +282,10 @@ var Q=class extends I.Modal{
 
     let taFront=field("EDIT_FRONT", e.front);
     let taBack=field("EDIT_BACK", e.back);
+    taBack.style.minHeight="140px";
+    function autoResize(ta){ta.style.height="auto";ta.style.height=ta.scrollHeight+"px";}
+    autoResize(taBack);
+    taBack.addEventListener("input",()=>autoResize(taBack));
 
     // Hints section
     let hintsWrap=body.createEl("div",{attr:{class:"lh-edit-hints-section"}});

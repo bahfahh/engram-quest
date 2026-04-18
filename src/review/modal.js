@@ -22,10 +22,10 @@ function openReviewCardModal(app, card, onDone, settings, deps) {
     let body = modal.contentEl.createEl("div", {
       attr: { style: "padding:28px 28px 24px;overflow-y:auto;flex:1;display:flex;flex-direction:column;gap:14px" }
     });
-    body.createEl("div", {
-      attr: { style: "font-size:17px;font-weight:700;color:var(--text-normal);line-height:1.55" },
-      text: card.front
+    let frontEl = body.createEl("div", {
+      attr: { style: "font-size:17px;font-weight:700;color:var(--text-normal);line-height:1.55" }
     });
+    obsidian.MarkdownRenderer.renderMarkdown(card.front||"", frontEl, card.notePath||"", null);
     body.createEl("div", { attr: { style: "border-top:1px dashed var(--background-modifier-border)" } });
 
     let hintBackgrounds = ["", "#dbeafe", "#fef9c3", "#dcfce7"];
@@ -40,17 +40,15 @@ function openReviewCardModal(app, card, onDone, settings, deps) {
         attr: { style: "font-size:10px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px" },
         text: hintLabels[index]
       });
-      block.createEl("div", {
-        attr: { style: "font-size:14px;color:#1f2937;line-height:1.65" },
-        text: hints[index] || deps.translate(settings, "NO_HINT")
-      });
+      let hintEl = block.createEl("div", { attr: { style: "font-size:14px;color:#1f2937;line-height:1.65" } });
+      obsidian.MarkdownRenderer.renderMarkdown(hints[index] || deps.translate(settings, "NO_HINT"), hintEl, card.notePath||"", null);
     }
 
     if (answerShown) {
-      body.createEl("div", {
-        attr: { style: "font-size:15px;line-height:1.7;color:var(--text-normal);background:var(--background-secondary);border-radius:10px;padding:15px 17px;border:1px solid var(--background-modifier-border)" },
-        text: card.back
+      let answerEl = body.createEl("div", {
+        attr: { style: "font-size:15px;line-height:1.7;color:var(--text-normal);background:var(--background-secondary);border-radius:10px;padding:15px 17px;border:1px solid var(--background-modifier-border)" }
       });
+      obsidian.MarkdownRenderer.renderMarkdown(card.back||"", answerEl, card.notePath||"", null);
     }
 
     body.createEl("div", { attr: { style: "flex:1" } });
