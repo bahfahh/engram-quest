@@ -64,11 +64,27 @@ function parseFlashcards(markdown) {
     }
     if (inFencedBlock) continue;
 
-    // Q/A style: Q: question \n A: answer (multi-line answer supported)
+    // Q/A style: Q: question \n A: answer (multi-line question & answer supported)
     const qaMatch = line.match(/^Q:\s*(.+)/i);
     if (qaMatch) {
+      // Collect multi-line question: Q: line + any lines before A: (allow single blank lines)
+      let frontLines = [qaMatch[1]];
       let aLineIdx = index + 1;
-      while (aLineIdx < lines.length && lines[aLineIdx].trim() === "") aLineIdx++;
+      let qBlankRun = 0;
+      while (aLineIdx < lines.length) {
+        if (/^A:\s*/i.test(lines[aLineIdx])) break;
+        if (lines[aLineIdx].trim() === "") {
+          qBlankRun++;
+          if (qBlankRun >= 2) break; // two blank lines = card boundary
+          aLineIdx++;
+        } else {
+          qBlankRun = 0;
+          frontLines.push(lines[aLineIdx]);
+          aLineIdx++;
+        }
+      }
+      // Remove trailing blank captures
+      while (frontLines.length > 0 && frontLines[frontLines.length - 1].trim() === "") frontLines.pop();
       const aMatch = aLineIdx < lines.length ? lines[aLineIdx].match(/^A:\s*(.*)/i) : null;
       if (aMatch) {
         let backLines = [aMatch[1]];
@@ -92,7 +108,7 @@ function parseFlashcards(markdown) {
         while (backLines.length > 0 && backLines[backLines.length - 1].trim() === "") backLines.pop();
         const back = backLines.join("\n").trim();
         if (back) {
-          cards.push({ front: qaMatch[1].trim(), back, emoji: "", hint_l1: "", hint_l2: "", hint_l3: "", srMeta: null, srComment: "", notePath: null });
+          cards.push({ front: frontLines.join("\n").trim(), back, emoji: "", hint_l1: "", hint_l2: "", hint_l3: "", srMeta: null, srComment: "", notePath: null });
           index = j - 1;
           continue;
         }
