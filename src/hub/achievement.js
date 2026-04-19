@@ -4,16 +4,18 @@ const { t: c } = require("../i18n");
 const { getReviewStatus } = require("../review/helpers");
 
 const ACHIEVEMENTS = [
-  { id: "first_card",   icon: "🌱", rarity: "UC",  threshold: 1,   field: "totalCardsReviewed", nameKey: "ACH_FIRST_CARD_NAME",   descKey: "ACH_FIRST_CARD_DESC"   },
-  { id: "ten_cards",    icon: "📖", rarity: "UC",  threshold: 10,  field: "totalCardsReviewed", nameKey: "ACH_TEN_CARDS_NAME",    descKey: "ACH_TEN_CARDS_DESC"    },
-  { id: "fifty_cards",  icon: "🧠", rarity: "R",   threshold: 50,  field: "totalCardsReviewed", nameKey: "ACH_FIFTY_CARDS_NAME",  descKey: "ACH_FIFTY_CARDS_DESC"  },
-  { id: "century",      icon: "⚡", rarity: "R",   threshold: 100, field: "totalCardsReviewed", nameKey: "ACH_CENTURY_NAME",      descKey: "ACH_CENTURY_DESC"      },
-  { id: "five_hundred", icon: "🏆", rarity: "LEG", threshold: 500, field: "totalCardsReviewed", nameKey: "ACH_FIVE_HUNDRED_NAME", descKey: "ACH_FIVE_HUNDRED_DESC" },
-  { id: "streak_3",     icon: "🔥", rarity: "UC",  threshold: 3,   field: "currentStreak",      nameKey: "ACH_STREAK_3_NAME",    descKey: "ACH_STREAK_3_DESC"     },
-  { id: "streak_7",     icon: "📅", rarity: "R",   threshold: 7,   field: "currentStreak",      nameKey: "ACH_STREAK_7_NAME",    descKey: "ACH_STREAK_7_DESC"     },
-  { id: "streak_30",    icon: "🌟", rarity: "LEG", threshold: 30,  field: "currentStreak",      nameKey: "ACH_STREAK_30_NAME",   descKey: "ACH_STREAK_30_DESC"    },
-  { id: "daily_surge",  icon: "💥", rarity: "R",   threshold: 30,  field: "dailySurge",         nameKey: "ACH_DAILY_SURGE_NAME", descKey: "ACH_DAILY_SURGE_DESC"  },
-  { id: "master_50",    icon: "👑", rarity: "LEG", threshold: 50,  field: "masteredCount",      nameKey: "ACH_MASTER_50_NAME",   descKey: "ACH_MASTER_50_DESC"    },
+  { id: "first_card",   icon: "assets/icons/first_card.webp",   rarity: "UC",  threshold: 1,   field: "totalCardsReviewed", nameKey: "ACH_FIRST_CARD_NAME",   descKey: "ACH_FIRST_CARD_DESC"   },
+  { id: "ten_cards",    icon: "assets/icons/ten_cards.webp",    rarity: "UC",  threshold: 10,  field: "totalCardsReviewed", nameKey: "ACH_TEN_CARDS_NAME",    descKey: "ACH_TEN_CARDS_DESC"    },
+  { id: "fifty_cards",  icon: "assets/icons/fifty_cards.webp",  rarity: "R",   threshold: 50,  field: "totalCardsReviewed", nameKey: "ACH_FIFTY_CARDS_NAME",  descKey: "ACH_FIFTY_CARDS_DESC"  },
+  { id: "century",      icon: "assets/icons/century.webp",      rarity: "R",   threshold: 100, field: "totalCardsReviewed", nameKey: "ACH_CENTURY_NAME",      descKey: "ACH_CENTURY_DESC"      },
+  { id: "five_hundred", icon: "assets/icons/five_hundred.webp", rarity: "LEG", threshold: 500,  field: "totalCardsReviewed", nameKey: "ACH_FIVE_HUNDRED_NAME",  descKey: "ACH_FIVE_HUNDRED_DESC"  },
+  { id: "one_thousand", icon: "assets/icons/one_thousand.webp", rarity: "LEG", threshold: 1000, field: "totalCardsReviewed", nameKey: "ACH_ONE_THOUSAND_NAME",  descKey: "ACH_ONE_THOUSAND_DESC"  },
+  { id: "two_thousand", icon: "assets/icons/two_thousand.webp", rarity: "LEG", threshold: 2000, field: "totalCardsReviewed", nameKey: "ACH_TWO_THOUSAND_NAME",  descKey: "ACH_TWO_THOUSAND_DESC"  },
+  { id: "streak_3",     icon: "assets/icons/streak_3.webp",     rarity: "UC",  threshold: 3,   field: "currentStreak",      nameKey: "ACH_STREAK_3_NAME",    descKey: "ACH_STREAK_3_DESC"     },
+  { id: "streak_7",     icon: "assets/icons/streak_7.webp",     rarity: "R",   threshold: 7,   field: "currentStreak",      nameKey: "ACH_STREAK_7_NAME",    descKey: "ACH_STREAK_7_DESC"     },
+  { id: "streak_30",    icon: "assets/icons/streak_30.webp",    rarity: "LEG", threshold: 30,  field: "currentStreak",      nameKey: "ACH_STREAK_30_NAME",   descKey: "ACH_STREAK_30_DESC"    },
+  { id: "daily_surge",  icon: "assets/icons/daily_surge.webp",  rarity: "R",   threshold: 30,  field: "dailySurge",         nameKey: "ACH_DAILY_SURGE_NAME", descKey: "ACH_DAILY_SURGE_DESC"  },
+  { id: "master_50",    icon: "assets/icons/master_50.webp",    rarity: "LEG", threshold: 50,  field: "masteredCount",      nameKey: "ACH_MASTER_50_NAME",   descKey: "ACH_MASTER_50_DESC"    },
 ];
 
 const RARITY = {
@@ -106,7 +108,7 @@ function buildActivitySvg(dailyLog, days) {
   };
 }
 
-function renderActivitySection(container, dailyLog, t, activePeriod) {
+function renderActivitySection(container, dailyLog, t, activePeriod, globalTotal) {
   container.empty();
 
   // Header + toggle row
@@ -124,7 +126,7 @@ function renderActivitySection(container, dailyLog, t, activePeriod) {
       text: p.label,
       attr: { style: `padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;cursor:pointer;border:1.5px solid ${p.days === activePeriod ? "#6366f1" : "#e5e7eb"};background:${p.days === activePeriod ? "#eef2ff" : "#fff"};color:${p.days === activePeriod ? "#6366f1" : "#6b7280"};` },
     });
-    btn.addEventListener("click", () => renderActivitySection(container, dailyLog, t, p.days));
+    btn.addEventListener("click", () => renderActivitySection(container, dailyLog, t, p.days, globalTotal));
   });
 
   // Chart
@@ -137,7 +139,7 @@ function renderActivitySection(container, dailyLog, t, activePeriod) {
   const statsRow = container.createEl("div", { attr: { style: "display:flex;gap:8px;" } });
   [
     { label: c(t, "ACH_STUDY_DAYS"), val: `${studyDays}/${days}`, sub: `${statsPct}%` },
-    { label: c(t, "ACH_TOTAL_REVIEWED"), val: String(total), sub: "" },
+    { label: c(t, "ACH_PERIOD_REVIEWS"), val: String(total), sub: "" },
     { label: c(t, "ACH_DAILY_AVG"), val: String(avgActive), sub: c(t, "ACH_PER_DAY") },
   ].forEach(s => {
     const box = statsRow.createEl("div", { attr: { style: "flex:1;padding:8px 10px;border-radius:10px;background:#f8faff;border:1.5px solid #e5e7eb;text-align:center;" } });
@@ -208,7 +210,7 @@ function renderAchievementTab(container, plugin, decks) {
 
   // === Activity chart ===
   const actSec = wrap.createEl("div", { attr: { style: "padding:16px 20px 8px;" } });
-  renderActivitySection(actSec, dailyLog, t, 30);
+  renderActivitySection(actSec, dailyLog, t, 30, totalReviewed);
 
   // === Achievement collection ===
   const achHdr = wrap.createEl("div", { attr: { style: "display:flex;align-items:center;gap:8px;padding:16px 20px 12px;border-top:1px solid #f1f5f9;" } });
@@ -229,7 +231,15 @@ function renderAchievementTab(container, plugin, decks) {
       : `background:linear-gradient(145deg,#374151,#1f2937);border:2px solid #4b5563;opacity:0.55;`;
 
     card.createEl("div", { text: ach.rarity, attr: { style: `background:${rs.badge};color:#fff;font-size:9px;font-weight:800;padding:2px 7px;border-radius:99px;position:absolute;top:8px;right:8px;letter-spacing:.04em;` } });
-    card.createEl("div", { text: ach.icon, attr: { style: "font-size:34px;line-height:1;text-align:center;margin:20px 0 8px;" } });
+
+    // Image icon — resolve to plugin's bundled asset path
+    const iconWrap = card.createEl("div", { attr: { style: "text-align:center;margin:14px 0 6px;" } });
+    const iconSrc = plugin.app.vault.adapter.getResourcePath
+      ? plugin.app.vault.adapter.getResourcePath(".obsidian/plugins/engram-quest/" + ach.icon)
+      : ach.icon;
+    const img = iconWrap.createEl("img", { attr: { src: iconSrc, width: "64", height: "64", style: `object-fit:cover;border-radius:8px;${isUnlocked ? "" : "filter:grayscale(1) brightness(0.5);"}` } });
+    img.onerror = () => { iconWrap.empty(); iconWrap.setText(ach.id); };
+
     card.createEl("div", { text: c(t, ach.nameKey), attr: { style: "font-size:11px;font-weight:700;color:#fff;text-align:center;padding:0 6px;line-height:1.3;margin-bottom:4px;" } });
     card.createEl("div", { text: c(t, ach.descKey), attr: { style: "font-size:9px;color:rgba(255,255,255,0.55);text-align:center;padding:0 6px;line-height:1.4;margin-bottom:8px;" } });
     const barBg = card.createEl("div", { attr: { style: "height:3px;background:rgba(255,255,255,0.15);border-radius:99px;margin:0 8px 8px;overflow:hidden;" } });
