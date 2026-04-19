@@ -91,7 +91,7 @@ var Q=class extends I.Modal{
     });
     // Task 6: back button → always go back to Hub (not close)
     let a=r.createEl("button",{attr:{class:"lh-review-back"}});
-    a.innerHTML=`← ${c(t,"BACK")}`;
+    a.textContent="← "+c(t,"BACK");
     a.addEventListener("click",()=>{ this.close(); this.onBack&&this.onBack(); });
     // Minimize button
     let minBtn=r.createEl("button",{attr:{class:"lh-review-back",style:"font-size:16px;padding:4px 8px;margin-left:4px;"}});
@@ -136,7 +136,7 @@ var Q=class extends I.Modal{
     editTopBtn.addEventListener("click",()=>this._renderEditForm(e));
     // Delete button
     let delTopBtn=btnGroup.createEl("button",{attr:{class:"lh-rc-edit-btn",style:"color:#ef4444;"}});
-    delTopBtn.innerHTML="🗑️";
+    delTopBtn.textContent="🗑️";
     delTopBtn.title=c(t,"DELETE");
     delTopBtn.addEventListener("click",()=>this._renderDeleteConfirm(e));
     if(e.emoji){ i.createEl("span",{attr:{class:"lh-rc-emoji"}}).textContent=e.emoji; }
@@ -216,12 +216,12 @@ var Q=class extends I.Modal{
       let p=this.contentEl.createEl("div",{attr:{class:"lh-review-footer"}});
       let g=p.createEl("div",{attr:{class:"lh-pill-row"}});
       let E=g.createEl("button",{attr:{class:"lh-pill-btn lh-pill-show"}});
-      E.innerHTML="TIP "+C("SHOW_ANSWER",t);
+      E.textContent="TIP "+C("SHOW_ANSWER",t);
       E.addEventListener("click",()=>{this.answerShown=true;this._renderCardContent(e);});
 
       let m=e.hint_l1||e.hint_l2||e.hint_l3;
       let x=g.createEl("button",{attr:{class:"lh-pill-btn lh-pill-recall"}});
-      x.innerHTML="L1 "+(this.hintLevel===0?C("RECALL",t):C("HINT_NEXT",t));
+      x.textContent="L1 "+(this.hintLevel===0?C("RECALL",t):C("HINT_NEXT",t));
       if(!m||this.hintLevel>=3){ x.disabled=true; x.style.opacity="0.38"; x.style.cursor="not-allowed"; }
       else x.addEventListener("click",()=>{this.hintLevel++;this._renderCardContent(e);});
 
@@ -236,7 +236,7 @@ var Q=class extends I.Modal{
       // Fallback: if full path not found, try resolving by basename via Obsidian link resolution
       if(!w&&S){let _bn=S.split("/").pop();let _resolved=this.app.metadataCache.getFirstLinkpathDest(_bn,"");if(_resolved)w=_resolved;}
       let k=g.createEl("button",{attr:{class:"lh-pill-btn lh-pill-memory"}});
-      k.innerHTML=`${c(t,"MEMORY_MAP")}`;
+      k.textContent=c(t,"MEMORY_MAP");
       w?k.addEventListener("click",()=>{this.app.workspace.openLinkText(w.path,"",false);}):(k.disabled=true,k.style.opacity="0.38",k.style.cursor="not-allowed");
 
       let y=p.createEl("div",{attr:{class:"lh-footer-meta"}});
@@ -285,7 +285,7 @@ var Q=class extends I.Modal{
     let nav=this.contentEl.createEl("div",{attr:{class:"lh-review-nav"}});
     nav.createEl("span",{text:c(t,"HUB_TITLE"),attr:{class:"lh-review-logo"}});
     let backBtn=nav.createEl("button",{attr:{class:"lh-review-back"}});
-    backBtn.innerHTML=`← ${c(t,"BACK")}`;
+    backBtn.textContent="← "+c(t,"BACK");
     backBtn.addEventListener("click",()=>this.renderCard());
 
     // Form body

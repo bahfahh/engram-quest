@@ -207,14 +207,15 @@ function renderQuestChallenge(container, challenge, difficulty, onSolved, settin
   if (challenge.type === "cloze" && challenge.sentence) {
     let expected = deps.collectExpectedAnswers(challenge);
     let sentence = wrapper.createEl("div", { attr: { style: "font-size:15px;line-height:1.8;color:var(--text-normal);margin-bottom:12px;padding:14px 16px;border-radius:10px;background:var(--background-secondary);border:1px solid var(--background-modifier-border)" } });
-    sentence.innerHTML = deps.renderClozeSentence(challenge.sentence, false);
+    sentence.appendChild(obsidian.sanitizeHTMLToDom(deps.renderClozeSentence(challenge.sentence, false)));
     let controls = wrapper.createEl("div", { attr: { style: "display:flex;gap:8px;align-items:center;flex-wrap:wrap" } });
     let input = controls.createEl("input", { attr: { type: "text", placeholder: zh ? "輸入填空答案" : "Type the cloze answer", class: "qm-ch-input" } });
     let button = controls.createEl("button", { text: zh ? "送出" : "Submit", attr: { class: "qm-ch-btn", style: "width:auto;padding:10px 18px" } });
     let result = wrapper.createEl("div", { attr: { style: "margin-top:10px;font-size:13px;color:var(--text-muted)" } });
     let revealButton = null;
     let revealAnswer = () => {
-      sentence.innerHTML = deps.renderClozeSentence(challenge.sentence, true);
+      sentence.empty();
+      sentence.appendChild(obsidian.sanitizeHTMLToDom(deps.renderClozeSentence(challenge.sentence, true)));
       result.textContent = (zh ? "正確答案：" : "Correct answer: ") + expected.join(" / ");
       if (revealButton) revealButton.disabled = true;
     };
