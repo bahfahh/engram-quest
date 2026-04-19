@@ -53,18 +53,19 @@ function parseFlashcards(markdown) {
   markdown = markdown.replace(/\r\n/g, "\n");
   let lines = markdown.split("\n");
   let cards = [];
-  let inFencedBlock = false;
   let inHtmlComment = false;
 
   for (let index = 0; index < lines.length; index++) {
     let line = lines[index];
 
-    // Track fenced code blocks (``` or ~~~)
-    if (/^[ \t]*(`{3,}|~{3,})/.test(line)) {
-      inFencedBlock = !inFencedBlock;
+    // Skip fenced code blocks (``` or ~~~) — match opening/closing pair
+    const fenceMatch = /^[ \t]*(`{3,}|~{3,})/.exec(line);
+    if (fenceMatch) {
+      const fence = fenceMatch[1];
+      index++;
+      while (index < lines.length && !lines[index].trimStart().startsWith(fence)) index++;
       continue;
     }
-    if (inFencedBlock) continue;
 
     // Skip HTML comments (but not <!--SR: scheduling comments)
     if (inHtmlComment) {
