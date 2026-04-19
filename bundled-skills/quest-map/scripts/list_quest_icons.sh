@@ -1,7 +1,7 @@
 #!/bin/bash
 # List all available AI-generated generic gamified icons
-REPO_ROOT="$(cd "$(dirname "$0")/../../../../.." && pwd)"
-ICON_DIR="$REPO_ROOT/assets/quest-map/icons"
+VAULT_ROOT="$(cd "$(dirname "$0")/../../../.." && pwd)"
+ICON_DIR="$VAULT_ROOT/.obsidian/plugins/engram-quest/assets/quest-map/icons"
 if [ -d "$ICON_DIR" ]; then
     ls -1 "$ICON_DIR/" 2>/dev/null
 else
