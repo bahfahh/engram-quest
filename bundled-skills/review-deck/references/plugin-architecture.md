@@ -33,6 +33,8 @@ In both flows the plugin scans the **file that contains the cards**. The tag mus
 ### User-written cards flow
 The user writes `question :: answer` lines directly in their source note and adds a `#flashcards/...` tag. The plugin scans the source note.
 
+Cards support embedded images using `![[image.png]]` (wiki-link) or `![](path/to/image.png)` (standard markdown). The plugin post-processes `MarkdownRenderer` output to resolve `.internal-embed` elements into actual `<img>` tags via `vault.getResourcePath()`.
+
 ### AI-generated cards flow
 AI reads the source note for content, then creates a separate file under `engram-review/ai-cards/`. That ai-cards file must contain:
 - YAML frontmatter with a `tags:` field matching the configured prefix

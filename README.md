@@ -38,6 +38,18 @@ Capitals: France {{c1::Paris}}, Japan {{c2::Tokyo}}
 
 **Tag format:** `#flashcards/topic` — the name after the slash is the Deck name. Change the prefix (`flashcards`) in Settings.
 
+**Embedding images in cards:** Use Obsidian's wiki-link image syntax inside any card format:
+
+```
+Q: What does this diagram show?
+![[diagram.png]]
+A: The architecture of a microservice system.
+
+Cell structure :: ![[cell-diagram.png]]
+```
+
+Both `![[image.png]]` (wiki-link) and `![](path/to/image.png)` (standard markdown) are supported. Images display directly in the review card during study sessions.
+
 Open Hub → Review Deck to see all your cards automatically.
 
 ### ⚡ Quick Start (AI Path)
@@ -134,6 +146,18 @@ A: 在快忘記時複習，可以用最少時間達到最高記憶保留率。
 | `{{c1::}}` 填空 | 填空記憶，Anki 相容語法 | `{{c1::答案}}` 或 `{{c1::答案::提示}}` |
 
 **Tag 格式：** `#flashcards/主題` — 斜線後的名稱就是 Deck 的名字。前綴（`flashcards`）可在設定中修改。
+
+**在卡片中嵌入圖片：** 在任何卡片格式中使用 Obsidian 的 wiki-link 圖片語法：
+
+```
+Q: 這張圖表示什麼？
+![[diagram.png]]
+A: 微服務系統的架構圖。
+
+細胞結構 :: ![[cell-diagram.png]]
+```
+
+支援 `![[image.png]]`（wiki-link）和 `![](path/to/image.png)`（標準 markdown）兩種語法。圖片會直接顯示在複習卡片中。
 
 開 Hub → Review Deck，你寫的卡片會自動出現。
 

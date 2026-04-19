@@ -10,6 +10,32 @@ Review Deck is the flashcard and spaced-repetition module in EngramQuest.
 4. If you enable legacy `::` scanning in plugin settings, untagged flashcard notes can also be included for migration.
 5. Ask an AI tool to generate review-deck hints.
 
+## Card formats
+
+Three formats are supported and freely mixable in one note:
+
+| Format | Best for | Syntax |
+|---|---|---|
+| `::` Q&A | Short answers, one line | `question :: answer` |
+| `Q:/A:` Q&A | Multi-line or bullet answers | `Q: question` → `A:` (two blank lines end the card) |
+| `{{c1::}}` Cloze | Fill-in-the-blank, Anki-compatible | `{{c1::answer}}` or `{{c1::answer::hint}}` |
+
+## Embedding images in cards
+
+Use Obsidian's wiki-link or standard markdown image syntax inside any card format:
+
+```
+Q: What does this diagram show?
+![[diagram.png]]
+A: The architecture of a microservice system.
+
+Cell structure :: ![[cell-diagram.png]]
+
+{{c1::Mitochondria}} is shown here: ![[cell.png]]
+```
+
+Both `![[image.png]]` (wiki-link) and `![](path/to/image.png)` (standard markdown) are supported. Images display directly in the review card during study sessions.
+
 ## Hint levels
 
 - `L1`: active recall trigger
