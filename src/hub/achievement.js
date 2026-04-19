@@ -68,7 +68,7 @@ function buildActivitySvg(dailyLog, days) {
   const total = counts.reduce((a, b) => a + b, 0);
   const avgActive = studyDays > 0 ? (total / studyDays).toFixed(1) : 0;
 
-  const W = 520, H = 90, padL = 28, padR = 4, padT = 6, padB = 22;
+  const W = 520, H = 140, padL = 28, padR = 4, padT = 6, padB = 22;
   const chartW = W - padL - padR;
   const chartH = H - padT - padB;
   const barW = Math.max(2, chartW / days - 1.2);
@@ -131,12 +131,12 @@ function renderActivitySection(container, dailyLog, t, activePeriod, globalTotal
 
   // Chart
   const { svg, studyDays, total, avgActive, days } = buildActivitySvg(dailyLog, activePeriod);
-  const chartBox = container.createEl("div", { attr: { style: "background:#f8faff;border:1.5px solid #e5e7eb;border-radius:12px;padding:10px 12px 6px;margin-bottom:10px;" } });
+  const chartBox = container.createEl("div", { attr: { class: "lh-ach-chart-box", style: "background:#f8faff;border:1.5px solid #e5e7eb;border-radius:12px;padding:10px 12px 6px;margin-bottom:10px;" } });
   chartBox.appendChild(I.sanitizeHTMLToDom(svg));
 
   // Stats row
   const statsPct = Math.round(studyDays / days * 100);
-  const statsRow = container.createEl("div", { attr: { style: "display:flex;gap:8px;" } });
+  const statsRow = container.createEl("div", { attr: { class: "lh-ach-stats-row", style: "display:flex;gap:8px;" } });
   [
     { label: c(t, "ACH_STUDY_DAYS"), val: `${studyDays}/${days}`, sub: `${statsPct}%` },
     { label: c(t, "ACH_PERIOD_REVIEWS"), val: String(total), sub: "" },
@@ -178,7 +178,7 @@ function renderAchievementTab(container, plugin, decks) {
   hdr.createEl("span", { text: c(t, "TAB_ACHIEVEMENT"), attr: { class: "lh-card-title" } });
 
   // === Summary stats ===
-  const sRow = wrap.createEl("div", { attr: { style: "display:flex;gap:10px;padding:0 20px 16px;flex-wrap:wrap;" } });
+  const sRow = wrap.createEl("div", { attr: { class: "lh-ach-stats-row", style: "display:flex;gap:10px;padding:0 20px 16px;flex-wrap:wrap;" } });
   [
     { label: c(t, "ACH_TOTAL_REVIEWED"), val: totalReviewed, color: "#6366f1" },
     { label: c(t, "ACH_MASTERED"),       val: counts.mastered, color: "#22c55e" },
@@ -186,12 +186,12 @@ function renderAchievementTab(container, plugin, decks) {
     { label: c(t, "ACH_STREAK"),         val: currentStreak + "d", color: "#ef4444" },
   ].forEach(s => {
     const b = sRow.createEl("div", { attr: { style: "flex:1;min-width:72px;padding:10px 12px;border-radius:12px;background:#f8faff;border:1.5px solid #e5e7eb;text-align:center;" } });
-    b.createEl("div", { text: String(s.val), attr: { style: `font-size:22px;font-weight:900;color:${s.color};line-height:1.1;` } });
+    b.createEl("div", { text: String(s.val), attr: { class: "lh-ach-stat-val", style: `font-size:22px;font-weight:900;color:${s.color};line-height:1.1;` } });
     b.createEl("div", { text: s.label, attr: { style: "font-size:9px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.05em;margin-top:2px;" } });
   });
 
   // === Familiarity donut ===
-  const chartSec = wrap.createEl("div", { attr: { style: "display:flex;align-items:center;gap:20px;padding:0 20px 20px;flex-wrap:wrap;border-bottom:1px solid #f1f5f9;" } });
+  const chartSec = wrap.createEl("div", { attr: { class: "lh-ach-familiarity", style: "display:flex;align-items:center;gap:20px;padding:0 20px 20px;flex-wrap:wrap;border-bottom:1px solid #f1f5f9;" } });
   const chartWrap = chartSec.createEl("div", { attr: { style: "flex-shrink:0;" } });
   chartWrap.appendChild(I.sanitizeHTMLToDom(buildDonutSvg(counts)));
   const legendWrap = chartSec.createEl("div", { attr: { style: "display:flex;flex-direction:column;gap:8px;flex:1;min-width:110px;" } });
@@ -209,7 +209,7 @@ function renderAchievementTab(container, plugin, decks) {
   });
 
   // === Activity chart ===
-  const actSec = wrap.createEl("div", { attr: { style: "padding:16px 20px 8px;" } });
+  const actSec = wrap.createEl("div", { attr: { class: "lh-ach-activity", style: "padding:16px 20px 8px;" } });
   renderActivitySection(actSec, dailyLog, t, 30, totalReviewed);
 
   // === Achievement collection ===
@@ -218,7 +218,7 @@ function renderAchievementTab(container, plugin, decks) {
   const unlocked = ACHIEVEMENTS.filter(a => (evalCtx[a.field] || 0) >= a.threshold).length;
   achHdr.createEl("span", { text: `${unlocked} / ${ACHIEVEMENTS.length}`, attr: { class: "lh-card-count" } });
 
-  const grid = wrap.createEl("div", { attr: { style: "display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:12px;padding:0 20px 24px;" } });
+  const grid = wrap.createEl("div", { attr: { class: "lh-ach-grid", style: "display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:12px;padding:0 20px 24px;" } });
   for (const ach of ACHIEVEMENTS) {
     const val = evalCtx[ach.field] || 0;
     const isUnlocked = val >= ach.threshold;
@@ -237,7 +237,7 @@ function renderAchievementTab(container, plugin, decks) {
     const iconSrc = plugin.app.vault.adapter.getResourcePath
       ? plugin.app.vault.adapter.getResourcePath(".obsidian/plugins/engram-quest/" + ach.icon)
       : ach.icon;
-    const img = iconWrap.createEl("img", { attr: { src: iconSrc, width: "64", height: "64", style: `object-fit:cover;border-radius:8px;${isUnlocked ? "" : "filter:grayscale(1) brightness(0.5);"}` } });
+    const img = iconWrap.createEl("img", { attr: { src: iconSrc, width: "88", height: "88", style: `object-fit:contain;display:block;margin:0 auto;${isUnlocked ? "" : "filter:grayscale(1) brightness(0.5);"}` } });
     img.onerror = () => { iconWrap.empty(); iconWrap.setText(ach.id); };
 
     card.createEl("div", { text: c(t, ach.nameKey), attr: { style: "font-size:11px;font-weight:700;color:#fff;text-align:center;padding:0 6px;line-height:1.3;margin-bottom:4px;" } });
