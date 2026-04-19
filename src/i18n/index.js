@@ -193,6 +193,13 @@ const DICT = {
     ACH_DAILY_SURGE_DESC: "30 cards in one day",
     ACH_MASTER_50_NAME: "Memory Sage",
     ACH_MASTER_50_DESC: "50 mastered cards",
+    ACH_ACTIVITY: "Review Activity",
+    ACH_STUDY_DAYS: "Study Days",
+    ACH_DAILY_AVG: "Daily Avg",
+    ACH_PER_DAY: "/day",
+    ACH_PERIOD_7: "7D",
+    ACH_PERIOD_30: "30D",
+    ACH_PERIOD_90: "90D",
   },
   "zh-tw": {
     LANGUAGE: "語言",
@@ -387,6 +394,13 @@ const DICT = {
     ACH_DAILY_SURGE_DESC: "單日完成 30 張",
     ACH_MASTER_50_NAME: "記憶賢者",
     ACH_MASTER_50_DESC: "熟練卡片達 50 張",
+    ACH_ACTIVITY: "複習活動",
+    ACH_STUDY_DAYS: "學習天數",
+    ACH_DAILY_AVG: "日均",
+    ACH_PER_DAY: "次/天",
+    ACH_PERIOD_7: "7天",
+    ACH_PERIOD_30: "30天",
+    ACH_PERIOD_90: "90天",
   },
 };
 

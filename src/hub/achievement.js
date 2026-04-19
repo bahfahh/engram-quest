@@ -47,6 +47,106 @@ function buildDonutSvg(counts) {
   return `<svg width="140" height="140" viewBox="0 0 140 140">${paths}<text x="70" y="66" text-anchor="middle" font-size="20" font-weight="800" fill="#1f2937">${pct}%</text><text x="70" y="82" text-anchor="middle" font-size="9" fill="#6b7280" font-weight="700">MASTERED</text></svg>`;
 }
 
+function buildActivitySvg(dailyLog, days) {
+  const pad = n => String(n).padStart(2, "0");
+  const toStr = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+  const today = new Date();
+  const todayStr = toStr(today);
+
+  const dates = [];
+  for (let i = days - 1; i >= 0; i--) {
+    const d = new Date(today);
+    d.setDate(d.getDate() - i);
+    dates.push(toStr(d));
+  }
+
+  const counts = dates.map(ds => dailyLog[ds] || 0);
+  const maxCount = Math.max(...counts, 1);
+  const studyDays = counts.filter(n => n > 0).length;
+  const total = counts.reduce((a, b) => a + b, 0);
+  const avgActive = studyDays > 0 ? (total / studyDays).toFixed(1) : 0;
+
+  const W = 520, H = 90, padL = 28, padR = 4, padT = 6, padB = 22;
+  const chartW = W - padL - padR;
+  const chartH = H - padT - padB;
+  const barW = Math.max(2, chartW / days - 1.2);
+  const step = (chartW - barW) / Math.max(days - 1, 1);
+
+  let bars = "";
+  dates.forEach((ds, i) => {
+    const x = (padL + i * step).toFixed(1);
+    const n = counts[i];
+    const h = n > 0 ? Math.max(3, (n / maxCount) * chartH) : 2;
+    const y = (padT + chartH - h).toFixed(1);
+    const isToday = ds === todayStr;
+    const fill = isToday ? "#818cf8" : n > 0 ? "#6366f1" : "#e5e7eb";
+    const op = n > 0 ? "1" : "0.6";
+    bars += `<rect x="${x}" y="${y}" width="${barW.toFixed(1)}" height="${h.toFixed(1)}" fill="${fill}" rx="2" opacity="${op}"/>`;
+  });
+
+  // x-axis labels
+  const labelStep = days <= 7 ? 1 : days <= 30 ? 7 : 14;
+  const DOW = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+  let xLabels = "";
+  dates.forEach((ds, i) => {
+    if (i % labelStep !== 0 && i !== days - 1) return;
+    const x = (padL + i * step + barW / 2).toFixed(1);
+    const d = new Date(ds);
+    const label = days <= 7 ? DOW[d.getDay()] : `${pad(d.getMonth()+1)}/${pad(d.getDate())}`;
+    xLabels += `<text x="${x}" y="${H - 2}" text-anchor="middle" font-size="7.5" fill="#9ca3af">${label}</text>`;
+  });
+
+  // y-axis max label
+  const yLabel = `<text x="${padL - 3}" y="${padT + 8}" text-anchor="end" font-size="7.5" fill="#9ca3af">${maxCount}</text>`;
+  const baseline = `<line x1="${padL}" y1="${padT + chartH}" x2="${W - padR}" y2="${padT + chartH}" stroke="#e5e7eb" stroke-width="1"/>`;
+
+  return {
+    svg: `<svg width="100%" height="${H}" viewBox="0 0 ${W} ${H}">${baseline}${bars}${yLabel}${xLabels}</svg>`,
+    studyDays, total, avgActive, days,
+  };
+}
+
+function renderActivitySection(container, dailyLog, t, activePeriod) {
+  container.empty();
+
+  // Header + toggle row
+  const hdr = container.createEl("div", { attr: { style: "display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;" } });
+  hdr.createEl("span", { text: c(t, "ACH_ACTIVITY"), attr: { style: "font-size:13px;font-weight:700;color:#374151;" } });
+
+  const toggleWrap = hdr.createEl("div", { attr: { style: "display:flex;gap:4px;" } });
+  const periods = [
+    { days: 7,  label: c(t, "ACH_PERIOD_7")  },
+    { days: 30, label: c(t, "ACH_PERIOD_30") },
+    { days: 90, label: c(t, "ACH_PERIOD_90") },
+  ];
+  periods.forEach(p => {
+    const btn = toggleWrap.createEl("button", {
+      text: p.label,
+      attr: { style: `padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;cursor:pointer;border:1.5px solid ${p.days === activePeriod ? "#6366f1" : "#e5e7eb"};background:${p.days === activePeriod ? "#eef2ff" : "#fff"};color:${p.days === activePeriod ? "#6366f1" : "#6b7280"};` },
+    });
+    btn.addEventListener("click", () => renderActivitySection(container, dailyLog, t, p.days));
+  });
+
+  // Chart
+  const { svg, studyDays, total, avgActive, days } = buildActivitySvg(dailyLog, activePeriod);
+  const chartBox = container.createEl("div", { attr: { style: "background:#f8faff;border:1.5px solid #e5e7eb;border-radius:12px;padding:10px 12px 6px;margin-bottom:10px;" } });
+  chartBox.appendChild(I.sanitizeHTMLToDom(svg));
+
+  // Stats row
+  const statsPct = Math.round(studyDays / days * 100);
+  const statsRow = container.createEl("div", { attr: { style: "display:flex;gap:8px;" } });
+  [
+    { label: c(t, "ACH_STUDY_DAYS"), val: `${studyDays}/${days}`, sub: `${statsPct}%` },
+    { label: c(t, "ACH_TOTAL_REVIEWED"), val: String(total), sub: "" },
+    { label: c(t, "ACH_DAILY_AVG"), val: String(avgActive), sub: c(t, "ACH_PER_DAY") },
+  ].forEach(s => {
+    const box = statsRow.createEl("div", { attr: { style: "flex:1;padding:8px 10px;border-radius:10px;background:#f8faff;border:1.5px solid #e5e7eb;text-align:center;" } });
+    box.createEl("div", { text: s.val, attr: { style: "font-size:16px;font-weight:900;color:#374151;line-height:1.1;" } });
+    if (s.sub) box.createEl("div", { text: s.sub, attr: { style: "font-size:9px;color:#6366f1;font-weight:700;" } });
+    box.createEl("div", { text: s.label, attr: { style: "font-size:9px;font-weight:600;color:#9ca3af;text-transform:uppercase;letter-spacing:.04em;margin-top:2px;" } });
+  });
+}
+
 function renderAchievementTab(container, plugin, decks) {
   const t = plugin.settings;
   const stats = t._stats || {};
@@ -62,7 +162,6 @@ function renderAchievementTab(container, plugin, decks) {
     }
   }
 
-  // Use SR repetitions as ground truth for historical reviews
   const totalReviewed = Math.max(stats.totalCardsReviewed || 0, srRepTotal);
   const currentStreak = stats.currentStreak || 0;
   const dailyLog = stats.dailyReviewLog || {};
@@ -71,10 +170,12 @@ function renderAchievementTab(container, plugin, decks) {
   const evalCtx = { totalCardsReviewed: totalReviewed, currentStreak, dailySurge, masteredCount: counts.mastered };
 
   const wrap = container.createEl("div", { attr: { class: "lh-card", style: "margin-top:0;border-radius:0;flex:1;display:flex;flex-direction:column;overflow-y:auto;" } });
+
+  // === Header ===
   const hdr = wrap.createEl("div", { attr: { class: "lh-card-header" } });
   hdr.createEl("span", { text: c(t, "TAB_ACHIEVEMENT"), attr: { class: "lh-card-title" } });
 
-  // Summary stats row
+  // === Summary stats ===
   const sRow = wrap.createEl("div", { attr: { style: "display:flex;gap:10px;padding:0 20px 16px;flex-wrap:wrap;" } });
   [
     { label: c(t, "ACH_TOTAL_REVIEWED"), val: totalReviewed, color: "#6366f1" },
@@ -87,8 +188,8 @@ function renderAchievementTab(container, plugin, decks) {
     b.createEl("div", { text: s.label, attr: { style: "font-size:9px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.05em;margin-top:2px;" } });
   });
 
-  // Chart + legend
-  const chartSec = wrap.createEl("div", { attr: { style: "display:flex;align-items:center;gap:20px;padding:0 20px 20px;flex-wrap:wrap;" } });
+  // === Familiarity donut ===
+  const chartSec = wrap.createEl("div", { attr: { style: "display:flex;align-items:center;gap:20px;padding:0 20px 20px;flex-wrap:wrap;border-bottom:1px solid #f1f5f9;" } });
   const chartWrap = chartSec.createEl("div", { attr: { style: "flex-shrink:0;" } });
   chartWrap.appendChild(I.sanitizeHTMLToDom(buildDonutSvg(counts)));
   const legendWrap = chartSec.createEl("div", { attr: { style: "display:flex;flex-direction:column;gap:8px;flex:1;min-width:110px;" } });
@@ -105,13 +206,16 @@ function renderAchievementTab(container, plugin, decks) {
     row.createEl("span", { text: `${item.n} (${pct}%)`, attr: { style: "font-size:11px;font-weight:700;color:#6b7280;" } });
   });
 
-  // Achievement collection header
-  const achHdr = wrap.createEl("div", { attr: { style: "display:flex;align-items:center;gap:8px;padding:0 20px 12px;border-top:1px solid #f1f5f9;" } });
+  // === Activity chart ===
+  const actSec = wrap.createEl("div", { attr: { style: "padding:16px 20px 8px;" } });
+  renderActivitySection(actSec, dailyLog, t, 30);
+
+  // === Achievement collection ===
+  const achHdr = wrap.createEl("div", { attr: { style: "display:flex;align-items:center;gap:8px;padding:16px 20px 12px;border-top:1px solid #f1f5f9;" } });
   achHdr.createEl("span", { text: c(t, "ACH_COLLECTION"), attr: { style: "font-size:14px;font-weight:700;color:#374151;" } });
   const unlocked = ACHIEVEMENTS.filter(a => (evalCtx[a.field] || 0) >= a.threshold).length;
   achHdr.createEl("span", { text: `${unlocked} / ${ACHIEVEMENTS.length}`, attr: { class: "lh-card-count" } });
 
-  // Cards grid
   const grid = wrap.createEl("div", { attr: { style: "display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:12px;padding:0 20px 24px;" } });
   for (const ach of ACHIEVEMENTS) {
     const val = evalCtx[ach.field] || 0;
@@ -124,7 +228,7 @@ function renderAchievementTab(container, plugin, decks) {
       ? `background:${rs.bg};box-shadow:0 0 16px ${rs.glow},0 4px 12px rgba(0,0,0,0.3);border:2px solid ${rs.badge};`
       : `background:linear-gradient(145deg,#374151,#1f2937);border:2px solid #4b5563;opacity:0.55;`;
 
-    const badgeEl = card.createEl("div", { text: ach.rarity, attr: { style: `background:${rs.badge};color:#fff;font-size:9px;font-weight:800;padding:2px 7px;border-radius:99px;position:absolute;top:8px;right:8px;letter-spacing:.04em;` } });
+    card.createEl("div", { text: ach.rarity, attr: { style: `background:${rs.badge};color:#fff;font-size:9px;font-weight:800;padding:2px 7px;border-radius:99px;position:absolute;top:8px;right:8px;letter-spacing:.04em;` } });
     card.createEl("div", { text: ach.icon, attr: { style: "font-size:34px;line-height:1;text-align:center;margin:20px 0 8px;" } });
     card.createEl("div", { text: c(t, ach.nameKey), attr: { style: "font-size:11px;font-weight:700;color:#fff;text-align:center;padding:0 6px;line-height:1.3;margin-bottom:4px;" } });
     card.createEl("div", { text: c(t, ach.descKey), attr: { style: "font-size:9px;color:rgba(255,255,255,0.55);text-align:center;padding:0 6px;line-height:1.4;margin-bottom:8px;" } });
