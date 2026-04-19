@@ -52,15 +52,18 @@ function renderAchievementTab(container, plugin, decks) {
   const stats = t._stats || {};
 
   const counts = { mastered: 0, learning: 0, due: 0, unseen: 0, total: 0 };
+  let srRepTotal = 0;
   for (const deck of decks) {
     for (const card of deck.cards) {
       const st = getReviewStatus(card.srMeta);
       counts[st] = (counts[st] || 0) + 1;
       counts.total++;
+      srRepTotal += (card.srMeta?.repetitions || 0);
     }
   }
 
-  const totalReviewed = stats.totalCardsReviewed || 0;
+  // Use SR repetitions as ground truth for historical reviews
+  const totalReviewed = Math.max(stats.totalCardsReviewed || 0, srRepTotal);
   const currentStreak = stats.currentStreak || 0;
   const dailyLog = stats.dailyReviewLog || {};
   const logVals = Object.values(dailyLog);
