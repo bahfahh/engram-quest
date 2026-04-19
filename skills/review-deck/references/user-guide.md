@@ -42,6 +42,18 @@ Both `![[image.png]]` (wiki-link) and `![](path/to/image.png)` (standard markdow
 - `L2`: real contextual anchor from the vault
 - `L3`: narrowing hint
 
+## Key capabilities
+
+- **FSRS-5 scheduling:** The latest spaced-repetition algorithm — intervals adapt to your actual recall performance, not fixed multipliers.
+- **Notes stay clean:** Cards and scheduling data live in `engram-review/`. Your original markdown is never modified — no scheduling comments injected into your notes.
+- **Multi-line Q&A:** Both question and answer support multiple lines, embedded images, and code blocks. A single blank line within a card is fine; two blank lines end the card.
+- **Image support:** Embed `![[image.png]]` or `![](path)` in any card format — images render directly in the review session.
+- **Three card formats:** `::` one-liner, `Q:/A:` multi-line, and `{{c1::}}` Cloze — freely mixable in one note.
+- **Triple-level Hints:** L1 (active recall), L2 (contextual anchor from your vault), L3 (narrowing hint). L2 links new knowledge to things you already know.
+- **AI Skills integration:** Generate cards, hints, and quest challenges from your notes using Claude Code, Gemini CLI, or Cursor.
+- **Source note link:** Every card connects back to its origin note — tap to read context, then resume where you left off.
+- **Anki compatible:** AI-generated cards use `question :: answer` format with `TARGET DECK` frontmatter — natively compatible with Obsidian_to_Anki.
+
 ## Example prompts
 
 - `Build a review deck for azure`

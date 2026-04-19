@@ -65,12 +65,14 @@ Open Hub → Review Deck to see all your cards automatically.
 #### 🃏 Review Deck
 Scientific long-term memory powered by the **FSRS Algorithm**.
 ![Review Deck Demo](assets/review-deck-demo.png)
-- **Three card formats:** `::` one-liner, `Q:/A:` multi-line, and `{{c1::}}` Cloze (Anki-compatible)
+- **Three card formats:** `::` one-liner, `Q:/A:` multi-line, and `{{c1::}}` Cloze (Anki-compatible) — freely mixable in one note
+- **Multi-line Q&A:** Both question and answer support multiple lines, embedded images, and code blocks. A single blank line within a card is fine — two blank lines end the card.
+- **Image support:** Embed `![[image.png]]` or `![](path)` directly in any card format — images render in the review session
 - **Auto-detection:** Scans any note tagged with `#flashcards/topic` — write cards wherever it fits your workflow
 - **Notes stay clean:** Cards and scheduling data live in `engram-review/` — your original markdown is never modified
 - **Source note link:** Every card connects back to its origin note — tap to read context, then resume right where you left off
 - **Triple-level Hints:** Stuck? AI provides L1 (active recall prompt), L2 (context anchored to your own vault notes), or L3 (narrowing hint). L2 is what makes AI useful here — it links new knowledge to things you already know in your vault.
-- **FSRS scheduling:** Intervals adapt to your actual recall performance — no review pile guilt
+- **FSRS scheduling:** The latest spaced-repetition algorithm — intervals adapt to your actual recall performance, not fixed multipliers
 
 #### 🗺️ Quest Map
 Turn long notes into structured, game-like learning stages — embedded directly in your vault as a `.md` file.
@@ -174,7 +176,9 @@ A: 微服務系統的架構圖。
 #### 🃏 Review Deck（長期記憶）
 基於 **FSRS 演算法** 的科學間隔重複。
 ![複習卡片展示](assets/review-deck-demo.png)
-- **三種卡片格式：** `::` 一行問答、`Q:/A:` 多行問答、`{{c1::}}` Cloze 填空（Anki 相容）
+- **三種卡片格式：** `::` 一行問答、`Q:/A:` 多行問答、`{{c1::}}` Cloze 填空（Anki 相容）— 可在同一篇筆記自由混用
+- **多行問答：** 問題和答案都支援多行、嵌入圖片和程式碼區塊。答案裡一個空行沒問題；兩個連續空行代表卡片結束
+- **圖片支援：** 在任何卡片格式中嵌入 `![[image.png]]` 或 `![](path)` — 圖片直接顯示在複習卡片中
 - **自動偵測：** 任何帶有 `#flashcards/主題` tag 的筆記都會被掃描，卡片寫在哪裡都能偵測到
 - **筆記永遠不被修改：** 卡片與排程資料存在 `engram-review/`，原始 markdown 完全不動
 - **來源筆記連結：** 每張卡片上方有 📄 按鈕 — 複習途中可即時跳轉到原始筆記查看脈絡，看完直接回到剛才的卡片
