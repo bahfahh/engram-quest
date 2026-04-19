@@ -1,9 +1,10 @@
 "use strict";
 
 function renderQuestMap(nodes, styleName, activeIndex, visitedSet, app, getNodePositions) {
-  let background = app.vault.adapter.getResourcePath(".obsidian/plugins/engram-quest/assets/quest-map/bg.png");
-  let platform = app.vault.adapter.getResourcePath(".obsidian/plugins/engram-quest/assets/quest-map/platform.png");
-  let iconRoot = ".obsidian/plugins/engram-quest/assets/quest-map/icons/";
+  let configDir = app.vault.configDir;
+  let background = app.vault.adapter.getResourcePath(configDir + "/plugins/engram-quest/assets/quest-map/bg.png");
+  let platform = app.vault.adapter.getResourcePath(configDir + "/plugins/engram-quest/assets/quest-map/platform.png");
+  let iconRoot = configDir + "/plugins/engram-quest/assets/quest-map/icons/";
   let positions = getNodePositions(nodes.length);
   let width = Math.max(1100, nodes.length > 1 ? positions[nodes.length - 1].cx + 200 : 1100);
   let path = "";

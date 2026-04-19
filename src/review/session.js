@@ -43,7 +43,7 @@ var Q=class extends I.Modal{
     this.modalEl.style.setProperty("--text-normal","#1f2937","important");
     this.modalEl.style.setProperty("--text-muted","#6b7280","important");
     this.modalEl.style.setProperty("--background-modifier-border","#e5e7eb","important");
-    let e=this.app.vault.adapter.getResourcePath(".obsidian/plugins/engram-quest/bg.png");
+    let e=this.app.vault.adapter.getResourcePath(this.app.vault.configDir+"/plugins/engram-quest/bg.png");
     this.contentEl.style.cssText=`padding:0;display:flex;flex-direction:column;height:100%;overflow:hidden;background-image:url('${e}');background-size:cover;background-position:center top;color:#1f2937`;
     this.renderCard();
   }
