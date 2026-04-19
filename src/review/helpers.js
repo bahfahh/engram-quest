@@ -50,9 +50,11 @@ function getReviewStatus(srMeta) {
 }
 
 function parseFlashcards(markdown) {
+  markdown = markdown.replace(/\r\n/g, "\n");
   let lines = markdown.split("\n");
   let cards = [];
   let inFencedBlock = false;
+  let inHtmlComment = false;
 
   for (let index = 0; index < lines.length; index++) {
     let line = lines[index];
@@ -63,6 +65,16 @@ function parseFlashcards(markdown) {
       continue;
     }
     if (inFencedBlock) continue;
+
+    // Skip HTML comments (but not <!--SR: scheduling comments)
+    if (inHtmlComment) {
+      if (line.includes("-->")) inHtmlComment = false;
+      continue;
+    }
+    if (line.trimStart().startsWith("<!--") && !line.trimStart().startsWith("<!--SR:")) {
+      if (!line.includes("-->")) inHtmlComment = true;
+      continue;
+    }
 
     // Q/A style: Q: question \n A: answer (multi-line question & answer supported)
     const qaMatch = line.match(/^Q:\s*(.+)/i);
