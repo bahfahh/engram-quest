@@ -7,6 +7,65 @@ const { saveTagSourceCard, saveInlineCard, deleteTagSourceCard } = require("./ed
 const W_ref = { get locale() { try { return I.moment && I.moment.locale && I.moment.locale(); } catch(e) { return "en"; } } };
 function L(s) { return _getLocale(s, W_ref.locale); }
 
+const REVIEW_MOBILE_PATCH_ID = "engram-quest-review-mobile-patch";
+function ensureReviewMobilePatch() {
+  if (document.getElementById(REVIEW_MOBILE_PATCH_ID)) return;
+  const styleEl = document.createElement("style");
+  styleEl.id = REVIEW_MOBILE_PATCH_ID;
+  styleEl.textContent = `
+body.is-phone .lh-review-nav {
+  overflow:hidden !important;
+}
+body.is-phone .lh-review-nav > .lh-review-tabs {
+  flex:1 1 auto;
+  min-width:0;
+  overflow-x:auto;
+  overflow-y:hidden;
+  -webkit-overflow-scrolling:touch;
+  scrollbar-width:none;
+}
+body.is-phone .lh-review-nav > .lh-review-tabs::-webkit-scrollbar { display:none; }
+body.is-phone .lh-review-nav .lh-review-tab { flex:0 0 auto; }
+body.is-phone .lh-review-card .lh-rc-top {
+  flex-wrap:wrap;
+  gap:8px;
+}
+body.is-phone .lh-review-card .lh-rc-top > div {
+  min-width:0;
+  max-width:100%;
+}
+body.is-phone .lh-review-card .lh-rc-top > div:first-of-type {
+  flex:1 1 100%;
+  margin-left:0 !important;
+  display:flex !important;
+  flex-wrap:wrap;
+  gap:6px;
+}
+body.is-phone .lh-review-card .lh-rc-top > div:last-of-type {
+  width:100%;
+  display:flex !important;
+  flex-wrap:wrap;
+  justify-content:flex-start !important;
+  gap:6px;
+}
+body.is-phone .lh-review-card .lh-rc-edit-btn {
+  margin-left:0;
+  max-width:100%;
+}
+body.is-phone .lh-review-card .lh-rc-badge {
+  font-size:11px;
+  padding:5px 12px;
+}
+body.is-phone .lh-review-footer .lh-pill-row {
+  flex-wrap:wrap;
+}
+body.is-phone .lh-review-footer .lh-pill-btn {
+  flex:1 1 calc(50% - 6px);
+}
+`;
+  document.head.appendChild(styleEl);
+}
+
 const IMG_EXT=["png","jpg","jpeg","gif","bmp","svg","webp","avif"];
 function postProcessEmbed(el,app,notePath){
   if(!el.findAll)return;
@@ -33,6 +92,7 @@ var Q=class extends I.Modal{
   }
 
   onOpen(){
+    ensureReviewMobilePatch();
     // Save initial progress on open
     this.plugin.settings._reviewProgress={deck:this.deckName,idx:this.idx};
     this.plugin.saveData(this.plugin.settings);
@@ -83,6 +143,7 @@ var Q=class extends I.Modal{
 
   _renderCardContent(e){
     let t=this.plugin.settings;
+    let _openedSourceLabel=L(t)==="zh-tw"?"已開啟":"Opened";
     this.contentEl.empty();
     // Nav
     let r=this.contentEl.createEl("div",{attr:{class:"lh-review-nav"}});
@@ -117,6 +178,23 @@ var Q=class extends I.Modal{
         let btn=srcWrap.createEl("button",{attr:{class:"lh-rc-edit-btn",style:"font-size:11px;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#6366f1;",title:np}});
         btn.textContent="📄 "+name;
         btn.addEventListener("click",(ev)=>{ev.stopPropagation();this.app.workspace.openLinkText(np,"",false);});
+      });
+    }
+    if(notePaths.length>0){
+      d.querySelectorAll(".lh-rc-top .lh-rc-edit-btn").forEach(btn=>{
+        if(btn.dataset.feedbackBound==="1") return;
+        let defaultLabel=btn.textContent;
+        btn.dataset.feedbackBound="1";
+        btn.addEventListener("click",()=>{
+          btn.textContent="✓ "+_openedSourceLabel;
+          btn.style.color="#10b981";
+          if(btn._feedbackTimer) clearTimeout(btn._feedbackTimer);
+          btn._feedbackTimer=setTimeout(()=>{
+            btn.textContent=defaultLabel;
+            btn.style.color="#6366f1";
+            btn._feedbackTimer=null;
+          },1200);
+        });
       });
     }
     // Right-side button group

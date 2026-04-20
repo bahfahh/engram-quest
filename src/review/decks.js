@@ -89,10 +89,6 @@ async function scanReviewDecks(app, settings, reviewHelpers) {
   let deckMap = {};
 
   for (let file of files) {
-    let content = await app.vault.read(file);
-    let cards = reviewHelpers.parseFlashcards(content);
-    if (cards.length === 0) continue;
-
     let cache = app.metadataCache.getFileCache(file);
     let tags = [];
     if (cache != null && cache.tags) {
@@ -111,6 +107,9 @@ async function scanReviewDecks(app, settings, reviewHelpers) {
 
     tags = [...new Set(tags.filter(Boolean))];
     let matchedDeck = reviewHelpers.matchFlashcardTagPrefix(tags, settings.flashcardTags);
+
+    let content = await app.vault.read(file);
+
     // If cache didn't yield a match, extract inline tags directly from content as fallback
     if (!matchedDeck) {
       const inlineTags = [...content.matchAll(/(^|\s)#([\w][\w/-]*)/gm)].map(m => m[2]);
@@ -119,7 +118,11 @@ async function scanReviewDecks(app, settings, reviewHelpers) {
     }
     if (!(settings.enableSRScan ?? false) && !matchedDeck) continue;
 
+    let cards = reviewHelpers.parseFlashcards(content);
+    if (cards.length === 0) continue;
+
     let deckName = matchedDeck || file.parent?.path || "/";
+    if (!deckName) deckName = "/";
     if (!deckMap[deckName]) deckMap[deckName] = { name: deckName, cards: [] };
 
     cards.forEach((card) => {

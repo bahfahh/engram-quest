@@ -2,7 +2,7 @@
 const I = require("obsidian");
 const { t: c, getLocale: L } = require("../i18n");
 
-var fe=class extends I.Modal{constructor(e,t){super(e),this.plugin=t}onClose(){var e;(e=document.getElementById("lh-help-styles"))==null||e.remove()}onOpen(){let e=this.plugin.settings,t=L(e);let imgInstallSkills=this.app.vault.adapter.getResourcePath(I.normalizePath(`${this.plugin.manifest.dir}/assets/install-skills.png`));this.modalEl.addClass("lh-help"),this.modalEl.style.cssText="width:min(95vw,800px);max-width:none;height:min(90vh,700px);max-height:none;padding:0;overflow:hidden;border-radius:20px;background:#f8faff",this.modalEl.style.setProperty("--background-primary","#ffffff","important"),this.modalEl.style.setProperty("--background-secondary","#f3f4f6","important"),this.modalEl.style.setProperty("--text-normal","#1f2937","important"),this.modalEl.style.setProperty("--text-muted","#6b7280","important"),this.contentEl.style.cssText="padding:0;height:100%;display:flex;flex-direction:column;overflow:hidden;background:#f8faff;color:#1f2937";let{contentEl:r}=this;r.empty();let s=r.createEl("div",{attr:{style:"padding:24px;border-bottom:1px solid var(--background-modifier-border);display:flex;justify-content:space-between;align-items:center"}});s.createEl("h2",{text:c(e,"HELP_TITLE"),attr:{style:"margin:0;font-size:18px;font-weight:700"}}),s.createEl("button",{text:"?",attr:{style:"width:32px;height:32px;background:transparent;border:none;cursor:pointer;font-size:18px;color:var(--text-muted)"}}).addEventListener("click",()=>this.close());let a=document.createElement("style");a.textContent=`
+var fe=class extends I.Modal{constructor(e,t){super(e),this.plugin=t}onClose(){var e;(e=document.getElementById("lh-help-styles"))==null||e.remove()}onOpen(){let e=this.plugin.settings,t=L(e),_isDark=document.body.classList.contains("theme-dark"),_bgPrimary=_isDark?"#1e1e2e":"#ffffff",_bgSecondary=_isDark?"#252538":"#f3f4f6",_textNormal=_isDark?"#e2e8f0":"#1f2937",_textMuted=_isDark?"#94a3b8":"#6b7280",_border=_isDark?"#3a3a5a":"#e5e7eb",_bgCard=_isDark?"#1a1a2e":"#f8faff";let imgInstallSkills=this.app.vault.adapter.getResourcePath(I.normalizePath(`${this.plugin.manifest.dir}/assets/install-skills.png`));this.modalEl.addClass("lh-help"),_isDark&&this.modalEl.addClass("lh-dark"),this.modalEl.style.cssText=`width:min(95vw,800px);max-width:none;height:min(90vh,700px);max-height:none;padding:0;overflow:hidden;border-radius:20px;background:${_bgCard}`,this.modalEl.style.setProperty("--background-primary",_bgPrimary,"important"),this.modalEl.style.setProperty("--background-secondary",_bgSecondary,"important"),this.modalEl.style.setProperty("--text-normal",_textNormal,"important"),this.modalEl.style.setProperty("--text-muted",_textMuted,"important"),this.modalEl.style.setProperty("--background-modifier-border",_border,"important"),this.contentEl.style.cssText=`padding:0;height:100%;display:flex;flex-direction:column;overflow:hidden;background:${_bgCard};color:${_textNormal}`;let{contentEl:r}=this;r.empty();let s=r.createEl("div",{attr:{style:"padding:24px;border-bottom:1px solid var(--background-modifier-border);display:flex;justify-content:space-between;align-items:center"}});s.createEl("h2",{text:c(e,"HELP_TITLE"),attr:{style:"margin:0;font-size:18px;font-weight:700"}}),s.createEl("button",{text:"×",attr:{style:"width:32px;height:32px;background:transparent;border:none;cursor:pointer;font-size:20px;line-height:1;color:var(--text-muted)"}}).addEventListener("click",()=>this.close());let a=document.createElement("style");a.textContent=`
       .lh-help-acc { border:1px solid #e5e7eb; border-radius:10px; margin-bottom:10px; overflow:hidden; background:#fff; }
       .lh-help-acc-hdr { display:flex; align-items:center; gap:10px; padding:14px 16px; cursor:pointer; user-select:none; background:#fff; transition:background 0.15s; }
       .lh-help-acc-hdr:hover { background:#f8faff; }
@@ -29,6 +29,22 @@ var fe=class extends I.Modal{constructor(e,t){super(e),this.plugin=t}onClose(){v
       .lh-help-chips { display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
       .lh-help-chip { padding:4px 12px; border-radius:99px; font-size:12px; font-weight:600; }
       .lh-help-acc-body pre { background:#f3f4f6; padding:8px 10px; border-radius:6px; font-size:12px; margin:6px 0; overflow-x:auto; white-space:pre-wrap; }
+      .lh-help.lh-dark .lh-help-acc { border-color:var(--background-modifier-border); background:var(--background-secondary); }
+      .lh-help.lh-dark .lh-help-acc-hdr { background:var(--background-secondary); }
+      .lh-help.lh-dark .lh-help-acc-hdr:hover { background:rgba(99,102,241,0.12); }
+      .lh-help.lh-dark .lh-help-acc-hdr.open { background:rgba(99,102,241,0.18); }
+      .lh-help.lh-dark .lh-help-acc-title { color:var(--text-normal); }
+      .lh-help.lh-dark .lh-help-acc-tag { background:rgba(255,255,255,0.06); color:var(--text-muted); }
+      .lh-help.lh-dark .lh-help-acc-arrow { color:var(--text-muted); }
+      .lh-help.lh-dark .lh-help-acc-body { color:var(--text-normal); border-top-color:var(--background-modifier-border); }
+      .lh-help.lh-dark .lh-help-acc-body code,
+      .lh-help.lh-dark .lh-help-acc-body pre { background:rgba(255,255,255,0.06); color:var(--text-normal); }
+      .lh-help.lh-dark .lh-help-acc-body th { background:rgba(255,255,255,0.06); border-color:var(--background-modifier-border); color:var(--text-normal); }
+      .lh-help.lh-dark .lh-help-acc-body td { border-color:var(--background-modifier-border); color:var(--text-normal); }
+      .lh-help.lh-dark .lh-help-acc-body tr:nth-child(even) td { background:rgba(255,255,255,0.03); }
+      .lh-help.lh-dark .lh-help-sub { background:rgba(255,255,255,0.04); }
+      .lh-help.lh-dark .lh-help-intro { background:linear-gradient(135deg,rgba(59,130,246,0.16),rgba(124,58,237,0.14)); }
+      .lh-help.lh-dark .lh-help-intro p { color:var(--text-normal); }
     `,a.id="lh-help-styles",document.head.appendChild(a);let o=r.createEl("div",{attr:{style:"flex:1;overflow-y:auto;padding:20px;font-size:14px;line-height:1.6"}}),i=o.createEl("div",{attr:{class:"lh-help-intro"}});i.innerHTML=t==="zh-tw"?`
       <p><strong>EngramQuest</strong> 讓你用 AI 快速建立學習內容，直接在 Obsidian 裡學習。</p>
       <div class="lh-help-chips">
