@@ -56,4 +56,9 @@ Before creating the canvas file:
 
 ### Save the file
 
-Save as `<source-note-name>-memory.canvas` in the resolved location above.
+**CRITICAL MANDATE: Filename Requirement**
+
+You **MUST** save the file using the exact format:
+`<source-note-name>-memory.canvas`
+
+**NEVER** use descriptive or contextual names (e.g., `Azure_Full_Ecosystem_Map.canvas`). The EngramQuest plugin detects Memory Maps by the `-memory.canvas` suffix. Files without this exact suffix are invisible to the plugin and the user.

@@ -75,7 +75,9 @@ Default behavior is AI-guided selection.
 5. Choose challenge type based on difficulty and source material.
 6. **Image challenges**: when a note image is worth testing, use `image-quiz` (all models). Only Gemini may use `image-occlusion` — and if doing so, run `scripts/occlusion_measure.py <image_path>` first to get accurate text bbox coordinates. If the script is unavailable (no Python/pytesseract), fall back to `image-quiz`.
 7. Add frontmatter tags when the topic has clear semantic tags.
-8. Save as `<source-note-name>-quest.md`.
+8. Save the output using the appropriate method:
+   - **Embedding in an existing note**: append the `quest-map` code block directly into that note. The plugin detects any `.md` file containing a ` ```quest-map ` block — no filename constraint applies.
+   - **Creating a standalone file**: use the exact format `<source-note-name>-quest.md`. **NEVER** use a descriptive name (e.g., `Azure_Quest_Adventure.md`) — the plugin uses the `-quest.md` suffix as a fallback detection path.
 
 ## Difficulty Rules
 
