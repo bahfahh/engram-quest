@@ -70,6 +70,7 @@ body.is-phone .lh-toolbar { flex-wrap:wrap; gap:6px; padding:0 10px 10px; }
 body.is-phone .lh-search { flex:1 1 100%; order:-1; }
 body.is-phone .lh-filter { flex:1 1 calc(50% - 6px); min-width:0; font-size:11px; padding:7px 8px; }
 body.is-phone .lh-view-toggle { flex-shrink:0; margin-left:auto !important; }
+body.is-phone .lh-toolbar > div[style*="position:relative"] { flex:1 1 calc(50% - 6px); min-width:0; margin-left:0 !important; }
 body.is-phone .lh-mm-grid { grid-template-columns:repeat(2,1fr); gap:10px; padding:0 0 16px; }
 body.is-phone .lh-mm-card { padding:12px 10px; gap:5px; border-radius:12px; }
 body.is-phone .lh-mm-emoji { font-size:20px; }
