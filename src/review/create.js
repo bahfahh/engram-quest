@@ -19,7 +19,10 @@ async function ensureManualCardDirs(adapter) {
 
 async function appendManualCard(adapter, deckName, front, back) {
   const dir = "engram-review/ai-cards";
-  const filePath = `${dir}/${deckName}-manual.md`;
+  // deckName may contain "/" (e.g. "flashcards/system-design/strategic")
+  // sanitize to avoid creating subdirectories in ai-cards/
+  const safeFileName = deckName.replace(/\//g, "__");
+  const filePath = `${dir}/${safeFileName}-manual.md`;
   await ensureManualCardDirs(adapter);
 
   const line = `${front} :: ${back}`;
@@ -29,7 +32,8 @@ async function appendManualCard(adapter, deckName, front, back) {
     await adapter.write(filePath, existing + sep + line + "\n");
   } else {
     // New file: add flashcard tag so it gets picked up by scanReviewDecks
-    const prefix = `#flashcards/${deckName}\n\n`;
+    // deckName is already the full tag path (e.g. "flashcards/system-design/strategic")
+    const prefix = `#${deckName}\n\n`;
     await adapter.write(filePath, prefix + line + "\n");
   }
 }
