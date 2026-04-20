@@ -55,7 +55,7 @@ function openCreateCardModal(app, deck, settings, onSaved) {
     attr: {
       type: "text",
       placeholder: t(settings, "CREATE_CARD_FRONT_PLACEHOLDER"),
-      style: "width:100%;padding:9px 12px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:14px;outline:none;background:#f9fafb;color:#374151;box-sizing:border-box;"
+      style: "width:100%;padding:9px 12px;border:1.5px solid var(--background-modifier-border, #e5e7eb);border-radius:8px;font-size:14px;outline:none;background:var(--background-secondary, #f9fafb);color:var(--text-normal, #374151);box-sizing:border-box;"
     }
   });
 
@@ -69,7 +69,7 @@ function openCreateCardModal(app, deck, settings, onSaved) {
     attr: {
       placeholder: t(settings, "CREATE_CARD_BACK_PLACEHOLDER"),
       rows: "4",
-      style: "width:100%;padding:9px 12px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:14px;outline:none;background:#f9fafb;color:#374151;resize:vertical;box-sizing:border-box;font-family:inherit;"
+      style: "width:100%;padding:9px 12px;border:1.5px solid var(--background-modifier-border, #e5e7eb);border-radius:8px;font-size:14px;outline:none;background:var(--background-secondary, #f9fafb);color:var(--text-normal, #374151);resize:vertical;box-sizing:border-box;font-family:inherit;"
     }
   });
 
@@ -77,7 +77,7 @@ function openCreateCardModal(app, deck, settings, onSaved) {
   const btnRow = wrap.createEl("div", { attr: { style: "display:flex;gap:8px;justify-content:flex-end;padding-top:4px;" } });
   btnRow.createEl("button", {
     text: t(settings, "CREATE_CARD_CANCEL"),
-    attr: { style: "padding:7px 16px;border-radius:8px;border:1px solid #d1d5db;background:#fff;cursor:pointer;font-size:13px;" }
+    attr: { style: "padding:7px 16px;border-radius:8px;border:1px solid var(--background-modifier-border, #d1d5db);background:var(--background-secondary, #fff);color:var(--text-muted, inherit);cursor:pointer;font-size:13px;" }
   }).addEventListener("click", () => modal.close());
 
   const saveBtn = btnRow.createEl("button", {

@@ -68,8 +68,8 @@ var Q=class extends I.Modal{
     this.contentEl.empty();
     let wrap=this.contentEl.createEl("div",{attr:{class:"lh-complete-screen",style:"flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;text-align:center;gap:16px;"}});
     wrap.createEl("div",{attr:{style:"font-size:56px;line-height:1;"}}).textContent="🎉";
-    wrap.createEl("div",{attr:{class:"lh-complete-title",style:"font-size:24px;font-weight:800;color:#1e293b;"}}).textContent=c(t,"REVIEW_COMPLETE");
-    wrap.createEl("div",{attr:{style:"font-size:14px;color:#64748b;line-height:1.6;max-width:260px;"}}).textContent=`${this.deckName} · ${this.cards.length} ${c(t,"CARDS_REVIEWED")}`;
+    wrap.createEl("div",{attr:{class:"lh-complete-title",style:"font-size:24px;font-weight:800;color:var(--text-normal, #1e293b);"}}).textContent=c(t,"REVIEW_COMPLETE");
+    wrap.createEl("div",{attr:{style:"font-size:14px;color:var(--text-muted, #64748b);line-height:1.6;max-width:260px;"}}).textContent=`${this.deckName} · ${this.cards.length} ${c(t,"CARDS_REVIEWED")}`;
     let btnRow=wrap.createEl("div",{attr:{style:"display:flex;flex-direction:column;gap:10px;width:100%;max-width:280px;margin-top:8px;"}});
     // Continue → back to hub
     let btnHub=btnRow.createEl("button",{attr:{class:"lh-complete-btn",style:"border-radius:99px;padding:14px 24px;font-size:15px;font-weight:700;cursor:pointer;border:none;background:linear-gradient(135deg,#4f46e5,#818cf8);color:#fff;box-shadow:0 4px 16px rgba(79,70,229,0.4);min-height:52px;"}});
@@ -384,7 +384,7 @@ var Q=class extends I.Modal{
       wrap.createEl("div",{text:"✏️ "+c(t,"EDIT_CARD"),attr:{style:"font-size:16px;font-weight:700;color:var(--text-normal,#111);"}});
       wrap.createEl("div",{text:`這是「${sourceNote}」的手寫筆記卡片，請直接在筆記中刪除對應的 question :: answer 行。`,attr:{style:"font-size:13px;color:var(--text-muted,#6b7280);line-height:1.6;"}});
       const btnRow=wrap.createEl("div",{attr:{style:"display:flex;gap:8px;justify-content:flex-end;"}});
-      btnRow.createEl("button",{text:c(t,"DELETE_CANCEL_BTN"),attr:{style:"padding:7px 16px;border-radius:8px;border:1px solid #d1d5db;background:#fff;cursor:pointer;font-size:13px;"}}).addEventListener("click",()=>modal.close());
+      btnRow.createEl("button",{text:c(t,"DELETE_CANCEL_BTN"),attr:{style:"padding:7px 16px;border-radius:8px;border:1px solid var(--background-modifier-border, #d1d5db);background:var(--background-secondary, #fff);color:var(--text-muted, inherit);cursor:pointer;font-size:13px;"}}).addEventListener("click",()=>modal.close());
       const openBtn=btnRow.createEl("button",{text:"開啟筆記",attr:{style:"padding:7px 16px;border-radius:8px;border:none;background:#6366f1;color:#fff;cursor:pointer;font-size:13px;font-weight:600;"}});
       openBtn.addEventListener("click",()=>{ modal.close(); this.app.workspace.openLinkText(sourceNote,"",false); });
       modal.open();
@@ -399,7 +399,7 @@ var Q=class extends I.Modal{
     wrap.createEl("div",{text:c(t,"DELETE_CONFIRM_TITLE").replace("{name}",e.front),attr:{style:"font-size:16px;font-weight:700;color:var(--text-normal,#111);"}});
     wrap.createEl("div",{text:c(t,"DELETE_CONFIRM_FILE"),attr:{style:"font-size:13px;color:var(--text-muted,#6b7280);line-height:1.6;"}});
     const btnRow=wrap.createEl("div",{attr:{style:"display:flex;gap:8px;justify-content:flex-end;"}});
-    btnRow.createEl("button",{text:c(t,"DELETE_CANCEL_BTN"),attr:{style:"padding:7px 16px;border-radius:8px;border:1px solid #d1d5db;background:#fff;cursor:pointer;font-size:13px;"}}).addEventListener("click",()=>modal.close());
+    btnRow.createEl("button",{text:c(t,"DELETE_CANCEL_BTN"),attr:{style:"padding:7px 16px;border-radius:8px;border:1px solid var(--background-modifier-border, #d1d5db);background:var(--background-secondary, #fff);color:var(--text-muted, inherit);cursor:pointer;font-size:13px;"}}).addEventListener("click",()=>modal.close());
     const delBtn=btnRow.createEl("button",{text:c(t,"DELETE_CONFIRM_BTN"),attr:{style:"padding:7px 16px;border-radius:8px;border:none;background:#ef4444;color:#fff;cursor:pointer;font-size:13px;font-weight:600;"}});
     delBtn.addEventListener("click",async()=>{
       modal.close();
