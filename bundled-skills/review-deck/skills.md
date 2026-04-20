@@ -222,6 +222,7 @@ Use when the user wants to fix or change an existing card's front text, back tex
    - Update `l1`, `l2`, `l3` values if the user requested hint changes, or if the front change makes existing hints inaccurate.
 5. Write both the updated card file and the updated hints JSON.
 6. If the front text changed: read `engram-review/sr/{note-name}.json`, rename the key matching the old front text to the new front text, and write the file back. Skip if the file does not exist or the key is not present.
+   CRITICAL: card front text may contain `"`, `\`, newlines, or other special characters. Always use a proper JSON library to parse and serialize — never construct the JSON string manually. Python: `json.loads` / `json.dumps(data, ensure_ascii=False, indent=2)`. Node.js: `JSON.parse` / `JSON.stringify(data, null, 2)`.
 7. Update `engram-review/scan-record.json`: update `mtime` for the affected note.
 8. Report: which card was changed, what changed (front / back / hints), and confirm all files were updated.
 
@@ -240,7 +241,9 @@ Use when the user wants to remove one or more cards entirely, or remove hints fo
    - **User-written card**: remove the line from the source note. There are no SR comments in markdown files — do NOT look for them.
 4. Write the updated file.
 5. Read `engram-review/hints/{note-name}.json`. Remove the key matching the deleted card's front text. If no keys remain in `cards`, delete the entire hint file.
+   CRITICAL: Always use a proper JSON library to parse and serialize — never construct JSON strings manually. Python: `json.loads` / `json.dumps(data, ensure_ascii=False, indent=2)`. Node.js: `JSON.parse` / `JSON.stringify(data, null, 2)`.
 6. Read `engram-review/sr/{note-name}.json`. Remove the key matching the deleted card's front text. If the file exists and the key is present, write it back without that key.
+   CRITICAL: Same serialization rule — use a JSON library, not string manipulation.
 7. Update `engram-review/scan-record.json`: update `mtime` and `cards` count for the affected note. If the note now has 0 cards, remove its entry from `notes`.
 8. Report: which card(s) were deleted, whether the hint file was updated or removed.
 
