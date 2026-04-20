@@ -66,23 +66,8 @@ body.is-phone .lh-tab-list-item > div:last-of-type {
   margin-left:52px;
 }
 body.is-phone .lh-mm-open { margin-top:6px; }
-body.is-phone .lh-deck-grid {
-  grid-template-columns:1fr !important;
-  padding:10px 10px 16px;
-  gap:10px;
-}
-body.is-phone .lh-deck-gc {
-  min-width:0;
-  padding:14px 12px;
-  gap:6px;
-}
-body.is-phone .lh-deck-gc-name {
-  font-size:13px;
-  line-height:1.35;
-}
-body.is-phone .lh-deck-gc-ready-num { font-size:28px; }
 body.is-phone .lh-deck-gc-metrics {
-  gap:6px;
+  gap:4px;
 }
 body.is-phone .lh-deck-gc-metric {
   min-width:0;
