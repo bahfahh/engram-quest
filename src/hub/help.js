@@ -59,7 +59,20 @@ var fe=class extends I.Modal{constructor(e,t){super(e),this.plugin=t}onClose(){v
         <span class="lh-help-chip" style="background:#d1fae5;color:#065f46">🗺️ Quest Map — Structured learning</span>
         <span class="lh-help-chip" style="background:#ede9fe;color:#5b21b6">🧠 Memory Map — Visual concept map</span>
       </div>
-    `;let d='<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>',f=0,h=[];t==="zh-tw"&&(h=[{icon:"🚀",title:"開始使用",tag:"First Run",html:`
+    `;let d='<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>',f=0,h=[];t==="zh-tw"&&(h=[{icon:"🃏",title:"建立第一個 Review Deck",tag:"手動開始",html:`
+            <p><strong>Step 1：在筆記加上標籤（Deck 名稱）</strong></p>
+            <p>在你的筆記任意位置加上 <code>#flashcards/主題</code>。例如 <code>#flashcards/英文</code> 就會建立一個名為「英文」的 Deck。</p>
+            <p><strong>Step 2：撰寫卡片內容</strong></p>
+            <p>支援三種格式，最簡單的是 <code>::</code>：</p>
+            <pre>畢氏定理 :: a² + b² = c²
+
+Q: 誰提出了相對論？
+A: 愛因斯坦
+
+{{c1::間隔重複}} 是最有效的學習方法</pre>
+            <p><strong>Step 3：到 Hub 開始複習</strong></p>
+            <p>點側邊欄圖示開啟 Hub → <strong>Review Deck</strong> → 你就會看到剛建立的牌組了！</p>
+          `},{icon:"🚀",title:"開始使用 AI",tag:"AI 自動化",html:`
             <p><strong>Step 1：安裝 AI Skills</strong></p>
             <ol>
               <li>Obsidian 設定 → <strong>EngramQuest → AI Skills</strong></li>
@@ -214,7 +227,22 @@ A:
             <p>同樣在 AI 設定檔中加入路徑規則，AI 建立檔案時就會遵守。</p>
             <pre>建立 Quest Map 時，檔案必須存放在 Quest_Map/ 資料夾底下。
 所有 Memory Map 請存到 Maps/Memory/ 目錄。</pre>
-          `}]),t==="en"&&(h=[{icon:"🚀",title:"Get Started",tag:"First Time",html:`
+            <p><strong>Q15：除了建立內容，AI 還能提供什麼幫助？</strong></p>
+            <p>AI 不只能幫你「產出」卡片。它還能讀取你的 Review Deck，進行互動式複習或針對錯誤點進行教學解說。此外，它也能幫你整理、分類既有的牌組，或根據現有內容延伸出更有挑戰性的新題目。</p>
+          `}]),t==="en"&&(h=[{icon:"🃏",title:"Create Your First Review Deck",tag:"Manual Start",html:`
+            <p><strong>Step 1: Add a tag to your note (Deck name)</strong></p>
+            <p>Add <code>#flashcards/topic</code> anywhere in your note. For example, <code>#flashcards/english</code> creates a Deck named "english".</p>
+            <p><strong>Step 2: Write your cards</strong></p>
+            <p>Three formats are supported. The simplest is <code>::</code>:</p>
+            <pre>Pythagorean theorem :: a² + b² = c²
+
+Q: Who proposed the theory of relativity?
+A: Albert Einstein
+
+{{c1::Spaced repetition}} is the most effective way to learn</pre>
+            <p><strong>Step 3: Start reviewing in Hub</strong></p>
+            <p>Click the ribbon icon to open Hub → <strong>Review Deck</strong> → Your new deck is ready!</p>
+          `},{icon:"🚀",title:"Get Started AI",tag:"AI Automation",html:`
             <p><strong>Step 1: Install AI Skills</strong></p>
             <ol>
               <li>Open Obsidian Settings → <strong>EngramQuest → AI Skills</strong></li>
@@ -370,6 +398,8 @@ Write all card questions in formal academic English.</pre>
             <p>Add a path rule to your AI config files and AI will respect it when creating files.</p>
             <pre>All Quest Maps must be saved under the Quest_Map/ folder.
 Store all Memory Maps in the Maps/Memory/ directory.</pre>
+            <p><strong>Q15. What other assistance can AI provide?</strong></p>
+            <p>Beyond content creation, AI can interact with your Review Decks to provide personalized tutoring and guided review sessions. It can also help organize and categorize existing decks, or generate more challenging new questions based on your current knowledge.</p>
           `}]),h.splice(Math.max(h.length-1,0),0,{icon:"🤖",title:t==="zh-tw"?"AI 設定":"AI Setup",tag:c(e,"HELP_AI_SETUP_TAG"),html:`
         <p>${c(e,"SKILLS_AI_SETUP_COPY")}</p>
         <table>
