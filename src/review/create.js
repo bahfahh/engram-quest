@@ -8,10 +8,19 @@ const { t, interpolate } = require("../i18n");
  * File: engram-review/ai-cards/{deckName}-manual.md
  * Format: front :: back
  */
+async function ensureManualCardDirs(adapter) {
+  if (!(await adapter.exists("engram-review"))) {
+    await adapter.mkdir("engram-review");
+  }
+  if (!(await adapter.exists("engram-review/ai-cards"))) {
+    await adapter.mkdir("engram-review/ai-cards");
+  }
+}
+
 async function appendManualCard(adapter, deckName, front, back) {
   const dir = "engram-review/ai-cards";
   const filePath = `${dir}/${deckName}-manual.md`;
-  await adapter.mkdir(dir).catch(() => {});
+  await ensureManualCardDirs(adapter);
 
   const line = `${front} :: ${back}`;
   if (await adapter.exists(filePath)) {
@@ -88,7 +97,10 @@ function openCreateCardModal(app, deck, settings, onSaved) {
   saveBtn.addEventListener("click", async () => {
     const front = frontInput.value.trim();
     const back = backInput.value.trim();
-    if (!front || !back) return;
+    if (!front || !back) {
+      new obsidian.Notice(t(settings, "CREATE_CARD_REQUIRED"));
+      return;
+    }
 
     saveBtn.disabled = true;
     try {
@@ -98,6 +110,7 @@ function openCreateCardModal(app, deck, settings, onSaved) {
       if (onSaved) onSaved();
     } catch (e) {
       console.error("create-card: failed to save", e);
+      new obsidian.Notice(t(settings, "CREATE_CARD_SAVE_FAILED"));
       saveBtn.disabled = false;
     }
   });
@@ -113,4 +126,4 @@ function openCreateCardModal(app, deck, settings, onSaved) {
   setTimeout(() => frontInput.focus(), 50);
 }
 
-module.exports = { openCreateCardModal };
+module.exports = { openCreateCardModal, appendManualCard, ensureManualCardDirs };
