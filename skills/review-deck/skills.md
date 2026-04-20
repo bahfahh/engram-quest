@@ -120,6 +120,7 @@ CRITICAL: Follow these steps in order. Do not skip any step.
      a. Check for a graph index (`graphify-out/GRAPH_REPORT.md` or `graph.json`). If found, read it — use its note paths and key concepts directly. No further search needed.
      b. If no graph index → `obsidian search query="path:<topic> OR tag:#<topic>" format=json`
      c. If `obsidian search` fails (CLI not available) → `bash scripts/search_vault.sh "<topic>" 30`
+        WARNING (Windows): always invoke as `bash scripts/search_vault.sh ...`. Running the `.sh` file directly on Windows opens it in an editor instead of executing it. If `bash` is not in PATH, use the full path to Git Bash or WSL bash (e.g. `"C:\Program Files\Git\bin\bash.exe" scripts/search_vault.sh ...`).
 5. Note discovery does NOT require source notes to have flashcard tags. AI can read any source note as content input. The flashcard tag is only required on the **file the plugin will scan** (see Terminology). For AI-generated cards, AI sets the tag on the ai-cards output file.
 6. Only use untagged `question :: answer` notes when the user explicitly wants legacy flashcard migration.
 7. For each note found: run `bash scripts/get_mtime.sh "<note-path>"` to get current mtime. If the note is already in scan-record AND mtime matches, skip it — it has not changed since last processing. Only read and process notes that are new or have a changed mtime.
