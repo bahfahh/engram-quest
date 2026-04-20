@@ -85,6 +85,22 @@ Visualize abstract concepts using Obsidian Canvas.
 - **Association Building:** AI maps note relationships into visual knowledge chunks
 - **Deep Intuition:** Contrast, analogy, and contextual anchoring for difficult topics
 
+#### 🌙 Dark Mode
+EngramQuest adapts seamlessly to your Obsidian theme.
+
+![Dark Mode Aurora](assets/bg_dark.webp)
+
+- **Automatic theme detection:** Hub background, review session, and achievement area all switch between light and dark assets automatically — no manual toggle needed
+- **Aurora-inspired dark theme:** A custom deep-space floating island scene replaces the light background in dark mode, keeping the visual story consistent
+- **Cohesive dark palette:** Difficulty badges (Easy / Medium / Hard), READY counts, and achievement badges all shift from their light-mode colors to an indigo-purple palette that reads cleanly against dark backgrounds
+
+#### 🏆 Achievements
+Track your learning milestones and celebrate progress.
+- **10 milestone achievements:** From your very first card to 2,000 total reviews, 30-day streaks, 50 mastered cards, and more — each with a unique 3D-rendered icon
+- **Rarity tiers:** Uncommon (UC) → Rare (R) → Legendary (LEG) — rarer achievements get glowing borders and special visual treatment
+- **Click any achievement card** to open a detail panel showing your progress data — reviewed decks, mastered cards, activity calendar, and daily records linked directly to your learning history
+- **Aurora background:** The achievement gallery uses the same dark-mode scene as a subtle translucent backdrop, giving it a premium cosmic feel
+
 ### ☕ Support My Work
 If you find EngramQuest helpful, consider supporting its development!
 
@@ -98,18 +114,18 @@ EngramQuest is built on three pillars of cognitive science:
 
 ### ❓ FAQ
 
-**Q: Do I have to use AI?**  
+**Q: Do I have to use AI?**
 **A:** No — and many users don't. Write cards yourself with `::`, `Q:/A:`, or `{{c1::}}` syntax, add a `#flashcards/topic` tag, and the plugin picks them up automatically.
 
 AI adds value in two specific ways: generating cards and quest challenges from notes you haven't formatted yet, and building L2 contextual hints that anchor each card to your personal vault knowledge — making recall stronger than isolated memorization.
 
-**Q: Where is my progress stored?**  
+**Q: Where is my progress stored?**
 **A:** Review progress is stored in `engram-review/sr/` inside your vault as JSON files. Your original notes are never modified.
 
-**Q: Does EngramQuest support Anki?**  
+**Q: Does EngramQuest support Anki?**
 **A:** Yes. Pair it with the **Obsidian_to_Anki** community plugin. AI-generated cards use the `question :: answer` format and include a `TARGET DECK` field in frontmatter — both are natively compatible with Obsidian_to_Anki. Install Obsidian_to_Anki + AnkiConnect, enable RemNote-style (`::`) syntax in its settings, and sync. Your cards will appear in Anki automatically.
 
-**Q: How can I make AI always follow a specific pattern when building a Review Deck?**  
+**Q: How can I make AI always follow a specific pattern when building a Review Deck?**
 **A:** Mark key answers in your notes using any syntax — Obsidian highlight `==text==`, bold `**text**`, or any custom marker. Then add a rule to your AI config file (`CLAUDE.md`, `GEMINI.md`, or `AGENTS.md`):
 > `IMPORTANT: When building a Review Deck, every highlighted ==text== must be turned into a review card.`
 
@@ -196,6 +212,22 @@ A: 微服務系統的架構圖。
 - **關聯建構：** AI 自動分析筆記間的關聯，建立視覺化知識區塊
 - **深度理解：** 透過對比、類比與情境錨定攻克最難記的知識點
 
+#### 🌙 Dark Mode（深色模式）
+EngramQuest 完整支援 Obsidian 深色主題，自動偵測、無需手動切換。
+
+![深色模式極光背景](assets/bg_dark.webp)
+
+- **自動主題偵測：** Hub 頭部背景、複習卡片介面、成就頁面，全部根據 `theme-dark` 自動切換對應圖片，不需任何設定
+- **極光深色背景：** 深色模式下換成自製的深太空浮島場景，視覺風格與淺色版本完全對稱，不是單純調暗色調
+- **深色配色系統：** 難度 badge（Easy / Medium / Hard）、READY 數字、成就卡邊框，全部從淺色系轉換為靛紫色系（`#a5b4fc` / `#c4b5fd`），在深色背景下清晰易讀
+
+#### 🏆 成就系統（Achievements）
+記錄學習里程碑，讓持之以恆的努力被看見。
+- **10 個里程碑成就：** 從第一張卡片到累計 2,000 次複習、連續 30 天學習、精通 50 張卡片，每個成就都有專屬 3D 渲染圖示
+- **稀有度分級：** Uncommon（UC）→ Rare（R）→ Legendary（LEG）— 越稀有的成就有發光邊框與特殊視覺效果
+- **點擊成就卡片** 開啟詳細面板，顯示你的進度資料 — 已複習的牌組、精通卡片、活動日曆、每日紀錄，直接連結到你的學習歷程
+- **極光背景：** 成就展示區使用與深色模式相同的場景圖作為半透明裝飾背景，呈現質感宇宙感
+
 ### ☕ 支持我的工作
 如果你覺得 EngramQuest 對你有幫助，歡迎贊助支持開發！
 
@@ -209,18 +241,18 @@ EngramQuest 結合了三大學習科學原理：
 
 ### ❓ 常見問題
 
-**Q: 我一定要用 AI 嗎？**  
+**Q: 我一定要用 AI 嗎？**
 **A:** 不需要 — 很多使用者根本不用 AI。用 `::` 問答、`Q:/A:` 多行問答或 `{{c1::}}` Cloze 填空在任何筆記裡寫卡片，加上 `#flashcards/主題` tag，插件就會自動偵測。
 
 AI 在兩個地方真正有價值：從你還沒整理的筆記快速生成卡片和 Quest 關卡，以及建立 L2 情境提示 — 把每張卡片錨定到你個人 vault 裡已有的知識，讓回想比孤立記憶更有效。
 
-**Q: 我的學習進度存哪裡？**  
+**Q: 我的學習進度存哪裡？**
 **A:** 複習進度存放在 vault 內的 `engram-review/sr/` 資料夾，以 JSON 格式儲存。你的原始筆記永遠不會被修改。
 
-**Q: EngramQuest 支援 Anki 嗎？**  
+**Q: EngramQuest 支援 Anki 嗎？**
 **A:** 支援。可搭配 **Obsidian_to_Anki** 社群插件使用。AI 生成的卡片採用 `question :: answer` 格式，frontmatter 也包含 `TARGET DECK` 欄位，兩者都與 Obsidian_to_Anki 原生相容。只需安裝 Obsidian_to_Anki + AnkiConnect，在設定中開啟 RemNote style（`::` 語法），同步後卡片就會自動出現在 Anki 中。
 
-**Q: 如何讓 AI 每次建立 Review Deck 時都依照我想要的固定模式？**  
+**Q: 如何讓 AI 每次建立 Review Deck 時都依照我想要的固定模式？**
 **A:** 用你習慣的語法在筆記中標記重要答案，例如高亮 `==文字==`、粗體 `**文字**` 或自訂記號，再到 AI 設定檔（`CLAUDE.md`、`GEMINI.md` 或 `AGENTS.md`）加入規則：
 > `IMPORTANT: When building a Review Deck, every highlighted ==text== must be turned into a review card.`
 

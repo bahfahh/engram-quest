@@ -36,15 +36,18 @@ var Q=class extends I.Modal{
     // Save initial progress on open
     this.plugin.settings._reviewProgress={deck:this.deckName,idx:this.idx};
     this.plugin.saveData(this.plugin.settings);
+    const _isDark=document.body.classList.contains("theme-dark");const _bgPrimary=_isDark?"#1e1e2e":"#ffffff";const _bgSecondary=_isDark?"#252538":"#f3f4f6";const _textNormal=_isDark?"#e2e8f0":"#1f2937";const _textMuted=_isDark?"#94a3b8":"#6b7280";
     this.modalEl.addClass("lh-hub");
+    if(_isDark)this.modalEl.addClass("lh-dark");
     this.modalEl.style.cssText="width:min(95vw,700px);max-width:none;height:min(90vh,640px);max-height:none;padding:0;overflow:hidden;border-radius:24px";
-    this.modalEl.style.setProperty("--background-primary","#ffffff","important");
-    this.modalEl.style.setProperty("--background-secondary","#f3f4f6","important");
-    this.modalEl.style.setProperty("--text-normal","#1f2937","important");
-    this.modalEl.style.setProperty("--text-muted","#6b7280","important");
+    this.modalEl.style.setProperty("--background-primary",_bgPrimary,"important");
+    this.modalEl.style.setProperty("--background-secondary",_bgSecondary,"important");
+    this.modalEl.style.setProperty("--text-normal",_textNormal,"important");
+    this.modalEl.style.setProperty("--text-muted",_textMuted,"important");
     this.modalEl.style.setProperty("--background-modifier-border","#e5e7eb","important");
-    let e=this.app.vault.adapter.getResourcePath(this.app.vault.configDir+"/plugins/engram-quest/bg.png");
-    this.contentEl.style.cssText=`padding:0;display:flex;flex-direction:column;height:100%;overflow:hidden;background-image:url('${e}');background-size:cover;background-position:center top;color:#1f2937`;
+    const _bgFile=_isDark?"bg_dark.webp":"bg.png";
+    let e=this.app.vault.adapter.getResourcePath(this.app.vault.configDir+"/plugins/engram-quest/"+_bgFile);
+    this.contentEl.style.cssText=`padding:0;display:flex;flex-direction:column;height:100%;overflow:hidden;background-image:url('${e}');background-size:cover;background-position:center top;color:${_isDark?"#e2e8f0":"#1f2937"}`;
     this.renderCard();
   }
 
