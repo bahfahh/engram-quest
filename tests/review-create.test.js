@@ -24,7 +24,7 @@ describe("appendManualCard", () => {
     expect(mkdir).toHaveBeenCalledWith("engram-review/ai-cards");
     expect(adapter.write).toHaveBeenCalledWith(
       "engram-review/ai-cards/azure-manual.md",
-      "#flashcards/azure\n\nWhat is ARM? :: Azure Resource Manager\n"
+      "#azure\n\nWhat is ARM? :: Azure Resource Manager\n"
     );
   });
 
