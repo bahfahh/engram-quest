@@ -119,7 +119,7 @@ async function scanReviewDecks(app, settings, reviewHelpers) {
     }
     if (!(settings.enableSRScan ?? false) && !matchedDeck) continue;
 
-    let deckName = matchedDeck || file.parent?.name || "flashcards";
+    let deckName = matchedDeck || file.parent?.path || "/";
     if (!deckMap[deckName]) deckMap[deckName] = { name: deckName, cards: [] };
 
     cards.forEach((card) => {

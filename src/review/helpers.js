@@ -305,9 +305,7 @@ function matchFlashcardTagPrefix(tags, flashcardTags) {
     let normalizedLower = normalizedTag.toLowerCase();
     for (let prefix of prefixes) {
       if (normalizedLower === prefix || normalizedLower.startsWith(prefix + "/")) {
-        let remainder = normalizedTag.slice(prefix.length).replace(/^\//, "");
-        let segments = remainder ? remainder.split("/") : [];
-        return segments.length > 0 ? segments[0] : prefix.split("/").pop();
+        return normalizedTag;
       }
     }
   }
