@@ -66,6 +66,15 @@ body.is-phone .lh-tab-list-item > div:last-of-type {
   margin-left:52px;
 }
 body.is-phone .lh-mm-open { margin-top:6px; }
+body.is-phone .lh-toolbar { flex-wrap:wrap; gap:6px; padding:0 10px 10px; }
+body.is-phone .lh-search { flex:1 1 100%; order:-1; }
+body.is-phone .lh-filter { flex:1 1 calc(50% - 6px); min-width:0; font-size:11px; padding:7px 8px; }
+body.is-phone .lh-view-toggle { flex-shrink:0; margin-left:auto !important; }
+body.is-phone .lh-mm-grid { grid-template-columns:repeat(2,1fr); gap:10px; padding:0 0 16px; }
+body.is-phone .lh-mm-card { padding:12px 10px; gap:5px; border-radius:12px; }
+body.is-phone .lh-mm-emoji { font-size:20px; }
+body.is-phone .lh-mm-name { font-size:12px; }
+body.is-phone .lh-mm-open { font-size:10px; margin-top:2px; }
 body.is-phone .lh-deck-gc-metrics {
   gap:4px;
 }
