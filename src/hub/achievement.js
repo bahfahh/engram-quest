@@ -402,7 +402,7 @@ function renderAchievementTab(container, plugin, decks) {
 
     // Rarity badge
     const rarityColors = { UC: "#6b7280", R: "#3b82f6", LEG: "#d97706" };
-    card.createEl("div", { text: ach.rarity, attr: { style: `background:${rarityColors[ach.rarity]};color:#fff;font-size:9px;font-weight:800;padding:2px 7px;border-radius:99px;position:absolute;top:8px;right:8px;letter-spacing:.04em;box-shadow:0 1px 4px rgba(0,0,0,0.4);` } });
+    card.createEl("div", { text: ach.rarity, attr: { style: `z-index:10;background:${rarityColors[ach.rarity]};color:#fff;font-size:9px;font-weight:800;padding:2px 7px;border-radius:99px;position:absolute;top:8px;right:8px;letter-spacing:.04em;box-shadow:0 1px 4px rgba(0,0,0,0.4);` } });
 
     // Image icon with rarity glow ring behind it
     const iconWrap = card.createEl("div", { attr: { style: "text-align:center;margin:14px 0 6px;position:relative;" } });
