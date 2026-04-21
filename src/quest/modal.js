@@ -95,6 +95,154 @@ function renderQuestChallenge(container, challenge, difficulty, onSolved, settin
     return;
   }
 
+  if (challenge.type === "countdown" && Array.isArray(challenge.options)) {
+    let timerSec = challenge.timer || 15;
+    let timerBar = wrapper.createEl("div", { attr: { style: "height:4px;background:var(--background-modifier-border);border-radius:99px;overflow:hidden;margin-bottom:12px" } });
+    let timerFill = timerBar.createEl("div", { attr: { style: "height:100%;width:100%;border-radius:99px;background:var(--interactive-accent);transition:width 0.1s linear" } });
+    let timerLabel = wrapper.createEl("div", { attr: { style: "font-size:11px;color:var(--text-faint);text-align:right;margin-bottom:12px;font-variant-numeric:tabular-nums" } });
+    timerLabel.textContent = timerSec + "s";
+    wrapper.createEl("p", { text: challenge.question || "", attr: { style: "font-size:14px;font-weight:600;color:var(--text-normal);margin-bottom:12px;line-height:1.5" } });
+    let grid = wrapper.createEl("div", { attr: { style: "display:grid;grid-template-columns:1fr 1fr;gap:8px" } });
+    let buttons = [];
+    let expired = false;
+    let interval = setInterval(() => {
+      timerSec -= 0.1;
+      if (timerSec <= 0) {
+        clearInterval(interval);
+        timerSec = 0;
+        timerFill.style.width = "0%";
+        timerLabel.textContent = "0s";
+        if (!expired && buttons.every(b => !b.disabled)) {
+          expired = true;
+          buttons.forEach(b => b.disabled = true);
+          buttons[challenge.answer].style.background = "#22c55e";
+          buttons[challenge.answer].style.color = "white";
+          buttons[challenge.answer].style.borderColor = "#22c55e";
+          handleWrong(wrapper);
+          setTimeout(() => onSolved(), 1200);
+        }
+        return;
+      }
+      let pct = (timerSec / (challenge.timer || 15)) * 100;
+      timerFill.style.width = pct + "%";
+      timerFill.style.background = pct > 50 ? "var(--interactive-accent)" : pct > 25 ? "#f59e0b" : "#ef4444";
+      timerLabel.textContent = Math.ceil(timerSec) + "s";
+    }, 100);
+    challenge.options.forEach((option, index) => {
+      let button = grid.createEl("button", { text: option, attr: { class: "qm-ch-btn" } });
+      buttons.push(button);
+      button.addEventListener("click", () => {
+        if (button.disabled || expired) return;
+        clearInterval(interval);
+        if (index === challenge.answer) {
+          setSolved(buttons, onSolved);
+        } else {
+          handleWrong(button);
+        }
+      });
+    });
+    return;
+  }
+
+  if (challenge.type === "snapshot" && Array.isArray(challenge.options)) {
+    let snapItems = challenge.snapshot_items || [];
+    let snapLabels = challenge.snapshot_labels || snapItems.map((_, i) => String(i + 1));
+    let snapTime = challenge.snapshot_time || 4;
+    let phase = "show";
+    let snapBox = wrapper.createEl("div", { attr: { style: "border-radius:10px;border:1px solid var(--background-modifier-border);background:var(--background-secondary);padding:20px;margin-bottom:14px;min-height:80px;text-align:center" } });
+    let cdLabel = wrapper.createEl("div", { attr: { style: "font-size:11px;color:var(--text-faint);margin-bottom:12px;font-variant-numeric:tabular-nums" } });
+    let grid = snapBox.createEl("div", { attr: { style: "display:grid;grid-template-columns:repeat(2,1fr);gap:8px" } });
+    snapItems.forEach((item, i) => {
+      let cell = grid.createEl("div", { attr: { style: "background:var(--background-primary);border:1px solid var(--background-modifier-border);border-radius:6px;padding:10px;text-align:left" } });
+      cell.createEl("div", { text: snapLabels[i] || "", attr: { style: "font-size:10px;color:var(--text-faint);margin-bottom:2px" } });
+      cell.createEl("div", { text: item, attr: { style: "font-size:13px;font-weight:600;color:var(--text-normal)" } });
+    });
+    cdLabel.textContent = (zh ? "記住以上內容 — " : "Memorize — ") + snapTime + "s";
+    let cdVal = snapTime;
+    let cdInterval = setInterval(() => {
+      cdVal -= 1;
+      if (cdVal <= 0) {
+        clearInterval(cdInterval);
+        phase = "quiz";
+        snapBox.empty();
+        snapBox.createEl("div", { text: "?", attr: { style: "font-size:48px;color:var(--text-faint);font-style:italic" } });
+        cdLabel.textContent = zh ? "從記憶回答：" : "Answer from memory:";
+        showQuizPart();
+      } else {
+        cdLabel.textContent = (zh ? "記住以上內容 — " : "Memorize — ") + cdVal + "s";
+      }
+    }, 1000);
+    function showQuizPart() {
+      wrapper.createEl("p", { text: challenge.question || "", attr: { style: "font-size:14px;font-weight:600;color:var(--text-normal);margin-bottom:12px;line-height:1.5" } });
+      let qGrid = wrapper.createEl("div", { attr: { style: "display:grid;grid-template-columns:1fr 1fr;gap:8px" } });
+      let buttons = [];
+      challenge.options.forEach((option, index) => {
+        let button = qGrid.createEl("button", { text: option, attr: { class: "qm-ch-btn" } });
+        buttons.push(button);
+        button.addEventListener("click", () => {
+          if (button.disabled) return;
+          if (index === challenge.answer) {
+            setSolved(buttons, onSolved);
+          } else {
+            handleWrong(button);
+          }
+        });
+      });
+    }
+    return;
+  }
+
+  if (challenge.type === "auction" && Array.isArray(challenge.options)) {
+    let totalCoins = challenge.coins || 100;
+    let betAmount = 10;
+    let selectedIdx = -1;
+    let confirmed = false;
+    let auctionBox = wrapper.createEl("div", { attr: { style: "border-radius:10px;border:1px solid var(--background-modifier-border);background:var(--background-secondary);padding:20px;margin-bottom:14px" } });
+    let hdr = auctionBox.createEl("div", { attr: { style: "display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--background-modifier-border)" } });
+    hdr.createEl("span", { text: zh ? "🪙 知識拍賣場" : "🪙 Knowledge Auction", attr: { style: "font-size:11px;color:var(--text-faint);letter-spacing:.08em" } });
+    let coinsLabel = hdr.createEl("span", { text: "◈ " + totalCoins, attr: { style: "font-size:13px;font-weight:600;color:var(--text-normal)" } });
+    auctionBox.createEl("p", { text: challenge.question || "", attr: { style: "font-size:14px;font-weight:600;color:var(--text-normal);margin-bottom:12px;line-height:1.5" } });
+    let optGrid = auctionBox.createEl("div", { attr: { style: "display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px" } });
+    let optEls = [];
+    challenge.options.forEach((option, index) => {
+      let card = optGrid.createEl("div", { attr: { style: "border:1px solid var(--background-modifier-border);border-radius:8px;padding:10px;cursor:pointer;transition:all .15s;background:var(--background-primary)" } });
+      card.createEl("div", { text: option, attr: { style: "font-size:12px;color:var(--text-normal);margin-bottom:6px" } });
+      optEls.push(card);
+      card.addEventListener("click", () => {
+        if (confirmed) return;
+        selectedIdx = index;
+        optEls.forEach((el, j) => { el.style.borderColor = j === index ? "var(--interactive-accent)" : "var(--background-modifier-border)"; });
+      });
+    });
+    let sliderRow = auctionBox.createEl("div", { attr: { style: "display:flex;align-items:center;gap:8px;margin-bottom:12px" } });
+    sliderRow.createEl("span", { text: zh ? "押注：" : "Bet:", attr: { style: "font-size:12px;color:var(--text-faint)" } });
+    let slider = sliderRow.createEl("input", { attr: { type: "range", min: "5", max: String(Math.min(totalCoins, 80)), step: "5", value: "10", style: "flex:1" } });
+    let betLabel = sliderRow.createEl("span", { text: "10", attr: { style: "font-size:12px;font-weight:600;color:var(--text-normal);min-width:28px;text-align:right" } });
+    slider.addEventListener("input", () => { betAmount = parseInt(slider.value); betLabel.textContent = String(betAmount); });
+    let confirmBtn = auctionBox.createEl("button", { text: zh ? "確認押注 ◈" : "Confirm Bet ◈", attr: { style: "width:100%;padding:10px;border-radius:8px;background:var(--interactive-accent);color:white;border:none;cursor:pointer;font-size:13px;font-weight:700" } });
+    let resultEl = auctionBox.createEl("div", { attr: { style: "margin-top:10px;font-size:12px;color:var(--text-muted);display:none" } });
+    confirmBtn.addEventListener("click", () => {
+      if (confirmed || selectedIdx < 0) return;
+      confirmed = true;
+      confirmBtn.style.display = "none";
+      slider.disabled = true;
+      let win = selectedIdx === challenge.answer;
+      optEls.forEach((el, i) => {
+        el.style.cursor = "default";
+        if (i === challenge.answer) { el.style.borderColor = "#22c55e"; el.style.background = "rgba(34,197,94,0.08)"; }
+        else if (i === selectedIdx && !win) { el.style.borderColor = "#ef4444"; el.style.background = "rgba(239,68,68,0.08)"; }
+      });
+      let delta = win ? betAmount : -betAmount;
+      totalCoins = Math.max(0, totalCoins + delta);
+      coinsLabel.textContent = "◈ " + totalCoins;
+      resultEl.style.display = "block";
+      resultEl.textContent = (win ? "✓ +" : "✗ ") + delta + " ◈ — " + (zh ? "餘額 " : "Balance ") + totalCoins;
+      resultEl.style.color = win ? "#22c55e" : "#ef4444";
+      setTimeout(() => onSolved(), 1200);
+    });
+    return;
+  }
+
   if (challenge.type === "truefalse") {
     wrapper.createEl("p", { text: challenge.statement || "", attr: { style: "font-size:14px;font-weight:600;color:var(--text-normal);margin-bottom:12px;line-height:1.5;padding:12px 16px;border-radius:8px;background:var(--background-secondary)" } });
     let row = wrapper.createEl("div", { attr: { style: "display:flex;gap:12px" } });

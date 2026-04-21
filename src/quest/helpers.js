@@ -113,6 +113,11 @@ function parseQuestMap(markdown) {
       else if (trimmed.startsWith("region_top_pct:")) challenge.region_top_pct = parseNumericField(trimmed, "region_top_pct:");
       else if (trimmed.startsWith("region_width_pct:")) challenge.region_width_pct = parseNumericField(trimmed, "region_width_pct:");
       else if (trimmed.startsWith("region_height_pct:")) challenge.region_height_pct = parseNumericField(trimmed, "region_height_pct:");
+      else if (trimmed.startsWith("timer:")) challenge.timer = parseNumericField(trimmed, "timer:");
+      else if (trimmed.startsWith("coins:")) challenge.coins = parseNumericField(trimmed, "coins:");
+      else if (trimmed.startsWith("snapshot_time:")) challenge.snapshot_time = parseNumericField(trimmed, "snapshot_time:");
+      else if (trimmed.startsWith("snapshot_items:")) challenge.snapshot_items = splitInlineList(trimmed);
+      else if (trimmed.startsWith("snapshot_labels:")) challenge.snapshot_labels = splitInlineList(trimmed);
       else if (trimmed.startsWith("answer:")) {
         let answer = trimmed.slice(7).trim();
         if (answer === "true") challenge.answer = true;
@@ -127,7 +132,7 @@ function parseQuestMap(markdown) {
         if (match) challenge.pairs.push(match[1].split(",").map((item) => item.trim()));
       }
 
-      let challengeKeys = ["type:", "question:", "statement:", "sentence:", "prompt:", "hint:", "link:", "image:", "mode:", "options:", "items:", "keywords:", "answers:", "answer:", "reveal_answer:", "region_x:", "region_y:", "region_width:", "region_height:", "region_left_pct:", "region_top_pct:", "region_width_pct:", "region_height_pct:", "pairs:", "- ["];
+      let challengeKeys = ["type:", "question:", "statement:", "sentence:", "prompt:", "hint:", "link:", "image:", "mode:", "options:", "items:", "keywords:", "answers:", "answer:", "reveal_answer:", "region_x:", "region_y:", "region_width:", "region_height:", "region_left_pct:", "region_top_pct:", "region_width_pct:", "region_height_pct:", "pairs:", "- [", "timer:", "coins:", "snapshot_time:", "snapshot_items:", "snapshot_labels:"];
       if (indent <= 4 && !challengeKeys.some((prefix) => trimmed.startsWith(prefix))) {
         inChallenge = false;
       }

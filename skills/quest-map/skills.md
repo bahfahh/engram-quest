@@ -78,7 +78,7 @@ Default behavior is AI-guided selection.
    - 2 to 4 points
    - optional insight
    - one challenge
-5. Choose challenge type based on difficulty and source material.
+5. Choose challenge type based on difficulty, source material, and the Challenge Type Selection table below.
 6. **Image challenges**: when a note image is worth testing, use `image-quiz` (all models). Only Gemini may use `image-occlusion` — and if doing so, run `scripts/occlusion_measure.py <image_path>` first to get accurate text bbox coordinates. If the script is unavailable (no Python/pytesseract), fall back to `image-quiz`.
 7. Add frontmatter tags when the topic has clear semantic tags.
 8. Save the output using the appropriate method:
@@ -90,23 +90,42 @@ Default behavior is AI-guided selection.
 ### easy
 - Prefer `truefalse`, then `quiz`
 - May use `cloze` when the blank is obvious and teachable
+- May use `countdown` for fluency drill (use generous timer, e.g. 20s)
 - May use `image-quiz` when a note image supports a good question
 - Include a hint
 - Keep distractors clearly teachable, not tricky
 
 ### medium
 - Prefer `quiz`, then `order`
-- May use `cloze`, `image-quiz`, or `image-occlusion` (Gemini only) when the source strongly supports them
+- May use `cloze`, `snapshot`, `auction`, `image-quiz`, or `image-occlusion` (Gemini only) when the source strongly supports them
+- `snapshot` works well for dense structured info (tables, layered architectures)
+- `auction` works well for easily confused concepts
 - Usually omit hints
 - Use plausible distractors
 
 ### hard
-- Prefer `match`, `cloze`, `image-quiz`, `image-occlusion` (Gemini only), then strict `input`
+- Prefer `match`, `cloze`, `countdown` (short timer), `auction`, `image-quiz`, `image-occlusion` (Gemini only), then strict `input`
 - No hint unless absolutely necessary
 - The challenge should require stronger recall than medium
 - **Scenario over trivia**: instead of "What is X?", ask "Why choose X over Y given constraint Z?" or "What breaks if you use X instead of Y?"
 - **Traceability**: all hard challenges **MUST** include the `link` field pointing back to the source note. This lets the learner self-verify when recall fails.
 - Include a `link` field when the format expects one
+
+## Challenge Type Selection
+
+AI must analyze the source note content before choosing challenge types. Do NOT default to `quiz` for every chapter.
+
+| Content characteristic | Best challenge types |
+|---|---|
+| Dense structured info (tables, layers, pipelines) | `snapshot` |
+| Easily confused concepts, multiple plausible answers | `auction` |
+| Fluency / basic recall drill | `countdown` |
+| Step-by-step process, causal flow | `order` |
+| Terminology, fill-in-the-blank | `cloze` |
+| Diagram or architecture image | `image-quiz`, `image-occlusion` |
+| True/false factual statement | `truefalse` |
+| Concept pairing | `match` |
+| Free recall, precise term | `input` |
 
 ## Parser Constraints
 
@@ -241,6 +260,57 @@ Rules:
 - Keep one main blank per challenge.
 - `sentence` should still read naturally after replacing the blank with `____`.
 - `answers` should contain acceptable user inputs.
+
+### countdown
+```yaml
+challenge:
+  type: countdown
+  timer: 15
+  question: Question text
+  options: [A, B, C, D]
+  answer: 1
+  hint: Optional hint
+```
+
+Rules:
+- A quiz with a countdown timer. When time expires, the correct answer is revealed and the challenge auto-advances.
+- `timer` is seconds (default 15). Use 10–20 for most questions.
+- Best for: fluency testing, basic recall under pressure.
+
+### snapshot
+```yaml
+challenge:
+  type: snapshot
+  snapshot_items: [UseExceptionHandler, UseHttpsRedirection, UseAuthentication, UseAuthorization]
+  snapshot_labels: [Layer 1, Layer 2, Layer 3, Layer 4]
+  snapshot_time: 4
+  question: Which middleware is at Layer 3?
+  options: [UseRouting, UseAuthentication, UseAuthorization, UseHttpsRedirection]
+  answer: 1
+  hint: Optional hint
+```
+
+Rules:
+- Shows `snapshot_items` in a grid for `snapshot_time` seconds, then hides them and presents a quiz question.
+- `snapshot_labels` is optional (defaults to 1, 2, 3...).
+- `snapshot_time` is seconds (default 4). Use 3–6.
+- Best for: dense information, visual memory, detail extraction.
+
+### auction
+```yaml
+challenge:
+  type: auction
+  coins: 100
+  question: Question text
+  options: [A, B, C, D]
+  answer: 1
+```
+
+Rules:
+- User selects an option and bets coins. Correct = gain bet, wrong = lose bet. Auto-advances after result.
+- `coins` is the starting balance (default 100).
+- No hint — the bet mechanic itself forces confidence calibration.
+- Best for: fuzzy knowledge, easily confused concepts, confidence assessment.
 
 ### image-quiz
 ```yaml
