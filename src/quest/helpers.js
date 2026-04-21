@@ -124,6 +124,10 @@ function parseQuestMap(markdown) {
       else if (trimmed.startsWith("palace_items:")) challenge.palace_items = splitInlineList(trimmed);
       else if (trimmed.startsWith("palace_descs:")) challenge.palace_descs = splitInlineList(trimmed);
       else if (trimmed.startsWith("palace_time:")) challenge.palace_time = parseNumericField(trimmed, "palace_time:");
+      else if (trimmed.startsWith("questions_json:")) {
+        let raw = trimmed.slice(15).trim();
+        try { challenge.questions_json = JSON.parse(raw); } catch (_) { challenge.questions_json = []; }
+      }
       else if (trimmed.startsWith("answer:")) {
         let answer = trimmed.slice(7).trim();
         if (answer === "true") challenge.answer = true;
@@ -138,7 +142,7 @@ function parseQuestMap(markdown) {
         if (match) challenge.pairs.push(match[1].split(",").map((item) => item.trim()));
       }
 
-      let challengeKeys = ["type:", "question:", "statement:", "sentence:", "prompt:", "hint:", "link:", "image:", "mode:", "options:", "items:", "keywords:", "answers:", "answer:", "reveal_answer:", "region_x:", "region_y:", "region_width:", "region_height:", "region_left_pct:", "region_top_pct:", "region_width_pct:", "region_height_pct:", "pairs:", "- [", "timer:", "coins:", "snapshot_time:", "snapshot_items:", "snapshot_labels:", "slots:", "events:", "chain_items:", "palace_items:", "palace_descs:", "palace_time:"];
+      let challengeKeys = ["type:", "question:", "statement:", "sentence:", "prompt:", "hint:", "link:", "image:", "mode:", "options:", "items:", "keywords:", "answers:", "answer:", "reveal_answer:", "region_x:", "region_y:", "region_width:", "region_height:", "region_left_pct:", "region_top_pct:", "region_width_pct:", "region_height_pct:", "pairs:", "- [", "timer:", "coins:", "snapshot_time:", "snapshot_items:", "snapshot_labels:", "slots:", "events:", "chain_items:", "palace_items:", "palace_descs:", "palace_time:", "questions_json:"];
       if (indent <= 4 && !challengeKeys.some((prefix) => trimmed.startsWith(prefix))) {
         inChallenge = false;
       }

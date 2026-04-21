@@ -233,3 +233,62 @@ describe("parseQuestMap memory-palace fields", () => {
     expect(c.palace_time).toBe(8);
   });
 });
+
+describe("parseQuestMap questions_json field", () => {
+  it("parses inline JSON array of questions", () => {
+    const cfg = parseQuestMap([
+      "version: 1",
+      "nodes:",
+      "  - id: ch1",
+      "    title: Auction Round",
+      "    challenge:",
+      "      type: auction",
+      "      coins: 100",
+      '      questions_json: [{"q":"Q1","opts":["A","B","C"],"ans":1},{"q":"Q2","opts":["X","Y"],"ans":0}]',
+    ].join("\n"));
+    const c = cfg.nodes[0].challenge;
+    expect(c.type).toBe("auction");
+    expect(c.coins).toBe(100);
+    expect(c.questions_json).toHaveLength(2);
+    expect(c.questions_json[0].q).toBe("Q1");
+    expect(c.questions_json[0].ans).toBe(1);
+    expect(c.questions_json[1].opts).toEqual(["X", "Y"]);
+  });
+
+  it("falls back to empty array on invalid JSON", () => {
+    const cfg = parseQuestMap([
+      "version: 1",
+      "nodes:",
+      "  - id: ch1",
+      "    title: Bad JSON",
+      "    challenge:",
+      "      type: countdown",
+      "      questions_json: not valid json",
+    ].join("\n"));
+    expect(cfg.nodes[0].challenge.questions_json).toEqual([]);
+  });
+
+  it("coexists with single-question fields", () => {
+    const cfg = parseQuestMap([
+      "version: 1",
+      "nodes:",
+      "  - id: ch1",
+      "    title: Single",
+      "    challenge:",
+      "      type: quiz",
+      "      question: Standalone?",
+      "      options: [A, B]",
+      "      answer: 0",
+      "  - id: ch2",
+      "    title: Multi",
+      "    challenge:",
+      "      type: countdown",
+      "      timer: 10",
+      '      questions_json: [{"q":"Fast?","opts":["X","Y"],"ans":1}]',
+    ].join("\n"));
+    expect(cfg.nodes[0].challenge.questions_json).toBeUndefined();
+    expect(cfg.nodes[0].challenge.question).toBe("Standalone?");
+    expect(cfg.nodes[1].challenge.questions_json).toHaveLength(1);
+    expect(cfg.nodes[1].challenge.timer).toBe(10);
+  });
+});
