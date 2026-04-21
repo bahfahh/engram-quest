@@ -97,14 +97,16 @@ Default behavior is AI-guided selection.
 
 ### medium
 - Prefer `quiz`, then `order`
-- May use `cloze`, `snapshot`, `auction`, `image-quiz`, or `image-occlusion` (Gemini only) when the source strongly supports them
+- May use `cloze`, `snapshot`, `auction`, `timeline`, `chain`, `image-quiz`, or `image-occlusion` (Gemini only) when the source strongly supports them
 - `snapshot` works well for dense structured info (tables, layered architectures)
 - `auction` works well for easily confused concepts
+- `timeline` works well for historical evolution or version history
+- `chain` works well for step-by-step processes under pressure
 - Usually omit hints
 - Use plausible distractors
 
 ### hard
-- Prefer `match`, `cloze`, `countdown` (short timer), `auction`, `image-quiz`, `image-occlusion` (Gemini only), then strict `input`
+- Prefer `match`, `cloze`, `countdown` (short timer), `auction`, `chain`, `timeline`, `image-quiz`, `image-occlusion` (Gemini only), then strict `input`
 - No hint unless absolutely necessary
 - The challenge should require stronger recall than medium
 - **Scenario over trivia**: instead of "What is X?", ask "Why choose X over Y given constraint Z?" or "What breaks if you use X instead of Y?"
@@ -120,7 +122,8 @@ AI must analyze the source note content before choosing challenge types. Do NOT 
 | Dense structured info (tables, layers, pipelines) | `snapshot` |
 | Easily confused concepts, multiple plausible answers | `auction` |
 | Fluency / basic recall drill | `countdown` |
-| Step-by-step process, causal flow | `order` |
+| Step-by-step process, causal flow | `order`, `chain` |
+| Historical evolution, version timeline | `timeline` |
 | Terminology, fill-in-the-blank | `cloze` |
 | Diagram or architecture image | `image-quiz`, `image-occlusion` |
 | True/false factual statement | `truefalse` |
@@ -311,6 +314,38 @@ Rules:
 - `coins` is the starting balance (default 100).
 - No hint — the bet mechanic itself forces confidence calibration.
 - Best for: fuzzy knowledge, easily confused concepts, confidence assessment.
+
+### timeline
+```yaml
+challenge:
+  type: timeline
+  question: Place these events in the correct era
+  slots: [2002, 2009, 2016, 2021]
+  events: [ASP.NET 1.0, ASP.NET MVC 1.0, ASP.NET Core 1.0, .NET 6 Minimal API]
+  answer: [0, 1, 2, 3]
+```
+
+Rules:
+- `slots` are the time labels (left column). `events` are the draggable items (shuffled).
+- `answer` is an array where `answer[i]` is the index of the event that belongs in `slots[i]`.
+- User clicks an event chip, then clicks a slot to place it. A check button reveals results.
+- Best for: historical evolution, version timelines, chronological ordering.
+
+### chain
+```yaml
+challenge:
+  type: chain
+  timer: 20
+  question: Click the steps in the correct order
+  chain_items: [Create project, Configure services, Build controllers, Map endpoints, Run app]
+  answer: [0, 1, 2, 3, 4]
+```
+
+Rules:
+- Nodes are displayed shuffled. User clicks them in the correct sequence under time pressure.
+- `answer` is the correct order as indices into `chain_items`.
+- `timer` is seconds (default 20). 3 wrong clicks or timeout = fail, but correct order is revealed and challenge auto-advances.
+- Best for: step-by-step processes, causal flows, pipeline sequences.
 
 ### image-quiz
 ```yaml

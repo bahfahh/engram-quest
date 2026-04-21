@@ -118,6 +118,9 @@ function parseQuestMap(markdown) {
       else if (trimmed.startsWith("snapshot_time:")) challenge.snapshot_time = parseNumericField(trimmed, "snapshot_time:");
       else if (trimmed.startsWith("snapshot_items:")) challenge.snapshot_items = splitInlineList(trimmed);
       else if (trimmed.startsWith("snapshot_labels:")) challenge.snapshot_labels = splitInlineList(trimmed);
+      else if (trimmed.startsWith("slots:")) challenge.slots = splitInlineList(trimmed);
+      else if (trimmed.startsWith("events:")) challenge.events = splitInlineList(trimmed);
+      else if (trimmed.startsWith("chain_items:")) challenge.chain_items = splitInlineList(trimmed);
       else if (trimmed.startsWith("answer:")) {
         let answer = trimmed.slice(7).trim();
         if (answer === "true") challenge.answer = true;
@@ -132,7 +135,7 @@ function parseQuestMap(markdown) {
         if (match) challenge.pairs.push(match[1].split(",").map((item) => item.trim()));
       }
 
-      let challengeKeys = ["type:", "question:", "statement:", "sentence:", "prompt:", "hint:", "link:", "image:", "mode:", "options:", "items:", "keywords:", "answers:", "answer:", "reveal_answer:", "region_x:", "region_y:", "region_width:", "region_height:", "region_left_pct:", "region_top_pct:", "region_width_pct:", "region_height_pct:", "pairs:", "- [", "timer:", "coins:", "snapshot_time:", "snapshot_items:", "snapshot_labels:"];
+      let challengeKeys = ["type:", "question:", "statement:", "sentence:", "prompt:", "hint:", "link:", "image:", "mode:", "options:", "items:", "keywords:", "answers:", "answer:", "reveal_answer:", "region_x:", "region_y:", "region_width:", "region_height:", "region_left_pct:", "region_top_pct:", "region_width_pct:", "region_height_pct:", "pairs:", "- [", "timer:", "coins:", "snapshot_time:", "snapshot_items:", "snapshot_labels:", "slots:", "events:", "chain_items:"];
       if (indent <= 4 && !challengeKeys.some((prefix) => trimmed.startsWith(prefix))) {
         inChallenge = false;
       }

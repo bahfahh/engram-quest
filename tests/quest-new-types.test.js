@@ -146,3 +146,47 @@ describe("new types coexist with existing types", () => {
     expect(cfg.nodes[2].challenge.coins).toBe(50);
   });
 });
+
+describe("parseQuestMap timeline fields", () => {
+  it("parses slots, events, and answer array", () => {
+    const cfg = parseQuestMap([
+      "version: 1",
+      "nodes:",
+      "  - id: ch1",
+      "    title: Timeline",
+      "    challenge:",
+      "      type: timeline",
+      "      question: Place events",
+      "      slots: [2002, 2009, 2016]",
+      "      events: [ASP.NET 1.0, MVC 1.0, Core 1.0]",
+      "      answer: [0, 1, 2]",
+    ].join("\n"));
+    const c = cfg.nodes[0].challenge;
+    expect(c.type).toBe("timeline");
+    expect(c.slots).toEqual(["2002", "2009", "2016"]);
+    expect(c.events).toEqual(["ASP.NET 1.0", "MVC 1.0", "Core 1.0"]);
+    expect(c.answer).toEqual([0, 1, 2]);
+  });
+});
+
+describe("parseQuestMap chain fields", () => {
+  it("parses chain_items, timer, and answer array", () => {
+    const cfg = parseQuestMap([
+      "version: 1",
+      "nodes:",
+      "  - id: ch1",
+      "    title: Chain",
+      "    challenge:",
+      "      type: chain",
+      "      timer: 25",
+      "      question: Click in order",
+      "      chain_items: [Step A, Step B, Step C]",
+      "      answer: [0, 1, 2]",
+    ].join("\n"));
+    const c = cfg.nodes[0].challenge;
+    expect(c.type).toBe("chain");
+    expect(c.timer).toBe(25);
+    expect(c.chain_items).toEqual(["Step A", "Step B", "Step C"]);
+    expect(c.answer).toEqual([0, 1, 2]);
+  });
+});

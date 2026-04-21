@@ -243,6 +243,151 @@ function renderQuestChallenge(container, challenge, difficulty, onSolved, settin
     return;
   }
 
+  if (challenge.type === "timeline" && Array.isArray(challenge.slots) && Array.isArray(challenge.events)) {
+    let correctAnswer = Array.isArray(challenge.answer) ? challenge.answer : [];
+    let placed = new Array(challenge.slots.length).fill(null);
+    let selectedEvent = null;
+    let checked = false;
+    wrapper.createEl("p", { text: challenge.question || (zh ? "把事件放到正確的時間位置" : "Place events in the correct time slots"), attr: { style: "font-size:14px;font-weight:600;color:var(--text-normal);margin-bottom:12px;line-height:1.5" } });
+    let poolLabel = wrapper.createEl("div", { text: zh ? "點選事件，再點選時間欄位放置：" : "Click an event, then click a slot to place it:", attr: { style: "font-size:11px;color:var(--text-faint);margin-bottom:8px" } });
+    let pool = wrapper.createEl("div", { attr: { style: "display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px" } });
+    let eventChips = [];
+    let shuffled = challenge.events.map((e, i) => i).sort(() => Math.random() - 0.5);
+    shuffled.forEach(origIdx => {
+      let chip = pool.createEl("button", { text: challenge.events[origIdx], attr: { style: "padding:6px 12px;border-radius:6px;border:1px solid var(--background-modifier-border);background:var(--background-primary);font-size:12px;cursor:pointer;transition:all .15s;color:var(--text-normal)" } });
+      chip._origIdx = origIdx;
+      eventChips.push(chip);
+      chip.addEventListener("click", () => {
+        if (checked || chip.disabled) return;
+        eventChips.forEach(c => { c.style.borderColor = "var(--background-modifier-border)"; });
+        selectedEvent = origIdx;
+        chip.style.borderColor = "var(--interactive-accent)";
+      });
+    });
+    let track = wrapper.createEl("div", { attr: { style: "display:flex;flex-direction:column;gap:6px;margin-bottom:14px;padding-left:12px;border-left:2px solid var(--background-modifier-border)" } });
+    let slotEls = [];
+    challenge.slots.forEach((slot, slotIdx) => {
+      let row = track.createEl("div", { attr: { style: "display:flex;align-items:center;gap:10px" } });
+      row.createEl("span", { text: slot, attr: { style: "font-size:11px;color:var(--text-faint);min-width:48px;font-weight:600" } });
+      let drop = row.createEl("div", { attr: { style: "flex:1;min-height:36px;border:1px dashed var(--background-modifier-border);border-radius:6px;padding:6px 10px;font-size:12px;color:var(--text-muted);cursor:pointer;transition:all .15s;display:flex;align-items:center" } });
+      drop.textContent = zh ? "點擊放置" : "Click to place";
+      slotEls.push(drop);
+      drop.addEventListener("click", () => {
+        if (checked || selectedEvent === null) return;
+        if (placed[slotIdx] !== null) {
+          let oldChip = eventChips.find(c => c._origIdx === placed[slotIdx]);
+          if (oldChip) { oldChip.disabled = false; oldChip.style.opacity = "1"; }
+        }
+        placed[slotIdx] = selectedEvent;
+        drop.textContent = challenge.events[selectedEvent];
+        drop.style.borderStyle = "solid";
+        drop.style.color = "var(--text-normal)";
+        drop.style.fontWeight = "600";
+        let usedChip = eventChips.find(c => c._origIdx === selectedEvent);
+        if (usedChip) { usedChip.disabled = true; usedChip.style.opacity = "0.3"; }
+        selectedEvent = null;
+        eventChips.forEach(c => { c.style.borderColor = "var(--background-modifier-border)"; });
+      });
+    });
+    let checkBtn = wrapper.createEl("button", { text: zh ? "確認" : "Check", attr: { style: "width:100%;padding:10px;border-radius:8px;background:var(--interactive-accent);color:white;border:none;cursor:pointer;font-size:13px;font-weight:700" } });
+    checkBtn.addEventListener("click", () => {
+      if (checked) return;
+      checked = true;
+      checkBtn.style.display = "none";
+      let correctCount = 0;
+      challenge.slots.forEach((_, i) => {
+        let isCorrect = placed[i] === correctAnswer[i];
+        if (isCorrect) correctCount++;
+        slotEls[i].style.borderColor = isCorrect ? "#22c55e" : "#ef4444";
+        slotEls[i].style.borderStyle = "solid";
+        slotEls[i].style.background = isCorrect ? "rgba(34,197,94,0.08)" : "rgba(239,68,68,0.08)";
+        if (!isCorrect && correctAnswer[i] != null) {
+          slotEls[i].textContent += " → " + challenge.events[correctAnswer[i]];
+        }
+      });
+      if (correctCount === challenge.slots.length) {
+        setTimeout(() => onSolved(), 800);
+      } else {
+        handleWrong(wrapper);
+        setTimeout(() => onSolved(), 2000);
+      }
+    });
+    return;
+  }
+
+  if (challenge.type === "chain" && Array.isArray(challenge.chain_items)) {
+    let correctOrder = Array.isArray(challenge.answer) ? challenge.answer : challenge.chain_items.map((_, i) => i);
+    let timerSec = challenge.timer || 20;
+    let activated = 0;
+    let mistakes = 0;
+    let done = false;
+    let timerBar = wrapper.createEl("div", { attr: { style: "height:4px;background:var(--background-modifier-border);border-radius:99px;overflow:hidden;margin-bottom:8px" } });
+    let timerFill = timerBar.createEl("div", { attr: { style: "height:100%;width:100%;border-radius:99px;background:var(--interactive-accent);transition:width 0.1s linear" } });
+    let timerLabel = wrapper.createEl("div", { attr: { style: "font-size:11px;color:var(--text-faint);text-align:right;margin-bottom:12px;font-variant-numeric:tabular-nums" } });
+    timerLabel.textContent = timerSec + "s";
+    wrapper.createEl("p", { text: challenge.question || (zh ? "按正確順序點擊：" : "Click in the correct order:"), attr: { style: "font-size:14px;font-weight:600;color:var(--text-normal);margin-bottom:12px;line-height:1.5" } });
+    let nodeList = wrapper.createEl("div", { attr: { style: "display:flex;flex-direction:column;gap:6px;margin-bottom:14px" } });
+    let shuffled = challenge.chain_items.map((_, i) => i).sort(() => Math.random() - 0.5);
+    let nodeEls = [];
+    shuffled.forEach(origIdx => {
+      let node = nodeList.createEl("button", { attr: { style: "display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:8px;border:1px solid var(--background-modifier-border);background:var(--background-primary);cursor:pointer;transition:all .2s;text-align:left;width:100%" } });
+      let numEl = node.createEl("span", { text: "?", attr: { style: "width:24px;height:24px;border-radius:6px;background:rgba(124,111,247,0.12);color:var(--interactive-accent);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0" } });
+      node.createEl("span", { text: challenge.chain_items[origIdx], attr: { style: "font-size:13px;color:var(--text-normal)" } });
+      node._origIdx = origIdx;
+      node._numEl = numEl;
+      nodeEls.push(node);
+      node.addEventListener("click", () => {
+        if (done || node.disabled) return;
+        let expected = correctOrder[activated];
+        if (origIdx === expected) {
+          activated++;
+          node.disabled = true;
+          node.style.borderColor = "#22c55e";
+          node.style.background = "rgba(34,197,94,0.06)";
+          numEl.textContent = String(activated);
+          numEl.style.background = "rgba(34,197,94,0.2)";
+          numEl.style.color = "#22c55e";
+          if (activated === correctOrder.length) { endChain(true); }
+        } else {
+          mistakes++;
+          deps.retriggerShake(node);
+          node.style.borderColor = "#ef4444";
+          setTimeout(() => { node.style.borderColor = "var(--background-modifier-border)"; }, 400);
+          if (mistakes >= 3) { endChain(false); }
+        }
+      });
+    });
+    let interval = setInterval(() => {
+      timerSec -= 0.1;
+      if (timerSec <= 0) { clearInterval(interval); if (!done) endChain(false); return; }
+      let pct = (timerSec / (challenge.timer || 20)) * 100;
+      timerFill.style.width = pct + "%";
+      timerFill.style.background = pct > 50 ? "var(--interactive-accent)" : pct > 25 ? "#f59e0b" : "#ef4444";
+      timerLabel.textContent = Math.ceil(timerSec) + "s";
+    }, 100);
+    function endChain(success) {
+      if (done) return;
+      done = true;
+      clearInterval(interval);
+      nodeEls.forEach(n => { n.disabled = true; n.style.cursor = "default"; });
+      if (success) {
+        setTimeout(() => onSolved(), 800);
+      } else {
+        correctOrder.forEach((origIdx, step) => {
+          let el = nodeEls.find(n => n._origIdx === origIdx);
+          if (el && !el.style.borderColor.includes("22c55e")) {
+            el._numEl.textContent = String(step + 1);
+            el.style.borderColor = "#f59e0b";
+            el.style.background = "rgba(245,158,11,0.06)";
+          }
+        });
+        handleWrong(wrapper);
+        setTimeout(() => onSolved(), 2000);
+      }
+    }
+    return;
+  }
+
   if (challenge.type === "truefalse") {
     wrapper.createEl("p", { text: challenge.statement || "", attr: { style: "font-size:14px;font-weight:600;color:var(--text-normal);margin-bottom:12px;line-height:1.5;padding:12px 16px;border-radius:8px;background:var(--background-secondary)" } });
     let row = wrapper.createEl("div", { attr: { style: "display:flex;gap:12px" } });
