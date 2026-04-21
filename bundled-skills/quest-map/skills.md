@@ -50,6 +50,12 @@ Default behavior is AI-guided selection.
 - If the user specifies a concrete image, use that image.
 - If the user does not specify, AI should decide which content is best turned into regular questions, cloze, or image-occlusion.
 
+## CRITICAL MANDATE: Filename
+
+- Standalone quest file **MUST** be named `<source-note-name>-quest.md`. No exceptions.
+- **NEVER** use descriptive titles (e.g., `Azure_Full_Ecosystem_Map.md`).
+- The plugin detects quest maps by `-quest.md` suffix OR `` ```quest-map `` code block. A wrong filename with no code block = invisible to the plugin.
+
 ## Generation Flow
 
 0. Check for a pre-existing knowledge index or graph in the vault (e.g. `graphify-out/GRAPH_REPORT.md`, `graph.json`). If found, read it first — use its key concepts as boss-challenge candidates, community groupings to inform chapter splits, and relationship edges to shape challenge content. Skip raw-file discovery for anything the index already covers.
@@ -77,7 +83,7 @@ Default behavior is AI-guided selection.
 7. Add frontmatter tags when the topic has clear semantic tags.
 8. Save the output using the appropriate method:
    - **Embedding in an existing note**: append the `quest-map` code block directly into that note. The plugin detects any `.md` file containing a ` ```quest-map ` block — no filename constraint applies.
-   - **Creating a standalone file**: use the exact format `<source-note-name>-quest.md`. **NEVER** use a descriptive name (e.g., `Azure_Quest_Adventure.md`) — the plugin uses the `-quest.md` suffix as a fallback detection path.
+   - **Creating a standalone file**: name it `<source-note-name>-quest.md` (see CRITICAL MANDATE above).
 
 ## Difficulty Rules
 
@@ -98,6 +104,8 @@ Default behavior is AI-guided selection.
 - Prefer `match`, `cloze`, `image-quiz`, `image-occlusion` (Gemini only), then strict `input`
 - No hint unless absolutely necessary
 - The challenge should require stronger recall than medium
+- **Scenario over trivia**: instead of "What is X?", ask "Why choose X over Y given constraint Z?" or "What breaks if you use X instead of Y?"
+- **Traceability**: all hard challenges **MUST** include the `link` field pointing back to the source note. This lets the learner self-verify when recall fails.
 - Include a `link` field when the format expects one
 
 ## Parser Constraints
@@ -122,6 +130,21 @@ options:
 ### Avoid ASCII commas inside array values
 
 The parser splits on commas. Rephrase option text or accepted answers to avoid accidental splits.
+
+### Cloze: one blank per challenge
+
+Each cloze challenge **MUST** contain exactly ONE `{{c1::...}}` blank.
+Multiple blanks (`{{c1::...}}` + `{{c2::...}}`) are NOT supported — the UI reveals all blanks simultaneously, destroying the recall test.
+
+Wrong:
+```yaml
+sentence: "{{c1::Azure}} uses {{c2::RBAC}} for access control"
+```
+
+Correct:
+```yaml
+sentence: "Azure uses {{c1::RBAC}} for access control"
+```
 
 ### Use flat fields for image-occlusion bbox
 
