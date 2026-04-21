@@ -56,57 +56,145 @@ function renderQuestChallenge(container, challenge, difficulty, onSolved, settin
     let roundScore = 0;
     let roundCorrect = 0;
 
+    // ── Game rules banner ──
+    let rulesBanner = wrapper.createEl("div", { attr: { style: "padding:12px 16px;border-radius:10px;margin-bottom:16px;font-size:12px;line-height:1.6;border-left:3px solid var(--interactive-accent)" } });
+    let rulesMap = {
+      "countdown": { icon: "⏱️", title: zh ? "倒數炸彈" : "Countdown Bomb", bg: "rgba(239,68,68,0.06)", border: "#ef4444", rules: zh ? "每題限時作答。時間到自動揭曉答案，答錯扣一條命。♥ 歸零則挑戰失敗。" : "Answer before time runs out. Wrong answers cost a life. ♥ reaches 0 = round over." },
+      "auction": { icon: "🪙", title: zh ? "知識拍賣場" : "Knowledge Auction", bg: "rgba(245,158,11,0.06)", border: "#f59e0b", rules: zh ? "選擇答案並押注硬幣。答對贏回押注金額，答錯失去押注。◈ 歸零則挑戰失敗。" : "Pick an answer and bet coins. Correct = win bet, wrong = lose bet. ◈ reaches 0 = round over." },
+      "snapshot": { icon: "📸", title: zh ? "概念快照" : "Concept Snapshot", bg: "rgba(59,130,246,0.06)", border: "#3b82f6", rules: zh ? "資訊將短暫顯示後消失。仔細記住內容，然後從記憶回答問題。" : "Information will flash briefly then disappear. Memorize it, then answer from memory." },
+      "memory-palace": { icon: "🧠", title: zh ? "記憶宮殿" : "Memory Palace", bg: "rgba(124,111,247,0.06)", border: "#7c6ff7", rules: zh ? "知識地圖將顯示一段時間後隱藏。記住每個元件的名稱和職責，然後回答問題。" : "A knowledge map will display then hide. Memorize each component's name and role, then answer." },
+    };
+    let rule = rulesMap[challenge.type] || { icon: "🎯", title: zh ? "挑戰回合" : "Challenge Round", bg: "var(--background-secondary)", border: "var(--interactive-accent)", rules: "" };
+    rulesBanner.style.background = rule.bg;
+    rulesBanner.style.borderColor = rule.border;
+    let rulesTitle = rulesBanner.createEl("div", { attr: { style: "display:flex;align-items:center;gap:6px;margin-bottom:4px;font-weight:700;font-size:13px;color:var(--text-normal)" } });
+    rulesTitle.createEl("span", { text: rule.icon });
+    rulesTitle.createEl("span", { text: rule.title });
+    rulesBanner.createEl("div", { text: rule.rules, attr: { style: "color:var(--text-muted)" } });
+
+    // ── Progress bar ──
     let roundHeader = wrapper.createEl("div", { attr: { style: "display:flex;align-items:center;justify-content:space-between;margin-bottom:14px" } });
     let pipsEl = roundHeader.createEl("div", { attr: { style: "display:flex;gap:4px" } });
-    let statsEl = roundHeader.createEl("div", { attr: { style: "font-size:11px;color:var(--text-faint);font-variant-numeric:tabular-nums" } });
+    let statsEl = roundHeader.createEl("div", { attr: { style: "font-size:12px;color:var(--text-muted);font-weight:600;font-variant-numeric:tabular-nums" } });
     let roundBody = wrapper.createEl("div");
 
     function updatePips() {
       pipsEl.empty();
       questions.forEach((_, i) => {
-        let pip = pipsEl.createEl("div", { attr: { style: `width:18px;height:3px;border-radius:1px;transition:all .2s;background:${i < qIdx ? "var(--interactive-accent)" : i === qIdx ? "#f59e0b" : "var(--background-modifier-border)"}` } });
+        pipsEl.createEl("div", { attr: { style: `width:18px;height:3px;border-radius:1px;transition:all .2s;background:${i < qIdx ? "var(--interactive-accent)" : i === qIdx ? "#f59e0b" : "var(--background-modifier-border)"}` } });
       });
-      statsEl.textContent = `${qIdx + 1} / ${questions.length}`;
-      if (challenge.type === "auction") statsEl.textContent += `  ◈ ${roundCoins}`;
-      if (challenge.type === "countdown") statsEl.textContent += `  ♥ ${gameState.lives}`;
+      let stat = `${Math.min(qIdx + 1, questions.length)} / ${questions.length}`;
+      if (challenge.type === "auction") stat += `  ◈ ${roundCoins}`;
+      if (challenge.type === "countdown") stat += `  ♥ ${gameState.lives}`;
+      statsEl.textContent = stat;
     }
 
-    function renderCurrentQuestion() {
+    // ── Memory phase (snapshot / memory-palace) ──
+    let memoryPhaseShown = false;
+    function showMemoryPhase(onDone) {
       roundBody.empty();
+      let ispalace = challenge.type === "memory-palace";
+      let items = ispalace ? (challenge.palace_items || []) : (challenge.snapshot_items || []);
+      let labels = ispalace ? items.map((_, i) => String.fromCharCode(65 + i)) : (challenge.snapshot_labels || items.map((_, i) => String(i + 1)));
+      let descs = ispalace ? (challenge.palace_descs || []) : [];
+      let time = ispalace ? (challenge.palace_time || 15) : (challenge.snapshot_time || 4);
+
+      // Phase indicator
+      let phaseTag = roundBody.createEl("div", { attr: { style: `display:inline-block;padding:4px 12px;border-radius:99px;font-size:11px;font-weight:700;margin-bottom:12px;background:${rule.bg};color:${rule.border};border:1px solid ${rule.border}` } });
+      phaseTag.textContent = zh ? "📖 記憶階段" : "📖 Study Phase";
+
+      let box = roundBody.createEl("div", { attr: { style: "border-radius:10px;border:1px solid var(--background-modifier-border);background:var(--background-secondary);padding:20px;margin-bottom:10px;min-height:80px" } });
+      if (ispalace) {
+        let list = box.createEl("div", { attr: { style: "display:flex;flex-direction:column;gap:8px" } });
+        items.forEach((item, i) => {
+          let row = list.createEl("div", { attr: { style: "display:flex;align-items:flex-start;gap:10px;background:var(--background-primary);border-radius:8px;padding:10px 12px;border:1px solid var(--background-modifier-border)" } });
+          row.createEl("span", { text: labels[i], attr: { style: "width:28px;height:28px;border-radius:6px;background:rgba(124,111,247,0.12);color:var(--interactive-accent);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0" } });
+          let info = row.createEl("div");
+          info.createEl("div", { text: item, attr: { style: "font-size:13px;font-weight:600;color:var(--text-normal)" } });
+          if (descs[i]) info.createEl("div", { text: descs[i], attr: { style: "font-size:11px;color:var(--text-muted);margin-top:2px;line-height:1.4" } });
+        });
+      } else {
+        let grid = box.createEl("div", { attr: { style: "display:grid;grid-template-columns:repeat(2,1fr);gap:8px" } });
+        items.forEach((item, i) => {
+          let cell = grid.createEl("div", { attr: { style: "background:var(--background-primary);border:1px solid var(--background-modifier-border);border-radius:6px;padding:10px;text-align:left" } });
+          cell.createEl("div", { text: labels[i], attr: { style: "font-size:10px;color:var(--text-faint);margin-bottom:2px" } });
+          cell.createEl("div", { text: item, attr: { style: "font-size:13px;font-weight:600;color:var(--text-normal)" } });
+        });
+      }
+
+      // Countdown bar
+      let cdBar = roundBody.createEl("div", { attr: { style: "height:4px;background:var(--background-modifier-border);border-radius:99px;overflow:hidden;margin-bottom:6px" } });
+      let cdFill = cdBar.createEl("div", { attr: { style: `height:100%;width:100%;border-radius:99px;background:${rule.border};transition:width 1s linear` } });
+      let cdLabel = roundBody.createEl("div", { attr: { style: "font-size:12px;color:var(--text-muted);font-weight:600;text-align:center;font-variant-numeric:tabular-nums" } });
+      cdLabel.textContent = `${time}s`;
+
+      let cdVal = time;
+      let cdInterval = setInterval(() => {
+        cdVal -= 1;
+        cdFill.style.width = ((cdVal / time) * 100) + "%";
+        cdLabel.textContent = `${cdVal}s`;
+        if (cdVal <= 0) {
+          clearInterval(cdInterval);
+          // Transition to quiz phase
+          phaseTag.textContent = zh ? "🎯 作答階段" : "🎯 Quiz Phase";
+          phaseTag.style.background = "rgba(34,197,94,0.08)";
+          phaseTag.style.color = "#22c55e";
+          phaseTag.style.borderColor = "#22c55e";
+          box.empty();
+          box.style.textAlign = "center";
+          box.style.display = "flex";
+          box.style.alignItems = "center";
+          box.style.justifyContent = "center";
+          box.style.minHeight = "60px";
+          box.createEl("div", { text: ispalace ? "🧠" : "❓", attr: { style: "font-size:36px;opacity:0.3" } });
+          cdBar.style.display = "none";
+          cdLabel.textContent = zh ? "從記憶回答以下問題" : "Answer from memory";
+          memoryPhaseShown = true;
+          onDone();
+        }
+      }, 1000);
+    }
+
+    // ── Render one question ──
+    function renderCurrentQuestion() {
+      if ((challenge.type === "memory-palace" || challenge.type === "snapshot") && !memoryPhaseShown) {
+        updatePips();
+        showMemoryPhase(() => renderCurrentQuestion());
+        return;
+      }
+      if (challenge.type !== "memory-palace" && challenge.type !== "snapshot") roundBody.empty();
+      if ((challenge.type === "memory-palace" || challenge.type === "snapshot") && qIdx > 0) {
+        roundBody.querySelectorAll(".qm-round-q").forEach(el => el.remove());
+      }
       updatePips();
       let q = questions[qIdx];
       let qOpts = q.opts || q.options || challenge.options;
       let qAns = q.ans != null ? q.ans : q.answer != null ? q.answer : challenge.answer;
-      // memory-palace single renderer expects answer as string, not index
-      if (challenge.type === "memory-palace" && typeof qAns === "number" && Array.isArray(qOpts)) {
-        qAns = qOpts[qAns] || "";
-      }
+      let singleType = (challenge.type === "memory-palace" || challenge.type === "snapshot") ? "quiz" : challenge.type;
       let singleChallenge = Object.assign({}, challenge, {
+        type: singleType,
         question: q.q || q.question || "",
         options: qOpts,
         answer: qAns,
         statement: q.statement || "",
         sentence: q.sentence || "",
-        items: q.items || challenge.items,
         keywords: q.keywords || challenge.keywords,
         answers: q.answers || challenge.answers,
         hint: q.hint || "",
-        slots: q.slots || challenge.slots,
-        events: q.events || challenge.events,
-        chain_items: q.chain_items || challenge.chain_items,
-        palace_items: q.palace_items || challenge.palace_items,
-        palace_descs: q.palace_descs || challenge.palace_descs,
-        snapshot_items: q.snapshot_items || challenge.snapshot_items,
-        snapshot_labels: q.snapshot_labels || challenge.snapshot_labels,
       });
       delete singleChallenge.questions_json;
+      delete singleChallenge.palace_items;
+      delete singleChallenge.palace_descs;
+      delete singleChallenge.snapshot_items;
+      delete singleChallenge.snapshot_labels;
       if (challenge.type === "auction") singleChallenge.coins = roundCoins;
 
-      renderQuestChallenge(roundBody, singleChallenge, difficulty, (correct) => {
-        if (correct) { roundCorrect++; gameState.streak++; roundScore += 10; gameState.score += 10; }
+      let qWrap = roundBody.createEl("div", { attr: { class: "qm-round-q" } });
+      renderQuestChallenge(qWrap, singleChallenge, difficulty, (correct) => {
+        if (correct) { roundCorrect++; gameState.streak++; gameState.score += 10; }
         else { gameState.streak = 0; if (challenge.type === "countdown") gameState.lives = Math.max(0, gameState.lives - 1); }
         if (challenge.type === "auction") {
-          let coinMatch = roundBody.textContent.match(/◈\s*(\d+)/);
+          let coinMatch = qWrap.textContent.match(/◈\s*(\d+)/);
           if (coinMatch) roundCoins = parseInt(coinMatch[1]);
           gameState.coins = roundCoins;
         }

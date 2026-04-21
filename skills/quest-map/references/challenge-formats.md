@@ -39,6 +39,20 @@ challenge:
   questions_json: [{"q":"Question 1","opts":["A","B","C","D"],"ans":1},{"q":"Question 2","opts":["X","Y"],"ans":0}]
 ```
 
+### Round UX behavior
+
+Every multi-question round displays:
+1. A **game rules banner** at the top explaining the mechanic (auto-generated, not in YAML)
+2. **Progress pips** showing current question / total
+3. **Stats bar** showing lives (countdown) or coins (auction)
+4. A **round summary** at the end with correct count, and a **📖 Review panel** if failed or < 50% correct
+
+Type-specific behavior:
+- `countdown`: each question has its own timer. Wrong = lose a life. ♥ 0 = round ends with failure.
+- `auction`: coins persist across questions. Wrong = lose bet. ◈ 0 = round ends with failure.
+- `snapshot`: shows items grid for N seconds with a countdown bar and "📖 Study Phase" tag. After hiding, switches to "🎯 Quiz Phase" and presents questions as standard quiz.
+- `memory-palace`: shows knowledge map for N seconds with "📖 Study Phase" tag. After hiding, switches to "🎯 Quiz Phase" and presents questions as standard quiz. The hidden map stays visible as a blurred placeholder.
+
 ### JSON object fields per question
 
 | Field | Used by | Description |
