@@ -190,3 +190,46 @@ describe("parseQuestMap chain fields", () => {
     expect(c.answer).toEqual([0, 1, 2]);
   });
 });
+
+describe("parseQuestMap memory-palace fields", () => {
+  it("parses palace_items, palace_descs, palace_time, and string answer", () => {
+    const cfg = parseQuestMap([
+      "version: 1",
+      "nodes:",
+      "  - id: ch1",
+      "    title: Palace",
+      "    challenge:",
+      "      type: memory-palace",
+      "      palace_items: [Pipeline, Controller, Service, DbContext]",
+      "      palace_descs: [HTTP flow, Handles requests, Business logic, ORM layer]",
+      "      palace_time: 12",
+      "      question: Which handles ORM?",
+      "      answer: DbContext",
+    ].join("\n"));
+    const c = cfg.nodes[0].challenge;
+    expect(c.type).toBe("memory-palace");
+    expect(c.palace_items).toEqual(["Pipeline", "Controller", "Service", "DbContext"]);
+    expect(c.palace_descs).toEqual(["HTTP flow", "Handles requests", "Business logic", "ORM layer"]);
+    expect(c.palace_time).toBe(12);
+    expect(c.answer).toBe("DbContext");
+  });
+
+  it("works without palace_descs", () => {
+    const cfg = parseQuestMap([
+      "version: 1",
+      "nodes:",
+      "  - id: ch1",
+      "    title: Palace",
+      "    challenge:",
+      "      type: memory-palace",
+      "      palace_items: [A, B, C]",
+      "      palace_time: 8",
+      "      question: Which is B?",
+      "      answer: B",
+    ].join("\n"));
+    const c = cfg.nodes[0].challenge;
+    expect(c.palace_items).toEqual(["A", "B", "C"]);
+    expect(c.palace_descs).toBeUndefined();
+    expect(c.palace_time).toBe(8);
+  });
+});

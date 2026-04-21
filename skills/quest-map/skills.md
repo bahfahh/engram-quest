@@ -97,7 +97,7 @@ Default behavior is AI-guided selection.
 
 ### medium
 - Prefer `quiz`, then `order`
-- May use `cloze`, `snapshot`, `auction`, `timeline`, `chain`, `image-quiz`, or `image-occlusion` (Gemini only) when the source strongly supports them
+- May use `cloze`, `snapshot`, `memory-palace`, `auction`, `timeline`, `chain`, `image-quiz`, or `image-occlusion` (Gemini only) when the source strongly supports them
 - `snapshot` works well for dense structured info (tables, layered architectures)
 - `auction` works well for easily confused concepts
 - `timeline` works well for historical evolution or version history
@@ -119,7 +119,7 @@ AI must analyze the source note content before choosing challenge types. Do NOT 
 
 | Content characteristic | Best challenge types |
 |---|---|
-| Dense structured info (tables, layers, pipelines) | `snapshot` |
+| Dense structured info (tables, layers, pipelines) | `snapshot`, `memory-palace` |
 | Easily confused concepts, multiple plausible answers | `auction` |
 | Fluency / basic recall drill | `countdown` |
 | Step-by-step process, causal flow | `order`, `chain` |
@@ -346,6 +346,24 @@ Rules:
 - `answer` is the correct order as indices into `chain_items`.
 - `timer` is seconds (default 20). 3 wrong clicks or timeout = fail, but correct order is revealed and challenge auto-advances.
 - Best for: step-by-step processes, causal flows, pipeline sequences.
+
+### memory-palace
+```yaml
+challenge:
+  type: memory-palace
+  palace_items: [Request Pipeline, Controller, Service Layer, DbContext, Middleware]
+  palace_descs: [HTTP request flows through layers, Receives requests and returns results, Business logic decoupled via DI, ORM abstraction for database, Handles auth and logging]
+  palace_time: 15
+  question: Which component handles ORM database operations?
+  answer: DbContext
+```
+
+Rules:
+- Shows 3–5 nodes (title + description) for `palace_time` seconds, then hides everything.
+- User picks the correct title from a shuffled grid. `answer` is a string matching one of `palace_items`.
+- `palace_descs` is optional but strongly recommended — descriptions make the memorization meaningful.
+- `palace_time` default is 15. Use 10–20 depending on node count.
+- Best for: architecture overviews, component relationships, structured knowledge maps.
 
 ### image-quiz
 ```yaml

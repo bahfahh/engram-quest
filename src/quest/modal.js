@@ -388,6 +388,73 @@ function renderQuestChallenge(container, challenge, difficulty, onSolved, settin
     return;
   }
 
+  if (challenge.type === "memory-palace" && Array.isArray(challenge.palace_items)) {
+    let items = challenge.palace_items;
+    let descs = challenge.palace_descs || [];
+    let studyTime = challenge.palace_time || 15;
+    let answerStr = typeof challenge.answer === "string" ? challenge.answer : "";
+    let phase = "study";
+    let palaceBox = wrapper.createEl("div", { attr: { style: "border-radius:10px;border:1px solid var(--background-modifier-border);background:var(--background-secondary);padding:20px;margin-bottom:14px;min-height:80px" } });
+    let cdLabel = wrapper.createEl("div", { attr: { style: "font-size:11px;color:var(--text-faint);margin-bottom:12px;font-variant-numeric:tabular-nums" } });
+    let nodeList = palaceBox.createEl("div", { attr: { style: "display:flex;flex-direction:column;gap:8px" } });
+    items.forEach((item, i) => {
+      let row = nodeList.createEl("div", { attr: { style: "display:flex;align-items:flex-start;gap:10px;background:var(--background-primary);border-radius:8px;padding:10px 12px;border:1px solid var(--background-modifier-border)" } });
+      let icon = row.createEl("span", { text: String.fromCharCode(65 + i), attr: { style: "width:28px;height:28px;border-radius:6px;background:rgba(124,111,247,0.12);color:var(--interactive-accent);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0" } });
+      let info = row.createEl("div");
+      info.createEl("div", { text: item, attr: { style: "font-size:13px;font-weight:600;color:var(--text-normal)" } });
+      if (descs[i]) info.createEl("div", { text: descs[i], attr: { style: "font-size:11px;color:var(--text-muted);margin-top:2px;line-height:1.4" } });
+    });
+    cdLabel.textContent = (zh ? "記住這張知識地圖 — " : "Memorize this map — ") + studyTime + "s";
+    let cdVal = studyTime;
+    let cdInterval = setInterval(() => {
+      cdVal -= 1;
+      if (cdVal <= 0) {
+        clearInterval(cdInterval);
+        phase = "recall";
+        palaceBox.empty();
+        palaceBox.style.textAlign = "center";
+        palaceBox.style.display = "flex";
+        palaceBox.style.alignItems = "center";
+        palaceBox.style.justifyContent = "center";
+        palaceBox.createEl("div", { text: "🧠", attr: { style: "font-size:48px;opacity:0.3" } });
+        cdLabel.textContent = zh ? "從記憶回答：" : "Answer from memory:";
+        showRecall();
+      } else {
+        cdLabel.textContent = (zh ? "記住這張知識地圖 — " : "Memorize this map — ") + cdVal + "s";
+      }
+    }, 1000);
+    function showRecall() {
+      wrapper.createEl("p", { text: challenge.question || "", attr: { style: "font-size:14px;font-weight:600;color:var(--text-normal);margin-bottom:12px;line-height:1.5" } });
+      let grid = wrapper.createEl("div", { attr: { style: "display:grid;grid-template-columns:1fr 1fr;gap:8px" } });
+      let shuffled = [...items].sort(() => Math.random() - 0.5);
+      let cards = [];
+      shuffled.forEach(item => {
+        let card = grid.createEl("button", { text: item, attr: { style: "padding:12px;border-radius:8px;border:1px solid var(--background-modifier-border);background:var(--background-primary);font-size:13px;cursor:pointer;transition:all .15s;color:var(--text-normal);text-align:center" } });
+        cards.push(card);
+        card.addEventListener("click", () => {
+          if (card.disabled) return;
+          cards.forEach(c => { c.disabled = true; c.style.cursor = "default"; });
+          let correct = item.trim().toLowerCase() === answerStr.trim().toLowerCase();
+          if (correct) {
+            card.style.borderColor = "#22c55e";
+            card.style.background = "rgba(34,197,94,0.08)";
+            card.style.color = "#22c55e";
+            setTimeout(() => onSolved(), 800);
+          } else {
+            card.style.borderColor = "#ef4444";
+            card.style.background = "rgba(239,68,68,0.08)";
+            card.style.color = "#ef4444";
+            let correctCard = cards.find(c => c.textContent.trim().toLowerCase() === answerStr.trim().toLowerCase());
+            if (correctCard) { correctCard.style.borderColor = "#22c55e"; correctCard.style.background = "rgba(34,197,94,0.08)"; correctCard.style.color = "#22c55e"; }
+            handleWrong(wrapper);
+            setTimeout(() => onSolved(), 2000);
+          }
+        });
+      });
+    }
+    return;
+  }
+
   if (challenge.type === "truefalse") {
     wrapper.createEl("p", { text: challenge.statement || "", attr: { style: "font-size:14px;font-weight:600;color:var(--text-normal);margin-bottom:12px;line-height:1.5;padding:12px 16px;border-radius:8px;background:var(--background-secondary)" } });
     let row = wrapper.createEl("div", { attr: { style: "display:flex;gap:12px" } });
@@ -412,33 +479,28 @@ function renderQuestChallenge(container, challenge, difficulty, onSolved, settin
 
   if (challenge.type === "order" && Array.isArray(challenge.items)) {
     wrapper.createEl("p", { text: challenge.question || (zh ? "請依正確順序點擊：" : "Click in the correct order:"), attr: { style: "font-size:14px;font-weight:600;color:var(--text-normal);margin-bottom:10px" } });
+    let correctOrder = Array.isArray(challenge.answer) ? challenge.answer : challenge.items.map((_, i) => i);
+    let step = 0;
+    let seqRow = wrapper.createEl("div", { attr: { style: "min-height:32px;padding:6px 10px;border-radius:8px;background:var(--background-secondary);font-size:12px;color:var(--text-faint);margin-bottom:10px;display:flex;gap:4px;flex-wrap:wrap;align-items:center" } });
+    seqRow.createEl("span", { text: zh ? "順序：" : "Sequence:" });
     let chipRow = wrapper.createEl("div", { attr: { style: "display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px" } });
-    let sequence = wrapper.createEl("div", { attr: { style: "min-height:36px;padding:8px 12px;border-radius:8px;background:var(--background-secondary);font-size:13px;color:var(--text-muted);margin-bottom:8px;display:flex;gap:6px;flex-wrap:wrap;align-items:center" } });
-    sequence.createEl("span", { text: zh ? "順序：" : "Sequence:", attr: { style: "color:var(--text-faint);font-size:11px" } });
-    let picks = [];
     let buttons = [];
     challenge.items.forEach((item, index) => {
       let button = chipRow.createEl("button", { text: item, attr: { class: "qm-ch-chip" } });
       buttons.push(button);
       button.addEventListener("click", () => {
         if (button.disabled) return;
-        picks.push(index);
-        button.disabled = true;
-        sequence.createEl("span", { text: item, attr: { style: "padding:2px 10px;border-radius:12px;background:var(--interactive-accent);color:white;font-size:12px;font-weight:600" } });
-        if (picks.length !== challenge.items.length) return;
-        let correct = Array.isArray(challenge.answer) && picks.every((value, answerIndex) => value === challenge.answer[answerIndex]);
-        if (correct) {
-          setSolved(buttons, onSolved);
-          return;
+        if (index === correctOrder[step]) {
+          button.disabled = true;
+          button.style.background = "#22c55e";
+          button.style.color = "white";
+          button.style.borderColor = "#22c55e";
+          seqRow.createEl("span", { text: (step + 1) + ". " + item, attr: { style: "padding:2px 8px;border-radius:10px;background:rgba(34,197,94,0.15);color:#22c55e;font-size:11px;font-weight:600" } });
+          step++;
+          if (step === correctOrder.length) { setTimeout(() => onSolved(), 500); }
+        } else {
+          handleWrong(button);
         }
-        buttons.forEach((itemButton) => {
-          itemButton.disabled = false;
-          itemButton.style.borderColor = "";
-          deps.retriggerShake(itemButton);
-        });
-        Array.from(sequence.querySelectorAll("span")).slice(1).forEach((node) => node.remove());
-        picks = [];
-        handleWrong(chipRow);
       });
     });
     return;
