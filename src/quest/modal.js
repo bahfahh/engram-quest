@@ -38,7 +38,7 @@ function setSolved(buttons, onSolved) {
     button.style.color = "white";
     button.style.borderColor = "#22c55e";
   });
-  setTimeout(() => onSolved(), 500);
+  setTimeout(() => onSolved(true), 500);
 }
 
 function renderQuestChallenge(container, challenge, difficulty, onSolved, settings, app, sourcePath, deps, gameState) {
@@ -102,9 +102,8 @@ function renderQuestChallenge(container, challenge, difficulty, onSolved, settin
       delete singleChallenge.questions_json;
       if (challenge.type === "auction") singleChallenge.coins = roundCoins;
 
-      renderQuestChallenge(roundBody, singleChallenge, difficulty, () => {
-        let wasCorrect = roundBody.querySelector("[style*='#22c55e']") != null;
-        if (wasCorrect) { roundCorrect++; gameState.streak++; roundScore += 10; gameState.score += 10; }
+      renderQuestChallenge(roundBody, singleChallenge, difficulty, (correct) => {
+        if (correct) { roundCorrect++; gameState.streak++; roundScore += 10; gameState.score += 10; }
         else { gameState.streak = 0; if (challenge.type === "countdown") gameState.lives = Math.max(0, gameState.lives - 1); }
         if (challenge.type === "auction") {
           let coinMatch = roundBody.textContent.match(/◈\s*(\d+)/);
@@ -233,7 +232,7 @@ function renderQuestChallenge(container, challenge, difficulty, onSolved, settin
           buttons[challenge.answer].style.color = "white";
           buttons[challenge.answer].style.borderColor = "#22c55e";
           handleWrong(wrapper);
-          setTimeout(() => onSolved(), 1200);
+          setTimeout(() => onSolved(false), 1200);
         }
         return;
       }
@@ -352,7 +351,7 @@ function renderQuestChallenge(container, challenge, difficulty, onSolved, settin
       resultEl.style.display = "block";
       resultEl.textContent = (win ? "✓ +" : "✗ ") + delta + " ◈ — " + (zh ? "餘額 " : "Balance ") + totalCoins;
       resultEl.style.color = win ? "#22c55e" : "#ef4444";
-      setTimeout(() => onSolved(), 1200);
+      setTimeout(() => onSolved(win), 1200);
     });
     return;
   }
@@ -420,10 +419,10 @@ function renderQuestChallenge(container, challenge, difficulty, onSolved, settin
         }
       });
       if (correctCount === challenge.slots.length) {
-        setTimeout(() => onSolved(), 800);
+        setTimeout(() => onSolved(true), 800);
       } else {
         handleWrong(wrapper);
-        setTimeout(() => onSolved(), 2000);
+        setTimeout(() => onSolved(false), 2000);
       }
     });
     return;
@@ -485,7 +484,7 @@ function renderQuestChallenge(container, challenge, difficulty, onSolved, settin
       clearInterval(interval);
       nodeEls.forEach(n => { n.disabled = true; n.style.cursor = "default"; });
       if (success) {
-        setTimeout(() => onSolved(), 800);
+        setTimeout(() => onSolved(true), 800);
       } else {
         correctOrder.forEach((origIdx, step) => {
           let el = nodeEls.find(n => n._origIdx === origIdx);
@@ -496,7 +495,7 @@ function renderQuestChallenge(container, challenge, difficulty, onSolved, settin
           }
         });
         handleWrong(wrapper);
-        setTimeout(() => onSolved(), 2000);
+        setTimeout(() => onSolved(false), 2000);
       }
     }
     return;
@@ -553,7 +552,7 @@ function renderQuestChallenge(container, challenge, difficulty, onSolved, settin
             card.style.borderColor = "#22c55e";
             card.style.background = "rgba(34,197,94,0.08)";
             card.style.color = "#22c55e";
-            setTimeout(() => onSolved(), 800);
+            setTimeout(() => onSolved(true), 800);
           } else {
             card.style.borderColor = "#ef4444";
             card.style.background = "rgba(239,68,68,0.08)";
@@ -561,7 +560,7 @@ function renderQuestChallenge(container, challenge, difficulty, onSolved, settin
             let correctCard = cards.find(c => c.textContent.trim().toLowerCase() === answerStr.trim().toLowerCase());
             if (correctCard) { correctCard.style.borderColor = "#22c55e"; correctCard.style.background = "rgba(34,197,94,0.08)"; correctCard.style.color = "#22c55e"; }
             handleWrong(wrapper);
-            setTimeout(() => onSolved(), 2000);
+            setTimeout(() => onSolved(false), 2000);
           }
         });
       });
@@ -611,7 +610,7 @@ function renderQuestChallenge(container, challenge, difficulty, onSolved, settin
           button.style.borderColor = "#22c55e";
           seqRow.createEl("span", { text: (step + 1) + ". " + item, attr: { style: "padding:2px 8px;border-radius:10px;background:rgba(34,197,94,0.15);color:#22c55e;font-size:11px;font-weight:600" } });
           step++;
-          if (step === correctOrder.length) { setTimeout(() => onSolved(), 500); }
+          if (step === correctOrder.length) { setTimeout(() => onSolved(true), 500); }
         } else {
           handleWrong(button);
         }
@@ -661,7 +660,7 @@ function renderQuestChallenge(container, challenge, difficulty, onSolved, settin
           selected = null;
           solved += 1;
           if (solved === challenge.pairs.length) {
-            setTimeout(() => onSolved(), 500);
+            setTimeout(() => onSolved(true), 500);
           }
           return;
         }
@@ -747,7 +746,7 @@ function renderQuestChallenge(container, challenge, difficulty, onSolved, settin
         x <= (challenge.region_x ?? 0) + (challenge.region_width ?? 0) &&
         y <= (challenge.region_y ?? 0) + (challenge.region_height ?? 0);
       if (correct) {
-        setTimeout(() => onSolved(), 300);
+        setTimeout(() => onSolved(true), 300);
       } else {
         handleWrong(stage);
       }
@@ -860,7 +859,7 @@ function renderQuestChallenge(container, challenge, difficulty, onSolved, settin
         getFeedback().textContent = zh ? "答對了" : "Correct";
         input.disabled = true;
         submitBtn.disabled = true;
-        setTimeout(() => onSolved(), 500);
+        setTimeout(() => onSolved(true), 500);
       } else {
         handleWrong(input);
         getFeedback().textContent = zh ? "答案不正確。你可以再試一次，或直接顯示答案。" : "That is not correct. Try once more or reveal the answer.";
