@@ -26,6 +26,75 @@ Read this before generating any challenge YAML.
 
 ---
 
+## Multi-Question Rounds (`questions_json`)
+
+Challenge types that benefit from multiple questions should use `questions_json` — an inline JSON array. The renderer loops through questions, tracks score/lives/coins, and shows a round summary at the end.
+
+### Syntax
+
+```yaml
+challenge:
+  type: auction
+  coins: 100
+  questions_json: [{"q":"Question 1","opts":["A","B","C","D"],"ans":1},{"q":"Question 2","opts":["X","Y"],"ans":0}]
+```
+
+### JSON object fields per question
+
+| Field | Used by | Description |
+|---|---|---|
+| `q` | all | Question text |
+| `opts` | quiz/countdown/auction/snapshot | Options array |
+| `ans` | quiz/countdown/auction/snapshot | Correct answer (zero-based index) |
+| `sentence` | cloze | Cloze sentence with `{{c1::...}}` |
+| `answers` | cloze/input | Acceptable answers array |
+| `keywords` | input | Acceptable keywords array |
+| `statement` | truefalse | Statement text (ans = true/false) |
+
+### Examples by type
+
+**Auction round (3 questions, coins persist):**
+```yaml
+challenge:
+  type: auction
+  coins: 100
+  questions_json: [{"q":"Which hosting plan for budget + unpredictable traffic?","opts":["Consumption","App Service","Premium"],"ans":0},{"q":"Which eliminates cold start?","opts":["Consumption","App Service","Premium"],"ans":2},{"q":"Which charges even when idle?","opts":["Consumption","App Service","Premium"],"ans":1}]
+```
+
+**Countdown round (4 questions, lives deplete):**
+```yaml
+challenge:
+  type: countdown
+  timer: 12
+  questions_json: [{"q":"[FromBody] reads from?","opts":["Query String","Request Body","Header","Cookie"],"ans":1},{"q":"201 status means?","opts":["OK","Created","No Content","Bad Request"],"ans":1},{"q":"Correct middleware order?","opts":["Auth→Route→Authz","Route→Auth→Authz","Authz→Auth→Route","Route→Authz→Auth"],"ans":1},{"q":"[ApiController] auto-returns on validation fail?","opts":["500","404","400","200"],"ans":2}]
+```
+
+**Snapshot round (memorize once, answer 2 questions):**
+```yaml
+challenge:
+  type: snapshot
+  snapshot_items: [UseExceptionHandler, UseHttpsRedirection, UseAuthentication, UseAuthorization]
+  snapshot_labels: [Layer 1, Layer 2, Layer 3, Layer 4]
+  snapshot_time: 5
+  questions_json: [{"q":"Which middleware is at Layer 3?","opts":["UseRouting","UseAuthentication","UseAuthorization","UseHttpsRedirection"],"ans":1},{"q":"Which is at Layer 1?","opts":["UseHttpsRedirection","UseAuthorization","UseExceptionHandler","UseAuthentication"],"ans":2}]
+```
+
+**Memory-palace round (memorize map, answer 3 questions):**
+```yaml
+challenge:
+  type: memory-palace
+  palace_items: [Pipeline, Controller, Service, DbContext, Middleware]
+  palace_descs: [HTTP flow, Handles requests, Business logic, ORM layer, Auth and logging]
+  palace_time: 15
+  questions_json: [{"q":"Which handles ORM?","opts":["Pipeline","Controller","Service","DbContext","Middleware"],"ans":3},{"q":"Which handles auth and logging?","opts":["Pipeline","Controller","Service","DbContext","Middleware"],"ans":4},{"q":"Which is decoupled via DI?","opts":["Pipeline","Controller","Service","DbContext","Middleware"],"ans":2}]
+```
+
+### Types that do NOT use `questions_json`
+
+`order`, `match`, `chain`, `timeline`, `image-quiz`, `image-occlusion` — these are already multi-step within one question. Use them as single-question challenges.
+
+---
+
 ## Format Details
 
 ### quiz

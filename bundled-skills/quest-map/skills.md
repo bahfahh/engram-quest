@@ -56,6 +56,53 @@ Default behavior is AI-guided selection.
 - **NEVER** use descriptive titles (e.g., `Azure_Full_Ecosystem_Map.md`).
 - The plugin detects quest maps by `-quest.md` suffix OR `` ```quest-map `` code block. A wrong filename with no code block = invisible to the plugin.
 
+## Quest Structure
+
+A quest is NOT "chapter + single question" repeated. It alternates between two node types:
+
+- **Lesson node**: has `summary` + `points` + optional `insight`. No challenge. User reads and clicks Next.
+- **Challenge round**: has `challenge` with `questions_json` (multiple questions). No points. User plays through the round, sees a summary, then proceeds.
+
+CRITICAL: A quest with 5 nodes should look like:
+```
+lesson → lesson → challenge round (3-4 questions) → lesson → boss challenge round
+```
+
+NOT like:
+```
+lesson+1question → lesson+1question → lesson+1question → lesson+1question → lesson+1question
+```
+
+### Multi-question rounds (`questions_json`)
+
+Challenge types that support multi-question rounds: `countdown`, `auction`, `snapshot`, `memory-palace`, `quiz`, `truefalse`, `cloze`, `input`.
+
+Use `questions_json` — an inline JSON array on one line:
+```yaml
+challenge:
+  type: auction
+  coins: 100
+  questions_json: [{"q":"Q1","opts":["A","B","C","D"],"ans":1},{"q":"Q2","opts":["A","B"],"ans":0}]
+```
+
+Each object in the array: `q` (question text), `opts` (options array), `ans` (answer index).
+For cloze: `{"q":"","sentence":"... {{c1::term}} ...","answers":["term"]}`.
+For input: `{"q":"What is X?","keywords":["answer1","answer2"]}`.
+
+Minimum questions per round by type:
+
+| Type | Min questions | Why |
+|---|---|---|
+| `auction` | 3–4 | Coins must accumulate/deplete to create stakes |
+| `countdown` | 4–5 | Lives (3) create tension only with enough questions |
+| `snapshot` | 2–3 | Memorize once, test multiple details |
+| `memory-palace` | 2–3 | Memorize map once, recall multiple components |
+| `quiz` / `cloze` / `input` | 1+ | Single-question is fine for these basic types |
+
+### Types that are inherently single-question
+
+`order`, `match`, `chain`, `timeline`, `image-quiz`, `image-occlusion` — these are already multi-step interactions within one question. Do NOT use `questions_json` with them.
+
 ## Generation Flow
 
 0. Check for a pre-existing knowledge index or graph in the vault (e.g. `graphify-out/GRAPH_REPORT.md`, `graph.json`). If found, read it first — use its key concepts as boss-challenge candidates, community groupings to inform chapter splits, and relationship edges to shape challenge content. Skip raw-file discovery for anything the index already covers.
@@ -67,18 +114,15 @@ Default behavior is AI-guided selection.
    - embedded vault images
    - targeted Obsidian CLI search only when needed.
        IMPORTANT: When vault search is needed, use Obsidian CLI (`obsidian search`). For full syntax, query operators, and fallback rules, see `references/obsidian-cli.md`.
-       `obsidian search query="<topic> <key concept>" format=json`
-       Use this when the source note lacks enough context or related notes are expected. Skip if the note is self-contained or the graph index already covers the topic.
    - run `scripts/list_quest_icons.sh` to discover available named icon files when the topic's icon is non-obvious; fall back to emoji if the script returns nothing
-3. Split the material into 3 to 5 chapters.
-4. For each chapter generate:
-   - title
-   - icon or fallback emoji
-   - summary
-   - 2 to 4 points
-   - optional insight
-   - one challenge
-5. Choose challenge type based on difficulty, source material, and the Challenge Type Selection table below.
+3. Analyze the source material and identify content characteristics (see Challenge Type Selection table).
+4. Design the quest structure:
+   - 3–5 lesson nodes covering the material
+   - 1–2 challenge rounds placed after every 1–2 lessons
+   - 1 boss challenge round at the end (optional, use `boss: true`)
+   - Challenge rounds MUST use `questions_json` with 3+ questions for auction/countdown/snapshot/memory-palace
+   - CRITICAL: at least 2 different challenge types across the quest. Do NOT use quiz for everything.
+5. Choose challenge type based on difficulty, source material, and the Challenge Type Selection table.
 6. **Image challenges**: when a note image is worth testing, use `image-quiz` (all models). Only Gemini may use `image-occlusion` — and if doing so, run `scripts/occlusion_measure.py <image_path>` first to get accurate text bbox coordinates. If the script is unavailable (no Python/pytesseract), fall back to `image-quiz`.
 7. Add frontmatter tags when the topic has clear semantic tags.
 8. Save the output using the appropriate method:
@@ -240,10 +284,9 @@ Use `cloze` or `quiz` instead. Never force an image challenge just because an im
 
 ## Chapter Design
 
-- `summary`: 1 to 3 sentences with the chapter's core insight
-- `points`: short, concrete, and useful
-- `insight`: optional real-world implication or counterintuitive point
-- `challenge`: must test something taught in the same chapter
+- **Lesson nodes**: `summary` (1–3 sentences), `points` (short, concrete), optional `insight`. No challenge.
+- **Challenge round nodes**: `challenge` with `questions_json`. No points or summary needed (title + emoji only).
+- A challenge must test content from the preceding lesson nodes.
 
 ## Output Skeleton
 
@@ -257,20 +300,57 @@ tags: [topic-tag]
 ```quest-map
 version: 1
 style: cyber
-difficulty: hard
+difficulty: medium
 nodes:
   - id: ch1
-    title: Chapter title
-    emoji: 🧠
-    summary: Core insight.
+    title: Triggers & Bindings
+    emoji: ⚡
+    summary: Core insight about triggers and bindings.
     points:
       - title: Point one
         body: Why it matters.
+      - title: Point two
+        body: Key detail.
+    insight: Real-world implication.
+
+  - id: ch2
+    title: Hosting Plans
+    emoji: 💰
+    summary: Three hosting options and when to choose each.
+    points:
+      - title: Consumption Plan
+        body: Pay per execution, cold start, 10 min limit.
+      - title: App Service Plan
+        body: Fixed cost, always on, no time limit.
+
+  - id: round1
+    title: 知識拍賣場
+    emoji: 🪙
     challenge:
-      type: cloze
-      sentence: Azure 版資料不會用於 {{c1::訓練}}
-      answers: [訓練]
-      reveal_answer: true
+      type: auction
+      coins: 100
+      questions_json: [{"q":"Which plan for unpredictable traffic + budget priority?","opts":["Consumption","App Service","Premium"],"ans":0},{"q":"Which plan eliminates cold start?","opts":["Consumption","App Service","Premium"],"ans":2},{"q":"Which plan charges even when idle?","opts":["Consumption","App Service","Premium"],"ans":1}]
+
+  - id: ch3
+    title: Durable Functions
+    emoji: 🔄
+    summary: How Durable Functions solve long-running workflows.
+    points:
+      - title: Three roles
+        body: Starter → Orchestrator → Activity.
+      - title: Deterministic rule
+        body: No DateTime.Now in Orchestrator.
+
+  - id: boss
+    boss: true
+    title: 節點連鎖爆破
+    emoji: 💥
+    challenge:
+      type: chain
+      timer: 25
+      question: Azure Functions request lifecycle in order
+      chain_items: [HTTP Trigger fires, Function host routes, Bindings resolve inputs, Your code executes, Output bindings write]
+      answer: [0, 1, 2, 3, 4]
 ```
 ````
 
