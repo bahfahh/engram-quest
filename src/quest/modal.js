@@ -75,10 +75,16 @@ function renderQuestChallenge(container, challenge, difficulty, onSolved, settin
       roundBody.empty();
       updatePips();
       let q = questions[qIdx];
+      let qOpts = q.opts || q.options || challenge.options;
+      let qAns = q.ans != null ? q.ans : q.answer != null ? q.answer : challenge.answer;
+      // memory-palace single renderer expects answer as string, not index
+      if (challenge.type === "memory-palace" && typeof qAns === "number" && Array.isArray(qOpts)) {
+        qAns = qOpts[qAns] || "";
+      }
       let singleChallenge = Object.assign({}, challenge, {
         question: q.q || q.question || "",
-        options: q.opts || q.options || challenge.options,
-        answer: q.ans != null ? q.ans : q.answer != null ? q.answer : challenge.answer,
+        options: qOpts,
+        answer: qAns,
         statement: q.statement || "",
         sentence: q.sentence || "",
         items: q.items || challenge.items,
@@ -94,43 +100,58 @@ function renderQuestChallenge(container, challenge, difficulty, onSolved, settin
         snapshot_labels: q.snapshot_labels || challenge.snapshot_labels,
       });
       delete singleChallenge.questions_json;
-
-      // For auction: override coins with running total
       if (challenge.type === "auction") singleChallenge.coins = roundCoins;
 
       renderQuestChallenge(roundBody, singleChallenge, difficulty, () => {
-        // Question completed — update round state
         let wasCorrect = roundBody.querySelector("[style*='#22c55e']") != null;
         if (wasCorrect) { roundCorrect++; gameState.streak++; roundScore += 10; gameState.score += 10; }
         else { gameState.streak = 0; if (challenge.type === "countdown") gameState.lives = Math.max(0, gameState.lives - 1); }
-
-        // Auction: track coins from the single-question renderer
         if (challenge.type === "auction") {
           let coinMatch = roundBody.textContent.match(/◈\s*(\d+)/);
           if (coinMatch) roundCoins = parseInt(coinMatch[1]);
           gameState.coins = roundCoins;
         }
-
         qIdx++;
-        if (qIdx >= questions.length || (challenge.type === "countdown" && gameState.lives <= 0)) {
-          showRoundSummary();
+        let failed = (challenge.type === "countdown" && gameState.lives <= 0) || (challenge.type === "auction" && roundCoins <= 0);
+        if (qIdx >= questions.length || failed) {
+          showRoundSummary(failed);
         } else {
           renderCurrentQuestion();
         }
       }, settings, app, sourcePath, deps, gameState);
     }
 
-    function showRoundSummary() {
+    function showRoundSummary(failed) {
       roundBody.empty();
       updatePips();
       let sum = roundBody.createEl("div", { attr: { style: "text-align:center;padding:24px 16px" } });
-      let emoji = roundCorrect === questions.length ? "🏆" : roundCorrect >= questions.length / 2 ? "⚔️" : "💀";
-      sum.createEl("div", { text: emoji, attr: { style: "font-size:48px;margin-bottom:8px" } });
-      sum.createEl("div", { text: `${roundCorrect} / ${questions.length}`, attr: { style: "font-size:20px;font-weight:800;color:var(--text-normal)" } });
-      let detail = zh ? "正確" : "correct";
-      if (challenge.type === "auction") detail += `  ·  ◈ ${roundCoins}`;
-      sum.createEl("div", { text: detail, attr: { style: "font-size:12px;color:var(--text-muted);margin-top:4px" } });
-      let btn = sum.createEl("button", { text: zh ? "繼續 →" : "Continue →", attr: { style: "margin-top:16px;padding:10px 28px;border-radius:99px;background:var(--interactive-accent);color:white;border:none;cursor:pointer;font-size:14px;font-weight:700" } });
+      if (failed) {
+        let failMsg = challenge.type === "auction" ? (zh ? "硬幣歸零！" : "Out of coins!") : (zh ? "生命歸零！" : "Out of lives!");
+        sum.createEl("div", { text: "💀", attr: { style: "font-size:48px;margin-bottom:8px" } });
+        sum.createEl("div", { text: failMsg, attr: { style: "font-size:18px;font-weight:800;color:#ef4444" } });
+        sum.createEl("div", { text: `${roundCorrect} / ${questions.length} ${zh ? "正確" : "correct"}`, attr: { style: "font-size:12px;color:var(--text-muted);margin-top:4px" } });
+      } else {
+        let emoji = roundCorrect === questions.length ? "🏆" : roundCorrect >= questions.length / 2 ? "⚔️" : "💀";
+        sum.createEl("div", { text: emoji, attr: { style: "font-size:48px;margin-bottom:8px" } });
+        sum.createEl("div", { text: `${roundCorrect} / ${questions.length}`, attr: { style: "font-size:20px;font-weight:800;color:var(--text-normal)" } });
+        let detail = zh ? "正確" : "correct";
+        if (challenge.type === "auction") detail += `  ·  ◈ ${roundCoins}`;
+        sum.createEl("div", { text: detail, attr: { style: "font-size:12px;color:var(--text-muted);margin-top:4px" } });
+      }
+      // Show learning review when failed or less than half correct
+      if (failed || roundCorrect < questions.length / 2) {
+        let review = roundBody.createEl("div", { attr: { style: "margin-top:16px;padding:16px;border-radius:10px;background:var(--background-secondary);border:1px solid var(--background-modifier-border);text-align:left" } });
+        review.createEl("div", { text: zh ? "📖 複習重點" : "📖 Review", attr: { style: "font-size:12px;font-weight:700;color:var(--text-faint);letter-spacing:.06em;margin-bottom:10px" } });
+        questions.forEach((q, i) => {
+          let opts = q.opts || q.options || [];
+          let ans = q.ans != null ? q.ans : q.answer;
+          let ansText = typeof ans === "number" && opts[ans] ? opts[ans] : String(ans || "");
+          let row = review.createEl("div", { attr: { style: "margin-bottom:8px;padding-bottom:8px;border-bottom:1px solid var(--background-modifier-border)" } });
+          row.createEl("div", { text: `${i + 1}. ${q.q || q.question || ""}`, attr: { style: "font-size:13px;color:var(--text-normal);margin-bottom:2px" } });
+          row.createEl("div", { text: `→ ${ansText}`, attr: { style: "font-size:12px;color:#22c55e;font-weight:600" } });
+        });
+      }
+      let btn = roundBody.createEl("button", { text: zh ? "繼續 →" : "Continue →", attr: { style: "margin-top:16px;width:100%;padding:10px 28px;border-radius:99px;background:var(--interactive-accent);color:white;border:none;cursor:pointer;font-size:14px;font-weight:700" } });
       btn.addEventListener("click", () => onSolved());
     }
 
