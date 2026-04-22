@@ -303,12 +303,12 @@ function getQuestTheme(themeName, nodeIndex, themes) {
 
 function getQuestNodePositions(nodeCount) {
   if (nodeCount === 0) return [];
-  if (nodeCount === 1) return [{ cx: 550, cy: 300 }];
-  // Wider spacing + more vertical variation for a natural winding path
-  let pattern = [260, 400, 180, 380, 240, 420, 160, 360];
-  let spacing = Math.max(260, Math.floor(1100 / Math.max(nodeCount - 1, 1)));
+  if (nodeCount === 1) return [{ cx: 550, cy: 320 }];
+  // Large vertical variation matching demo (high/low alternating)
+  let pattern = [200, 440, 140, 420, 180, 460, 120, 400, 160];
+  let spacing = Math.max(280, Math.floor(1200 / Math.max(nodeCount - 1, 1)));
   return Array.from({ length: nodeCount }, (_, index) => ({
-    cx: 160 + index * spacing,
+    cx: 180 + index * spacing,
     cy: pattern[index % pattern.length]
   }));
 }

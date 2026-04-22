@@ -51,13 +51,13 @@ function renderQuestMap(nodes, styleName, activeIndex, visitedSet, app, getNodeP
   let dotColor = isDark ? "rgba(255,210,80,0.85)" : "rgba(255,255,255,0.7)";
   let shadowColor = isDark ? "rgba(0,0,0,0.5)" : "rgba(0,0,0,0.15)";
 
-  let mapH = 580;
+  let mapH = 640;
   let html = `
   <div class="qm-scroll-wrapper">
     <div class="qm-hybrid-container" style="background-image:url('${background}');min-width:${width}px;height:${mapH}px;">
       <svg class="qm-svg-layer" viewBox="0 0 ${width} ${mapH}" preserveAspectRatio="xMinYMin slice">
-        <path d="${path}" fill="none" stroke="${shadowColor}" stroke-width="6" stroke-linecap="round" transform="translate(0,6)" />
-        <path d="${path}" fill="none" stroke="${dotColor}" stroke-width="4" stroke-linecap="round" stroke-dasharray="10 16" style="animation:dashFlow 1.2s linear infinite;" />
+        <path d="${path}" fill="none" stroke="rgba(0,0,0,0.3)" stroke-width="4" stroke-linecap="round" transform="translate(0,5)" />
+        <path d="${path}" fill="none" stroke="${dotColor}" stroke-width="3" stroke-linecap="round" stroke-dasharray="6 14" style="animation:dashFlow 1s linear infinite;" />
       </svg>
   `;
 
@@ -73,7 +73,7 @@ function renderQuestMap(nodes, styleName, activeIndex, visitedSet, app, getNodeP
       // Use island_dark_N.png as the main visual (replaces platform)
       let islandN = (index % 9) + 1;
       let islandSrc = app.vault.adapter.getResourcePath(assetRoot + `island_dark_${islandN}.png`);
-      islandMarkup = `<img src="${islandSrc}" class="qm-platform qm-island-img" onload="(function(img){try{var c=document.createElement('canvas');c.width=img.naturalWidth;c.height=img.naturalHeight;var ctx=c.getContext('2d');ctx.drawImage(img,0,0);var d=ctx.getImageData(0,0,c.width,c.height),px=d.data;for(var i=0;i<px.length;i+=4){var r=px[i],g=px[i+1],b=px[i+2];if(Math.abs(r-g)<20&&Math.abs(g-b)<20&&r<85){px[i+3]=0;}}ctx.putImageData(d,0,0);img.src=c.toDataURL();}catch(e){}})(this)" />`;
+      islandMarkup = `<img src="${islandSrc}" class="qm-platform qm-island-img" />`;
     } else {
       // Light mode: show emoji/icon prop above platform
       let iconPath = node.icon ? app.vault.adapter.getResourcePath(iconRoot + node.icon) : "";
