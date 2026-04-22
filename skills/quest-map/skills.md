@@ -58,17 +58,33 @@ Default behavior is AI-guided selection.
 
 ## Quest Structure
 
-A quest is NOT "chapter + single question" repeated. It alternates between two node types:
+### Node count — scale to source material
+
+| Source material size | Total nodes | Challenge rounds | Lesson nodes |
+|---|---|---|---|
+| Small (1 short note, < 500 words) | 3–4 | 2 | 1–2 |
+| Medium (1–2 notes, 500–2000 words) | 5–6 | 3 | 2–3 |
+| Large (3+ notes or > 2000 words) | 7–9 | 4–5 | 2–4 |
+
+**Do NOT pad with extra lesson nodes to reach a higher count. Fewer nodes with richer challenges beats many thin nodes.**
+
+### Two node types
 
 - **Lesson node**: has `summary` + `points` + optional `insight`. No challenge. User reads and clicks Next.
-- **Challenge round**: has `challenge` with `questions_json` (multiple questions). No points. User plays through the round, sees a summary, then proceeds.
+- **Challenge round**: has `challenge` with `questions_json` (multiple questions). No points. User plays through the round, sees a round summary, then proceeds.
 
-CRITICAL: A quest with 5 nodes should look like:
+### CRITICAL rules
+
+1. **Every challenge round MUST use `questions_json` with at least 3 questions.** No exceptions — not even for `quiz`, `cloze`, or `truefalse`. A single-question challenge round is forbidden.
+2. **Boss challenge round MUST have 4–6 questions** covering the whole quest.
+3. The quest must feel like a game, not a reading exercise. Aim for at least 60% challenge nodes vs lesson nodes.
+
+CORRECT structure for a medium quest (5 nodes):
 ```
-lesson → lesson → challenge round (3-4 questions) → lesson → boss challenge round
+lesson → challenge round (3 q) → lesson → challenge round (4 q) → boss round (5 q)
 ```
 
-NOT like:
+WRONG — forbidden:
 ```
 lesson+1question → lesson+1question → lesson+1question → lesson+1question → lesson+1question
 ```
@@ -117,10 +133,10 @@ Minimum questions per round by type:
    - run `scripts/list_quest_icons.sh` to discover available named icon files when the topic's icon is non-obvious; fall back to emoji if the script returns nothing
 3. Analyze the source material and identify content characteristics (see Challenge Type Selection table).
 4. Design the quest structure:
-   - 3–5 lesson nodes covering the material
-   - 1–2 challenge rounds placed after every 1–2 lessons
-   - 1 boss challenge round at the end (optional, use `boss: true`)
-   - Challenge rounds MUST use `questions_json` with 3+ questions for auction/countdown/snapshot/memory-palace
+   - Scale total node count to source material size (see Node count table above).
+   - Every challenge round MUST use `questions_json` with **at least 3 questions** — no exceptions, including quiz/cloze/truefalse.
+   - Boss round MUST have 4–6 questions.
+   - Place challenge rounds after every 1–2 lesson nodes. Do NOT stack 3+ lessons in a row.
    - CRITICAL: at least 2 different challenge types across the quest. Do NOT use quiz for everything.
 5. Choose challenge type based on difficulty, source material, and the Challenge Type Selection table.
 6. **Image challenges**: when a note image is worth testing, use `image-quiz` (all models). Only Gemini may use `image-occlusion` — and if doing so, run `scripts/occlusion_measure.py <image_path>` first to get accurate text bbox coordinates. If the script is unavailable (no Python/pytesseract), fall back to `image-quiz`.
