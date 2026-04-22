@@ -19,17 +19,13 @@ function renderQuestMap(nodes, styleName, activeIndex, visitedSet, app, getNodeP
     }
   }
 
+  let mapH = 580;
   let html = `
   <div class="qm-scroll-wrapper">
-    <div class="qm-hybrid-container" style="background-image:url('${background}');min-width:${width}px;">
-      <svg class="qm-svg-layer" viewBox="0 0 ${width} 520" preserveAspectRatio="xMinYMin slice">
-        <filter id="pathGlow${styleName}" x="-20%" y="-100%" width="140%" height="300%">
-          <feGaussianBlur stdDeviation="4" result="blur"/>
-          <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-        </filter>
-        <path d="${path}" fill="none" stroke="rgba(0,0,0,0.2)" stroke-width="8" stroke-linecap="round" transform="translate(0, 10)" />
-        <path d="${path}" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="6" stroke-linecap="round" filter="url(#pathGlow${styleName})" />
-        <path d="${path}" fill="none" stroke="#ffffff" stroke-width="3" stroke-dasharray="10 16" stroke-linecap="round" style="animation:dashFlow 1s linear infinite;" />
+    <div class="qm-hybrid-container" style="background-image:url('${background}');min-width:${width}px;height:${mapH}px;">
+      <svg class="qm-svg-layer" viewBox="0 0 ${width} ${mapH}" preserveAspectRatio="xMinYMin slice">
+        <path d="${path}" fill="none" stroke="rgba(0,0,0,0.15)" stroke-width="6" stroke-linecap="round" transform="translate(0,8)" />
+        <path d="${path}" fill="none" stroke="rgba(255,255,255,0.55)" stroke-width="5" stroke-linecap="round" stroke-dasharray="14 18" stroke-dashoffset="0" style="animation:dashFlow 1.2s linear infinite;" />
       </svg>
   `;
 
@@ -45,7 +41,7 @@ function renderQuestMap(nodes, styleName, activeIndex, visitedSet, app, getNodeP
       : `<div class="qm-emoji">${node.emoji || "📝"}</div>`;
 
     html += `
-      <div class="qm-island-group ${isCurrent ? "qm-active" : ""} ${isBoss ? "qm-diff-boss" : ""} ${isVisited ? "qm-visited" : ""}" data-index="${index}" style="left:${x}px;top:${y + 20}px;animation-delay:${-(index * 0.7)}s;">
+      <div class="qm-island-group ${isCurrent ? "qm-active" : ""} ${isBoss ? "qm-diff-boss" : ""} ${isVisited ? "qm-visited" : ""}" data-index="${index}" style="left:${x}px;top:${y}px;animation-delay:${-(index * 0.7)}s;">
         ${iconMarkup}
         ${isCurrent ? '<div class="qm-current-badge">Current</div>' : ""}
         ${isVisited ? '<div class="qm-visited-badge">Visited</div>' : ""}

@@ -57,7 +57,6 @@ function renderQuestChallenge(container, challenge, difficulty, onSolved, settin
     let roundCorrect = 0;
 
     // ── Game rules banner ──
-    let rulesBanner = wrapper.createEl("div", { attr: { style: "padding:12px 16px;border-radius:10px;margin-bottom:16px;font-size:12px;line-height:1.6;border-left:3px solid var(--interactive-accent)" } });
     let rulesMap = {
       "countdown": { icon: "⏱️", title: zh ? "倒數炸彈" : "Countdown Bomb", bg: "rgba(239,68,68,0.06)", border: "#ef4444", rules: zh ? "每題限時作答。時間到自動揭曉答案，答錯扣一條命。♥ 歸零則挑戰失敗。" : "Answer before time runs out. Wrong answers cost a life. ♥ reaches 0 = round over." },
       "auction": { icon: "🪙", title: zh ? "知識拍賣場" : "Knowledge Auction", bg: "rgba(245,158,11,0.06)", border: "#f59e0b", rules: zh ? "選擇答案並押注硬幣。答對贏回押注金額，答錯失去押注。◈ 歸零則挑戰失敗。" : "Pick an answer and bet coins. Correct = win bet, wrong = lose bet. ◈ reaches 0 = round over." },
@@ -65,12 +64,11 @@ function renderQuestChallenge(container, challenge, difficulty, onSolved, settin
       "memory-palace": { icon: "🧠", title: zh ? "記憶宮殿" : "Memory Palace", bg: "rgba(124,111,247,0.06)", border: "#7c6ff7", rules: zh ? "知識地圖將顯示一段時間後隱藏。記住每個元件的名稱和職責，然後回答問題。" : "A knowledge map will display then hide. Memorize each component's name and role, then answer." },
     };
     let rule = rulesMap[challenge.type] || { icon: "🎯", title: zh ? "挑戰回合" : "Challenge Round", bg: "var(--background-secondary)", border: "var(--interactive-accent)", rules: "" };
-    rulesBanner.style.background = rule.bg;
-    rulesBanner.style.borderColor = rule.border;
-    let rulesTitle = rulesBanner.createEl("div", { attr: { style: "display:flex;align-items:center;gap:6px;margin-bottom:4px;font-weight:700;font-size:13px;color:var(--text-normal)" } });
+    let rulesBanner = wrapper.createEl("div", { attr: { class: "qm-rules-banner", style: "background:" + rule.bg + ";border-color:" + rule.border } });
+    let rulesTitle = rulesBanner.createEl("div", { attr: { class: "qm-rules-banner-title" } });
     rulesTitle.createEl("span", { text: rule.icon });
     rulesTitle.createEl("span", { text: rule.title });
-    rulesBanner.createEl("div", { text: rule.rules, attr: { style: "color:var(--text-muted)" } });
+    rulesBanner.createEl("div", { text: rule.rules, attr: { class: "qm-rules-banner-body" } });
 
     // ── Progress bar ──
     let roundHeader = wrapper.createEl("div", { attr: { style: "display:flex;align-items:center;justify-content:space-between;margin-bottom:14px" } });
@@ -238,7 +236,7 @@ function renderQuestChallenge(container, challenge, difficulty, onSolved, settin
           row.createEl("div", { text: `→ ${ansText}`, attr: { style: "font-size:12px;color:#22c55e;font-weight:600" } });
         });
       }
-      let btn = roundBody.createEl("button", { text: zh ? "繼續 →" : "Continue →", attr: { style: "margin-top:16px;width:100%;padding:10px 28px;border-radius:99px;background:var(--interactive-accent);color:white;border:none;cursor:pointer;font-size:14px;font-weight:700" } });
+      let btn = roundBody.createEl("button", { text: zh ? "繼續" : "Continue", attr: { class: "qm-continue-btn" } });
       btn.addEventListener("click", () => onSolved());
     }
 
@@ -278,11 +276,14 @@ function renderQuestChallenge(container, challenge, difficulty, onSolved, settin
   }
 
   if (challenge.type === "quiz" && Array.isArray(challenge.options)) {
-    wrapper.createEl("p", { text: challenge.question || "", attr: { style: "font-size:14px;font-weight:600;color:var(--text-normal);margin-bottom:12px;line-height:1.5" } });
-    let grid = wrapper.createEl("div", { attr: { style: "display:grid;grid-template-columns:1fr 1fr;gap:8px" } });
+    wrapper.createEl("p", { text: challenge.question || "", attr: { class: "qm-question-text" } });
+    let col = wrapper.createEl("div", { attr: { class: "qm-options-col" } });
     let buttons = [];
+    const optLabels = ["A","B","C","D","E","F"];
     challenge.options.forEach((option, index) => {
-      let button = grid.createEl("button", { text: option, attr: { class: "qm-ch-btn" } });
+      let button = col.createEl("button", { attr: { class: "qm-ch-btn" } });
+      button.createEl("span", { text: optLabels[index] || String(index+1), attr: { class: "qm-ch-btn-label" } });
+      button.createEl("span", { text: option, attr: { class: "qm-ch-btn-text" } });
       buttons.push(button);
       button.addEventListener("click", () => {
         if (button.disabled) return;
@@ -302,9 +303,10 @@ function renderQuestChallenge(container, challenge, difficulty, onSolved, settin
     let timerFill = timerBar.createEl("div", { attr: { style: "height:100%;width:100%;border-radius:99px;background:var(--interactive-accent);transition:width 0.1s linear" } });
     let timerLabel = wrapper.createEl("div", { attr: { style: "font-size:11px;color:var(--text-faint);text-align:right;margin-bottom:12px;font-variant-numeric:tabular-nums" } });
     timerLabel.textContent = timerSec + "s";
-    wrapper.createEl("p", { text: challenge.question || "", attr: { style: "font-size:14px;font-weight:600;color:var(--text-normal);margin-bottom:12px;line-height:1.5" } });
-    let grid = wrapper.createEl("div", { attr: { style: "display:grid;grid-template-columns:1fr 1fr;gap:8px" } });
+    wrapper.createEl("p", { text: challenge.question || "", attr: { class: "qm-question-text" } });
+    let col = wrapper.createEl("div", { attr: { class: "qm-options-col" } });
     let buttons = [];
+    const optLabels = ["A","B","C","D","E","F"];
     let expired = false;
     let interval = setInterval(() => {
       timerSec -= 0.1;
@@ -330,7 +332,9 @@ function renderQuestChallenge(container, challenge, difficulty, onSolved, settin
       timerLabel.textContent = Math.ceil(timerSec) + "s";
     }, 100);
     challenge.options.forEach((option, index) => {
-      let button = grid.createEl("button", { text: option, attr: { class: "qm-ch-btn" } });
+      let button = col.createEl("button", { attr: { class: "qm-ch-btn" } });
+      button.createEl("span", { text: optLabels[index] || String(index+1), attr: { class: "qm-ch-btn-label" } });
+      button.createEl("span", { text: option, attr: { class: "qm-ch-btn-text" } });
       buttons.push(button);
       button.addEventListener("click", () => {
         if (button.disabled || expired) return;
@@ -374,11 +378,14 @@ function renderQuestChallenge(container, challenge, difficulty, onSolved, settin
       }
     }, 1000);
     function showQuizPart() {
-      wrapper.createEl("p", { text: challenge.question || "", attr: { style: "font-size:14px;font-weight:600;color:var(--text-normal);margin-bottom:12px;line-height:1.5" } });
-      let qGrid = wrapper.createEl("div", { attr: { style: "display:grid;grid-template-columns:1fr 1fr;gap:8px" } });
+      wrapper.createEl("p", { text: challenge.question || "", attr: { class: "qm-question-text" } });
+      let qGrid = wrapper.createEl("div", { attr: { class: "qm-options-col" } });
+      const optLabels = ["A","B","C","D","E","F"];
       let buttons = [];
       challenge.options.forEach((option, index) => {
-        let button = qGrid.createEl("button", { text: option, attr: { class: "qm-ch-btn" } });
+        let button = qGrid.createEl("button", { attr: { class: "qm-ch-btn" } });
+        button.createEl("span", { text: optLabels[index] || String(index+1), attr: { class: "qm-ch-btn-label" } });
+        button.createEl("span", { text: option, attr: { class: "qm-ch-btn-text" } });
         buttons.push(button);
         button.addEventListener("click", () => {
           if (button.disabled) return;
@@ -657,14 +664,14 @@ function renderQuestChallenge(container, challenge, difficulty, onSolved, settin
   }
 
   if (challenge.type === "truefalse") {
-    wrapper.createEl("p", { text: challenge.statement || "", attr: { style: "font-size:14px;font-weight:600;color:var(--text-normal);margin-bottom:12px;line-height:1.5;padding:12px 16px;border-radius:8px;background:var(--background-secondary)" } });
-    let row = wrapper.createEl("div", { attr: { style: "display:flex;gap:12px" } });
+    wrapper.createEl("p", { text: challenge.statement || "", attr: { class: "qm-question-text" } });
+    let col = wrapper.createEl("div", { attr: { class: "qm-options-col" } });
     let buttons = [];
     [
-      { label: zh ? "正確" : "True", val: true },
-      { label: zh ? "錯誤" : "False", val: false }
+      { label: zh ? "✓  正確" : "✓  True", val: true },
+      { label: zh ? "✗  錯誤" : "✗  False", val: false }
     ].forEach(({ label, val }) => {
-      let button = row.createEl("button", { text: label, attr: { class: "qm-ch-btn", style: "width:auto;padding:10px 28px;font-size:14px" } });
+      let button = col.createEl("button", { text: label, attr: { class: "qm-ch-btn", style: "font-size:16px;font-weight:700;justify-content:center" } });
       buttons.push(button);
       button.addEventListener("click", () => {
         if (button.disabled) return;
