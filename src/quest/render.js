@@ -1,31 +1,63 @@
+// Remove near-grey background from island images using canvas
+function removeIslandBg(imgEl) {
+  imgEl.addEventListener('load', () => {
+    try {
+      const canvas = document.createElement('canvas');
+      canvas.width = imgEl.naturalWidth;
+      canvas.height = imgEl.naturalHeight;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(imgEl, 0, 0);
+      const data = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const d = data.data;
+      for (let i = 0; i < d.length; i += 4) {
+        const r = d[i], g = d[i+1], b = d[i+2];
+        // Remove dark grey background (r≈g≈b, all < 80)
+        if (Math.abs(r-g) < 18 && Math.abs(g-b) < 18 && r < 80) {
+          d[i+3] = 0;
+        }
+      }
+      ctx.putImageData(data, 0, 0);
+      imgEl.src = canvas.toDataURL('image/png');
+    } catch(e) { /* cross-origin fallback: just show as-is */ }
+  }, { once: true });
+}
+
 "use strict";
 
 function renderQuestMap(nodes, styleName, activeIndex, visitedSet, app, getNodePositions) {
   let configDir = app.vault.configDir;
-  let background = app.vault.adapter.getResourcePath(configDir + "/plugins/engram-quest/assets/quest-map/bg.png");
-  let platform = app.vault.adapter.getResourcePath(configDir + "/plugins/engram-quest/assets/quest-map/platform.png");
-  let iconRoot = configDir + "/plugins/engram-quest/assets/quest-map/icons/";
+  let assetRoot = configDir + "/plugins/engram-quest/assets/quest-map/";
+  let isDark = document.body.classList.contains("theme-dark");
+
+  let bgFile = isDark ? "bg_dark.png" : "bg_light.png";
+  let background = app.vault.adapter.getResourcePath(assetRoot + bgFile);
+  let platform = app.vault.adapter.getResourcePath(assetRoot + (isDark ? "platform_dark.png" : "platform_light.png"));
+  let iconRoot = assetRoot + "icons/";
+
   let positions = getNodePositions(nodes.length);
   let width = Math.max(1100, nodes.length > 1 ? positions[nodes.length - 1].cx + 200 : 1100);
   let path = "";
 
   if (positions.length > 0) {
     path = `M ${positions[0].cx} ${positions[0].cy} `;
-    for (let index = 0; index < positions.length - 1; index++) {
-      let current = positions[index];
-      let next = positions[index + 1];
-      let delta = next.cx - current.cx;
-      path += `C ${current.cx + delta * 0.65} ${current.cy}, ${next.cx - delta * 0.65} ${next.cy}, ${next.cx} ${next.cy} `;
+    for (let i = 0; i < positions.length - 1; i++) {
+      let cur = positions[i], nxt = positions[i + 1];
+      let dx = nxt.cx - cur.cx;
+      path += `C ${cur.cx + dx * 0.65} ${cur.cy}, ${nxt.cx - dx * 0.65} ${nxt.cy}, ${nxt.cx} ${nxt.cy} `;
     }
   }
+
+  // Path color: golden dots for dark (like demo), white dots for light
+  let dotColor = isDark ? "rgba(255,210,80,0.85)" : "rgba(255,255,255,0.7)";
+  let shadowColor = isDark ? "rgba(0,0,0,0.5)" : "rgba(0,0,0,0.15)";
 
   let mapH = 580;
   let html = `
   <div class="qm-scroll-wrapper">
     <div class="qm-hybrid-container" style="background-image:url('${background}');min-width:${width}px;height:${mapH}px;">
       <svg class="qm-svg-layer" viewBox="0 0 ${width} ${mapH}" preserveAspectRatio="xMinYMin slice">
-        <path d="${path}" fill="none" stroke="rgba(0,0,0,0.15)" stroke-width="6" stroke-linecap="round" transform="translate(0,8)" />
-        <path d="${path}" fill="none" stroke="rgba(255,255,255,0.55)" stroke-width="5" stroke-linecap="round" stroke-dasharray="14 18" stroke-dashoffset="0" style="animation:dashFlow 1.2s linear infinite;" />
+        <path d="${path}" fill="none" stroke="${shadowColor}" stroke-width="6" stroke-linecap="round" transform="translate(0,6)" />
+        <path d="${path}" fill="none" stroke="${dotColor}" stroke-width="4" stroke-linecap="round" stroke-dasharray="10 16" style="animation:dashFlow 1.2s linear infinite;" />
       </svg>
   `;
 
@@ -35,17 +67,27 @@ function renderQuestMap(nodes, styleName, activeIndex, visitedSet, app, getNodeP
     let isCurrent = index === activeIndex;
     let isBoss = !!node.boss;
     let isVisited = visitedSet && visitedSet.has(index) && !isCurrent;
-    let iconPath = node.icon ? app.vault.adapter.getResourcePath(iconRoot + node.icon) : "";
-    let iconMarkup = iconPath
-      ? `<img src="${iconPath}" class="qm-icon-prop ${isBoss ? "qm-icon-boss" : ""}" />`
-      : `<div class="qm-emoji">${node.emoji || "📝"}</div>`;
+
+    let islandMarkup = "";
+    if (isDark) {
+      // Use island_dark_N.png as the main visual (replaces platform)
+      let islandN = (index % 9) + 1;
+      let islandSrc = app.vault.adapter.getResourcePath(assetRoot + `island_dark_${islandN}.png`);
+      islandMarkup = `<img src="${islandSrc}" class="qm-platform qm-island-img" onload="(function(img){try{var c=document.createElement('canvas');c.width=img.naturalWidth;c.height=img.naturalHeight;var ctx=c.getContext('2d');ctx.drawImage(img,0,0);var d=ctx.getImageData(0,0,c.width,c.height),px=d.data;for(var i=0;i<px.length;i+=4){var r=px[i],g=px[i+1],b=px[i+2];if(Math.abs(r-g)<20&&Math.abs(g-b)<20&&r<85){px[i+3]=0;}}ctx.putImageData(d,0,0);img.src=c.toDataURL();}catch(e){}})(this)" />`;
+    } else {
+      // Light mode: show emoji/icon prop above platform
+      let iconPath = node.icon ? app.vault.adapter.getResourcePath(iconRoot + node.icon) : "";
+      let iconProp = iconPath
+        ? `<img src="${iconPath}" class="qm-icon-prop ${isBoss ? "qm-icon-boss" : ""}" />`
+        : `<div class="qm-emoji">${node.emoji || "📝"}</div>`;
+      islandMarkup = iconProp + `<img src="${platform}" class="qm-platform" />`;
+    }
 
     html += `
       <div class="qm-island-group ${isCurrent ? "qm-active" : ""} ${isBoss ? "qm-diff-boss" : ""} ${isVisited ? "qm-visited" : ""}" data-index="${index}" style="left:${x}px;top:${y}px;animation-delay:${-(index * 0.7)}s;">
-        ${iconMarkup}
-        ${isCurrent ? '<div class="qm-current-badge">Current</div>' : ""}
-        ${isVisited ? '<div class="qm-visited-badge">Visited</div>' : ""}
-        <img src="${platform}" class="qm-platform" />
+        ${isCurrent ? '<div class="qm-current-badge">▶ Current</div>' : ""}
+        ${isVisited ? '<div class="qm-visited-badge">✓</div>' : ""}
+        ${islandMarkup}
         <div class="qm-label-wrap">${node.title || ""}</div>
       </div>
     `;
@@ -55,6 +97,4 @@ function renderQuestMap(nodes, styleName, activeIndex, visitedSet, app, getNodeP
   return html;
 }
 
-module.exports = {
-  renderQuestMap
-};
+module.exports = { renderQuestMap };
