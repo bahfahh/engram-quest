@@ -48,7 +48,7 @@ function renderQuestMap(nodes, styleName, activeIndex, visitedSet, app, getNodeP
   }
 
   // Path color: golden dots for dark (like demo), white dots for light
-  let dotColor = isDark ? "rgba(255,210,80,0.85)" : "rgba(255,255,255,0.7)";
+  let dotColor = isDark ? "rgba(255,210,80,0.85)" : "rgba(80,120,200,0.75)";
   let shadowColor = isDark ? "rgba(0,0,0,0.5)" : "rgba(0,0,0,0.15)";
 
   let mapH = 640;
@@ -75,12 +75,10 @@ function renderQuestMap(nodes, styleName, activeIndex, visitedSet, app, getNodeP
       let islandSrc = app.vault.adapter.getResourcePath(assetRoot + `island_dark_${islandN}.png`);
       islandMarkup = `<img src="${islandSrc}" class="qm-platform qm-island-img" />`;
     } else {
-      // Light mode: show emoji/icon prop above platform
-      let iconPath = node.icon ? app.vault.adapter.getResourcePath(iconRoot + node.icon) : "";
-      let iconProp = iconPath
-        ? `<img src="${iconPath}" class="qm-icon-prop ${isBoss ? "qm-icon-boss" : ""}" />`
-        : `<div class="qm-emoji">${node.emoji || "📝"}</div>`;
-      islandMarkup = iconProp + `<img src="${platform}" class="qm-platform" />`;
+      // Light mode: use island_light_N.png
+      let islandN = (index % 9) + 1;
+      let islandSrc = app.vault.adapter.getResourcePath(assetRoot + `island_light_${islandN}.png`);
+      islandMarkup = `<img src="${islandSrc}" class="qm-platform qm-island-img" />`;
     }
 
     html += `
