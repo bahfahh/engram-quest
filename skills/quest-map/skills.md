@@ -155,31 +155,44 @@ Minimum questions per round by type:
 
 ## Difficulty Rules
 
+### Progressive difficulty within a quest (applies to ALL difficulty settings)
+
+Every quest MUST follow a difficulty ramp — regardless of the user-requested difficulty level:
+
+| Round position | Cognitive demand | Allowed question types | Question style |
+|---|---|---|---|
+| Round 1 (first challenge) | Recognition — can the learner identify the concept? | `truefalse`, `quiz` | Direct recall: "What is X?" |
+| Round 2 | Application — can the learner use the concept? | `quiz`, `cloze`, `order`, `countdown` | Applied: "Which approach fits scenario Y?" |
+| Round 3+ (mid rounds) | Analysis — can the learner compare and reason? | `auction`, `snapshot`, `match`, `chain`, `timeline` | Comparative: "Why X over Y?" or "What breaks if Z?" |
+| Boss round | Synthesis — can the learner integrate everything? | `match`, `cloze` (hard blanks), `input`, `auction`, `countdown` (short timer) | Scenario-based: multi-step reasoning, cross-concept integration |
+
+**Boss round MUST:**
+- Use at least 2 different question types
+- Include at least 1 `input` or `cloze` question (free recall, not multiple choice)
+- Ask questions that require connecting concepts from different lessons, not just recalling one fact
+- Use scenario framing: "Given X constraint, which approach and why?" not "What is X?"
+- Have 5–6 questions (not just 4)
+
 ### easy
-- Prefer `truefalse`, then `quiz`
-- May use `cloze` when the blank is obvious and teachable
-- May use `countdown` for fluency drill (use generous timer, e.g. 20s)
-- May use `image-quiz` when a note image supports a good question
-- Include a hint
+- Round 1: `truefalse` — simple true/false statements
+- Round 2: `quiz` with obvious distractors, include `hint`
+- Boss: `quiz` + `cloze` (obvious blanks), include hints
 - Keep distractors clearly teachable, not tricky
 
 ### medium
-- Prefer `quiz`, then `order`
-- May use `cloze`, `snapshot`, `memory-palace`, `auction`, `timeline`, `chain`, `image-quiz`, or `image-occlusion` (Gemini only) when the source strongly supports them
-- `snapshot` works well for dense structured info (tables, layered architectures)
-- `auction` works well for easily confused concepts
-- `timeline` works well for historical evolution or version history
-- `chain` works well for step-by-step processes under pressure
-- Usually omit hints
-- Use plausible distractors
+- Round 1: `quiz` — direct recall
+- Round 2: `cloze`, `order`, or `countdown` — applied recall
+- Round 3+: `auction`, `snapshot`, or `memory-palace` — comparative reasoning
+- Boss: `match` + `cloze` (non-obvious blanks) + 1 `input` — no hints
+- Use plausible distractors that test real confusion points
 
 ### hard
-- Prefer `match`, `cloze`, `countdown` (short timer), `auction`, `chain`, `timeline`, `image-quiz`, `image-occlusion` (Gemini only), then strict `input`
-- No hint unless absolutely necessary
-- The challenge should require stronger recall than medium
-- **Scenario over trivia**: instead of "What is X?", ask "Why choose X over Y given constraint Z?" or "What breaks if you use X instead of Y?"
-- **Traceability**: all hard challenges **MUST** include the `link` field pointing back to the source note. This lets the learner self-verify when recall fails.
-- Include a `link` field when the format expects one
+- Round 1: `quiz` or `cloze` — no hints, plausible distractors
+- Round 2: `countdown` (15s timer), `chain`, or `timeline` — pressure + sequence
+- Round 3+: `auction` (easily confused concepts), `match` (cross-concept pairing)
+- Boss: `input` + `cloze` (hard blanks) + `countdown` (10s timer) — scenario-based, no hints
+- **Scenario over trivia**: "Why choose X over Y given constraint Z?" not "What is X?"
+- **Traceability**: all hard challenges **MUST** include the `link` field pointing back to the source note
 
 ## Challenge Type Selection
 
