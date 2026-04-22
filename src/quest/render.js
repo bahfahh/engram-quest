@@ -82,7 +82,7 @@ function renderQuestMap(nodes, styleName, activeIndex, visitedSet, app, getNodeP
     }
 
     html += `
-      <div class="qm-island-group ${isCurrent ? "qm-active" : ""} ${isBoss ? "qm-diff-boss" : ""} ${isVisited ? "qm-visited" : ""}" data-index="${index}" style="left:${x}px;top:${y}px;animation-delay:${-(index * 0.7)}s;">
+      <div class="qm-island-group ${isCurrent ? "qm-active" : ""} ${isBoss ? "qm-diff-boss" : ""} ${isVisited ? "qm-visited qm-completed" : ""}" data-index="${index}" style="left:${x}px;top:${y}px;animation-delay:${-(index * 0.7)}s;">
         ${isCurrent ? '<div class="qm-current-badge">▶ Current</div>' : ""}
         ${isVisited ? '<div class="qm-visited-badge">✓</div>' : ""}
         ${islandMarkup}

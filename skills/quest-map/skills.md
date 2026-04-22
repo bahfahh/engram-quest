@@ -78,15 +78,22 @@ Default behavior is AI-guided selection.
 1. **Every challenge round MUST use `questions_json` with at least 3 questions.** No exceptions — not even for `quiz`, `cloze`, or `truefalse`. A single-question challenge round is forbidden.
 2. **Boss challenge round MUST have 4–6 questions** covering the whole quest.
 3. The quest must feel like a game, not a reading exercise. Aim for at least 60% challenge nodes vs lesson nodes.
+4. **Learning loop rule**: Every challenge round MUST be immediately preceded by its own dedicated lesson node. That lesson must contain the content being tested in the round. One lesson → one round. Do NOT reuse a single lesson to support multiple rounds.
+5. **Boss recap rule**: The node immediately before the boss round MUST be a recap/synthesis lesson that summarizes the key concepts from the entire quest. Do not place the boss round directly after a regular challenge round.
 
 CORRECT structure for a medium quest (5 nodes):
 ```
-lesson → challenge round (3 q) → lesson → challenge round (4 q) → boss round (5 q)
+lesson → round (3q) → lesson → round (4q) → recap lesson → boss round (5q)
 ```
 
 WRONG — forbidden:
 ```
 lesson+1question → lesson+1question → lesson+1question → lesson+1question → lesson+1question
+```
+
+WRONG — no dedicated lesson per round:
+```
+lesson → lesson → round → round → boss
 ```
 
 ### Multi-question rounds (`questions_json`)
@@ -136,7 +143,8 @@ Minimum questions per round by type:
    - Scale total node count to source material size (see Node count table above).
    - Every challenge round MUST use `questions_json` with **at least 3 questions** — no exceptions, including quiz/cloze/truefalse.
    - Boss round MUST have 4–6 questions.
-   - Place challenge rounds after every 1–2 lesson nodes. Do NOT stack 3+ lessons in a row.
+   - **Each challenge round must be immediately preceded by its own lesson node** — one lesson per round, no sharing.
+   - **The node before the boss round must be a recap lesson** summarizing the whole quest.
    - CRITICAL: at least 2 different challenge types across the quest. Do NOT use quiz for everything.
 5. Choose challenge type based on difficulty, source material, and the Challenge Type Selection table.
 6. **Image challenges**: when a note image is worth testing, use `image-quiz` (all models). Only Gemini may use `image-occlusion` — and if doing so, run `scripts/occlusion_measure.py <image_path>` first to get accurate text bbox coordinates. If the script is unavailable (no Python/pytesseract), fall back to `image-quiz`.

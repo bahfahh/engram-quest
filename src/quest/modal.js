@@ -31,14 +31,21 @@ async function markNodeCompleted(app, sourcePath, nodeId) {
   await app.vault.modify(file, lines.join('\n'));
 }
 
-function setSolved(buttons, onSolved) {
+function setSolved(buttons, onSolved, feedbackEl) {
   buttons.forEach((button) => {
     button.disabled = true;
     button.style.background = "#22c55e";
     button.style.color = "white";
     button.style.borderColor = "#22c55e";
+    button.style.boxShadow = "0 2px 0 #16a34a";
   });
-  setTimeout(() => onSolved(true), 500);
+  if (feedbackEl) {
+    feedbackEl.style.display = "flex";
+    feedbackEl.style.background = "rgba(34,197,94,0.12)";
+    feedbackEl.style.borderColor = "#22c55e";
+    feedbackEl.style.color = "#15803d";
+  }
+  setTimeout(() => onSolved(true), 600);
 }
 
 function renderQuestChallenge(container, challenge, difficulty, onSolved, settings, app, sourcePath, deps, gameState) {
@@ -209,34 +216,47 @@ function renderQuestChallenge(container, challenge, difficulty, onSolved, settin
     function showRoundSummary(failed) {
       roundBody.empty();
       updatePips();
-      let sum = roundBody.createEl("div", { attr: { style: "text-align:center;padding:24px 16px" } });
+      let pct = Math.round(roundCorrect / questions.length * 100);
+      let isPerfect = roundCorrect === questions.length;
+      let isGood = roundCorrect >= questions.length * 0.7;
+
+      // ── Score header ──
+      let sum = roundBody.createEl("div", { attr: { style: "text-align:center;padding:20px 16px 12px" } });
       if (failed) {
         let failMsg = challenge.type === "auction" ? (zh ? "硬幣歸零！" : "Out of coins!") : (zh ? "生命歸零！" : "Out of lives!");
-        sum.createEl("div", { text: "💀", attr: { style: "font-size:48px;margin-bottom:8px" } });
-        sum.createEl("div", { text: failMsg, attr: { style: "font-size:18px;font-weight:800;color:#ef4444" } });
-        sum.createEl("div", { text: `${roundCorrect} / ${questions.length} ${zh ? "正確" : "correct"}`, attr: { style: "font-size:12px;color:var(--text-muted);margin-top:4px" } });
+        sum.createEl("div", { text: "💀", attr: { style: "font-size:44px;margin-bottom:6px" } });
+        sum.createEl("div", { text: failMsg, attr: { style: "font-size:17px;font-weight:800;color:#ef4444;margin-bottom:4px" } });
       } else {
-        let emoji = roundCorrect === questions.length ? "🏆" : roundCorrect >= questions.length / 2 ? "⚔️" : "💀";
-        sum.createEl("div", { text: emoji, attr: { style: "font-size:48px;margin-bottom:8px" } });
-        sum.createEl("div", { text: `${roundCorrect} / ${questions.length}`, attr: { style: "font-size:20px;font-weight:800;color:var(--text-normal)" } });
-        let detail = zh ? "正確" : "correct";
-        if (challenge.type === "auction") detail += `  ·  ◈ ${roundCoins}`;
-        sum.createEl("div", { text: detail, attr: { style: "font-size:12px;color:var(--text-muted);margin-top:4px" } });
+        let emoji = isPerfect ? "🏆" : isGood ? "⭐" : "💪";
+        let msg = isPerfect ? (zh ? "完美通關！" : "Perfect!") : isGood ? (zh ? "做得好！" : "Well done!") : (zh ? "繼續加油！" : "Keep going!");
+        sum.createEl("div", { text: emoji, attr: { style: "font-size:44px;margin-bottom:6px" } });
+        sum.createEl("div", { text: msg, attr: { style: `font-size:17px;font-weight:800;color:${isPerfect ? "#f59e0b" : isGood ? "#22c55e" : "var(--text-normal)"};margin-bottom:4px` } });
       }
-      // Show learning review when failed or less than half correct
-      if (failed || roundCorrect < questions.length / 2) {
-        let review = roundBody.createEl("div", { attr: { style: "margin-top:16px;padding:16px;border-radius:10px;background:var(--background-secondary);border:1px solid var(--background-modifier-border);text-align:left" } });
-        review.createEl("div", { text: zh ? "📖 複習重點" : "📖 Review", attr: { style: "font-size:12px;font-weight:700;color:var(--text-faint);letter-spacing:.06em;margin-bottom:10px" } });
-        questions.forEach((q, i) => {
-          let opts = q.opts || q.options || [];
-          let ans = q.ans != null ? q.ans : q.answer;
-          let ansText = typeof ans === "number" && opts[ans] ? opts[ans] : String(ans || "");
-          let row = review.createEl("div", { attr: { style: "margin-bottom:8px;padding-bottom:8px;border-bottom:1px solid var(--background-modifier-border)" } });
-          row.createEl("div", { text: `${i + 1}. ${q.q || q.question || ""}`, attr: { style: "font-size:13px;color:var(--text-normal);margin-bottom:2px" } });
-          row.createEl("div", { text: `→ ${ansText}`, attr: { style: "font-size:12px;color:#22c55e;font-weight:600" } });
-        });
+      // Score bar
+      let scoreRow = sum.createEl("div", { attr: { style: "display:flex;align-items:center;justify-content:center;gap:10px;margin-top:8px" } });
+      scoreRow.createEl("div", { text: `${roundCorrect} / ${questions.length}`, attr: { style: "font-size:22px;font-weight:900;color:var(--text-normal)" } });
+      let barWrap = scoreRow.createEl("div", { attr: { style: "width:80px;height:8px;background:var(--background-modifier-border);border-radius:99px;overflow:hidden" } });
+      barWrap.createEl("div", { attr: { style: `height:100%;width:${pct}%;background:${isPerfect ? "#f59e0b" : isGood ? "#22c55e" : "#ef4444"};border-radius:99px;transition:width .6s` } });
+      if (challenge.type === "auction") {
+        sum.createEl("div", { text: `◈ ${roundCoins}`, attr: { style: "font-size:12px;color:var(--text-muted);margin-top:4px" } });
       }
-      let btn = roundBody.createEl("button", { text: zh ? "繼續" : "Continue", attr: { class: "qm-continue-btn" } });
+
+      // ── Answer review (always shown) ──
+      let review = roundBody.createEl("div", { attr: { style: "margin-top:4px;padding:14px 16px;border-radius:12px;background:var(--background-secondary);border:1px solid var(--background-modifier-border);text-align:left" } });
+      review.createEl("div", { text: zh ? "📖 本關重點" : "📖 Round Review", attr: { style: "font-size:11px;font-weight:700;color:var(--text-faint);letter-spacing:.06em;text-transform:uppercase;margin-bottom:10px" } });
+      questions.forEach((q, i) => {
+        let opts = q.opts || q.options || [];
+        let ans = q.ans != null ? q.ans : q.answer;
+        let ansText = typeof ans === "number" && opts[ans] ? opts[ans] : String(ans || "");
+        let row = review.createEl("div", { attr: { style: "margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid var(--background-modifier-border)" } });
+        row.createEl("div", { text: `${i + 1}. ${q.q || q.question || ""}`, attr: { style: "font-size:13px;color:var(--text-normal);margin-bottom:4px;line-height:1.4" } });
+        let ansRow = row.createEl("div", { attr: { style: "display:flex;align-items:center;gap:6px" } });
+        ansRow.createEl("span", { text: "✓", attr: { style: "color:#22c55e;font-weight:800;font-size:13px" } });
+        ansRow.createEl("span", { text: ansText, attr: { style: "font-size:13px;color:#22c55e;font-weight:600" } });
+        if (q.hint) row.createEl("div", { text: q.hint, attr: { style: "font-size:11px;color:var(--text-muted);margin-top:3px;line-height:1.4" } });
+      });
+
+      let btn = roundBody.createEl("button", { text: zh ? "繼續 →" : "Continue →", attr: { class: "qm-continue-btn" } });
       btn.addEventListener("click", () => onSolved());
     }
 
@@ -972,7 +992,7 @@ function renderQuestChallenge(container, challenge, difficulty, onSolved, settin
   }
 }
 
-function openQuestChapterModal(app, nodes, activeIndex, styleName, difficulty, settings, sourcePath, deps) {
+function openQuestChapterModal(app, nodes, activeIndex, styleName, difficulty, settings, sourcePath, deps, onComplete) {
   let modal = new obsidian.Modal(app);
   let currentIndex = activeIndex;
   let gameState = { score: 0, lives: 3, coins: 100, streak: 0 };
@@ -997,7 +1017,7 @@ function openQuestChapterModal(app, nodes, activeIndex, styleName, difficulty, s
     }
     let btn = wrap.createEl("button", { attr: { style: "margin-top:12px;border-radius:99px;padding:14px 32px;font-size:15px;font-weight:700;cursor:pointer;border:none;background:linear-gradient(135deg,#4f46e5,#818cf8);color:#fff;box-shadow:0 4px 16px rgba(79,70,229,0.4);" } });
     btn.textContent = zh ? "關閉" : "Close";
-    btn.addEventListener("click", () => modal.close());
+    btn.addEventListener("click", () => { modal.close(); if (onComplete) onComplete(); });
   }
 
   function render() {
@@ -1045,6 +1065,7 @@ function openQuestChapterModal(app, nodes, activeIndex, styleName, difficulty, s
     if (node.challenge) {
       deps.renderQuestChallenge(content, node.challenge, difficulty, () => {
         markNodeCompleted(app, sourcePath, node.id);
+        if (onComplete) onComplete(node.id, currentIndex);
         if (currentIndex < nodes.length - 1) {
           currentIndex += 1;
           render();
