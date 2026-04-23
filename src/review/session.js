@@ -220,7 +220,7 @@ var Q=class extends I.Modal{
         let name=np.split("/").pop().replace(/\.md$/i,"");
         let btn=srcWrap.createEl("button",{attr:{class:"lh-rc-edit-btn",style:"font-size:11px;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#6366f1;",title:np}});
         btn.textContent="📄 "+name;
-        btn.addEventListener("click",(ev)=>{ev.stopPropagation();this.app.workspace.openLinkText(np,"",false);});
+        btn.addEventListener("click",(ev)=>{ev.stopPropagation();const _f=this.app.vault.getAbstractFileByPath(np);if(_f){this.app.workspace.openLinkText(_f.path,"",false);}else{const _fb=this.app.metadataCache.getFirstLinkpathDest(np.split("/").pop(),"");if(_fb){this.app.workspace.openLinkText(_fb.path,"",false);}else{new I.Notice("Source note not found: "+np);}}});
       });
     }
     if(notePaths.length>0){
