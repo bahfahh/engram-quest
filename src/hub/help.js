@@ -107,11 +107,21 @@ A: 愛因斯坦
               <tr><td><strong>hard</strong></td><td>自我測驗</td></tr>
             </table>
           `},{icon:"🧠",title:"Memory Map",tag:c(e,"HELP_MEMORY_TAG"),html:`
+            <p><strong>建立方式（三種都可以）</strong></p>
             <ol>
-              <li>跟 AI 說：「幫作業系統概論.md 建立 memory-map」</li>
-              <li>AI 建立視覺化概念地圖</li>
-              <li>開 Hub → Memory Map 查看（也可以從 Review Deck 卡片直接點進來）</li>
+              <li><strong>AI 生成：</strong>跟 AI 說「幫作業系統概論.md 建立 memory-map」，AI 會自動建立 <code>作業系統概論-memory.canvas</code></li>
+              <li><strong>手動建立：</strong>在 Obsidian 新增 Canvas 檔案，命名為 <code>{筆記名}-memory.canvas</code>，插件就會自動偵測</li>
+              <li><strong>存放位置：</strong>預設放在來源筆記同資料夾。也可以在設定中指定 Memory Map 資料夾，集中管理</li>
             </ol>
+            <p><strong>偵測規則</strong></p>
+            <p>插件會掃描 vault 中所有檔名以 <code>-memory.canvas</code> 結尾的檔案，自動收錄到 Hub → Memory Map 頁籤。</p>
+            <p><strong>與 Review Deck 的關聯</strong></p>
+            <p>複習卡片時，底部的「Memory Map」按鈕會自動尋找對應的 canvas：</p>
+            <ol>
+              <li>先找同名的 <code>-memory.canvas</code>（根據來源筆記名稱）</li>
+              <li>找不到時，會掃描所有 memory canvas 的內容，如果 canvas 裡有指向該筆記的 file node，就會自動關聯</li>
+            </ol>
+            <div class="lh-help-sub" style="border-color:#7c3aed"><div class="lh-help-sub-icon">💡</div><div>建議讓 canvas 裡包含一個指向來源筆記的 file node（AI 生成時會自動加入），這樣即使檔案移動或改名，Obsidian 也會自動更新路徑，關聯不會斷掉。</div></div>
           `},{icon:"🔬",title:"Learning Science",tag:c(e,"HELP_SCIENCE_TAG"),html:`
             <div class="lh-help-sub"><div class="lh-help-sub-icon">SR</div><div><strong>Spaced Repetition</strong><br>在快忘記時複習，提升效率。Review Deck 使用 FSRS 自動安排下次複習。</div></div>
             <div class="lh-help-sub"><div class="lh-help-sub-icon">RP</div><div><strong>Retrieval Practice</strong><br>先回想，再看答案，比重讀更有效。Review Deck 與 Quest Map 都會強迫主動回想。</div></div>
@@ -277,11 +287,21 @@ A: Albert Einstein
               <tr><td><strong>hard</strong></td><td>Self-testing mastery</td></tr>
             </table>
           `},{icon:"🧠",title:"Memory Map",tag:c(e,"HELP_MEMORY_TAG"),html:`
+            <p><strong>How to create (three ways)</strong></p>
             <ol>
-              <li>Ask AI: "Create a memory-map for OS-overview.md"</li>
-              <li>AI builds the visual concept map</li>
-              <li>Open Hub → Memory Map (or click into it from a Review Deck card)</li>
+              <li><strong>AI-generated:</strong> Ask AI "Create a memory-map for OS-overview.md" — it produces <code>OS-overview-memory.canvas</code> automatically</li>
+              <li><strong>Manual:</strong> Create a Canvas file in Obsidian and name it <code>{note-name}-memory.canvas</code> — the plugin detects it automatically</li>
+              <li><strong>Save location:</strong> Defaults to the same folder as the source note. You can also set a dedicated Memory Map folder in Settings</li>
             </ol>
+            <p><strong>Detection rule</strong></p>
+            <p>The plugin scans all files ending with <code>-memory.canvas</code> in your vault and lists them in Hub → Memory Map.</p>
+            <p><strong>Link to Review Deck</strong></p>
+            <p>During review, the "Memory Map" button on each card automatically finds the matching canvas:</p>
+            <ol>
+              <li>First, it looks for a <code>-memory.canvas</code> with the same name as the source note</li>
+              <li>If not found, it scans all memory canvases — if a canvas contains a file node pointing to that note, it links automatically</li>
+            </ol>
+            <div class="lh-help-sub" style="border-color:#7c3aed"><div class="lh-help-sub-icon">💡</div><div>Tip: include a file node in your canvas that points back to the source note (AI does this automatically). This way, even if files are moved or renamed, Obsidian updates the path and the link stays intact.</div></div>
           `},{icon:"🔬",title:"Why It Works",tag:c(e,"HELP_SCIENCE_TAG"),html:`
             <div class="lh-help-sub"><div class="lh-help-sub-icon">SR</div><div><strong>Spaced Repetition</strong><br>Review at the point of near-forgetting. FSRS calculates the next interval automatically.</div></div>
             <div class="lh-help-sub"><div class="lh-help-sub-icon">RP</div><div><strong>Retrieval Practice</strong><br>Active recall is more effective than re-reading. Review Deck and Quest Map force retrieval before the answer appears.</div></div>

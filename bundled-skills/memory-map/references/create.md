@@ -11,7 +11,7 @@ Build a new `-memory.canvas` file that helps the user understand and remember a 
 - one or more association nodes from real vault context when available
 - one analogy or elaboration node
 - several chunked support nodes
-- one file node linking back to the source note
+- one file node linking back to the source note (use `type: "file"` with the vault-relative path in the `file` field, e.g. `"file": "Study/OS概論.md"`)
 
 ## Design Rules
 

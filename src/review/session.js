@@ -66,6 +66,49 @@ body.is-phone .lh-review-footer .lh-pill-btn {
   document.head.appendChild(styleEl);
 }
 
+/** Plan A — sync name-based lookup (fast, no I/O) */
+function findMemoryMapSync(app, card, settings) {
+  const isAi = card.notePath && card.notePath.startsWith("engram-review/ai-cards/");
+  const mmFolder = settings.memoryMapFolder;
+  let guess = null;
+  if (card.notePath) {
+    if (mmFolder) {
+      const nn = (card.sourceNotePath || card.notePath).split("/").pop().replace(/\.md$/i, "");
+      guess = `${mmFolder}/${nn}-memory.canvas`;
+    } else if (!isAi) {
+      guess = card.notePath.replace(/\.md$/i, "-memory.canvas");
+    } else if (card.sourceNotePath) {
+      guess = card.sourceNotePath.replace(/\.md$/i, "-memory.canvas");
+    }
+  }
+  let found = guess ? app.vault.getAbstractFileByPath(guess) : null;
+  if (!found && guess) {
+    const bn = guess.split("/").pop();
+    found = app.metadataCache.getFirstLinkpathDest(bn, "") || null;
+  }
+  return found;
+}
+
+/** Plan B — async canvas file-node reverse lookup */
+async function findMemoryMapByCanvasContent(app, card) {
+  const targets = new Set();
+  if (card.notePath) targets.add(card.notePath);
+  if (card.sourceNotePath) targets.add(card.sourceNotePath);
+  if (card.sourceNotePaths) card.sourceNotePaths.forEach(p => p && targets.add(p));
+  if (targets.size === 0) return null;
+  const canvasFiles = app.vault.getFiles().filter(f => f.name.endsWith("-memory.canvas"));
+  for (const cf of canvasFiles) {
+    try {
+      const json = JSON.parse(await app.vault.read(cf));
+      const fileNodes = (json.nodes || []).filter(n => n.type === "file");
+      for (const fn of fileNodes) {
+        if (targets.has(fn.file)) return cf;
+      }
+    } catch { /* skip malformed canvas */ }
+  }
+  return null;
+}
+
 const IMG_EXT=["png","jpg","jpeg","gif","bmp","svg","webp","avif"];
 function postProcessEmbed(el,app,notePath){
   if(!el.findAll)return;
@@ -323,19 +366,14 @@ var Q=class extends I.Modal{
       if(!m||this.hintLevel>=3){ x.disabled=true; x.style.opacity="0.38"; x.style.cursor="not-allowed"; }
       else x.addEventListener("click",()=>{this.hintLevel++;this._renderCardContent(e);});
 
-      let _isAiCard=e.notePath&&e.notePath.startsWith("engram-review/ai-cards/");
-      let _mmFolder=this.plugin.settings.memoryMapFolder;
-      let S=null;
-      if(e.notePath){if(_mmFolder){let nn=(e.sourceNotePath||e.notePath).split("/").pop().replace(/\.md$/i,"");S=`${_mmFolder}/${nn}-memory.canvas`;}else if(!_isAiCard){S=e.notePath.replace(/\.md$/i,"-memory.canvas");}else if(e.sourceNotePath){// sourceNotePath may be full path or bare filename — derive canvas name and use openLinkText for resolution
-        let _srcBase=e.sourceNotePath.replace(/\.md$/i,"-memory.canvas");
-        // If sourceNotePath contains a folder, use it directly; otherwise let Obsidian resolve by name
-        S=_srcBase;}}
-      let w=S?this.app.vault.getAbstractFileByPath(S):null;
-      // Fallback: if full path not found, try resolving by basename via Obsidian link resolution
-      if(!w&&S){let _bn=S.split("/").pop();let _resolved=this.app.metadataCache.getFirstLinkpathDest(_bn,"");if(_resolved)w=_resolved;}
+      // Memory Map button — Plan A (sync) then Plan B (async fallback)
       let k=g.createEl("button",{attr:{class:"lh-pill-btn lh-pill-memory"}});
       k.textContent=c(t,"MEMORY_MAP");
-      w?k.addEventListener("click",()=>{this.app.workspace.openLinkText(w.path,"",false);}):(k.disabled=true,k.style.opacity="0.38",k.style.cursor="not-allowed");
+      let w=findMemoryMapSync(this.app,e,t);
+      if(w){k.addEventListener("click",()=>{this.app.workspace.openLinkText(w.path,"",false);});}
+      else{k.disabled=true;k.style.opacity="0.38";k.style.cursor="not-allowed";
+        const gen=this._mmGen=(this._mmGen||0)+1;
+        findMemoryMapByCanvasContent(this.app,e).then(cf=>{if(cf&&this._mmGen===gen&&k.isConnected){k.disabled=false;k.style.opacity="";k.style.cursor="";k.addEventListener("click",()=>{this.app.workspace.openLinkText(cf.path,"",false);});}}).catch(()=>{});}
 
       let y=p.createEl("div",{attr:{class:"lh-footer-meta"}});
       let b=y.createEl("button",{attr:{class:"lh-pill-reset"}});

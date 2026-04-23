@@ -82,8 +82,11 @@ Turn long notes into structured, game-like learning stages — embedded directly
 
 #### 🧠 Memory Map
 Visualize abstract concepts using Obsidian Canvas.
+- **Three ways to create:** Ask AI to generate one, manually create a Canvas named `{note-name}-memory.canvas`, or set a dedicated folder in Settings
+- **Auto-detection:** Any file ending with `-memory.canvas` is automatically listed in Hub → Memory Map
 - **Association Building:** AI maps note relationships into visual knowledge chunks
 - **Deep Intuition:** Contrast, analogy, and contextual anchoring for difficult topics
+- **Review Deck link:** During review, the Memory Map button finds the matching canvas — first by name, then by scanning canvas content for a file node pointing to the source note. Include a file node in your canvas for reliable linking even after moves or renames
 
 #### 🌙 Dark Mode
 EngramQuest adapts seamlessly to your Obsidian theme.
@@ -209,8 +212,11 @@ A: 微服務系統的架構圖。
 
 #### 🧠 Memory Map（視覺記憶）
 利用 Obsidian Canvas 將抽象概念具象化。
+- **三種建立方式：** 請 AI 生成、手動建立命名為 `{筆記名}-memory.canvas` 的 Canvas 檔案、或在設定中指定專用資料夾
+- **自動偵測：** 任何檔名以 `-memory.canvas` 結尾的檔案都會自動出現在 Hub → Memory Map
 - **關聯建構：** AI 自動分析筆記間的關聯，建立視覺化知識區塊
 - **深度理解：** 透過對比、類比與情境錨定攻克最難記的知識點
+- **Review Deck 連動：** 複習時，Memory Map 按鈕會自動尋找對應的 canvas — 先比對同名檔案，找不到再掃描 canvas 內容中指向來源筆記的 file node。建議讓 canvas 包含指向來源筆記的 file node，即使檔案移動或改名也不會斷掉關聯
 
 #### 🌙 Dark Mode（深色模式）
 EngramQuest 完整支援 Obsidian 深色主題，自動偵測、無需手動切換。
