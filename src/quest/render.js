@@ -35,7 +35,7 @@ function renderQuestMap(nodes, styleName, activeIndex, visitedSet, app, getNodeP
   let iconRoot = assetRoot + "icons/";
 
   let positions = getNodePositions(nodes.length);
-  let width = Math.max(1100, nodes.length > 1 ? positions[nodes.length - 1].cx + 200 : 1100);
+  let width = Math.max(900, nodes.length > 1 ? positions[nodes.length - 1].cx + 160 : 900);
   let path = "";
 
   if (positions.length > 0) {
@@ -51,7 +51,7 @@ function renderQuestMap(nodes, styleName, activeIndex, visitedSet, app, getNodeP
   let dotColor = isDark ? "rgba(255,210,80,0.85)" : "rgba(80,120,200,0.75)";
   let shadowColor = isDark ? "rgba(0,0,0,0.5)" : "rgba(0,0,0,0.15)";
 
-  let mapH = 640;
+  let mapH = 480;
   let html = `
   <div class="qm-scroll-wrapper">
     <div class="qm-hybrid-container" style="background-image:url('${background}');min-width:${width}px;height:${mapH}px;">
@@ -84,7 +84,7 @@ function renderQuestMap(nodes, styleName, activeIndex, visitedSet, app, getNodeP
     html += `
       <div class="qm-island-group ${isCurrent ? "qm-active" : ""} ${isBoss ? "qm-diff-boss" : ""} ${isVisited ? "qm-visited qm-completed" : ""}" data-index="${index}" style="left:${x}px;top:${y}px;animation-delay:${-(index * 0.7)}s;">
         ${isCurrent ? '<div class="qm-current-badge">▶ Current</div>' : ""}
-        ${isVisited ? '<div class="qm-visited-badge">✓</div>' : ""}
+        ${isVisited ? '<div class="qm-crown">👑</div>' : ""}
         ${islandMarkup}
         <div class="qm-label-wrap">${node.title || ""}</div>
       </div>
