@@ -47,6 +47,13 @@ Before creating the canvas file:
 - Default width: 220px for short nodes, 280px for nodes with longer content
 - Never go below 180px
 
+**Minimum spacing between nodes (CRITICAL — prevents overlap):**
+- Horizontal gap between adjacent nodes in the same row: **at least 60px**
+- Vertical gap between nodes in the same column: **at least 50px**
+- Before finalizing coordinates, verify: for every pair of nodes that share a group or are visually adjacent, confirm `node_B.x >= node_A.x + node_A.width + 60` (horizontal) or `node_B.y >= node_A.y + node_A.height + 50` (vertical).
+- File nodes (type `file`) are typically taller than text nodes — treat their height as **at least 160px** when computing spacing for neighbors.
+- When in doubt, **add more space**. A sparse map is always better than an overlapping one.
+
 **Group bounding box:**
 - Add 60px padding on all four sides around child nodes
 - `group_x = min(nodes.x) - 60`

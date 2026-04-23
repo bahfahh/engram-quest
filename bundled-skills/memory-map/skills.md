@@ -50,7 +50,7 @@ Choose the right reference before writing:
    d. Source note is self-contained and no associations are needed → skip this step.
 3. Choose the best reference flow.
 4. Read `.memory-map/config.json` — this is a **config file only**, not an output folder. Extract the `memoryMapFolder` value, then follow `references/create.md` → Output section for the exact save location. Never save canvas files inside `.memory-map/`.
-5. Keep the canvas readable and stable.
+5. Keep the canvas readable and stable. Ensure no two nodes overlap — maintain at least 60px horizontal and 50px vertical gap between every pair of adjacent nodes. File nodes are tall; treat them as at least 160px high when spacing neighbors.
 
 ## Output Rules
 
