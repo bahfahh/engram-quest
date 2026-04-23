@@ -78,14 +78,14 @@ function parseFlashcards(markdown) {
     }
 
     // Q/A style: Q: question \n A: answer (multi-line question & answer supported)
-    const qaMatch = line.match(/^Q:\s*(.+)/i);
+    const qaMatch = line.match(/^\s*Q:\s*(.+)/i);
     if (qaMatch) {
       // Collect multi-line question: Q: line + any lines before A: (allow single blank lines)
       let frontLines = [qaMatch[1]];
       let aLineIdx = index + 1;
       let qBlankRun = 0;
       while (aLineIdx < lines.length) {
-        if (/^A:\s*/i.test(lines[aLineIdx])) break;
+        if (/^\s*A:\s*/i.test(lines[aLineIdx])) break;
         if (lines[aLineIdx].trim() === "") {
           qBlankRun++;
           if (qBlankRun >= 2) break; // two blank lines = card boundary
@@ -98,13 +98,13 @@ function parseFlashcards(markdown) {
       }
       // Remove trailing blank captures
       while (frontLines.length > 0 && frontLines[frontLines.length - 1].trim() === "") frontLines.pop();
-      const aMatch = aLineIdx < lines.length ? lines[aLineIdx].match(/^A:\s*(.*)/i) : null;
+      const aMatch = aLineIdx < lines.length ? lines[aLineIdx].match(/^\s*A:\s*(.*)/i) : null;
       if (aMatch) {
         let backLines = [aMatch[1]];
         let j = aLineIdx + 1;
         let blankRun = 0;
         while (j < lines.length) {
-          if (/^Q:\s*/i.test(lines[j])) break;
+          if (/^\s*Q:\s*/i.test(lines[j])) break;
           if (/^[ \t]*(`{3,}|~{3,})/.test(lines[j])) break;
           if (/\{\{c\d+::/.test(lines[j])) break; // cloze card on next line — stop here
           if (lines[j].trim() === "") {
