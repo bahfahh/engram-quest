@@ -103,9 +103,32 @@ function parseFlashcards(markdown) {
         let backLines = [aMatch[1]];
         let j = aLineIdx + 1;
         let blankRun = 0;
+        let inCodeBlock = false;
+        let codeBlockFenceChar = "";
+        let codeBlockFenceLen = 0;
         while (j < lines.length) {
+          const codeFenceMatch = lines[j].match(/^[ \t]*(`{3,}|~{3,})/);
+          if (codeFenceMatch) {
+            const fenceChar = codeFenceMatch[1][0];
+            const fenceLen = codeFenceMatch[1].length;
+            if (!inCodeBlock) {
+              inCodeBlock = true;
+              codeBlockFenceChar = fenceChar;
+              codeBlockFenceLen = fenceLen;
+            } else if (fenceChar === codeBlockFenceChar && fenceLen >= codeBlockFenceLen) {
+              inCodeBlock = false;
+            }
+            backLines.push(lines[j]);
+            blankRun = 0;
+            j++;
+            continue;
+          }
+          if (inCodeBlock) {
+            backLines.push(lines[j]);
+            j++;
+            continue;
+          }
           if (/^\s*Q:\s*/i.test(lines[j])) break;
-          if (/^[ \t]*(`{3,}|~{3,})/.test(lines[j])) break;
           if (/\{\{c\d+::/.test(lines[j])) break; // cloze card on next line — stop here
           if (lines[j].trim() === "") {
             blankRun++;
