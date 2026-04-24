@@ -1,7 +1,7 @@
 {
   "id": "engram-quest",
   "name": "EngramQuest",
-  "version": "1.2.2",
+  "version": "1.3.0",
   "minAppVersion": "1.6.0",
   "description": "Turn notes into gamified Quest Maps, visual Memory Maps (Canvas), and flashcard Review Decks powered by AI Skills. Supports Claude Code, Gemini CLI, and Cursor. Features FSRS spaced repetition, active recall, memory retention, and AI hints.",
   "author": "powen",
