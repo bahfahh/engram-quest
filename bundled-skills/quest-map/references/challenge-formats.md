@@ -447,8 +447,13 @@ Design guidance:
 
 ### image-quiz
 
-Show an image and ask a question about it.
+Show an image and ask a question about it. **This is the recommended type for any note that contains diagrams, architecture images, or visual content — use it aggressively.**
 
+`type: image-quiz` is supported by all AI models (Claude, Gemini, Cursor, Codex). Prefer it over text-only quiz whenever the source note has images.
+
+Three interaction modes — the renderer auto-selects based on which fields are present:
+
+**Mode A — options (quiz style, recommended)**
 ```yaml
 challenge:
   type: image-quiz
@@ -460,13 +465,7 @@ challenge:
   link: relative/path/to/source.md
 ```
 
-Fields:
-- `image` (required): vault-relative or note-relative path. No OS absolute paths.
-- `question` (required): must require understanding the image.
-- `options` + `answer` (quiz style) OR `keywords` (input style).
-- `hint`, `link` (optional).
-
-Input variant:
+**Mode B — keywords (input style)**
 ```yaml
 challenge:
   type: image-quiz
@@ -477,10 +476,32 @@ challenge:
   link: relative/path/to/source.md
 ```
 
+**Mode C — click-region (legacy, use `type: image`)**
+```yaml
+challenge:
+  type: image
+  image: path/to/image.png
+  question: Click the correct region
+  region_x: 0.3
+  region_y: 0.2
+  region_width: 0.4
+  region_height: 0.3
+```
+
+Fields:
+- `image` (required): vault-relative or note-relative path. No OS absolute paths.
+- `question` (required): must require understanding the image.
+- `options` + `answer` → Mode A (quiz style). `answer` is zero-based index.
+- `keywords` → Mode B (input style). Matching is case-insensitive.
+- `hint`, `link` (optional).
+
 Design guidance:
-- All AI models can generate this type.
+- **All AI models can and should generate this type** whenever the source note has images.
 - The question MUST require seeing the image. If answerable without the image, use `quiz` instead.
-- Use for architecture diagrams, biological diagrams, flowcharts.
+- Use for architecture diagrams, biological diagrams, flowcharts, UI screenshots, data flow diagrams.
+- Mode A (options) is preferred — it gives the learner clear choices and is easier to answer on mobile.
+- Mode B (keywords) is better for precise term recall (e.g., anatomy labels, protocol names).
+- When in doubt between `image-quiz` and `quiz`: if the note has an image that illustrates the concept, use `image-quiz`. Visual context strengthens memory encoding.
 
 ---
 

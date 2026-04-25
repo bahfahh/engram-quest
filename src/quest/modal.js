@@ -842,15 +842,58 @@ function renderQuestChallenge(container, challenge, difficulty, onSolved, settin
     return;
   }
 
-  if (challenge.type === "image" && challenge.image) {
+  if ((challenge.type === "image" || challenge.type === "image-quiz") && challenge.image) {
     let resource = deps.getQuestImageResource(app, challenge.image, sourcePath);
     if (!resource) {
       wrapper.createEl("p", { text: zh ? "找不到題目圖片。" : "Image not found for this challenge.", attr: { style: "color:var(--text-muted)" } });
       return;
     }
     wrapper.createEl("p", { text: challenge.prompt || challenge.question || (zh ? "請點擊正確區域。" : "Click the correct region."), attr: { style: "font-size:14px;font-weight:600;color:var(--text-normal);margin-bottom:10px" } });
-    let stage = wrapper.createEl("div", { attr: { style: "position:relative;display:inline-block;max-width:100%;border-radius:12px;overflow:hidden;border:1px solid var(--background-modifier-border)" } });
-    let image = stage.createEl("img", { attr: { src: resource, style: "display:block;max-width:100%;height:auto" } });
+    let stage = wrapper.createEl("div", { attr: { style: "position:relative;display:inline-block;max-width:100%;border-radius:12px;overflow:hidden;border:1px solid var(--background-modifier-border);margin-bottom:12px" } });
+    stage.createEl("img", { attr: { src: resource, style: "display:block;max-width:100%;height:auto" } });
+
+    // options mode (quiz style)
+    if (Array.isArray(challenge.options) && challenge.options.length > 0) {
+      let col = wrapper.createEl("div", { attr: { class: "qm-options-col" } });
+      let buttons = [];
+      const optLabels = ["A","B","C","D","E","F"];
+      challenge.options.forEach((option, index) => {
+        let button = col.createEl("button", { attr: { class: "qm-ch-btn" } });
+        button.createEl("span", { text: optLabels[index] || String(index+1), attr: { class: "qm-ch-btn-label" } });
+        button.createEl("span", { text: option, attr: { class: "qm-ch-btn-text" } });
+        buttons.push(button);
+        button.addEventListener("click", () => {
+          if (button.disabled) return;
+          if (index === challenge.answer) {
+            setSolved(buttons, onSolved);
+          } else {
+            handleWrong(button);
+          }
+        });
+      });
+      return;
+    }
+
+    // keywords/input mode
+    if (challenge.keywords || challenge.answers) {
+      let expected = deps.collectExpectedAnswers(challenge);
+      let controls = wrapper.createEl("div", { attr: { style: "display:flex;gap:8px;align-items:center;flex-wrap:wrap" } });
+      let input = controls.createEl("input", { attr: { type: "text", placeholder: zh ? "輸入答案" : "Type your answer", class: "qm-ch-input" } });
+      let button = controls.createEl("button", { text: zh ? "送出" : "Submit", attr: { class: "qm-ch-btn", style: "width:auto;padding:10px 18px" } });
+      let submit = () => {
+        if (deps.matchesExpectedAnswer(input.value, expected)) {
+          setSolved([button], onSolved);
+        } else {
+          handleWrong(button);
+        }
+      };
+      button.addEventListener("click", submit);
+      input.addEventListener("keydown", (event) => { if (event.key === "Enter") submit(); });
+      return;
+    }
+
+    // click-region mode (legacy type: image)
+    let image = stage.querySelector("img");
     stage.addEventListener("click", (event) => {
       let rect = image.getBoundingClientRect();
       let x = (event.clientX - rect.left) / rect.width;

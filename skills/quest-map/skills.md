@@ -286,6 +286,8 @@ Supported types: `quiz`, `truefalse`, `order`, `match`, `input`, `cloze`, `count
 
 ## Image Challenge Selection Rules
 
+**Default rule: if the source note has images, use `image-quiz` for at least one challenge round.** Visual questions are more engaging and strengthen memory encoding — don't skip them just because text-only is easier to generate.
+
 When a note contains images, decide between `image-quiz` and `image-occlusion`:
 
 **Model capability gate (mandatory)**
