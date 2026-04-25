@@ -63,13 +63,17 @@ var fe=class extends I.Modal{constructor(e,t){super(e),this.plugin=t}onClose(){v
             <p><strong>Step 1：在筆記加上標籤（Deck 名稱）</strong></p>
             <p>在你的筆記任意位置加上 <code>#flashcards/主題</code>。例如 <code>#flashcards/英文</code> 就會建立一個名為「英文」的 Deck。</p>
             <p><strong>Step 2：撰寫卡片內容</strong></p>
-            <p>支援三種格式，最簡單的是 <code>::</code>：</p>
-            <pre>畢氏定理 :: a² + b² = c²
-
-Q: 誰提出了相對論？
+            <p>支援三種格式，推薦使用 <code>Q:/A:</code>（支援多行、圖片、表格）：</p>
+            <pre>Q: 誰提出了相對論？
 A: 愛因斯坦
 
-{{c1::間隔重複}} 是最有效的學習方法</pre>
+Q: 什麼是間隔重複？
+A: 在快忘記時複習，可以用最少時間達到最高記憶保留率。
+   每次成功回想後，下次複習的間隔會自動拉長。
+
+{{c1::間隔重複}} 是最有效的學習方法
+
+畢氏定理 :: a² + b² = c²</pre>
             <p><strong>Step 3：到 Hub 開始複習</strong></p>
             <p>點側邊欄圖示開啟 Hub → <strong>Review Deck</strong> → 你就會看到剛建立的牌組了！</p>
           `},{icon:"🚀",title:"開始使用 AI",tag:"AI 自動化",html:`
@@ -184,9 +188,9 @@ A:
 法國首都 {{c1::巴黎}}，日本首都 {{c2::東京}}</pre>
             <table>
               <tr><th>格式</th><th>適合</th><th>寫法</th></tr>
-              <tr><td><code>::</code> 問答</td><td>簡短答案，一行</td><td><code>問題 :: 答案</code></td></tr>
-              <tr><td><code>Q:/A:</code> 問答</td><td>答案有多行或列點</td><td><code>Q: 問題</code> 換行 <code>A: 答案</code>（答案可以從下一行開始，可有多行）</td></tr>
+              <tr><td><code>Q:/A:</code> 問答 ⭐</td><td>推薦。多行答案、圖片、表格</td><td><code>Q: 問題</code> 換行 <code>A: 答案</code>（答案可以從下一行開始，可有多行）</td></tr>
               <tr><td>Cloze 填空</td><td>填空記憶，同 Anki 語法</td><td><code>{{c1::答案}}</code> 或 <code>{{c1::答案::提示}}</code></td></tr>
+              <tr><td><code>::</code> 問答</td><td>簡短答案，僅限一行</td><td><code>問題 :: 答案</code></td></tr>
             </table>
             <p><strong>Q:/A: 邊界規則：</strong></p>
             <ul>
@@ -232,7 +236,8 @@ A:
             <pre>IMPORTANT: When building a Review Deck, every highlighted ==text== must be turned into a review card.</pre>
             <p>用你自己最順手的標記方式就好，AI 會照著規則一致執行。</p>
             <p><strong>Q13：EngramQuest 支援 Anki 嗎？</strong></p>
-            <p>支援。可搭配 <strong>Obsidian_to_Anki</strong> 社群插件使用。AI 生成的卡片採用 <code>question :: answer</code> 格式，frontmatter 也包含 <code>TARGET DECK</code> 欄位，兩者都與 Obsidian_to_Anki 原生相容。只需安裝 Obsidian_to_Anki + AnkiConnect，在設定中開啟 RemNote style（<code>::</code> 語法），同步後卡片就會自動出現在 Anki 中。</p>
+            <p>部分支援。<code>::</code> 和 <code>{{c1::}}</code> 格式與 Anki 相容，可搭配 <strong>Obsidian_to_Anki</strong> 社群插件使用。只需安裝 Obsidian_to_Anki + AnkiConnect，在設定中開啟 RemNote style（<code>::</code> 語法），同步後卡片就會自動出現在 Anki 中。</p>
+            <p><code>Q:/A:</code> 格式是 EngramQuest 專屬，<strong>不會</strong>同步到 Anki — 它是為多行答案、圖片、表格設計的，這些內容無法直接對應到 Anki 的卡片模型。如果你需要同時在兩邊使用，請改用 <code>::</code> 或 <code>{{c1::}}</code>。</p>
             <p><strong>Q14：AI 產生的 Map 我想放在特定資料夾，怎麼做？</strong></p>
             <p>同樣在 AI 設定檔中加入路徑規則，AI 建立檔案時就會遵守。</p>
             <pre>建立 Quest Map 時，檔案必須存放在 Quest_Map/ 資料夾底下。
@@ -243,13 +248,17 @@ A:
             <p><strong>Step 1: Add a tag to your note (Deck name)</strong></p>
             <p>Add <code>#flashcards/topic</code> anywhere in your note. For example, <code>#flashcards/english</code> creates a Deck named "english".</p>
             <p><strong>Step 2: Write your cards</strong></p>
-            <p>Three formats are supported. The simplest is <code>::</code>:</p>
-            <pre>Pythagorean theorem :: a² + b² = c²
-
-Q: Who proposed the theory of relativity?
+            <p>Three formats are supported. Recommended: <code>Q:/A:</code> (supports multi-line, images, tables):</p>
+            <pre>Q: Who proposed the theory of relativity?
 A: Albert Einstein
 
-{{c1::Spaced repetition}} is the most effective way to learn</pre>
+Q: What is spaced repetition?
+A: Reviewing just before you forget — maximizes retention with minimal time.
+   Each successful recall automatically extends the next review interval.
+
+{{c1::Spaced repetition}} is the most effective way to learn
+
+Pythagorean theorem :: a² + b² = c²</pre>
             <p><strong>Step 3: Start reviewing in Hub</strong></p>
             <p>Click the ribbon icon to open Hub → <strong>Review Deck</strong> → Your new deck is ready!</p>
           `},{icon:"🚀",title:"Get Started AI",tag:"AI Automation",html:`
@@ -365,9 +374,9 @@ A:
 Capitals: France {{c1::Paris}}, Japan {{c2::Tokyo}}</pre>
             <table>
               <tr><th>Format</th><th>Best for</th><th>Syntax</th></tr>
-              <tr><td><code>::</code> Q&amp;A</td><td>Short answers, one line</td><td><code>question :: answer</code></td></tr>
-              <tr><td><code>Q:/A:</code> Q&amp;A</td><td>Multi-line or bullet answers</td><td><code>Q: question</code> → <code>A: answer</code> (answer can start on the next line; multiple lines ok)</td></tr>
+              <tr><td><code>Q:/A:</code> Q&amp;A ⭐</td><td>Recommended. Multi-line, images, tables</td><td><code>Q: question</code> → <code>A: answer</code> (answer can start on the next line; multiple lines ok)</td></tr>
               <tr><td>Cloze</td><td>Fill-in-the-blank, same as Anki</td><td><code>{{c1::answer}}</code> or <code>{{c1::answer::hint}}</code></td></tr>
+              <tr><td><code>::</code> Q&amp;A</td><td>Short answers, one line only</td><td><code>question :: answer</code></td></tr>
             </table>
             <p><strong>Q:/A: boundary rules:</strong></p>
             <ul>
@@ -413,7 +422,8 @@ Write all card questions in formal academic English.</pre>
             <pre>IMPORTANT: When building a Review Deck, every highlighted ==text== must be turned into a review card.</pre>
             <p>Use whatever convention fits your note-taking style — the AI will follow it consistently.</p>
             <p><strong>Q13. Does EngramQuest support Anki?</strong></p>
-            <p>Yes. Pair it with the <strong>Obsidian_to_Anki</strong> community plugin. AI-generated cards use the <code>question :: answer</code> format and include a <code>TARGET DECK</code> field in the frontmatter — both are natively compatible with Obsidian_to_Anki. Install Obsidian_to_Anki + AnkiConnect, enable RemNote-style (<code>::</code>) syntax in its settings, and sync. Your cards will appear in Anki automatically.</p>
+            <p>Partially. The <code>::</code> and <code>{{c1::}}</code> formats are Anki-compatible. Pair them with the <strong>Obsidian_to_Anki</strong> community plugin — install Obsidian_to_Anki + AnkiConnect, enable RemNote-style (<code>::</code>) syntax in its settings, and sync. Your cards will appear in Anki automatically.</p>
+            <p>The <code>Q:/A:</code> format is EngramQuest-native and does <strong>not</strong> sync to Anki — it's designed for rich multi-line answers, images, and tables that don't map cleanly to Anki's card model. Use <code>::</code> or <code>{{c1::}}</code> for cards you want in both places.</p>
             <p><strong>Q14. I want AI-generated maps saved to a specific folder. How?</strong></p>
             <p>Add a path rule to your AI config files and AI will respect it when creating files.</p>
             <pre>All Quest Maps must be saved under the Quest_Map/ folder.
