@@ -89,10 +89,13 @@ function createInstaller() {
     for (const moduleDefinition of MODULES) {
       const targetRoot = joinPath(toolTarget.baseDir, `engram-quest-${moduleDefinition.id}`);
       for (const asset of MODULE_ASSETS[moduleDefinition.id] || []) {
-        entries.push({
-          path: joinPath(targetRoot, asset.target),
-          content: await readBundledSkill(adapter, asset.source)
-        });
+        let content = await readBundledSkill(adapter, asset.source);
+        if (asset.target === "SKILL.md") {
+          // Rewrite `bash scripts/` → `bash {targetRoot}/scripts/` so the path resolves
+          // correctly when CWD is the vault root (not the skill directory).
+          content = content.replace(/\bbash scripts\//g, `bash ${targetRoot}/scripts/`);
+        }
+        entries.push({ path: joinPath(targetRoot, asset.target), content });
       }
     }
     return entries;
