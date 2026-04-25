@@ -168,7 +168,11 @@ async function scanReviewDecks(app, settings, reviewHelpers) {
       let total = deck.cards.length;
       return { ...deck, due, unseen, total };
     })
-    .sort((left, right) => right.due - left.due || right.total - left.total);
+    .sort((left, right) => {
+      const leftReady = left.due + left.unseen;
+      const rightReady = right.due + right.unseen;
+      return rightReady - leftReady || right.total - left.total;
+    });
 }
 
 module.exports = {
