@@ -125,6 +125,23 @@ function postProcessEmbed(el,app,notePath){
   });
 }
 
+function attachImgZoom(el){
+  el.querySelectorAll("img").forEach(img=>{
+    if(img.dataset.eqZoom)return;
+    img.dataset.eqZoom="1";
+    img.classList.add("eq-zoomable");
+    img.addEventListener("click",e=>{
+      e.stopPropagation();
+      const lb=document.body.createEl("div",{attr:{class:"eq-lightbox"}});
+      const close=lb.createEl("button",{attr:{class:"eq-lightbox-close"},text:"✕"});
+      lb.createEl("img",{attr:{src:img.src,alt:img.alt||""}});
+      const dismiss=()=>lb.remove();
+      lb.addEventListener("click",dismiss);
+      close.addEventListener("click",dismiss);
+    });
+  });
+}
+
 var Q=class extends I.Modal{
   constructor(e,t,r,s,l,a={}){
     super(e);
@@ -267,6 +284,7 @@ var Q=class extends I.Modal{
     let qEl=i.createEl("div",{attr:{class:"lh-rc-question"}});
     I.MarkdownRenderer.renderMarkdown(e.front||"",qEl,e.notePath||"",null);
     postProcessEmbed(qEl,this.app,e.notePath||"");
+    attachImgZoom(qEl);
 
     // Hints
     let f=[{key:"hint_l1",cls:"lh-hint-l1",label:"L1 · Active Recall"},{key:"hint_l2",cls:"lh-hint-l2",label:"L2 · Contextual Anchor"},{key:"hint_l3",cls:"lh-hint-l3",label:"L3 · Narrowing Hint"}];
@@ -276,6 +294,7 @@ var Q=class extends I.Modal{
       let hintEl=E.createEl("div",{attr:{class:"lh-hint-text"}});
       I.MarkdownRenderer.renderMarkdown(e[g.key]||C("NO_HINT",t),hintEl,e.notePath||"",null);
       postProcessEmbed(hintEl,this.app,e.notePath||"");
+      attachImgZoom(hintEl);
     }
 
     // Answer block
@@ -285,6 +304,7 @@ var Q=class extends I.Modal{
       let answerEl=p.createEl("div",{attr:{class:"lh-answer-text"}});
       I.MarkdownRenderer.renderMarkdown(e.back||"",answerEl,e.notePath||"",null);
       postProcessEmbed(answerEl,this.app,e.notePath||"");
+      attachImgZoom(answerEl);
       this.browseOnly&&i.createEl("div",{text:c(t,"BROWSE_NOTE"),attr:{class:"lh-browse-note"}});
     }
 

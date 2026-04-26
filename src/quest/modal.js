@@ -3,6 +3,23 @@
 const obsidian = require("obsidian");
 const { resolveImageOcclusionRect } = require("./helpers");
 
+function attachImgZoom(el){
+  el.querySelectorAll("img").forEach(img=>{
+    if(img.dataset.eqZoom)return;
+    img.dataset.eqZoom="1";
+    img.classList.add("eq-zoomable");
+    img.addEventListener("click",e=>{
+      e.stopPropagation();
+      const lb=document.body.createEl("div",{attr:{class:"eq-lightbox"}});
+      const close=lb.createEl("button",{attr:{class:"eq-lightbox-close"},text:"✕"});
+      lb.createEl("img",{attr:{src:img.src,alt:img.alt||""}});
+      const dismiss=()=>lb.remove();
+      lb.addEventListener("click",dismiss);
+      close.addEventListener("click",dismiss);
+    });
+  });
+}
+
 function isZh(deps, settings) {
   return deps.getLanguage(settings) === "zh-tw";
 }
@@ -1116,6 +1133,10 @@ function openQuestChapterModal(app, nodes, activeIndex, styleName, difficulty, s
           showComplete();
         }
       }, settings, app, sourcePath, deps, gameState);
+      // attach zoom after challenge renders (skip occlusion — it has its own reveal mechanic)
+      if (node.challenge.type !== "image-occlusion") {
+        attachImgZoom(content);
+      }
     }
 
     let footer = content.createEl("div", { attr: { style: "display:flex;align-items:center;justify-content:space-between;border-top:1px solid var(--background-modifier-border);padding-top:20px;margin-top:28px" } });
