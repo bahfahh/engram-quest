@@ -12,9 +12,10 @@ function attachImgZoom(el){
       e.stopPropagation();
       const lb=document.body.createEl("div",{attr:{class:"eq-lightbox"}});
       const close=lb.createEl("button",{attr:{class:"eq-lightbox-close"},text:"✕"});
-      lb.createEl("img",{attr:{src:img.src,alt:img.alt||""}});
+      const lbImg=lb.createEl("img",{attr:{src:img.src,alt:img.alt||""}});
       const dismiss=()=>lb.remove();
       lb.addEventListener("click",dismiss);
+      lbImg.addEventListener("click",e2=>e2.stopPropagation());
       close.addEventListener("click",dismiss);
     });
   });
