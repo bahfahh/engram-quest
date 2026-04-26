@@ -138,8 +138,8 @@ CRITICAL: Follow these steps in order. Do not skip any step.
        - Default format: `question :: answer` (single line, plain text)
        - If the question OR answer contains code snippets, use `Q:/A:` multi-line format and wrap code in fenced code blocks with the appropriate language tag. Example:
          ```
-         Q: 以下哪種寫法才是真正並行？
-         A: 寫法 B 是並行，因為兩個 Task 同時啟動：
+         Q: Which approach is truly parallel?
+         A: Approach B is parallel because both tasks start simultaneously:
          ```csharp
          var sqlTask = RunSql(...);
          var vectorTask = context.CallActivity(...);

@@ -40,7 +40,7 @@ Parse the user's command for a tag or topic:
 ```
 /macro-review tag:azure
 /macro-review azure-ai
-幫我學完 azure 的卡片
+learn all azure cards
 ```
 
 Find relevant notes using this priority.
@@ -77,7 +77,7 @@ Show a clear header:
 
 ```
 ---
-## 群組 X／Y：{Note Title}（{N} 張卡）
+## Group X/Y: {Note Title} ({N} cards)
 ```
 
 ### 2b. Teach the concepts
@@ -98,12 +98,12 @@ Number them so the user can reference them in option 4.
 Always use this exact numbered format:
 
 ```
-這群組你的掌握感如何？
+How well did you grasp this group?
 
-1. ✅ 懂了（Good）
-2. 🤔 大概（Hard）
-3. ❌ 很陌生（Again）
-4. ❓ 繼續解釋，我不懂第 [N] 張
+1. ✅ Got it (Good)
+2. 🤔 Roughly (Hard)
+3. ❌ Unfamiliar (Again)
+4. ❓ Explain more — I don't understand card [N]
 ```
 
 Wait for the user to reply before proceeding to the next group.
@@ -112,39 +112,39 @@ Wait for the user to reply before proceeding to the next group.
 
 ## Step 3: Handle Each Rating
 
-### If user picks 1 / "懂了" / Good
+### If user picks 1 / "Got it" / Good
 
 Apply **Good** rating to all cards in this group. Then say:
 
 ```
-✅ 已更新 {N} 張卡片的 review-deck 記憶紀錄
-   狀態：灰色（未學習）→ 藍色（學習中）
-   下次複習：明天（FSRS 將根據你的回答繼續調整）
+✅ Updated {N} cards in review-deck
+   Status: grey (unseen) → blue (learning)
+   Next review: tomorrow (FSRS will adjust based on your answers)
 ```
 
 Then immediately move to the next group.
 
-### If user picks 2 / "大概" / Hard
+### If user picks 2 / "Roughly" / Hard
 
 Apply **Hard** rating to all cards. Then say:
 
 ```
-🤔 已更新 {N} 張卡片的 review-deck 記憶紀錄
-   狀態：灰色（未學習）→ 藍色（學習中，較快複習）
-   下次複習：明天（Hard 排程，下次會更快出現）
+🤔 Updated {N} cards in review-deck
+   Status: grey (unseen) → blue (learning, shorter interval)
+   Next review: tomorrow (Hard schedule — will appear sooner)
 ```
 
-### If user picks 3 / "很陌生" / Again
+### If user picks 3 / "Unfamiliar" / Again
 
 Apply **Again** rating to all cards. Then say:
 
 ```
-❌ 已更新 {N} 張卡片的 review-deck 記憶紀錄
-   狀態：灰色（未學習）→ 藍色（學習中，明天需要再學一次）
-   建議：明天再跑一次這個群組的 Macro Review
+❌ Updated {N} cards in review-deck
+   Status: grey (unseen) → blue (learning, review again tomorrow)
+   Tip: run Macro Review on this group again tomorrow
 ```
 
-### If user picks 4 / "不懂第 N 張"
+### If user picks 4 / "Explain card N"
 
 Re-explain **only that specific card** with:
 - A different angle or analogy
@@ -200,15 +200,15 @@ After all groups are done, show a summary:
 
 ```
 ---
-## ✅ Macro Review 完成
+## ✅ Macro Review Complete
 
-| 群組 | 筆記 | 卡數 | 評分 |
-|------|------|------|------|
-| 1 | Azure OpenAI Service | 7 張 | ✅ Good |
-| 2 | Azure AI Services | 7 張 | 🤔 Hard |
+| Group | Note | Cards | Rating |
+|-------|------|-------|--------|
+| 1 | Azure OpenAI Service | 7 | ✅ Good |
+| 2 | Azure AI Services | 7 | 🤔 Hard |
 
-**共更新 14 張卡片的 review-deck 記憶紀錄**
-打開 EngramQuest plugin，灰色卡片已全部消失。
+**Updated 14 cards in review-deck**
+Open the EngramQuest plugin — all grey cards are gone.
 ```
 
 ---

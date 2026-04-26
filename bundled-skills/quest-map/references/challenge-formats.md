@@ -236,8 +236,8 @@ Fill-in-the-blank within a sentence.
 ```yaml
 challenge:
   type: cloze
-  sentence: Azure 版資料不會用於 {{c1::訓練}}
-  answers: [訓練]
+  sentence: Azure data is never used for {{c1::training}}
+  answers: [training]
   reveal_answer: true
   hint: Optional hint
   link: relative/path/to/source.md

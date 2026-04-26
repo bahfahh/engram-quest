@@ -328,10 +328,10 @@ Ask: "If this image is shown, does the question require the learner to retrieve 
 
 **Step 3 — Question design**
 
-The question must test understanding, not just label recognition. "這是什麼？" alone is not enough.
+The question must test understanding, not just label recognition. "What is this?" alone is not enough.
 
 Good: "What is the responsibility of this component?" / "Why is X used here instead of Y?" / "What is the output of this step?"
-Bad: "What is this hidden node?"
+Bad: "What is this?" (no understanding required)
 
 **Fallback rule (mandatory)**
 
@@ -380,7 +380,7 @@ nodes:
         body: Fixed cost, always on, no time limit.
 
   - id: round1
-    title: 知識拍賣場
+    title: Knowledge Auction
     emoji: 🪙
     challenge:
       type: auction
@@ -399,7 +399,7 @@ nodes:
 
   - id: boss
     boss: true
-    title: 節點連鎖爆破
+    title: Chain Reaction Boss
     emoji: 💥
     challenge:
       type: chain
