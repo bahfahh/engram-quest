@@ -147,7 +147,24 @@ Minimum questions per round by type:
    - **The node before the boss round must be a recap lesson** summarizing the whole quest.
    - CRITICAL: at least 2 different challenge types across the quest. Do NOT use quiz for everything.
 5. Choose challenge type based on difficulty, source material, and the Challenge Type Selection table.
-6. **Image challenges**: when a note image is worth testing, use `image-quiz` (all models). Only Gemini may use `image-occlusion` — and if doing so, run `scripts/occlusion_measure.py <image_path>` first to get accurate text bbox coordinates. If the script is unavailable (no Python/pytesseract), fall back to `image-quiz`.
+6. **Image challenges** — follow this workflow whenever the source note may contain images:
+   1. **Find images**: scan the source note content for `![[...]]` or `![](...)` embeds. Also check linked notes discovered in step 2.
+   2. **Read each image**: use your vision capability to read and understand the image content — identify what the diagram shows, what labels are present, what relationships are depicted.
+   3. **Apply the Image Challenge Selection Rules** (see below) to decide if the image is worth testing.
+   4. **Generate the challenge**: use `type: image-quiz` with the vault-relative image path. Write a question that requires having seen the image — not answerable from text alone.
+      - If the image has clear labeled components → use `options` mode (quiz buttons)
+      - If the answer is a specific term to recall → use `keywords` mode (text input)
+   5. **Model gate**: all models use `image-quiz`. Only Gemini may use `image-occlusion` — and only after running `scripts/occlusion_measure.py <image_path>` for accurate bbox. If unavailable, fall back to `image-quiz`.
+
+   Example: source note has `![[azure-architecture.png]]` → read the image → identify key components → generate:
+   ```yaml
+   challenge:
+     type: image-quiz
+     image: azure-architecture.png
+     question: Which component in this diagram acts as the entry point for all client requests?
+     options: [Azure SQL, API Management, Service Bus, Cosmos DB]
+     answer: 1
+   ```
 7. Add frontmatter tags when the topic has clear semantic tags.
 8. Save the output using the appropriate method:
    - **Embedding in an existing note**: append the `quest-map` code block directly into that note. The plugin detects any `.md` file containing a ` ```quest-map ` block — no filename constraint applies.
