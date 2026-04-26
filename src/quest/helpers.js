@@ -266,7 +266,15 @@ function resolveQuestPath(app, path, sourcePath) {
   if (exactMatch) return exactMatch;
 
   if (sourcePath && app.metadataCache && typeof app.metadataCache.getFirstLinkpathDest === "function") {
-    return app.metadataCache.getFirstLinkpathDest(targetPath, sourcePath) || null;
+    let linked = app.metadataCache.getFirstLinkpathDest(targetPath, sourcePath) || null;
+    if (linked) return linked;
+  }
+
+  // Fallback: search by basename so moved files/folders are still found
+  let basename = targetPath.split("/").pop();
+  if (basename && typeof app.vault.getFiles === "function") {
+    let match = app.vault.getFiles().find(f => f.name === basename || f.path.endsWith("/" + basename));
+    if (match) return match;
   }
 
   return null;
