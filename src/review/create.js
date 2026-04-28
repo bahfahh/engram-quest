@@ -25,16 +25,21 @@ async function appendManualCard(adapter, deckName, front, back) {
   const filePath = `${dir}/${safeFileName}-manual.md`;
   await ensureManualCardDirs(adapter);
 
-  const line = `${front} :: ${back}`;
+  // Use Q:/A: format for multi-line answers; :: for single-line
+  const isMultiLine = back.includes("\n");
+  const cardText = isMultiLine
+    ? `Q: ${front}\nA: ${back}\n\n`
+    : `${front} :: ${back}\n`;
+
   if (await adapter.exists(filePath)) {
     const existing = await adapter.read(filePath);
     const sep = existing.endsWith("\n") ? "" : "\n";
-    await adapter.write(filePath, existing + sep + line + "\n");
+    await adapter.write(filePath, existing + sep + cardText);
   } else {
     // New file: add flashcard tag so it gets picked up by scanReviewDecks
     // deckName is already the full tag path (e.g. "flashcards/system-design/strategic")
     const prefix = `#${deckName}\n\n`;
-    await adapter.write(filePath, prefix + line + "\n");
+    await adapter.write(filePath, prefix + cardText);
   }
 }
 
