@@ -454,6 +454,18 @@ var Q=class extends I.Modal{
               else if(_st.lastReviewDate===_yest){_st.currentStreak=(_st.currentStreak||1)+1;_st.longestStreak=Math.max(_st.longestStreak||0,_st.currentStreak);}
               else{_st.currentStreak=1;}
               _st.lastReviewDate=_today;
+              
+              if(E.q === 1) {
+                _st.totalAgainCount = (_st.totalAgainCount || 0) + 1;
+                this._perfectStreak = 0;
+              } else {
+                this._perfectStreak = (this._perfectStreak || 0) + 1;
+                if (this._perfectStreak >= 20 && !this._perfectSessionAwarded) {
+                  _st.perfectSessions = (_st.perfectSessions || 0) + 1;
+                  this._perfectSessionAwarded = true;
+                }
+              }
+
               this.plugin.settings._stats=_st;
               this.plugin.saveData(this.plugin.settings);
             } catch(_se){console.error('achievement stats failed',_se);}
