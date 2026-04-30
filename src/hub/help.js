@@ -199,7 +199,16 @@ A:
               <li>答案裡有一個空行沒關係，會繼續收集</li>
               <li><strong>連續兩個空行</strong>代表卡片結束</li>
               <li>遇到下一個 <code>Q:</code> 或 Cloze 行也會自動結束</li>
-              <li><strong>Fenced 模式：</strong>前後各加一行 <code>---</code> 包住，裡面不管幾個空行都不會截斷 — 適合貼上 ChatGPT / AI 的長答案</li>
+              <li><strong>Fenced 模式：</strong>前後各加一行 <code>---</code> 包住，裡面不管幾個空行都不會截斷 — 適合貼上 ChatGPT / AI 的長答案：<pre>---
+Q: Stripe 的核心模型是什麼？
+A: Stripe 本質是一個 Saga System。
+
+   它處理：
+   - payment_intent 狀態機
+   - retry / failure handling
+
+   你只要「接結果」。
+---</pre></li>
             </ul>
             <p><strong>Cloze 補充說明：</strong></p>
             <ul>
@@ -387,7 +396,16 @@ Capitals: France {{c1::Paris}}, Japan {{c2::Tokyo}}</pre>
               <li>A single blank line inside the answer is fine; collection continues</li>
               <li><strong>Two consecutive blank lines</strong> end the card</li>
               <li>The next <code>Q:</code> line or a Cloze line also ends the answer automatically</li>
-              <li><strong>Fenced mode:</strong> wrap the card with <code>---</code> on its own line before and after — any number of blank lines inside are safe. Ideal for pasting ChatGPT / AI answers.</li>
+              <li><strong>Fenced mode:</strong> wrap the card with <code>---</code> on its own line before and after — any number of blank lines inside are safe. Ideal for pasting ChatGPT / AI answers:<pre>---
+Q: What is Stripe's core model?
+A: Stripe is essentially a Saga System.
+
+   It handles:
+   - payment_intent state machine
+   - retry / failure handling
+
+   You only receive the result.
+---</pre></li>
             </ul>
             <p><strong>Cloze notes:</strong></p>
             <ul>
