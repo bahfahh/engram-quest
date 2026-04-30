@@ -32,6 +32,19 @@ A: The architecture of a microservice system.
    - Service mesh
    - Message queue
 
+---
+Q: What is Stripe's core model?
+A: Stripe is essentially a Saga system.
+   It handles:
+
+   - payment_intent state machine
+   - retry / failure handling
+   - fund consistency
+   - webhook events
+
+   You only receive the result.
+---
+
 {{c1::Calculus}} is built on limits, derivatives, and integrals
 Capitals: France {{c1::Paris}}, Japan {{c2::Tokyo}}
 
@@ -41,6 +54,7 @@ Pythagorean theorem :: a² + b² = c²
 | Format | Best for | Syntax |
 |---|---|---|
 | `Q:/A:` Q&A ⭐ | **Recommended.** Multi-line answers, images, tables, code blocks | `Q: question` → `A:` (answer can span multiple lines; single blank line within answer is ok; **two blank lines** end the card) |
+| `Q:/A:` fenced ⭐ | Long answers with many blank lines (e.g. pasted AI output) | Wrap with `---` on its own line before and after — blank lines inside are never treated as card boundaries |
 | `{{c1::}}` Cloze | Fill-in-the-blank, Anki-compatible | `{{c1::answer}}` or `{{c1::answer::hint}}` |
 | `::` Q&A | Quick one-liners only — answer must fit on a single line | `question :: answer` |
 
@@ -75,6 +89,7 @@ Scientific long-term memory powered by the **FSRS Algorithm**.
 ![Review Deck Demo](assets/review-deck-demo.png)
 - **Three card formats:** `Q:/A:` multi-line (recommended), `{{c1::}}` Cloze (Anki-compatible), and `::` one-liner — freely mixable in one note
 - **Multi-line Q&A (`Q:/A:`):** Both question and answer support multiple lines, embedded images, tables, and code blocks. A single blank line within a card is fine — two blank lines end the card.
+- **Fenced Q&A (`Q:/A:` wrapped in `---`):** Wrap a card with `---` on its own line before and after. Blank lines inside are never treated as card boundaries — ideal for pasting long AI-generated answers.
 - **Image support:** Embed `![[image.png]]` or `![](path)` directly in `Q:/A:` or `::` cards — images render in the review session
 - **Auto-detection:** Scans any note tagged with `#flashcards/topic` — write cards wherever it fits your workflow
 - **Notes stay clean:** Cards and scheduling data live in `engram-review/` — your original markdown is never modified
@@ -173,6 +188,7 @@ A: 在快忘記時複習，可以用最少時間達到最高記憶保留率。
 | 格式 | 適合 | 寫法 |
 |---|---|---|
 | `Q:/A:` 問答 ⭐ | **推薦。** 多行答案、圖片、表格、程式碼區塊 | `Q: 問題` → `A:` 後可空（答案從下行開始）；答案裡一個空行沒問題；**兩個連續空行**代表卡片結束 |
+| `Q:/A:` fenced ⭐ | 答案有很多空行（例如貼上 AI 輸出） | 前後各加一行 `---` 包住 — 裡面的空行永遠不會被當成卡片邊界 |
 | `{{c1::}}` 填空 | 填空記憶，Anki 相容語法 | `{{c1::答案}}` 或 `{{c1::答案::提示}}` |
 | `::` 問答 | 簡短答案，僅限一行 | `問題 :: 答案` |
 
@@ -207,6 +223,7 @@ A: 微服務系統的架構圖。
 ![複習卡片展示](assets/review-deck-demo.png)
 - **三種卡片格式：** `Q:/A:` 多行問答（推薦）、`{{c1::}}` Cloze 填空（Anki 相容）、`::` 一行問答 — 可在同一篇筆記自由混用
 - **多行問答（`Q:/A:`）：** 問題和答案都支援多行、嵌入圖片、表格和程式碼區塊。答案裡一個空行沒問題；兩個連續空行代表卡片結束
+- **Fenced 問答（`Q:/A:` 用 `---` 包住）：** 前後各加一行 `---` 包住卡片。裡面的空行永遠不會被當成卡片邊界 — 適合貼上 AI 生成的長答案
 - **圖片支援：** 在 `Q:/A:` 或 `::` 卡片中嵌入 `![[image.png]]` 或 `![](path)` — 圖片直接顯示在複習卡片中
 - **自動偵測：** 任何帶有 `#flashcards/主題` tag 的筆記都會被掃描，卡片寫在哪裡都能偵測到
 - **筆記永遠不被修改：** 卡片與排程資料存在 `engram-review/`，原始 markdown 完全不動

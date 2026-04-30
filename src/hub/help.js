@@ -189,6 +189,7 @@ A:
             <table>
               <tr><th>格式</th><th>適合</th><th>寫法</th></tr>
               <tr><td><code>Q:/A:</code> 問答 ⭐</td><td>推薦。多行答案、圖片、表格</td><td><code>Q: 問題</code> 換行 <code>A: 答案</code>（答案可以從下一行開始，可有多行）</td></tr>
+              <tr><td><code>Q:/A:</code> fenced ⭐</td><td>答案有很多空行（例如貼上 AI 輸出）</td><td>前後各加一行 <code>---</code> 包住卡片，裡面的空行永遠不會被當成卡片邊界</td></tr>
               <tr><td>Cloze 填空</td><td>填空記憶，同 Anki 語法</td><td><code>{{c1::答案}}</code> 或 <code>{{c1::答案::提示}}</code></td></tr>
               <tr><td><code>::</code> 問答</td><td>簡短答案，僅限一行</td><td><code>問題 :: 答案</code></td></tr>
             </table>
@@ -198,6 +199,7 @@ A:
               <li>答案裡有一個空行沒關係，會繼續收集</li>
               <li><strong>連續兩個空行</strong>代表卡片結束</li>
               <li>遇到下一個 <code>Q:</code> 或 Cloze 行也會自動結束</li>
+              <li><strong>Fenced 模式：</strong>前後各加一行 <code>---</code> 包住，裡面不管幾個空行都不會截斷 — 適合貼上 ChatGPT / AI 的長答案</li>
             </ul>
             <p><strong>Cloze 補充說明：</strong></p>
             <ul>
@@ -375,6 +377,7 @@ Capitals: France {{c1::Paris}}, Japan {{c2::Tokyo}}</pre>
             <table>
               <tr><th>Format</th><th>Best for</th><th>Syntax</th></tr>
               <tr><td><code>Q:/A:</code> Q&amp;A ⭐</td><td>Recommended. Multi-line, images, tables</td><td><code>Q: question</code> → <code>A: answer</code> (answer can start on the next line; multiple lines ok)</td></tr>
+              <tr><td><code>Q:/A:</code> fenced ⭐</td><td>Long answers with many blank lines (e.g. pasted AI output)</td><td>Wrap with <code>---</code> on its own line before and after — blank lines inside never end the card</td></tr>
               <tr><td>Cloze</td><td>Fill-in-the-blank, same as Anki</td><td><code>{{c1::answer}}</code> or <code>{{c1::answer::hint}}</code></td></tr>
               <tr><td><code>::</code> Q&amp;A</td><td>Short answers, one line only</td><td><code>question :: answer</code></td></tr>
             </table>
@@ -384,6 +387,7 @@ Capitals: France {{c1::Paris}}, Japan {{c2::Tokyo}}</pre>
               <li>A single blank line inside the answer is fine; collection continues</li>
               <li><strong>Two consecutive blank lines</strong> end the card</li>
               <li>The next <code>Q:</code> line or a Cloze line also ends the answer automatically</li>
+              <li><strong>Fenced mode:</strong> wrap the card with <code>---</code> on its own line before and after — any number of blank lines inside are safe. Ideal for pasting ChatGPT / AI answers.</li>
             </ul>
             <p><strong>Cloze notes:</strong></p>
             <ul>

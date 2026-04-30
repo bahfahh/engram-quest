@@ -49,6 +49,46 @@ function getReviewStatus(srMeta) {
   return (srMeta.stability ?? srMeta.interval) >= 21 ? "mastered" : "learning";
 }
 
+// Parse Q:/A: cards from a fenced block — blank lines never terminate a card.
+// Only the next Q: line or end-of-block ends the current card.
+function parseFencedQA(text) {
+  const lines = text.split("\n");
+  const cards = [];
+  let i = 0;
+  while (i < lines.length) {
+    const qaMatch = lines[i].match(/^\s*Q:\s*(.+)/i);
+    if (!qaMatch) { i++; continue; }
+
+    // Collect question lines until A:
+    const frontLines = [qaMatch[1]];
+    i++;
+    while (i < lines.length && !/^\s*A:\s*/i.test(lines[i])) {
+      frontLines.push(lines[i]);
+      i++;
+    }
+    while (frontLines.length > 0 && frontLines[frontLines.length - 1].trim() === "") frontLines.pop();
+
+    const aMatch = i < lines.length ? lines[i].match(/^\s*A:\s*(.*)/i) : null;
+    if (!aMatch) continue;
+
+    // Collect answer lines until next Q: or end of block
+    const backLines = [aMatch[1]];
+    i++;
+    while (i < lines.length && !/^\s*Q:\s*/i.test(lines[i])) {
+      backLines.push(lines[i]);
+      i++;
+    }
+    while (backLines.length > 0 && backLines[backLines.length - 1].trim() === "") backLines.pop();
+
+    const front = frontLines.join("\n").trim();
+    const back = backLines.join("\n").trim();
+    if (front && back) {
+      cards.push({ front, back, emoji: "", hint_l1: "", hint_l2: "", hint_l3: "", srMeta: null, srComment: "", notePath: null });
+    }
+  }
+  return cards;
+}
+
 function parseFlashcards(markdown) {
   markdown = markdown.replace(/\r\n/g, "\n");
   let lines = markdown.split("\n");
@@ -57,6 +97,25 @@ function parseFlashcards(markdown) {
 
   for (let index = 0; index < lines.length; index++) {
     let line = lines[index];
+
+    // --- fenced card block: --- \n Q: ... \n A: ... \n ---
+    // Blank lines inside are allowed freely; only closing --- ends the card.
+    if (/^---\s*$/.test(line)) {
+      // Collect lines until closing ---
+      const fencedLines = [];
+      let j = index + 1;
+      while (j < lines.length && !/^---\s*$/.test(lines[j])) {
+        fencedLines.push(lines[j]);
+        j++;
+      }
+      index = j; // skip past closing ---
+
+      // Parse Q:/A: cards within the fenced block (no blank-line termination)
+      const fencedText = fencedLines.join("\n");
+      const fencedCards = parseFencedQA(fencedText);
+      cards.push(...fencedCards);
+      continue;
+    }
 
     // Skip fenced code blocks (``` or ~~~) — match opening/closing pair
     const fenceMatch = /^[ \t]*(`{3,}|~{3,})/.exec(line);
@@ -129,6 +188,7 @@ function parseFlashcards(markdown) {
             continue;
           }
           if (/^\s*Q:\s*/i.test(lines[j])) break;
+          if (/^---\s*$/.test(lines[j])) break; // fenced block boundary
           if (/\{\{c\d+::/.test(lines[j])) break; // cloze card on next line — stop here
           if (lines[j].trim() === "") {
             blankRun++;
