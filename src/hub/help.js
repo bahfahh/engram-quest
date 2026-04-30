@@ -208,7 +208,16 @@ A: Stripe 本質是一個 Saga System。
    - retry / failure handling
 
    你只要「接結果」。
----</pre></li>
+---
+
+---
+Q: 什麼是 Saga 模式？
+A: 一連串的本地交易。
+
+   每個步驟發布一個事件。
+   失敗時，補償交易負責回滾。
+---</pre>
+              <strong>注意：</strong>筆記裡普通的 <code>---</code> 水平線（後面不接 <code>Q:</code>）會自動被忽略，不會誤觸發。</li>
             </ul>
             <p><strong>Cloze 補充說明：</strong></p>
             <ul>
@@ -405,7 +414,16 @@ A: Stripe is essentially a Saga System.
    - retry / failure handling
 
    You only receive the result.
----</pre></li>
+---
+
+---
+Q: What is a Saga pattern?
+A: A sequence of local transactions.
+
+   Each step publishes an event.
+   On failure, compensating transactions roll back.
+---</pre>
+              <strong>Note:</strong> a plain <code>---</code> horizontal rule in your note (not followed by <code>Q:</code>) is automatically ignored — no false triggers.</li>
             </ul>
             <p><strong>Cloze notes:</strong></p>
             <ul>

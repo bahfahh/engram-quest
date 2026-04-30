@@ -45,11 +45,23 @@ A: Stripe is essentially a Saga system.
    You only receive the result.
 ---
 
+---
+Q: What is a Saga pattern?
+A: A sequence of local transactions.
+
+   Each step publishes an event.
+   On failure, compensating transactions roll back.
+
+   Used in: Stripe, Uber, Airbnb.
+---
+
 {{c1::Calculus}} is built on limits, derivatives, and integrals
 Capitals: France {{c1::Paris}}, Japan {{c2::Tokyo}}
 
 Pythagorean theorem :: a² + b² = c²
 ```
+
+> **Tip — fenced cards (`---`):** Use `---` to wrap any card where the answer has multiple blank lines (e.g. pasted AI output). The `---` must be on its own line and the very next non-blank line must be `Q:`. A plain `---` horizontal rule in your note (not followed by `Q:`) is ignored automatically.
 
 | Format | Best for | Syntax |
 |---|---|---|
@@ -88,6 +100,7 @@ Open Hub → Review Deck to see all your cards automatically.
 Scientific long-term memory powered by the **FSRS Algorithm**.
 ![Review Deck Demo](assets/review-deck-demo.png)
 - **Three card formats:** `Q:/A:` multi-line (recommended), `{{c1::}}` Cloze (Anki-compatible), and `::` one-liner — freely mixable in one note
+- **Rich answers:** `Q:/A:` answers support multiple paragraphs, embedded images (`![[img.png]]`), tables, and code blocks — paste long AI output directly without reformatting
 - **Multi-line Q&A (`Q:/A:`):** Both question and answer support multiple lines, embedded images, tables, and code blocks. A single blank line within a card is fine — two blank lines end the card.
 - **Fenced Q&A (`Q:/A:` wrapped in `---`):** Wrap a card with `---` on its own line before and after. Blank lines inside are never treated as card boundaries — ideal for pasting long AI-generated answers.
   ```
@@ -191,11 +204,34 @@ Q: 間隔重複的原理是什麼？
 A: 在快忘記時複習，可以用最少時間達到最高記憶保留率。
    每次成功回想後，下次複習的間隔會自動拉長。
 
+---
+Q: Stripe 的核心模型是什麼？
+A: Stripe 本質是一個 Saga System。
+
+   它處理：
+   - payment_intent 狀態機
+   - retry / failure handling
+
+   你只要「接結果」。
+---
+
+---
+Q: 什麼是 Saga 模式？
+A: 一連串的本地交易。
+
+   每個步驟發布一個事件。
+   失敗時，補償交易負責回滾。
+
+   應用於：Stripe、Uber、Airbnb。
+---
+
 {{c1::間隔重複}} 是最有效的長期記憶方法之一
 法國首都 {{c1::巴黎}}，日本首都 {{c2::東京}}
 
 畢氏定理 :: a² + b² = c²
 ```
+
+> **提示 — fenced 卡片（`---`）：** 用 `---` 包住答案有很多空行的卡片（例如貼上 AI 輸出）。`---` 必須單獨一行，且緊接的下一個非空行必須是 `Q:`。筆記裡普通的 `---` 水平線（後面不接 `Q:`）會自動被忽略。
 
 | 格式 | 適合 | 寫法 |
 |---|---|---|
