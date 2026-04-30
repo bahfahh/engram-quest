@@ -99,8 +99,15 @@ function parseFlashcards(markdown) {
     let line = lines[index];
 
     // --- fenced card block: --- \n Q: ... \n A: ... \n ---
-    // Blank lines inside are allowed freely; only closing --- ends the card.
+    // Only triggers when the --- is followed (possibly after blank lines) by a Q: line.
+    // Plain horizontal rules (--- not followed by Q:) are ignored.
     if (/^---\s*$/.test(line)) {
+      // Peek ahead past blank lines to see if a Q: follows
+      let peek = index + 1;
+      while (peek < lines.length && lines[peek].trim() === "") peek++;
+      if (peek >= lines.length || !/^\s*Q:\s*/i.test(lines[peek])) {
+        continue; // plain horizontal rule — skip
+      }
       // Collect lines until closing ---
       const fencedLines = [];
       let j = index + 1;
