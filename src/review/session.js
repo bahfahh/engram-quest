@@ -524,18 +524,44 @@ var Q=class extends I.Modal{
   _openMemoryMapChooser(candidates){
     const modal=new I.Modal(this.app);
     const isZh=L(this.plugin.settings)==="zh-tw";
-    modal.modalEl.style.cssText="width:min(92vw,460px);padding:0;border-radius:16px;overflow:hidden;";
+    const reasonLabelMap={
+      "same-folder": isZh?"同資料夾":"Same folder",
+      "configured-folder": isZh?"設定資料夾":"Configured folder",
+      "topic-folder": isZh?"同主題":"Same topic",
+      "deck-token": isZh?"同 deck":"Deck match",
+      "file-node": isZh?"關聯節點":"Linked node"
+    };
+    const reasonStyleMap={
+      "same-folder":"background:rgba(34,197,94,0.16);color:#22c55e;border:1px solid rgba(34,197,94,0.28);",
+      "configured-folder":"background:rgba(59,130,246,0.16);color:#60a5fa;border:1px solid rgba(96,165,250,0.28);",
+      "topic-folder":"background:rgba(245,158,11,0.16);color:#f59e0b;border:1px solid rgba(245,158,11,0.28);",
+      "deck-token":"background:rgba(168,85,247,0.16);color:#c084fc;border:1px solid rgba(192,132,252,0.28);",
+      "file-node":"background:rgba(99,102,241,0.16);color:#818cf8;border:1px solid rgba(129,140,248,0.28);"
+    };
+    modal.modalEl.style.cssText="width:min(92vw,620px);padding:0;border-radius:18px;overflow:hidden;background:var(--background-primary,#141722);box-shadow:0 20px 50px rgba(0,0,0,0.35);";
     const wrap=modal.contentEl;
-    wrap.style.cssText="padding:20px;display:flex;flex-direction:column;gap:12px;";
-    wrap.createEl("div",{text:isZh?"選擇 Memory Map":"Select Memory Map",attr:{style:"font-size:16px;font-weight:700;color:var(--text-normal,#111);"}});
+    wrap.style.cssText="padding:24px;display:flex;flex-direction:column;gap:14px;";
+    wrap.createEl("div",{text:isZh?"選擇 Memory Map":"Select Memory Map",attr:{style:"font-size:18px;font-weight:800;color:var(--text-normal,#111);"}});
+    wrap.createEl("div",{text:isZh?"選擇要開啟的地圖":"Choose the map to open",attr:{style:"font-size:12px;color:var(--text-muted,#6b7280);margin-top:-6px;"}});
     candidates.forEach(candidate=>{
-      const btn=wrap.createEl("button",{attr:{style:"display:flex;flex-direction:column;align-items:flex-start;gap:4px;padding:12px 14px;border-radius:12px;border:1px solid var(--background-modifier-border,#d1d5db);background:var(--background-primary,#fff);cursor:pointer;text-align:left;"}});      
-      btn.createEl("div",{text:getBaseName(candidate.path),attr:{style:"font-size:14px;font-weight:700;color:var(--text-normal,#111);"}});
-      btn.createEl("div",{text:candidate.file.parent?.path||candidate.path,attr:{style:"font-size:12px;color:var(--text-muted,#6b7280);"}});
-      candidate.relatedPath&&btn.createEl("div",{text:isZh?`關聯：${getBaseName(candidate.relatedPath)}`:`Related: ${getBaseName(candidate.relatedPath)}`,attr:{style:"font-size:12px;color:#6366f1;"}});
-      btn.addEventListener("click",()=>{modal.close();this.app.workspace.openLinkText(candidate.path,"",false);});
+      const card=wrap.createEl("div",{attr:{style:"display:flex;flex-direction:column;gap:12px;padding:16px 18px;border-radius:16px;border:1px solid rgba(148,163,184,0.18);background:linear-gradient(180deg,rgba(255,255,255,0.035),rgba(255,255,255,0.015));cursor:pointer;transition:transform .12s ease,border-color .12s ease,background .12s ease;outline:none;"}});      
+      card.setAttr("role","button");
+      card.tabIndex=0;
+      card.addEventListener("mouseenter",()=>{card.style.transform="translateY(-1px)";card.style.borderColor="rgba(99,102,241,0.42)";card.style.background="linear-gradient(180deg,rgba(99,102,241,0.10),rgba(255,255,255,0.02))";});
+      card.addEventListener("mouseleave",()=>{card.style.transform="";card.style.borderColor="rgba(148,163,184,0.18)";card.style.background="linear-gradient(180deg,rgba(255,255,255,0.035),rgba(255,255,255,0.015))";});
+      card.addEventListener("focus",()=>{card.style.borderColor="rgba(99,102,241,0.55)";card.style.boxShadow="0 0 0 3px rgba(99,102,241,0.12)";});
+      card.addEventListener("blur",()=>{card.style.borderColor="rgba(148,163,184,0.18)";card.style.boxShadow="";});
+      const topRow=card.createEl("div",{attr:{style:"width:100%;display:flex;align-items:flex-start;justify-content:space-between;gap:12px;"}});
+      topRow.createEl("div",{text:getBaseName(candidate.path),attr:{style:"flex:1 1 auto;min-width:0;font-size:17px;font-weight:800;color:var(--text-normal,#111);line-height:1.35;word-break:break-word;overflow-wrap:anywhere;"}});
+      topRow.createEl("div",{text:reasonLabelMap[candidate.reason]||candidate.reason,attr:{style:`flex:0 0 auto;align-self:flex-start;padding:4px 8px;border-radius:999px;font-size:11px;font-weight:700;white-space:nowrap;${reasonStyleMap[candidate.reason]||"background:rgba(148,163,184,0.16);color:#cbd5e1;border:1px solid rgba(203,213,225,0.24);"}`}});
+      const metaRow=card.createEl("div",{attr:{style:"display:flex;flex-wrap:wrap;gap:8px;width:100%;"}});
+      metaRow.createEl("div",{text:candidate.file.parent?.path||candidate.path,attr:{style:"max-width:100%;padding:5px 10px;border-radius:999px;background:rgba(148,163,184,0.10);color:var(--text-muted,#6b7280);font-size:12px;line-height:1.45;word-break:break-word;overflow-wrap:anywhere;"}});
+      if(candidate.relatedPath) metaRow.createEl("div",{text:isZh?`關聯：${getBaseName(candidate.relatedPath)}`:`Related: ${getBaseName(candidate.relatedPath)}`,attr:{style:"max-width:100%;padding:5px 10px;border-radius:999px;background:rgba(99,102,241,0.14);color:#818cf8;font-size:12px;line-height:1.45;word-break:break-word;overflow-wrap:anywhere;"}});
+      const openCandidate=()=>{modal.close();this.app.workspace.openLinkText(candidate.path,"",false);};
+      card.addEventListener("click",openCandidate);
+      card.addEventListener("keydown",(ev)=>{ if(ev.key==="Enter"||ev.key===" "){ ev.preventDefault(); openCandidate(); } });
     });
-    const closeBtn=wrap.createEl("button",{text:isZh?"取消":"Cancel",attr:{style:"margin-top:4px;padding:8px 12px;border-radius:10px;border:1px solid var(--background-modifier-border,#d1d5db);background:var(--background-secondary,#f8fafc);cursor:pointer;font-size:13px;"}}); 
+    const closeBtn=wrap.createEl("button",{text:isZh?"取消":"Cancel",attr:{style:"margin-top:4px;padding:10px 12px;border-radius:12px;border:1px solid rgba(148,163,184,0.18);background:rgba(148,163,184,0.08);color:var(--text-muted,#6b7280);cursor:pointer;font-size:13px;font-weight:600;"}}); 
     closeBtn.addEventListener("click",()=>modal.close());
     modal.open();
   }
