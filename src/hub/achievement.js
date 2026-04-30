@@ -4,18 +4,32 @@ const { t: c } = require("../i18n");
 const { getReviewStatus } = require("../review/helpers");
 
 const ACHIEVEMENTS = [
-  { id: "first_card",   icon: "assets/icons/first_card.webp",   rarity: "UC",  threshold: 1,   field: "totalCardsReviewed", nameKey: "ACH_FIRST_CARD_NAME",   descKey: "ACH_FIRST_CARD_DESC"   },
-  { id: "ten_cards",    icon: "assets/icons/ten_cards.webp",    rarity: "UC",  threshold: 10,  field: "totalCardsReviewed", nameKey: "ACH_TEN_CARDS_NAME",    descKey: "ACH_TEN_CARDS_DESC"    },
-  { id: "fifty_cards",  icon: "assets/icons/fifty_cards.webp",  rarity: "R",   threshold: 50,  field: "totalCardsReviewed", nameKey: "ACH_FIFTY_CARDS_NAME",  descKey: "ACH_FIFTY_CARDS_DESC"  },
-  { id: "century",      icon: "assets/icons/century.webp",      rarity: "R",   threshold: 100, field: "totalCardsReviewed", nameKey: "ACH_CENTURY_NAME",      descKey: "ACH_CENTURY_DESC"      },
-  { id: "five_hundred", icon: "assets/icons/five_hundred.webp", rarity: "LEG", threshold: 500,  field: "totalCardsReviewed", nameKey: "ACH_FIVE_HUNDRED_NAME",  descKey: "ACH_FIVE_HUNDRED_DESC"  },
-  { id: "one_thousand", icon: "assets/icons/one_thousand.webp", rarity: "LEG", threshold: 1000, field: "totalCardsReviewed", nameKey: "ACH_ONE_THOUSAND_NAME",  descKey: "ACH_ONE_THOUSAND_DESC"  },
-  { id: "two_thousand", icon: "assets/icons/two_thousand.webp", rarity: "LEG", threshold: 2000, field: "totalCardsReviewed", nameKey: "ACH_TWO_THOUSAND_NAME",  descKey: "ACH_TWO_THOUSAND_DESC"  },
-  { id: "streak_3",     icon: "assets/icons/streak_3.webp",     rarity: "UC",  threshold: 3,   field: "currentStreak",      nameKey: "ACH_STREAK_3_NAME",    descKey: "ACH_STREAK_3_DESC"     },
-  { id: "streak_7",     icon: "assets/icons/streak_7.webp",     rarity: "R",   threshold: 7,   field: "currentStreak",      nameKey: "ACH_STREAK_7_NAME",    descKey: "ACH_STREAK_7_DESC"     },
-  { id: "streak_30",    icon: "assets/icons/streak_30.webp",    rarity: "LEG", threshold: 30,  field: "currentStreak",      nameKey: "ACH_STREAK_30_NAME",   descKey: "ACH_STREAK_30_DESC"    },
-  { id: "daily_surge",  icon: "assets/icons/daily_surge.webp",  rarity: "R",   threshold: 30,  field: "dailySurge",         nameKey: "ACH_DAILY_SURGE_NAME", descKey: "ACH_DAILY_SURGE_DESC"  },
-  { id: "master_50",    icon: "assets/icons/master_50.webp",    rarity: "LEG", threshold: 50,  field: "masteredCount",      nameKey: "ACH_MASTER_50_NAME",   descKey: "ACH_MASTER_50_DESC"    },
+  // --- Original 12 ---
+  { id: "first_card",   icon: "assets/icons/first_card.webp",   rarity: "UC",  threshold: 1,    field: "totalCardsReviewed", nameKey: "ACH_FIRST_CARD_NAME",   descKey: "ACH_FIRST_CARD_DESC"   },
+  { id: "ten_cards",    icon: "assets/icons/ten_cards.webp",    rarity: "UC",  threshold: 10,   field: "totalCardsReviewed", nameKey: "ACH_TEN_CARDS_NAME",    descKey: "ACH_TEN_CARDS_DESC"    },
+  { id: "fifty_cards",  icon: "assets/icons/fifty_cards.webp",  rarity: "R",   threshold: 50,   field: "totalCardsReviewed", nameKey: "ACH_FIFTY_CARDS_NAME",  descKey: "ACH_FIFTY_CARDS_DESC"  },
+  { id: "century",      icon: "assets/icons/century.webp",      rarity: "R",   threshold: 100,  field: "totalCardsReviewed", nameKey: "ACH_CENTURY_NAME",      descKey: "ACH_CENTURY_DESC"      },
+  { id: "five_hundred", icon: "assets/icons/five_hundred.webp", rarity: "LEG", threshold: 500,  field: "totalCardsReviewed", nameKey: "ACH_FIVE_HUNDRED_NAME", descKey: "ACH_FIVE_HUNDRED_DESC" },
+  { id: "one_thousand", icon: "assets/icons/one_thousand.webp", rarity: "LEG", threshold: 1000, field: "totalCardsReviewed", nameKey: "ACH_ONE_THOUSAND_NAME", descKey: "ACH_ONE_THOUSAND_DESC" },
+  { id: "two_thousand", icon: "assets/icons/two_thousand.webp", rarity: "LEG", threshold: 2000, field: "totalCardsReviewed", nameKey: "ACH_TWO_THOUSAND_NAME", descKey: "ACH_TWO_THOUSAND_DESC" },
+  { id: "streak_3",     icon: "assets/icons/streak_3.webp",     rarity: "UC",  threshold: 3,    field: "longestStreak",      nameKey: "ACH_STREAK_3_NAME",    descKey: "ACH_STREAK_3_DESC"     },
+  { id: "streak_7",     icon: "assets/icons/streak_7.webp",     rarity: "R",   threshold: 7,    field: "longestStreak",      nameKey: "ACH_STREAK_7_NAME",    descKey: "ACH_STREAK_7_DESC"     },
+  { id: "streak_30",    icon: "assets/icons/streak_30.webp",    rarity: "LEG", threshold: 30,   field: "longestStreak",      nameKey: "ACH_STREAK_30_NAME",   descKey: "ACH_STREAK_30_DESC"    },
+  { id: "daily_surge",  icon: "assets/icons/daily_surge.webp",  rarity: "R",   threshold: 20,   field: "maxDaily",           nameKey: "ACH_DAILY_SURGE_NAME", descKey: "ACH_DAILY_SURGE_DESC"  },
+  { id: "master_50",    icon: "assets/icons/master_50.webp",    rarity: "LEG", threshold: 50,   field: "masteredCards",      nameKey: "ACH_MASTER_50_NAME",   descKey: "ACH_MASTER_50_DESC"    },
+  // --- New 12 ---
+  { id: "four_thousand",    icon: "assets/icons/four_thousand.webp",    rarity: "LEG", threshold: 4000,  field: "totalCardsReviewed", nameKey: "ACH_FOUR_THOUSAND_NAME",    descKey: "ACH_FOUR_THOUSAND_DESC"    },
+  { id: "ten_thousand",     icon: "assets/icons/ten_thousand.webp",     rarity: "LEG", threshold: 10000, field: "totalCardsReviewed", nameKey: "ACH_TEN_THOUSAND_NAME",     descKey: "ACH_TEN_THOUSAND_DESC"     },
+  { id: "streak_100",       icon: "assets/icons/streak_100.webp",       rarity: "LEG", threshold: 100,   field: "longestStreak",      nameKey: "ACH_STREAK_100_NAME",       descKey: "ACH_STREAK_100_DESC"       },
+  { id: "streak_365",       icon: "assets/icons/streak_365.webp",       rarity: "LEG", threshold: 365,   field: "longestStreak",      nameKey: "ACH_STREAK_365_NAME",       descKey: "ACH_STREAK_365_DESC"       },
+  { id: "daily_storm",      icon: "assets/icons/daily_storm.webp",      rarity: "LEG", threshold: 100,   field: "maxDaily",           nameKey: "ACH_DAILY_STORM_NAME",      descKey: "ACH_DAILY_STORM_DESC"      },
+  { id: "master_200",       icon: "assets/icons/master_200.webp",       rarity: "LEG", threshold: 200,   field: "masteredCards",      nameKey: "ACH_MASTER_200_NAME",       descKey: "ACH_MASTER_200_DESC"       },
+  { id: "first_memory_map", icon: "assets/icons/first_memory_map.webp", rarity: "R",   threshold: 1,     field: "memoryMapCount",     nameKey: "ACH_FIRST_MEMORY_MAP_NAME", descKey: "ACH_FIRST_MEMORY_MAP_DESC" },
+  { id: "first_quest_map",  icon: "assets/icons/first_quest_map.webp",  rarity: "R",   threshold: 1,     field: "questMapCount",      nameKey: "ACH_FIRST_QUEST_MAP_NAME",  descKey: "ACH_FIRST_QUEST_MAP_DESC"  },
+  { id: "quest_cleared",    icon: "assets/icons/quest_cleared.webp",    rarity: "LEG", threshold: 1,     field: "clearedQuestCount",  nameKey: "ACH_QUEST_CLEARED_NAME",    descKey: "ACH_QUEST_CLEARED_DESC"    },
+  { id: "multiple_decks",   icon: "assets/icons/multiple_decks.webp",   rarity: "R",   threshold: 3,     field: "deckCount",          nameKey: "ACH_MULTIPLE_DECKS_NAME",   descKey: "ACH_MULTIPLE_DECKS_DESC"   },
+  { id: "perfect_session",  icon: "assets/icons/perfect_session.webp",  rarity: "LEG", threshold: 1,     field: "perfectSessions",    nameKey: "ACH_PERFECT_SESSION_NAME",  descKey: "ACH_PERFECT_SESSION_DESC"  },
+  { id: "hundred_again",    icon: "assets/icons/hundred_again.webp",    rarity: "R",   threshold: 100,   field: "totalAgainCount",    nameKey: "ACH_HUNDRED_AGAIN_NAME",    descKey: "ACH_HUNDRED_AGAIN_DESC"    },
 ];
 
 const RARITY_DARK = {
@@ -165,21 +179,30 @@ function renderActivitySection(container, dailyLog, t, activePeriod, globalTotal
   });
 }
 
-function openAchievementDetail(app, plugin, ach, evalCtx, decks, stats) {
-  const t = plugin.settings;
-  const val = evalCtx[ach.field] || 0;
+function openAchievementDetail(app, plugin, ach, val, settings, decks, quests, memories) {
+  const t = settings;
   const isUnlocked = val >= ach.threshold;
   const progress = Math.min(1, val / ach.threshold);
-  const rs = RARITY[ach.rarity];
+  const isDark = document.body.classList.contains("theme-dark");
+  const rs = (isDark ? RARITY_DARK : RARITY_LIGHT)[ach.rarity] || RARITY_DARK.UC;
   const rarityColors = { UC: "#6b7280", R: "#3b82f6", LEG: "#d97706" };
 
+  // Theme tokens
+  const modalBg      = isDark ? "#0f111a" : "#ffffff";
+  const textPrimary  = isDark ? "#fff"    : "#1e293b";
+  const textSecondary= isDark ? "rgba(255,255,255,0.6)" : "#64748b";
+  const textProgress = isDark ? "rgba(255,255,255,0.7)" : "#374151";
+  const borderHero   = isDark ? "rgba(255,255,255,0.08)": "#e5e7eb";
+  const barBgColor   = isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.08)";
+  const lockedFilter = isDark ? "filter:grayscale(1) brightness(0.4);" : "filter:grayscale(1) brightness(0.7) opacity(0.5);";
+
   const modal = new I.Modal(app);
-  modal.modalEl.style.cssText = "width:min(92vw,480px);padding:0;border-radius:20px;overflow:hidden;background:#0f111a;";
+  modal.modalEl.style.cssText = `width:min(92vw,480px);padding:0;border-radius:20px;overflow:hidden;background:${modalBg};`;
   const el = modal.contentEl;
-  el.style.cssText = "padding:0;background:#0f111a;color:#fff;";
+  el.style.cssText = `padding:0;background:${modalBg};color:${textPrimary};`;
 
   // ── Header hero ──
-  const hero = el.createEl("div", { attr: { style: `background:${rs.bg};padding:28px 24px 20px;text-align:center;position:relative;border-bottom:1px solid rgba(255,255,255,0.08);` } });
+  const hero = el.createEl("div", { attr: { style: `background:${rs.bg};padding:28px 24px 20px;text-align:center;position:relative;border-bottom:1px solid ${borderHero};` } });
   // Rarity badge
   hero.createEl("div", { text: ach.rarity, attr: { style: `display:inline-block;background:${rarityColors[ach.rarity]};color:#fff;font-size:10px;font-weight:800;padding:2px 10px;border-radius:99px;letter-spacing:.06em;margin-bottom:12px;` } });
   // Icon
@@ -188,128 +211,69 @@ function openAchievementDetail(app, plugin, ach, evalCtx, decks, stats) {
     iconWrap.createEl("div", { attr: { style: `position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:110px;height:110px;border-radius:50%;background:radial-gradient(circle,${rs.ring} 0%,transparent 70%);box-shadow:0 0 30px ${rs.glow};pointer-events:none;` } });
   }
   const iconSrc = plugin.app.vault.adapter.getResourcePath
-    ? plugin.app.vault.adapter.getResourcePath(".obsidian/plugins/engram-quest/" + ach.icon)
+    ? plugin.app.vault.adapter.getResourcePath(plugin.app.vault.configDir + "/plugins/engram-quest/" + ach.icon)
     : ach.icon;
-  const img = iconWrap.createEl("img", { attr: { src: iconSrc, width: "96", height: "96", style: `object-fit:contain;display:block;position:relative;z-index:1;${isUnlocked ? "" : "filter:grayscale(1) brightness(0.4);"}` } });
+  const img = iconWrap.createEl("img", { attr: { src: iconSrc, width: "96", height: "96", style: `object-fit:contain;display:block;position:relative;z-index:1;${isUnlocked ? "" : lockedFilter}` } });
   img.onerror = () => { iconWrap.empty(); iconWrap.createEl("div", { text: "🏆", attr: { style: "font-size:64px;line-height:1;" } }); };
-  hero.createEl("div", { text: c(t, ach.nameKey), attr: { style: "font-size:18px;font-weight:800;color:#fff;margin-bottom:4px;" } });
-  hero.createEl("div", { text: c(t, ach.descKey), attr: { style: "font-size:12px;color:rgba(255,255,255,0.6);line-height:1.5;" } });
+  hero.createEl("div", { text: c(t, ach.nameKey), attr: { style: `font-size:18px;font-weight:800;color:${textPrimary};margin-bottom:4px;` } });
+  hero.createEl("div", { text: c(t, ach.descKey), attr: { style: `font-size:12px;color:${textSecondary};line-height:1.5;` } });
 
   // ── Progress ──
   const progSec = el.createEl("div", { attr: { style: "padding:16px 20px 0;" } });
   const progRow = progSec.createEl("div", { attr: { style: "display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;" } });
   progRow.createEl("span", { text: isUnlocked ? "✓ Unlocked" : "Progress", attr: { style: `font-size:11px;font-weight:700;color:${isUnlocked ? rs.badge : "#9ca3af"};` } });
-  progRow.createEl("span", { text: `${val} / ${ach.threshold}`, attr: { style: "font-size:12px;font-weight:700;color:rgba(255,255,255,0.7);" } });
-  const barBg = progSec.createEl("div", { attr: { style: "height:6px;background:rgba(255,255,255,0.1);border-radius:99px;overflow:hidden;margin-bottom:14px;" } });
+  progRow.createEl("span", { text: `${val} / ${ach.threshold}`, attr: { style: `font-size:12px;font-weight:700;color:${textProgress};` } });
+  const barBg = progSec.createEl("div", { attr: { style: `height:6px;background:${barBgColor};border-radius:99px;overflow:hidden;margin-bottom:14px;` } });
   const barFill = barBg.createEl("div", { attr: { style: `height:100%;border-radius:99px;background:${rs.badge};width:0%;transition:width 0.6s ease;` } });
   setTimeout(() => { barFill.style.width = `${Math.round(progress * 100)}%`; }, 80);
-
-  // ── Related data ──
-  const dataSec = el.createEl("div", { attr: { style: "padding:0 20px 24px;" } });
-
-  if (ach.field === "totalCardsReviewed") {
-    // Show deck breakdown
-    dataSec.createEl("div", { text: "📚 Deck Breakdown", attr: { style: "font-size:11px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;" } });
-    if (decks.length === 0) {
-      dataSec.createEl("div", { text: "No decks found.", attr: { style: "font-size:12px;color:#6b7280;" } });
-    } else {
-      const maxCards = Math.max(...decks.map(d => d.cards.length), 1);
-      for (const deck of decks.slice(0, 6)) {
-        const mastered = deck.cards.filter(cd => cd.srMeta && (cd.srMeta.stability ?? 0) >= 21).length;
-        const row = dataSec.createEl("div", { attr: { style: "margin-bottom:8px;" } });
-        const rLabel = row.createEl("div", { attr: { style: "display:flex;justify-content:space-between;margin-bottom:3px;" } });
-        rLabel.createEl("span", { text: deck.name, attr: { style: "font-size:12px;font-weight:600;color:#e5e7eb;max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" } });
-        rLabel.createEl("span", { text: `${mastered}/${deck.cards.length}`, attr: { style: "font-size:11px;color:#6b7280;" } });
-        const bg = row.createEl("div", { attr: { style: "height:4px;background:rgba(255,255,255,0.08);border-radius:99px;overflow:hidden;" } });
-        bg.createEl("div", { attr: { style: `height:100%;border-radius:99px;background:linear-gradient(90deg,#6366f1,#818cf8);width:${Math.round(deck.cards.length / maxCards * 100)}%;` } });
-      }
-    }
-
-  } else if (ach.field === "masteredCount") {
-    // Show mastered cards sample
-    dataSec.createEl("div", { text: "⭐ Mastered Cards", attr: { style: "font-size:11px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;" } });
-    const masteredCards = decks.flatMap(d => d.cards).filter(cd => cd.srMeta && (cd.srMeta.stability ?? 0) >= 21);
-    if (masteredCards.length === 0) {
-      dataSec.createEl("div", { text: "Keep reviewing to master cards!", attr: { style: "font-size:12px;color:#6b7280;" } });
-    } else {
-      masteredCards.slice(0, 5).forEach(cd => {
-        const row = dataSec.createEl("div", { attr: { style: "background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.2);border-radius:8px;padding:7px 10px;margin-bottom:6px;" } });
-        row.createEl("div", { text: cd.front.slice(0, 60) + (cd.front.length > 60 ? "…" : ""), attr: { style: "font-size:12px;color:#86efac;font-weight:600;" } });
-        if (cd.notePath) row.createEl("div", { text: cd.notePath.split("/").pop().replace(".md", ""), attr: { style: "font-size:10px;color:#4b5563;margin-top:2px;" } });
-      });
-      if (masteredCards.length > 5) dataSec.createEl("div", { text: `+${masteredCards.length - 5} more`, attr: { style: "font-size:11px;color:#6b7280;text-align:center;margin-top:4px;" } });
-    }
-
-  } else if (ach.field === "currentStreak") {
-    // Mini 14-day calendar
-    dataSec.createEl("div", { text: "🔥 Recent Activity", attr: { style: "font-size:11px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;" } });
-    const dailyLog = stats.dailyReviewLog || {};
-    const today = new Date();
-    const pad = n => String(n).padStart(2, "0");
-    const toStr = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
-    const calWrap = dataSec.createEl("div", { attr: { style: "display:grid;grid-template-columns:repeat(7,1fr);gap:4px;" } });
-    for (let i = 13; i >= 0; i--) {
-      const d = new Date(today); d.setDate(d.getDate() - i);
-      const ds = toStr(d);
-      const n = dailyLog[ds] || 0;
-      const cell = calWrap.createEl("div", { attr: { style: `height:28px;border-radius:5px;background:${n > 0 ? "#6366f1" : "rgba(255,255,255,0.06)"};display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:${n > 0 ? "#fff" : "#374151"};` } });
-      cell.title = `${ds}: ${n} reviews`;
-      if (n > 0) cell.textContent = n;
-    }
-    dataSec.createEl("div", { text: `${Object.keys(dailyLog).length} total study days`, attr: { style: "font-size:10px;color:#6b7280;margin-top:8px;text-align:center;" } });
-
-  } else if (ach.field === "dailySurge") {
-    // Best day highlight
-    dataSec.createEl("div", { text: "⚡ Daily Records", attr: { style: "font-size:11px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;" } });
-    const dailyLog = stats.dailyReviewLog || {};
-    const entries = Object.entries(dailyLog).sort((a, b) => b[1] - a[1]).slice(0, 5);
-    if (entries.length === 0) {
-      dataSec.createEl("div", { text: "No reviews yet.", attr: { style: "font-size:12px;color:#6b7280;" } });
-    } else {
-      const maxVal = entries[0][1];
-      entries.forEach(([date, count], i) => {
-        const row = dataSec.createEl("div", { attr: { style: "display:flex;align-items:center;gap:8px;margin-bottom:7px;" } });
-        row.createEl("div", { text: i === 0 ? "👑" : `#${i+1}`, attr: { style: "font-size:12px;width:20px;text-align:center;" } });
-        row.createEl("div", { text: date, attr: { style: "font-size:11px;color:#9ca3af;width:80px;" } });
-        const barWrap = row.createEl("div", { attr: { style: "flex:1;height:5px;background:rgba(255,255,255,0.08);border-radius:99px;overflow:hidden;" } });
-        barWrap.createEl("div", { attr: { style: `height:100%;border-radius:99px;background:${i === 0 ? "#f59e0b" : "#6366f1"};width:${Math.round(count / maxVal * 100)}%;` } });
-        row.createEl("div", { text: String(count), attr: { style: "font-size:12px;font-weight:700;color:#e5e7eb;width:30px;text-align:right;" } });
-      });
-    }
-  }
 
   modal.open();
 }
 
-function renderAchievementTab(container, plugin, decks) {
+function renderAchievementTab(containerEl, plugin, decks, quests=[], memories=[]) {
   const t = plugin.settings;
-  const stats = t._stats || {};
+  const st = t._stats || {};
   const isDark = document.body.classList.contains("theme-dark");
   const cardBg   = isDark ? "#252538" : "#f8faff";
   const border   = isDark ? "#3a3a5a" : "#e5e7eb";
   const divider  = isDark ? "rgba(255,255,255,0.08)" : "#f1f5f9";
   const textMain = isDark ? "#e2e8f0" : "#374151";
+
   const textMuted= isDark ? "#94a3b8"  : "#9ca3af";
 
+  let masteredTotal = 0;
   const counts = { mastered: 0, learning: 0, due: 0, unseen: 0, total: 0 };
-  let srRepTotal = 0;
   for (const deck of decks) {
     for (const card of deck.cards) {
-      const st = getReviewStatus(card.srMeta);
-      counts[st] = (counts[st] || 0) + 1;
+      const cst = getReviewStatus(card.srMeta);
+      counts[cst] = (counts[cst] || 0) + 1;
       counts.total++;
-      srRepTotal += (card.srMeta?.repetitions || 0);
     }
+    masteredTotal += deck.cards.filter(cd => cd.srMeta && (cd.srMeta.stability ?? 0) >= 21).length;
   }
-
-  const totalReviewed = Math.max(stats.totalCardsReviewed || 0, srRepTotal);
-  const currentStreak = stats.currentStreak || 0;
-  const dailyLog = stats.dailyReviewLog || {};
+  let maxDaily = 0;
+  const dailyLog = st.dailyReviewLog || {};
   const logVals = Object.values(dailyLog);
-  const dailySurge = logVals.length ? Math.max(...logVals) : 0;
-  const evalCtx = { totalCardsReviewed: totalReviewed, currentStreak, dailySurge, masteredCount: counts.mastered };
+  if(logVals.length > 0) {
+    maxDaily = Math.max(...logVals);
+  }
+  const totalReviewed = st.totalCardsReviewed || 0;
+  const currentStreak = st.currentStreak || 0;
 
-  const wrap = container.createEl("div", { attr: { class: "lh-card", style: "margin-top:0;border-radius:0;flex:1;display:flex;flex-direction:column;overflow-y:auto;" } });
+  let evalCtx = {
+    totalCardsReviewed: totalReviewed,
+    longestStreak: st.longestStreak || 0,
+    maxDaily: maxDaily,
+    masteredCards: masteredTotal,
+    memoryMapCount: memories.length,
+    questMapCount: quests.length,
+    clearedQuestCount: quests.filter(q => q.completed).length,
+    deckCount: decks.length,
+    perfectSessions: st.perfectSessions || 0,
+    totalAgainCount: st.totalAgainCount || 0
+  };
+
+  const wrap = containerEl.createEl("div", { attr: { class: "lh-card", style: "margin-top:0;border-radius:0;flex:1;display:flex;flex-direction:column;overflow-y:auto;" } });
 
   // === Header ===
   const hdr = wrap.createEl("div", { attr: { class: "lh-card-header" } });
@@ -383,9 +347,6 @@ function renderAchievementTab(container, plugin, decks) {
     const cardStatusColor = isDark
       ? (isUnlocked ? "rgba(255,255,255,0.85)" : "rgba(255,255,255,0.4)")
       : (isUnlocked ? "#374151" : "#94a3b8");
-    const lockedBg = isDark
-      ? "linear-gradient(145deg,#1e2433,#151b27);border:1.5px solid rgba(75,85,99,0.5)"
-      : `background:#e2e8f0;border:1.5px solid #cbd5e1`;
     const rarityClass = isUnlocked ? ` lh-ach-${ach.rarity.toLowerCase()}` : "";
     const card = grid.createEl("div", { attr: { class: "lh-ach-card" + (isUnlocked ? " unlocked" : "") + rarityClass } });
     if (isUnlocked) {
@@ -396,11 +357,8 @@ function renderAchievementTab(container, plugin, decks) {
         : `background:#e2e8f0;border:1.5px solid #cbd5e1;opacity:0.6;cursor:pointer;`;
     }
 
-    // Click → detail modal (all cards clickable, locked shows locked state too)
-    card.addEventListener("click", () => openAchievementDetail(plugin.app, plugin, ach, evalCtx, decks, stats));
+    card.addEventListener("click", () => openAchievementDetail(plugin.app, plugin, ach, val, t, decks, quests, memories));
 
-
-    // Rarity badge
     const rarityColors = { UC: "#6b7280", R: "#3b82f6", LEG: "#d97706" };
     card.createEl("div", { text: ach.rarity, attr: { style: `z-index:10;background:${rarityColors[ach.rarity]};color:#fff;font-size:9px;font-weight:800;padding:2px 7px;border-radius:99px;position:absolute;top:8px;right:8px;letter-spacing:.04em;box-shadow:0 1px 4px rgba(0,0,0,0.4);` } });
 
@@ -410,7 +368,7 @@ function renderAchievementTab(container, plugin, decks) {
       iconWrap.createEl("div", { attr: { style: `position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:84px;height:84px;border-radius:50%;background:radial-gradient(circle,${rs.ring} 0%,transparent 70%);box-shadow:0 0 18px ${rs.glow};pointer-events:none;` } });
     }
     const iconSrc = plugin.app.vault.adapter.getResourcePath
-      ? plugin.app.vault.adapter.getResourcePath(".obsidian/plugins/engram-quest/" + ach.icon)
+      ? plugin.app.vault.adapter.getResourcePath(plugin.app.vault.configDir + "/plugins/engram-quest/" + ach.icon)
       : ach.icon;
     const lockedFilter = isDark ? "filter:grayscale(1) brightness(0.35);" : "filter:grayscale(1) brightness(0.7) opacity(0.5);";
     const img = iconWrap.createEl("img", { attr: { src: iconSrc, width: "88", height: "88", style: `object-fit:contain;display:block;margin:0 auto;position:relative;z-index:1;${isUnlocked ? "" : lockedFilter}` } });
