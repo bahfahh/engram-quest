@@ -67,46 +67,141 @@ body.is-phone .lh-review-footer .lh-pill-btn {
 }
 
 /** Plan A — sync name-based lookup (fast, no I/O) */
-function findMemoryMapSync(app, card, settings) {
-  const isAi = card.notePath && card.notePath.startsWith("engram-review/ai-cards/");
+function isAiReviewCard(card) {
+  return !!(card && card.notePath && card.notePath.startsWith("engram-review/ai-cards/"));
+}
+
+function uniqueNonEmpty(items) {
+  return [...new Set((items || []).filter(v => typeof v === "string" && v.trim()))];
+}
+
+function getParentFolder(notePath) {
+  if (!notePath || !notePath.includes("/")) return "";
+  return notePath.slice(0, notePath.lastIndexOf("/"));
+}
+
+function getBaseName(filePath) {
+  return (filePath || "").split("/").pop().replace(/\.[^.]+$/i, "");
+}
+
+function getCardRelatedNotePaths(card) {
+  const paths = [];
+  if (Array.isArray(card.relatedNotePaths)) paths.push(...card.relatedNotePaths);
+  if (Array.isArray(card.sourceNotePaths)) paths.push(...card.sourceNotePaths);
+  if (card.primarySourceNotePath) paths.push(card.primarySourceNotePath);
+  if (card.sourceNotePath) paths.push(card.sourceNotePath);
+  if (!isAiReviewCard(card) && card.notePath) paths.push(card.notePath);
+  return uniqueNonEmpty(paths);
+}
+
+function getCardDisplayNotePaths(card) {
+  if (isAiReviewCard(card)) return getCardRelatedNotePaths(card);
+  return uniqueNonEmpty([card.notePath, card.sourceNotePath, ...(Array.isArray(card.relatedNotePaths) ? card.relatedNotePaths : [])]);
+}
+
+function getCanvasFiles(app) {
+  return app.vault.getFiles().filter(f => f.name.endsWith("-memory.canvas"));
+}
+
+function addMemoryMapCandidate(candidates, seen, file, reason, relatedPath = null) {
+  if (!file || !file.path || seen.has(file.path)) return;
+  seen.add(file.path);
+  candidates.push({ file, path: file.path, reason, relatedPath });
+}
+
+function getUniqueFolders(notePaths) {
+  return uniqueNonEmpty(notePaths.map(getParentFolder));
+}
+
+function getCommonTopicFolder(notePaths) {
+  const folders = getUniqueFolders(notePaths);
+  if (folders.length === 0) return "";
+  const splitFolders = folders.map(folder => folder.split("/").filter(Boolean));
+  const shortest = Math.min(...splitFolders.map(parts => parts.length));
+  const common = [];
+  for (let i = 0; i < shortest; i++) {
+    const part = splitFolders[0][i];
+    if (splitFolders.every(parts => parts[i] === part)) common.push(part);
+    else break;
+  }
+  return common.join("/");
+}
+
+function getTopicFolders(notePaths) {
+  const folders = getUniqueFolders(notePaths);
+  const related = [];
+  const common = getCommonTopicFolder(notePaths);
+  if (common && !folders.includes(common)) related.push(common);
+  if (folders.length === 1) {
+    const parts = folders[0].split("/").filter(Boolean);
+    if (parts.length > 1) related.push(parts.slice(0, -1).join("/"));
+  }
+  return uniqueNonEmpty(related);
+}
+
+function findMemoryMapCandidatesSync(app, card, settings, deckName) {
+  const relatedNotePaths = getCardRelatedNotePaths(card);
+  if (relatedNotePaths.length === 0) return [];
+  const candidates = [];
+  const seen = new Set();
+  const canvasFiles = getCanvasFiles(app);
+  const folderMatches = new Set(getUniqueFolders(relatedNotePaths));
+  for (const cf of canvasFiles) {
+    if (folderMatches.has(cf.parent?.path || "")) addMemoryMapCandidate(candidates, seen, cf, "same-folder");
+  }
+  if (candidates.length > 0) return candidates;
+
   const mmFolder = settings.memoryMapFolder;
-  let guess = null;
-  if (card.notePath) {
-    if (mmFolder) {
-      const nn = (card.sourceNotePath || card.notePath).split("/").pop().replace(/\.md$/i, "");
-      guess = `${mmFolder}/${nn}-memory.canvas`;
-    } else if (!isAi) {
-      guess = card.notePath.replace(/\.md$/i, "-memory.canvas");
-    } else if (card.sourceNotePath) {
-      guess = card.sourceNotePath.replace(/\.md$/i, "-memory.canvas");
+  if (mmFolder) {
+    for (const notePath of relatedNotePaths) {
+      const guess = `${mmFolder}/${getBaseName(notePath)}-memory.canvas`;
+      const found = app.vault.getAbstractFileByPath(guess)
+        || app.metadataCache.getFirstLinkpathDest(guess.split("/").pop(), "") || null;
+      if (found) addMemoryMapCandidate(candidates, seen, found, "configured-folder", notePath);
     }
   }
-  let found = guess ? app.vault.getAbstractFileByPath(guess) : null;
-  if (!found && guess) {
-    const bn = guess.split("/").pop();
-    found = app.metadataCache.getFirstLinkpathDest(bn, "") || null;
+  if (candidates.length > 0) return candidates;
+
+  const topicFolders = getTopicFolders(relatedNotePaths);
+  if (topicFolders.length > 0) {
+    for (const cf of canvasFiles) {
+      if (topicFolders.some(folder => cf.path.startsWith(folder + "/"))) {
+        addMemoryMapCandidate(candidates, seen, cf, "topic-folder");
+      }
+    }
   }
-  return found;
+  if (candidates.length > 0) return candidates;
+
+  const deckToken = String(deckName || "").trim().toLowerCase();
+  if (deckToken) {
+    for (const cf of canvasFiles) {
+      const hay = `${cf.path} ${getBaseName(cf.path)}`.toLowerCase();
+      if (hay.includes(deckToken)) addMemoryMapCandidate(candidates, seen, cf, "deck-token");
+    }
+  }
+  return candidates;
 }
 
 /** Plan B — async canvas file-node reverse lookup */
-async function findMemoryMapByCanvasContent(app, card) {
-  const targets = new Set();
-  if (card.notePath) targets.add(card.notePath);
-  if (card.sourceNotePath) targets.add(card.sourceNotePath);
-  if (card.sourceNotePaths) card.sourceNotePaths.forEach(p => p && targets.add(p));
-  if (targets.size === 0) return null;
-  const canvasFiles = app.vault.getFiles().filter(f => f.name.endsWith("-memory.canvas"));
-  for (const cf of canvasFiles) {
+async function findMemoryMapCandidatesByCanvasContent(app, card, existingCandidates = []) {
+  const relatedNotePaths = getCardRelatedNotePaths(card);
+  if (relatedNotePaths.length === 0) return existingCandidates;
+  const targets = new Set(relatedNotePaths);
+  const candidates = [...existingCandidates];
+  const seen = new Set(existingCandidates.map(candidate => candidate.path));
+  for (const cf of getCanvasFiles(app)) {
     try {
       const json = JSON.parse(await app.vault.read(cf));
-      const fileNodes = (json.nodes || []).filter(n => n.type === "file");
+      const fileNodes = (json.nodes || []).filter(n => n.type === "file" && n.file);
       for (const fn of fileNodes) {
-        if (targets.has(fn.file)) return cf;
+        if (targets.has(fn.file)) {
+          addMemoryMapCandidate(candidates, seen, cf, "file-node", fn.file);
+          break;
+        }
       }
     } catch { /* skip malformed canvas */ }
   }
-  return null;
+  return candidates;
 }
 
 const IMG_EXT=["png","jpg","jpeg","gif","bmp","svg","webp","avif"];
@@ -230,8 +325,7 @@ var Q=class extends I.Modal{
     d.createEl("span",{text:this.deckName,attr:{class:"lh-rc-badge"}});
     this.browseOnly&&d.createEl("span",{text:c(t,"BROWSE_ONLY"),attr:{class:"lh-rc-badge"}});
     // Source note buttons — for AI cards show sourceNotePaths only, for hand-written show notePath
-    let _isAi=e.notePath&&e.notePath.startsWith("engram-review/ai-cards/");
-    let notePaths=_isAi?(e.sourceNotePaths||[e.sourceNotePath].filter(Boolean)):[...new Set([e.notePath,e.sourceNotePath].filter(Boolean))];
+    let notePaths=getCardDisplayNotePaths(e);
     if(notePaths.length>0){
       let srcWrap=d.createEl("div",{attr:{style:"display:flex;align-items:center;gap:4px;margin-left:auto;flex-shrink:1;min-width:0;"}});
       notePaths.forEach(np=>{
@@ -390,11 +484,26 @@ var Q=class extends I.Modal{
       // Memory Map button — Plan A (sync) then Plan B (async fallback)
       let k=g.createEl("button",{attr:{class:"lh-pill-btn lh-pill-memory"}});
       k.textContent=c(t,"MEMORY_MAP");
-      let w=findMemoryMapSync(this.app,e,t);
-      if(w){k.addEventListener("click",()=>{this.app.workspace.openLinkText(w.path,"",false);});}
-      else{k.disabled=true;k.style.opacity="0.38";k.style.cursor="not-allowed";
+      let memoryMapAction=null;
+      const setMemoryMapAction=(candidates)=>{
+        if(!candidates||candidates.length===0){
+          memoryMapAction=null;
+          k.disabled=true;
+          k.style.opacity="0.38";
+          k.style.cursor="not-allowed";
+          return;
+        }
+        k.disabled=false;
+        k.style.opacity="";
+        k.style.cursor="";
+        memoryMapAction=()=>this._openMemoryMapChooser(candidates);
+      };
+      k.addEventListener("click",()=>{ if(memoryMapAction) memoryMapAction(); });
+      let w=findMemoryMapCandidatesSync(this.app,e,t,this.deckName);
+      if(w.length>0){setMemoryMapAction(w);}
+      else{setMemoryMapAction([]);
         const gen=this._mmGen=(this._mmGen||0)+1;
-        findMemoryMapByCanvasContent(this.app,e).then(cf=>{if(cf&&this._mmGen===gen&&k.isConnected){k.disabled=false;k.style.opacity="";k.style.cursor="";k.addEventListener("click",()=>{this.app.workspace.openLinkText(cf.path,"",false);});}}).catch(()=>{});}
+        findMemoryMapCandidatesByCanvasContent(this.app,e,w).then(found=>{if(this._mmGen===gen&&k.isConnected)setMemoryMapAction(found||[]);}).catch(()=>{});}
 
       let y=p.createEl("div",{attr:{class:"lh-footer-meta"}});
       let b=y.createEl("button",{attr:{class:"lh-pill-reset"}});
@@ -410,6 +519,25 @@ var Q=class extends I.Modal{
     let v=Math.round(this.idx/this.cards.length*100);
     u.createEl("div",{attr:{class:"lh-review-prog-bar",style:`width:${v}%`}});
     h.createEl("span",{text:`${this.idx+1} / ${this.cards.length}`,attr:{class:"lh-review-badge"}});
+  }
+
+  _openMemoryMapChooser(candidates){
+    const modal=new I.Modal(this.app);
+    const isZh=L(this.plugin.settings)==="zh-tw";
+    modal.modalEl.style.cssText="width:min(92vw,460px);padding:0;border-radius:16px;overflow:hidden;";
+    const wrap=modal.contentEl;
+    wrap.style.cssText="padding:20px;display:flex;flex-direction:column;gap:12px;";
+    wrap.createEl("div",{text:isZh?"選擇 Memory Map":"Select Memory Map",attr:{style:"font-size:16px;font-weight:700;color:var(--text-normal,#111);"}});
+    candidates.forEach(candidate=>{
+      const btn=wrap.createEl("button",{attr:{style:"display:flex;flex-direction:column;align-items:flex-start;gap:4px;padding:12px 14px;border-radius:12px;border:1px solid var(--background-modifier-border,#d1d5db);background:var(--background-primary,#fff);cursor:pointer;text-align:left;"}});      
+      btn.createEl("div",{text:getBaseName(candidate.path),attr:{style:"font-size:14px;font-weight:700;color:var(--text-normal,#111);"}});
+      btn.createEl("div",{text:candidate.file.parent?.path||candidate.path,attr:{style:"font-size:12px;color:var(--text-muted,#6b7280);"}});
+      candidate.relatedPath&&btn.createEl("div",{text:isZh?`關聯：${getBaseName(candidate.relatedPath)}`:`Related: ${getBaseName(candidate.relatedPath)}`,attr:{style:"font-size:12px;color:#6366f1;"}});
+      btn.addEventListener("click",()=>{modal.close();this.app.workspace.openLinkText(candidate.path,"",false);});
+    });
+    const closeBtn=wrap.createEl("button",{text:isZh?"取消":"Cancel",attr:{style:"margin-top:4px;padding:8px 12px;border-radius:10px;border:1px solid var(--background-modifier-border,#d1d5db);background:var(--background-secondary,#f8fafc);cursor:pointer;font-size:13px;"}}); 
+    closeBtn.addEventListener("click",()=>modal.close());
+    modal.open();
   }
 
   _minimize(){
@@ -552,4 +680,14 @@ var Q=class extends I.Modal{
 
 }
 
-module.exports = { ReviewSessionModal: Q };
+module.exports = {
+  ReviewSessionModal: Q,
+  __private: {
+    isAiReviewCard,
+    getCardRelatedNotePaths,
+    getCardDisplayNotePaths,
+    getTopicFolders,
+    findMemoryMapCandidatesSync,
+    findMemoryMapCandidatesByCanvasContent
+  }
+};

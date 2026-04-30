@@ -34,6 +34,16 @@ Before creating the canvas file:
    save next to the source note:
    `<source-note-folder>/<source-note-name>-memory.canvas`
 
+### AI workflow preference
+
+For EngramQuest runtime discovery, folder placement matters:
+
+- Preferred: save the map next to the source note
+- If the map is synthesized across several related notes, save it in the most representative shared topic folder
+- Only use a dedicated `memoryMapFolder` when the user or config explicitly requires it
+
+The Review Deck runtime searches same-folder candidates before weaker relation signals, so keeping AI-generated maps in the source/topic folder maximizes automatic linkage success.
+
 ### Canvas node sizing rules
 
 **Text node height estimation:**

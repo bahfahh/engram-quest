@@ -181,9 +181,11 @@ CRITICAL: Follow these steps in order. Do not skip any step.
       }
     }
     ```
-    - `source`: card-level override for the source note button. String or array of vault-relative paths.
-    - If card is derived from a note, set `source` to that note's path. If card is AI-creative (no specific source), omit `source` or set `null` to suppress the button.
-    CRITICAL: `"note"` (file-level) MUST be the full vault-relative path of the **primary source note** (e.g. `"Study/Azure Notes.md"`), NOT the ai-cards file path. The plugin uses this field to resolve the source note for Memory Map linking. Writing the ai-cards path here breaks that resolution.
+    - `source`: card-level related-note metadata for Review Deck and Memory Map discovery. String or array of vault-relative paths.
+    - If card is derived from a note, set `source` to that note's path. If card synthesizes multiple notes, prefer an array so the plugin can search the shared topic/folder context.
+    - If card is AI-creative (no specific source), omit `source` or set `null` to keep the Memory Map button disabled.
+    - CRITICAL: `"note"` (file-level) MUST be the full vault-relative path of the **primary source note** (e.g. `"Study/Azure Notes.md"`), NOT the ai-cards file path. It is a fallback relation signal, not the ai-cards path.
+    - CRITICAL for aggregated decks: keep the ai-cards filename, flashcard tag, and primary `note` semantically tied to the topic. The plugin now tries same-folder first, then topic/deck context, then canvas file-node relations.
     WRONG — do NOT use array format:
     ```json
     { "cards": [{ "front": "...", "l1": "..." }] }

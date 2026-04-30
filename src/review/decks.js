@@ -144,15 +144,26 @@ async function scanReviewDecks(app, settings, reviewHelpers) {
           const fileNotes = hintsPayload.note
             ? (Array.isArray(hintsPayload.note) ? hintsPayload.note : [hintsPayload.note])
             : [];
+          const hintCards = Array.isArray(hintsPayload.cards)
+            ? hintsPayload.cards.reduce((acc, entry) => {
+                if (entry && entry.front) acc[entry.front] = entry;
+                return acc;
+              }, {})
+            : (hintsPayload.cards || {});
           cards.forEach(card => {
-            const cardHint = hintsPayload.cards?.[card.front];
+            const cardHint = hintCards[card.front];
             const cardSource = cardHint?.source;
             // source:null = AI-creative card, explicitly no source note
+            let relatedNotePaths;
             if (cardHint && "source" in cardHint) {
-              card.sourceNotePaths = cardSource === null ? [] : (Array.isArray(cardSource) ? cardSource : [cardSource]);
+              relatedNotePaths = cardSource === null ? [] : (Array.isArray(cardSource) ? cardSource : [cardSource]);
             } else {
-              card.sourceNotePaths = fileNotes;
+              relatedNotePaths = fileNotes;
             }
+            relatedNotePaths = [...new Set((relatedNotePaths || []).filter(Boolean))];
+            card.sourceNotePaths = relatedNotePaths;
+            card.relatedNotePaths = relatedNotePaths;
+            card.primarySourceNotePath = relatedNotePaths[0] || null;
           });
         }
       }

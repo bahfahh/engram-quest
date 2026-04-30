@@ -42,7 +42,16 @@ AI reads the source note for content, then creates a separate file under `engram
 
 The source note is never modified. The plugin scans the ai-cards file, not the source note.
 
-When the plugin detects a card from `engram-review/ai-cards/`, it reads the `note` field from the corresponding hints JSON to resolve `sourceNotePath` back to the original note.
+When the plugin detects a card from `engram-review/ai-cards/`, it builds a related-note context from the corresponding hints JSON:
+- `cards[front].source` is the preferred per-card relation signal
+- file-level `note` is the fallback primary source signal
+
+Memory Map discovery for review cards is folder-first:
+1. same folder as the related note(s)
+2. same topic / deck context
+3. canvas file-node relations
+
+This means aggregated AI decks remain supported as long as the hints and deck naming preserve useful topic/source context.
 
 ## Data Locations
 

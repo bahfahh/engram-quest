@@ -52,6 +52,18 @@ Choose the right reference before writing:
 4. Read `.memory-map/config.json` — this is a **config file only**, not an output folder. Extract the `memoryMapFolder` value, then follow `references/create.md` → Output section for the exact save location. Never save canvas files inside `.memory-map/`.
 5. Keep the canvas readable and stable. Ensure no two nodes overlap — maintain at least 60px horizontal and 50px vertical gap between every pair of adjacent nodes. File nodes are tall; treat them as at least 160px high when spacing neighbors.
 
+## Discovery Contract
+
+The plugin now discovers Memory Maps for Review Deck cards using this priority:
+1. same folder as the related source/topic notes
+2. same topic / deck context
+3. canvas file-node relations
+
+Therefore:
+- Prefer saving AI-generated maps in the source note folder
+- If the map genuinely spans multiple notes, save it in the most representative shared topic folder
+- Continue adding file nodes to related notes, but treat them as support for discovery rather than the only linkage mechanism
+
 ## Output Rules
 
 - Use valid JSON Canvas format.
