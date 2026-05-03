@@ -96,7 +96,7 @@ A: 在快忘記時複習，可以用最少時間達到最高記憶保留率。
               <li>AI 讀取你的筆記，在 <code>engram-review/ai-cards/</code> 建立卡片檔（含 <code>#flashcards/math</code> tag 和 <code>question :: answer</code> 格式）</li>
               <li>開 Hub → Review Deck → 開始複習</li>
             </ol>
-            <div class="lh-help-sub"><div class="lh-help-sub-icon">💡</div><div>你的一般筆記不需要有任何 tag，AI 可以直接讀取。AI <strong>產生的卡片檔</strong>存在 <code>engram-review/ai-cards/</code>，<strong>不會修改你的原始筆記</strong>。你自己手寫的卡片，在複習時使用「編輯」、「高亮」或「重點」功能，變更會直接寫回原始筆記。卡片檔需要有 <code>#flashcards/...</code> tag，插件才能偵測到。</div></div>
+            <div class="lh-help-sub"><div class="lh-help-sub-icon">💡</div><div>你的一般筆記不需要有任何 tag，AI 可以直接讀取。AI <strong>產生的卡片檔</strong>存在 <code>engram-review/ai-cards/</code>，<strong>不會修改你的原始筆記</strong>。你自己手寫的卡片，在複習時使用「編輯」、「高亮」或「引述」功能，變更會直接寫回原始筆記。卡片檔需要有 <code>#flashcards/...</code> tag，插件才能偵測到。</div></div>
             <p><strong>相容模式：</strong>如果你有舊式 <code>::</code> 卡片筆記，可以到設定中開啟 legacy <code>::</code> 掃描。這是遷移模式，不是新手預設。</p>
           `},{icon:"🗺️",title:"Quest Map",tag:c(e,"HELP_QUEST_TAG"),html:`
             <ol>
@@ -229,7 +229,7 @@ A: 一連串的本地交易。
             <p><strong>Q6：我有很多舊 <code>::</code> 卡片，但沒有 tag。要怎麼遷移？</strong></p>
             <p>到設定打開 <code>Include legacy :: notes</code>，保留原本的 <code>question :: answer</code> 格式，再回到 Hub 的 Review Deck 檢查是否已被納入。若要長期維護，建議之後慢慢補上 <code>#flashcards/...</code> tag。</p>
             <p><strong>Q7：Review Deck 進度存在哪裡？</strong></p>
-            <p>複習排程資料存放在 <code>engram-review/sr/{筆記名稱}.json</code>，AI 生成的卡片存在 <code>engram-review/ai-cards/</code>，兩者都不會寫入你的原始筆記。你自己手寫的卡片，在複習時使用「編輯」、「高亮」或「重點」功能，變更會直接寫回原始筆記。</p>
+            <p>複習排程資料存放在 <code>engram-review/sr/{筆記名稱}.json</code>，AI 生成的卡片存在 <code>engram-review/ai-cards/</code>，兩者都不會寫入你的原始筆記。你自己手寫的卡片，在複習時使用「編輯」、「高亮」或「引述」功能，變更會直接寫回原始筆記。</p>
             <p><strong>Q8：手機可以用嗎？</strong></p>
             <p>Review Deck 可以。Quest Map 與 Memory Map 目前仍較適合桌面版。</p>
             <p><strong>Q9：手機上的插件不會自動更新怎麼辦？</strong></p>
