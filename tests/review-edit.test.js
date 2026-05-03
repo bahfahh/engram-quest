@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { saveTagSourceCard, saveInlineCard, replaceCardInBlock } from "../src/review/edit.js";
+import { saveTagSourceCard, saveInlineCard, replaceCardInBlock, applyFormatToCardBack } from "../src/review/edit.js";
 
 // ── replaceCardInBlock (pure, no I/O) ────────────────────────────────────────
 describe("replaceCardInBlock", () => {
@@ -58,14 +58,16 @@ describe("replaceCardInBlock", () => {
 describe("saveTagSourceCard", () => {
   function makeApp({ fileContent = "", hintsExist = false, hintsContent = null } = {}) {
     let written = null;
+    let modifyCount = 0;
     let hintsWritten = null;
     return {
       _getWritten: () => written,
+      _getModifyCount: () => modifyCount,
       _getHintsWritten: () => hintsWritten,
       vault: {
         getAbstractFileByPath: (p) => p ? { path: p } : null,
         read: async () => fileContent,
-        modify: async (f, c) => { written = c; },
+        modify: async (f, c) => { written = c; modifyCount++; },
         adapter: {
           exists: async () => hintsExist,
           read: async () => hintsContent || JSON.stringify({ note: "test.md", generated: "2026-01-01", cards: { "What is X?": { l1: "old l1", l2: "old l2", l3: "" } } }),
@@ -81,6 +83,40 @@ describe("saveTagSourceCard", () => {
     await saveTagSourceCard(app, card, { front: "What is X? (v2)", back: "It is X. (v2)", hint_l1: "", hint_l2: "", hint_l3: "" });
     expect(app._getWritten()).toContain("What is X? (v2) :: It is X. (v2)");
     expect(app._getWritten()).not.toContain("What is X? :: It is X.");
+  });
+
+  it("replaces the full Q:/A: answer block without leaving old answer lines", async () => {
+    const app = makeApp({
+      fileContent: "Q: What is X?\nA: first line\nsecond line\n\n\nNext paragraph\n",
+    });
+    const card = { front: "What is X?", back: "first line\nsecond line", notePath: "Notes/test.md" };
+    const saved = await saveTagSourceCard(app, card, {
+      front: "What is X?",
+      back: "edited first\nedited second",
+      hint_l1: "",
+      hint_l2: "",
+      hint_l3: "",
+    });
+
+    expect(saved).toBe(true);
+    expect(app._getWritten()).toBe("Q: What is X?\nA: edited first\nedited second\n\n\nNext paragraph\n");
+    expect(app._getWritten()).not.toContain("first line\nsecond line");
+  });
+
+  it("does not modify source, hints, or sr when the original card cannot be found", async () => {
+    const app = makeApp({ fileContent: "Q :: A\n", hintsExist: false });
+    const card = { front: "Missing", back: "Nope", notePath: "Notes/test.md" };
+    const saved = await saveTagSourceCard(app, card, {
+      front: "Q2",
+      back: "A2",
+      hint_l1: "new hint",
+      hint_l2: "",
+      hint_l3: "",
+    });
+
+    expect(saved).toBe(false);
+    expect(app._getModifyCount()).toBe(0);
+    expect(app._getHintsWritten()).toBeNull();
   });
 
   it("creates hints file when it does not exist", async () => {
@@ -109,6 +145,60 @@ describe("saveTagSourceCard", () => {
     const card = { front: "Q", back: "A", notePath: null };
     await saveTagSourceCard(app, card, { front: "Q2", back: "A2", hint_l1: "", hint_l2: "", hint_l3: "" });
     expect(app._getWritten()).toBeNull();
+  });
+});
+
+describe("applyFormatToCardBack", () => {
+  function makeApp(fileContent) {
+    let written = null;
+    let modifyCount = 0;
+    return {
+      _getWritten: () => written,
+      _getModifyCount: () => modifyCount,
+      vault: {
+        getAbstractFileByPath: (p) => p ? { path: p } : null,
+        read: async () => fileContent,
+        modify: async (f, c) => { written = c; modifyCount++; },
+      },
+    };
+  }
+
+  it("formats a :: answer", async () => {
+    const app = makeApp("Q :: first answer\n");
+    const card = { front: "Q", back: "first answer", rawFront: "Q", rawBack: "first answer", notePath: "Notes/test.md" };
+    const saved = await applyFormatToCardBack(app, card, "first answer", "==first answer==");
+
+    expect(saved).toBe(true);
+    expect(app._getWritten()).toBe("Q :: ==first answer==\n");
+    expect(card.rawBack).toBe("==first answer==");
+  });
+
+  it("formats a multi-line Q:/A: answer without duplicating old lines", async () => {
+    const app = makeApp("Q: What is X?\nA: first line\nsecond line\n\n\nNext paragraph\n");
+    const card = { front: "What is X?", back: "first line\nsecond line", notePath: "Notes/test.md" };
+    const saved = await applyFormatToCardBack(
+      app,
+      card,
+      "first line\nsecond line",
+      "==first line==\nsecond line"
+    );
+
+    expect(saved).toBe(true);
+    expect(app._getWritten()).toBe("Q: What is X?\nA: ==first line==\nsecond line\n\n\nNext paragraph\n");
+    expect(app._getWritten().match(/second line/g)).toHaveLength(1);
+  });
+
+  it("does not write when the card cannot be found", async () => {
+    const app = makeApp("Q :: A\n");
+    const saved = await applyFormatToCardBack(
+      app,
+      { front: "Missing", back: "Nope", notePath: "Notes/test.md" },
+      "Nope",
+      "**Nope**"
+    );
+
+    expect(saved).toBe(false);
+    expect(app._getModifyCount()).toBe(0);
   });
 });
 

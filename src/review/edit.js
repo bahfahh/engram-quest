@@ -6,6 +6,178 @@ function escapeRegExp(s) {
   return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
+function stripMdEdge(s) {
+  return String(s || "").replace(/^[*_=]+|[*_=]+$/g, "").trim();
+}
+
+function cardFrontCandidates(card) {
+  return [...new Set([
+    card.rawFront,
+    card.front,
+    stripMdEdge(card.rawFront),
+    stripMdEdge(card.front),
+  ].filter(v => typeof v === "string" && v.trim()))];
+}
+
+function cardBackCandidates(card, fallbackBack) {
+  return [...new Set([
+    card.rawBack,
+    fallbackBack,
+    card.back,
+    stripMdEdge(card.rawBack),
+    stripMdEdge(fallbackBack),
+    stripMdEdge(card.back),
+  ].filter(v => typeof v === "string" && v.trim()))];
+}
+
+function replaceDoubleColonCard(content, card, newData, fallbackBack) {
+  const fronts = cardFrontCandidates(card);
+  const backs = cardBackCandidates(card, fallbackBack);
+
+  for (const front of fronts) {
+    for (const back of backs) {
+      const re = new RegExp(
+        `^([ \t]*)${escapeRegExp(front)}([ \t]*)::[ \t]*${escapeRegExp(back)}[ \t]*$`,
+        "m"
+      );
+      if (re.test(content)) {
+        return {
+          content: content.replace(re, (_match, indent, mid) => `${indent}${newData.front}${mid}:: ${newData.back}`),
+          modified: true,
+        };
+      }
+    }
+  }
+
+  for (const front of fronts) {
+    const reFront = new RegExp(`^([ \t]*)${escapeRegExp(front)}([ \t]*)::(.*)$`, "m");
+    if (reFront.test(content)) {
+      return {
+        content: content.replace(reFront, (_match, indent, mid) => `${indent}${newData.front}${mid}:: ${newData.back}`),
+        modified: true,
+      };
+    }
+  }
+
+  return { content, modified: false };
+}
+
+function trimTrailingBlankLines(lines) {
+  while (lines.length > 0 && lines[lines.length - 1].trim() === "") lines.pop();
+  return lines;
+}
+
+function findQaCardRange(lines, card, fallbackBack) {
+  const fronts = new Set(cardFrontCandidates(card));
+  const backs = new Set(cardBackCandidates(card, fallbackBack));
+
+  for (let qStart = 0; qStart < lines.length; qStart++) {
+    const qMatch = lines[qStart].match(/^\s*Q:\s*(.+)/i);
+    if (!qMatch) continue;
+
+    const frontLines = [qMatch[1]];
+    let aIndex = qStart + 1;
+    let qBlankRun = 0;
+    while (aIndex < lines.length) {
+      if (/^\s*A:\s*/i.test(lines[aIndex])) break;
+      if (lines[aIndex].trim() === "") {
+        qBlankRun++;
+        if (qBlankRun >= 2) break;
+        aIndex++;
+      } else {
+        qBlankRun = 0;
+        frontLines.push(lines[aIndex]);
+        aIndex++;
+      }
+    }
+
+    if (aIndex >= lines.length || !/^\s*A:\s*/i.test(lines[aIndex])) continue;
+    const parsedFront = trimTrailingBlankLines([...frontLines]).join("\n").trim();
+    if (!fronts.has(parsedFront) && !fronts.has(stripMdEdge(parsedFront))) continue;
+
+    const aMatch = lines[aIndex].match(/^\s*A:\s*(.*)/i);
+    const backLines = [aMatch ? aMatch[1] : ""];
+    let end = aIndex + 1;
+    let blankRun = 0;
+    let inCodeBlock = false;
+    let codeBlockFenceChar = "";
+    let codeBlockFenceLen = 0;
+
+    while (end < lines.length) {
+      const codeFenceMatch = lines[end].match(/^[ \t]*(`{3,}|~{3,})/);
+      if (codeFenceMatch) {
+        const fenceChar = codeFenceMatch[1][0];
+        const fenceLen = codeFenceMatch[1].length;
+        if (!inCodeBlock) {
+          inCodeBlock = true;
+          codeBlockFenceChar = fenceChar;
+          codeBlockFenceLen = fenceLen;
+        } else if (fenceChar === codeBlockFenceChar && fenceLen >= codeBlockFenceLen) {
+          inCodeBlock = false;
+        }
+        backLines.push(lines[end]);
+        blankRun = 0;
+        end++;
+        continue;
+      }
+
+      if (inCodeBlock) {
+        backLines.push(lines[end]);
+        end++;
+        continue;
+      }
+
+      if (/^\s*Q:\s*/i.test(lines[end])) break;
+      if (/^---\s*$/.test(lines[end])) break;
+      if (/\{\{c\d+::/.test(lines[end])) break;
+      if (lines[end].trim() === "") {
+        blankRun++;
+        if (blankRun >= 2) break;
+        backLines.push(lines[end]);
+        end++;
+      } else {
+        blankRun = 0;
+        backLines.push(lines[end]);
+        end++;
+      }
+    }
+
+    const parsedBack = trimTrailingBlankLines([...backLines]).join("\n").trim();
+    if (!backs.has(parsedBack) && !backs.has(stripMdEdge(parsedBack))) continue;
+
+    while (end > qStart && lines[end - 1].trim() === "") end--;
+    return { start: qStart, end };
+  }
+
+  return null;
+}
+
+function replaceQaCard(content, card, newData, fallbackBack) {
+  const hasFinalNewline = content.endsWith("\n");
+  const lines = content.split("\n");
+  if (hasFinalNewline) lines.pop();
+  const range = findQaCardRange(lines, card, fallbackBack);
+  if (!range) return { content, modified: false };
+
+  const newLines = [`Q: ${newData.front}`];
+  const backLines = String(newData.back || "").split("\n");
+  newLines.push(`A: ${backLines[0] || ""}`);
+  newLines.push(...backLines.slice(1));
+  lines.splice(range.start, range.end - range.start, ...newLines);
+  return { content: lines.join("\n") + (hasFinalNewline ? "\n" : ""), modified: true };
+}
+
+function replaceSourceCard(content, card, newData, fallbackBack) {
+  const dc = replaceDoubleColonCard(content, card, newData, fallbackBack);
+  if (dc.modified) return dc;
+  return replaceQaCard(content, card, newData, fallbackBack);
+}
+
+function syncRawCardFields(card, newData) {
+  if (card.rawFront !== undefined) card.rawFront = newData.front;
+  if (card.rawBack !== undefined) card.rawBack = newData.back;
+}
+
 /**
  * Save edits for a tag/source-based card (card.notePath is set).
  * Updates the `front :: back` line in the markdown note and the hints JSON.
@@ -14,58 +186,17 @@ function escapeRegExp(s) {
  * @param {{front,back,hint_l1,hint_l2,hint_l3}} newData
  */
 async function saveTagSourceCard(app, card, newData) {
-  if (!card.notePath) return;
+  if (!card.notePath) return false;
 
   // 1. Update markdown note
   const file = app.vault.getAbstractFileByPath(card.notePath);
-  if (file) {
-    let content = await app.vault.read(file);
-    const frontKey = card.rawFront !== undefined ? card.rawFront : card.front;
-    const backKey = card.rawBack !== undefined ? card.rawBack : card.back;
+  if (!file) return false;
 
-    let modified = false;
-    // Try exact front :: back match using raw (possibly markdown-decorated) values
-    const re = new RegExp(
-      `^([ \t]*)${escapeRegExp(frontKey)}([ \t]*)::[ \t]*${escapeRegExp(backKey)}[ \t]*$`,
-      "m"
-    );
-    if (re.test(content)) {
-      content = content.replace(re, () => `${newData.front} :: ${newData.back}`);
-      modified = true;
-    } else {
-      // Fallback: match by raw front only
-      const reFront = new RegExp(`^([ \t]*)${escapeRegExp(frontKey)}([ \t]*)::(.*)$`, "m");
-      if (reFront.test(content)) {
-        content = content.replace(reFront, () => `${newData.front} :: ${newData.back}`);
-        modified = true;
-      } else if (frontKey !== card.front) {
-        // Second fallback: stripped front
-        const reFront2 = new RegExp(`^([ \t]*)${escapeRegExp(card.front)}([ \t]*)::(.*)$`, "m");
-        content = content.replace(reFront2, () => `${newData.front} :: ${newData.back}`);
-        modified = true;
-      } else {
-        content = content.replace(re, () => `${newData.front} :: ${newData.back}`);
-        modified = true;
-      }
-    }
+  const content = await app.vault.read(file);
+  const result = replaceSourceCard(content, card, newData, card.back);
+  if (!result.modified) return false;
 
-    // Q:/A: format fallback (for cards not using :: format)
-    if (!modified) {
-      const frontLine = card.front.split("\n")[0].trim();
-      const backLine = (card.rawBack || card.back).split("\n")[0].trim();
-      if (frontLine && backLine) {
-        const qaRe = new RegExp(
-          `(Q:\\s*${escapeRegExp(frontLine)}.*\\n)(A:\\s*)${escapeRegExp(backLine)}`,
-          "m"
-        );
-        if (qaRe.test(content)) {
-          content = content.replace(qaRe, (_, qLine, aPrefix) => `${qLine}${aPrefix}${newData.back}`);
-        }
-      }
-    }
-
-    await app.vault.modify(file, content);
-  }
+  await app.vault.modify(file, result.content);
 
   // 2. Update hints JSON
   const noteName = card.notePath.split("/").pop().replace(/\.md$/i, "");
@@ -100,6 +231,9 @@ async function saveTagSourceCard(app, card, newData) {
       console.warn("review-edit: sr update failed", e);
     }
   }
+
+  syncRawCardFields(card, newData);
+  return true;
 }
 
 /**
@@ -172,56 +306,17 @@ module.exports = { saveTagSourceCard, saveInlineCard, replaceCardInBlock, delete
  * @param {string} newBack - new back text with wrapping applied
  */
 async function applyFormatToCardBack(app, card, oldBack, newBack) {
-  if (!card.notePath) return;
+  if (!card.notePath) return false;
   const file = app.vault.getAbstractFileByPath(card.notePath);
-  if (!file) return;
+  if (!file) return false;
 
-  let content = await app.vault.read(file);
-  let modified = false;
+  const content = await app.vault.read(file);
+  const result = replaceSourceCard(content, card, { front: card.front, back: newBack }, oldBack);
+  if (!result.modified) return false;
 
-  const frontKey = card.rawFront !== undefined ? card.rawFront : card.front;
-  const backKey = card.rawBack !== undefined ? card.rawBack : oldBack;
-
-  // 1. Try front :: back format using rawBack as the current value in the file
-  const re = new RegExp(
-    `^([ \t]*)${escapeRegExp(frontKey)}([ \t]*)::[ \t]*${escapeRegExp(backKey)}[ \t]*$`,
-    "m"
-  );
-  if (re.test(content)) {
-    content = content.replace(re, (_, indent, mid) => `${indent}${frontKey}${mid}:: ${newBack}`);
-    modified = true;
-  } else {
-    // Fallback: find line with frontKey and oldBack (in case rawBack is already updated)
-    const reFallback = new RegExp(
-      `^([ \t]*)${escapeRegExp(frontKey)}([ \t]*)::[ \t]*${escapeRegExp(oldBack)}[ \t]*$`,
-      "m"
-    );
-    if (reFallback.test(content)) {
-      content = content.replace(reFallback, (_, indent, mid) => `${indent}${frontKey}${mid}:: ${newBack}`);
-      modified = true;
-    }
-  }
-
-  // 2. Try Q:/A: format
-  if (!modified) {
-    const frontLine = card.front.split("\n")[0].trim();
-    const backLine = oldBack.split("\n")[0].trim();
-    if (frontLine && backLine) {
-      const qaRe = new RegExp(
-        `(Q:\\s*${escapeRegExp(frontLine)}.*\\n)(A:\\s*)${escapeRegExp(backLine)}`,
-        "m"
-      );
-      if (qaRe.test(content)) {
-        content = content.replace(qaRe, (_, qLine, aPrefix) => `${qLine}${aPrefix}${newBack}`);
-        modified = true;
-      }
-    }
-  }
-
-  if (modified) {
-    await app.vault.modify(file, content);
-    if (card.rawBack !== undefined) card.rawBack = newBack;
-  }
+  await app.vault.modify(file, result.content);
+  if (card.rawBack !== undefined) card.rawBack = newBack;
+  return true;
 }
 
 /**

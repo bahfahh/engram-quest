@@ -398,31 +398,46 @@ var Q=class extends I.Modal{
       // Answer header row: label on left, format buttons on right
       let answerHeader=p.createEl("div",{attr:{class:"lh-answer-header"}});
       answerHeader.createEl("div",{text:c(t,"ANSWER"),attr:{class:"lh-answer-label"}});
+      let answerEl;
+      let selectedAnswerText="";
+      const captureAnswerSelection=()=>{
+        const sel=window.getSelection&&window.getSelection();
+        if(!sel||sel.rangeCount===0){selectedAnswerText="";return "";}
+        const text=sel.toString();
+        if(!text||!text.trim()){selectedAnswerText="";return "";}
+        const node=sel.anchorNode;
+        if(!answerEl||!node||!answerEl.contains(node)){selectedAnswerText="";return "";}
+        selectedAnswerText=text.trim();
+        return selectedAnswerText;
+      };
       if(e.notePath){
         let fmtBtns=answerHeader.createEl("div",{attr:{class:"lh-answer-fmt-btns"}});
-        const applyAnswerFmt=(wrap)=>{
-          const sel=window.getSelection();
-          const selectedText=sel&&sel.toString().trim();
+        const applyAnswerFmt=async(wrap)=>{
+          const selectedText=captureAnswerSelection()||selectedAnswerText;
           if(!selectedText){new I.Notice(c(t,"FORMAT_SELECT_TEXT"));return;}
           if(!e.back.includes(selectedText)){new I.Notice(c(t,"FORMAT_SELECT_TEXT"));return;}
           const oldBack=e.back;
           const newBack=e.back.replace(selectedText,wrap+selectedText+wrap);
-          e.back=newBack;
-          applyFormatToCardBack(this.app,e,oldBack,newBack).then(()=>{
+          try{
+            const saved=await applyFormatToCardBack(this.app,e,oldBack,newBack);
+            if(!saved){new I.Notice(c(t,"CREATE_CARD_SAVE_FAILED"));return;}
+            e.back=newBack;
             this._renderCardContent(e);
-          }).catch(err=>console.error("format-apply failed",err));
+          }catch(err){console.error("format-apply failed",err);new I.Notice(c(t,"CREATE_CARD_SAVE_FAILED"));}
         };
         let hlBtn=fmtBtns.createEl("button",{text:c(t,"FORMAT_HIGHLIGHT"),attr:{class:"lh-rc-edit-btn lh-fmt-btn"}});
-        hlBtn.addEventListener("mousedown",(ev)=>ev.preventDefault());
+        hlBtn.addEventListener("mousedown",(ev)=>{captureAnswerSelection();ev.preventDefault();});
         hlBtn.addEventListener("click",()=>applyAnswerFmt("=="));
         let bdBtn=fmtBtns.createEl("button",{text:c(t,"FORMAT_BOLD"),attr:{class:"lh-rc-edit-btn lh-fmt-btn"}});
-        bdBtn.addEventListener("mousedown",(ev)=>ev.preventDefault());
+        bdBtn.addEventListener("mousedown",(ev)=>{captureAnswerSelection();ev.preventDefault();});
         bdBtn.addEventListener("click",()=>applyAnswerFmt("**"));
       }
-      let answerEl=p.createEl("div",{attr:{class:"lh-answer-text"}});
+      answerEl=p.createEl("div",{attr:{class:"lh-answer-text"}});
       I.MarkdownRenderer.renderMarkdown(e.back||"",answerEl,e.notePath||"",null);
       postProcessEmbed(answerEl,this.app,e.notePath||"");
       attachImgZoom(answerEl);
+      answerEl.addEventListener("mouseup",captureAnswerSelection);
+      answerEl.addEventListener("keyup",captureAnswerSelection);
       this.browseOnly&&i.createEl("div",{text:c(t,"BROWSE_NOTE"),attr:{class:"lh-browse-note"}});
     }
 
@@ -695,18 +710,20 @@ var Q=class extends I.Modal{
       if(!newData.front||!newData.back) return;
       saveBtn.disabled=true;
       try {
+        let saved=false;
         if(e.notePath){
-          await saveTagSourceCard(this.app, e, newData);
+          saved=await saveTagSourceCard(this.app, e, newData);
         } else {
           // inline card: find source via active MarkdownView
           const view=this.app.workspace.getActiveViewOfType&&this.app.workspace.getActiveViewOfType(I.MarkdownView);
           const sourcePath=view&&view.file&&view.file.path;
-          if(sourcePath) await saveInlineCard(this.app, sourcePath, e, newData);
+          if(sourcePath){await saveInlineCard(this.app, sourcePath, e, newData);saved=true;}
         }
+        if(!saved){new I.Notice(c(t,"CREATE_CARD_SAVE_FAILED"));saveBtn.disabled=false;return;}
         // Update in-memory card
         e.front=newData.front; e.back=newData.back;
         e.hint_l1=newData.hint_l1; e.hint_l2=newData.hint_l2; e.hint_l3=newData.hint_l3;
-      } catch(err){ console.error("review-edit: save failed",err); }
+      } catch(err){ console.error("review-edit: save failed",err);new I.Notice(c(t,"CREATE_CARD_SAVE_FAILED"));saveBtn.disabled=false;return; }
       this.renderCard();
     });
 
