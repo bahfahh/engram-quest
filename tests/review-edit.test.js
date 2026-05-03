@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { saveTagSourceCard, saveInlineCard, replaceCardInBlock, applyFormatToCardBack } from "../src/review/edit.js";
+import { saveTagSourceCard, saveInlineCard, replaceCardInBlock, applyFormatToCardBack, refreshTagSourceCard, findCurrentSourceCard } from "../src/review/edit.js";
 
 // ── replaceCardInBlock (pure, no I/O) ────────────────────────────────────────
 describe("replaceCardInBlock", () => {
@@ -145,6 +145,51 @@ describe("saveTagSourceCard", () => {
     const card = { front: "Q", back: "A", notePath: null };
     await saveTagSourceCard(app, card, { front: "Q2", back: "A2", hint_l1: "", hint_l2: "", hint_l3: "" });
     expect(app._getWritten()).toBeNull();
+  });
+});
+
+describe("refreshTagSourceCard", () => {
+  function makeApp(fileContent) {
+    return {
+      vault: {
+        getAbstractFileByPath: (p) => p ? { path: p } : null,
+        read: async () => fileContent,
+      },
+    };
+  }
+
+  it("refreshes stale :: card text from the source file", async () => {
+    const app = makeApp("Q :: current answer\n");
+    const card = { front: "Q", back: "old answer", rawFront: "Q", rawBack: "old answer", notePath: "Notes/test.md" };
+
+    const refreshed = await refreshTagSourceCard(app, card);
+
+    expect(refreshed).toBe(true);
+    expect(card.front).toBe("Q");
+    expect(card.back).toBe("current answer");
+    expect(card.rawBack).toBe("current answer");
+  });
+
+  it("refreshes stale Q:/A: multi-line answer text", async () => {
+    const app = makeApp("Q: What is X?\nA: current first\ncurrent second\n\n\nNext paragraph\n");
+    const card = { front: "What is X?", back: "old first\nold second", notePath: "Notes/test.md" };
+
+    const refreshed = await refreshTagSourceCard(app, card);
+
+    expect(refreshed).toBe(true);
+    expect(card.front).toBe("What is X?");
+    expect(card.back).toBe("current first\ncurrent second");
+  });
+
+  it("does not guess when duplicate fronts exist and the old back no longer matches", () => {
+    const current = findCurrentSourceCard("Q :: current one\nQ :: current two\n", {
+      front: "Q",
+      back: "old answer",
+      rawFront: "Q",
+      rawBack: "old answer",
+    });
+
+    expect(current).toBeNull();
   });
 });
 

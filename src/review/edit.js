@@ -67,10 +67,8 @@ function trimTrailingBlankLines(lines) {
   return lines;
 }
 
-function findQaCardRange(lines, card, fallbackBack) {
-  const fronts = new Set(cardFrontCandidates(card));
-  const backs = new Set(cardBackCandidates(card, fallbackBack));
-
+function collectQaCards(lines) {
+  const cards = [];
   for (let qStart = 0; qStart < lines.length; qStart++) {
     const qMatch = lines[qStart].match(/^\s*Q:\s*(.+)/i);
     if (!qMatch) continue;
@@ -92,9 +90,6 @@ function findQaCardRange(lines, card, fallbackBack) {
     }
 
     if (aIndex >= lines.length || !/^\s*A:\s*/i.test(lines[aIndex])) continue;
-    const parsedFront = trimTrailingBlankLines([...frontLines]).join("\n").trim();
-    if (!fronts.has(parsedFront) && !fronts.has(stripMdEdge(parsedFront))) continue;
-
     const aMatch = lines[aIndex].match(/^\s*A:\s*(.*)/i);
     const backLines = [aMatch ? aMatch[1] : ""];
     let end = aIndex + 1;
@@ -142,11 +137,23 @@ function findQaCardRange(lines, card, fallbackBack) {
       }
     }
 
-    const parsedBack = trimTrailingBlankLines([...backLines]).join("\n").trim();
-    if (!backs.has(parsedBack) && !backs.has(stripMdEdge(parsedBack))) continue;
-
+    const front = trimTrailingBlankLines([...frontLines]).join("\n").trim();
+    const back = trimTrailingBlankLines([...backLines]).join("\n").trim();
     while (end > qStart && lines[end - 1].trim() === "") end--;
-    return { start: qStart, end };
+    cards.push({ front, back, start: qStart, end });
+    qStart = end - 1;
+  }
+  return cards;
+}
+
+function findQaCardRange(lines, card, fallbackBack) {
+  const fronts = new Set(cardFrontCandidates(card));
+  const backs = new Set(cardBackCandidates(card, fallbackBack));
+
+  for (const parsed of collectQaCards(lines)) {
+    if (!fronts.has(parsed.front) && !fronts.has(stripMdEdge(parsed.front))) continue;
+    if (!backs.has(parsed.back) && !backs.has(stripMdEdge(parsed.back))) continue;
+    return { start: parsed.start, end: parsed.end };
   }
 
   return null;
@@ -171,6 +178,55 @@ function replaceSourceCard(content, card, newData, fallbackBack) {
   const dc = replaceDoubleColonCard(content, card, newData, fallbackBack);
   if (dc.modified) return dc;
   return replaceQaCard(content, card, newData, fallbackBack);
+}
+
+function collectDoubleColonCards(content) {
+  const cards = [];
+  const re = /^([ \t]*)(.+?)([ \t]*)::[ \t]*(.*?)[ \t]*$/gm;
+  let match;
+  while ((match = re.exec(content)) !== null) {
+    cards.push({ front: match[2].trim(), back: match[4].trim() });
+  }
+  return cards;
+}
+
+function findCurrentSourceCard(content, card) {
+  const fronts = new Set(cardFrontCandidates(card));
+  const backs = new Set(cardBackCandidates(card, card.back));
+  const matchesFront = parsed => fronts.has(parsed.front) || fronts.has(stripMdEdge(parsed.front));
+  const matchesBack = parsed => backs.has(parsed.back) || backs.has(stripMdEdge(parsed.back));
+
+  const doubleColonCards = collectDoubleColonCards(content);
+  const exactDc = doubleColonCards.find(parsed => matchesFront(parsed) && matchesBack(parsed));
+  if (exactDc) return { front: exactDc.front, back: exactDc.back, rawFront: exactDc.front, rawBack: exactDc.back };
+
+  const qaCards = collectQaCards(content.split("\n"));
+  const exactQa = qaCards.find(parsed => matchesFront(parsed) && matchesBack(parsed));
+  if (exactQa) return { front: exactQa.front, back: exactQa.back };
+
+  const frontMatches = [...doubleColonCards, ...qaCards].filter(matchesFront);
+  if (frontMatches.length === 1) {
+    const parsed = frontMatches[0];
+    return { front: parsed.front, back: parsed.back, rawFront: parsed.front, rawBack: parsed.back };
+  }
+
+  return null;
+}
+
+async function refreshTagSourceCard(app, card) {
+  if (!card.notePath) return true;
+  const file = app.vault.getAbstractFileByPath(card.notePath);
+  if (!file) return false;
+
+  const content = await app.vault.read(file);
+  const current = findCurrentSourceCard(content, card);
+  if (!current) return false;
+
+  card.front = current.front;
+  card.back = current.back;
+  if (card.rawFront !== undefined || current.rawFront !== undefined) card.rawFront = current.rawFront || current.front;
+  if (card.rawBack !== undefined || current.rawBack !== undefined) card.rawBack = current.rawBack || current.back;
+  return true;
 }
 
 function syncRawCardFields(card, newData) {
@@ -294,7 +350,7 @@ async function saveInlineCard(app, sourcePath, card, newData) {
   await app.vault.modify(file, content);
 }
 
-module.exports = { saveTagSourceCard, saveInlineCard, replaceCardInBlock, deleteTagSourceCard, deleteDeckCards, applyFormatToCardBack };
+module.exports = { saveTagSourceCard, saveInlineCard, replaceCardInBlock, deleteTagSourceCard, deleteDeckCards, applyFormatToCardBack, refreshTagSourceCard, findCurrentSourceCard };
 
 /**
  * Apply a format wrap (== or **) to card.back in the source note.

@@ -3,7 +3,7 @@ const I = require("obsidian");
 const { computeFsrs: P } = require("../fsrs");
 const { t: c, tAlt: C, getLocale: _getLocale } = require("../i18n");
 const { anySrPattern: ge, getReviewStatus: $, loadSrData, saveSrData } = require("./helpers");
-const { saveTagSourceCard, saveInlineCard, deleteTagSourceCard, applyFormatToCardBack } = require("./edit");
+const { saveTagSourceCard, saveInlineCard, deleteTagSourceCard, applyFormatToCardBack, refreshTagSourceCard } = require("./edit");
 const W_ref = { get locale() { try { return I.moment && I.moment.locale && I.moment.locale(); } catch(e) { return "en"; } } };
 function L(s) { return _getLocale(s, W_ref.locale); }
 
@@ -369,7 +369,15 @@ var Q=class extends I.Modal{
     // Edit button
     let editTopBtn=btnGroup.createEl("button",{attr:{class:"lh-rc-edit-btn"}});
     editTopBtn.textContent="✏️ "+c(t,"EDIT_CARD");
-    editTopBtn.addEventListener("click",()=>this._renderEditForm(e));
+    editTopBtn.addEventListener("click",async()=>{
+      if(e.notePath){
+        try{
+          const refreshed=await refreshTagSourceCard(this.app,e);
+          if(!refreshed){new I.Notice(c(t,"CREATE_CARD_SAVE_FAILED"));return;}
+        }catch(err){console.error("review-edit: refresh failed",err);new I.Notice(c(t,"CREATE_CARD_SAVE_FAILED"));return;}
+      }
+      this._renderEditForm(e);
+    });
     // Delete button
     let delTopBtn=btnGroup.createEl("button",{attr:{class:"lh-rc-edit-btn",style:"color:#ef4444;"}});
     delTopBtn.textContent="🗑️";
