@@ -117,7 +117,8 @@ Scientific long-term memory powered by the **FSRS Algorithm**.
   ```
 - **Image support:** Embed `![[image.png]]` or `![](path)` directly in `Q:/A:` or `::` cards — images render in the review session
 - **Auto-detection:** Scans any note tagged with `#flashcards/topic` — write cards wherever it fits your workflow
-- **Notes stay clean:** Cards and scheduling data live in `engram-review/` — your original markdown is never modified
+- **AI cards stay separate:** AI-generated cards and scheduling data live in `engram-review/` — AI never touches your source notes
+- **Your own cards stay editable:** Edit, Highlight (`==`), and Bold (`**`) tools in the review session write changes directly back to your source note, keeping it as the single source of truth
 - **Source note link:** Every card connects back to its origin note — tap to read context, then resume right where you left off
 - **Triple-level Hints:** Stuck? AI provides L1 (active recall prompt), L2 (context anchored to your own vault notes), or L3 (narrowing hint). L2 is what makes AI useful here — it links new knowledge to things you already know in your vault.
 - **FSRS scheduling:** The latest spaced-repetition algorithm — intervals adapt to your actual recall performance, not fixed multipliers
@@ -171,7 +172,7 @@ EngramQuest is built on three pillars of cognitive science:
 AI adds value in two specific ways: generating cards and quest challenges from notes you haven't formatted yet, and building L2 contextual hints that anchor each card to your personal vault knowledge — making recall stronger than isolated memorization.
 
 **Q: Where is my progress stored?**
-**A:** Review progress is stored in `engram-review/sr/` inside your vault as JSON files. Your original notes are never modified.
+**A:** Review scheduling data is stored in `engram-review/sr/` inside your vault as JSON files. AI-generated cards live in `engram-review/ai-cards/`. Neither touches your source notes. Cards you write yourself: the Edit, Highlight, and Bold tools in the review session write changes directly back to your note — intentionally, so your note stays the source of truth.
 
 **Q: Does EngramQuest support Anki?**
 **A:** Partially. The `::` and `{{c1::}}` formats are Anki-compatible. Pair them with the **Obsidian_to_Anki** community plugin — install Obsidian_to_Anki + AnkiConnect, enable RemNote-style (`::`) syntax in its settings, and sync. Your cards will appear in Anki automatically.
@@ -286,7 +287,8 @@ A: 微服務系統的架構圖。
   ```
 - **圖片支援：** 在 `Q:/A:` 或 `::` 卡片中嵌入 `![[image.png]]` 或 `![](path)` — 圖片直接顯示在複習卡片中
 - **自動偵測：** 任何帶有 `#flashcards/主題` tag 的筆記都會被掃描，卡片寫在哪裡都能偵測到
-- **筆記永遠不被修改：** 卡片與排程資料存在 `engram-review/`，原始 markdown 完全不動
+- **AI 卡片獨立存放：** AI 生成的卡片與排程資料存在 `engram-review/`，AI 不會修改你的原始筆記
+- **手寫卡片可直接編輯：** 複習時使用「編輯」、「高亮」或「粗體」功能，變更會直接寫回你的原始筆記，讓筆記始終是最新版
 - **來源筆記連結：** 每張卡片上方有 📄 按鈕 — 複習途中可即時跳轉到原始筆記查看脈絡，看完直接回到剛才的卡片
 - **三段式提示：** 想不起來時，AI 提供 L1（主動回想提示）、L2（錨定你自己 vault 筆記的情境）或 L3（縮小範圍提示）。L2 是 AI 真正有價值的地方 — 把新知識連結到你已經知道的東西
 - **FSRS 排程：** 間隔根據你的實際回想表現自動調整，不會堆積複習壓力
@@ -340,7 +342,7 @@ EngramQuest 結合了三大學習科學原理：
 AI 在兩個地方真正有價值：從你還沒整理的筆記快速生成卡片和 Quest 關卡，以及建立 L2 情境提示 — 把每張卡片錨定到你個人 vault 裡已有的知識，讓回想比孤立記憶更有效。
 
 **Q: 我的學習進度存哪裡？**
-**A:** 複習進度存放在 vault 內的 `engram-review/sr/` 資料夾，以 JSON 格式儲存。你的原始筆記永遠不會被修改。
+**A:** 複習排程資料存放在 vault 內的 `engram-review/sr/` 資料夾，以 JSON 格式儲存。AI 生成的卡片存在 `engram-review/ai-cards/`，兩者都不會修改你的原始筆記。你自己手寫的卡片，在複習時使用「編輯」、「高亮」或「粗體」功能，變更會直接寫回原始筆記。
 
 **Q: EngramQuest 支援 Anki 嗎？**
 **A:** 部分支援。`::` 和 `{{c1::}}` 格式與 Anki 相容，可搭配 **Obsidian_to_Anki** 社群插件使用。只需安裝 Obsidian_to_Anki + AnkiConnect，在設定中開啟 RemNote style（`::` 語法），同步後卡片就會自動出現在 Anki 中。

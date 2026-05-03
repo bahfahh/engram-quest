@@ -245,13 +245,17 @@ function parseFlashcards(markdown) {
     if (/\{\{c\d+::/.test(beforeSep)) continue;
 
     const stripMd = s => s.replace(/^[*_=]+|[*_=]+$/g, "").trim();
-    let front = stripMd(beforeSep.trim());
-    let back = stripMd(line.slice(separatorIndex + 2).trim());
+    const rawFront = beforeSep.trim();
+    const rawBack = line.slice(separatorIndex + 2).trim();
+    let front = stripMd(rawFront);
+    let back = stripMd(rawBack);
     if (!front || !back) continue;
 
     cards.push({
       front,
       back,
+      rawFront,
+      rawBack,
       emoji: "",
       hint_l1: "",
       hint_l2: "",

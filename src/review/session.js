@@ -3,7 +3,7 @@ const I = require("obsidian");
 const { computeFsrs: P } = require("../fsrs");
 const { t: c, tAlt: C, getLocale: _getLocale } = require("../i18n");
 const { anySrPattern: ge, getReviewStatus: $, loadSrData, saveSrData } = require("./helpers");
-const { saveTagSourceCard, saveInlineCard, deleteTagSourceCard } = require("./edit");
+const { saveTagSourceCard, saveInlineCard, deleteTagSourceCard, applyFormatToCardBack } = require("./edit");
 const W_ref = { get locale() { try { return I.moment && I.moment.locale && I.moment.locale(); } catch(e) { return "en"; } } };
 function L(s) { return _getLocale(s, W_ref.locale); }
 
@@ -395,7 +395,30 @@ var Q=class extends I.Modal{
     // Answer block
     if(this.answerShown){
       let p=i.createEl("div",{attr:{class:"lh-answer-block"}});
-      p.createEl("div",{text:c(t,"ANSWER"),attr:{class:"lh-answer-label"}});
+      // Answer header row: label on left, format buttons on right
+      let answerHeader=p.createEl("div",{attr:{class:"lh-answer-header"}});
+      answerHeader.createEl("div",{text:c(t,"ANSWER"),attr:{class:"lh-answer-label"}});
+      if(e.notePath){
+        let fmtBtns=answerHeader.createEl("div",{attr:{class:"lh-answer-fmt-btns"}});
+        const applyAnswerFmt=(wrap)=>{
+          const sel=window.getSelection();
+          const selectedText=sel&&sel.toString().trim();
+          if(!selectedText){new I.Notice(c(t,"FORMAT_SELECT_TEXT"));return;}
+          if(!e.back.includes(selectedText)){new I.Notice(c(t,"FORMAT_SELECT_TEXT"));return;}
+          const oldBack=e.back;
+          const newBack=e.back.replace(selectedText,wrap+selectedText+wrap);
+          e.back=newBack;
+          applyFormatToCardBack(this.app,e,oldBack,newBack).then(()=>{
+            this._renderCardContent(e);
+          }).catch(err=>console.error("format-apply failed",err));
+        };
+        let hlBtn=fmtBtns.createEl("button",{text:c(t,"FORMAT_HIGHLIGHT"),attr:{class:"lh-rc-edit-btn lh-fmt-btn"}});
+        hlBtn.addEventListener("mousedown",(ev)=>ev.preventDefault());
+        hlBtn.addEventListener("click",()=>applyAnswerFmt("=="));
+        let bdBtn=fmtBtns.createEl("button",{text:c(t,"FORMAT_BOLD"),attr:{class:"lh-rc-edit-btn lh-fmt-btn"}});
+        bdBtn.addEventListener("mousedown",(ev)=>ev.preventDefault());
+        bdBtn.addEventListener("click",()=>applyAnswerFmt("**"));
+      }
       let answerEl=p.createEl("div",{attr:{class:"lh-answer-text"}});
       I.MarkdownRenderer.renderMarkdown(e.back||"",answerEl,e.notePath||"",null);
       postProcessEmbed(answerEl,this.app,e.notePath||"");
@@ -628,6 +651,24 @@ var Q=class extends I.Modal{
     function autoResize(ta){ta.style.height="auto";ta.style.height=ta.scrollHeight+"px";}
     autoResize(taBack);
     taBack.addEventListener("input",()=>autoResize(taBack));
+
+    // Format toolbar for the back textarea
+    let backFmtBar=body.createEl("div",{attr:{class:"lh-edit-fmt-bar"}});
+    const applyEditFmt=(ta,wrap)=>{
+      const start=ta.selectionStart;
+      const end=ta.selectionEnd;
+      if(start===end){new I.Notice(c(t,"FORMAT_SELECT_TEXT"));return;}
+      const sel=ta.value.slice(start,end);
+      ta.value=ta.value.slice(0,start)+wrap+sel+wrap+ta.value.slice(end);
+      ta.selectionStart=start+wrap.length;
+      ta.selectionEnd=end+wrap.length;
+      ta.focus();
+      autoResize(ta);
+    };
+    let hlEditBtn=backFmtBar.createEl("button",{text:c(t,"FORMAT_HIGHLIGHT"),attr:{class:"lh-rc-edit-btn lh-fmt-btn"}});
+    hlEditBtn.addEventListener("click",()=>applyEditFmt(taBack,"=="));
+    let bdEditBtn=backFmtBar.createEl("button",{text:c(t,"FORMAT_BOLD"),attr:{class:"lh-rc-edit-btn lh-fmt-btn"}});
+    bdEditBtn.addEventListener("click",()=>applyEditFmt(taBack,"**"));
 
     // Hints section
     let hintsWrap=body.createEl("div",{attr:{class:"lh-edit-hints-section"}});

@@ -20,18 +20,50 @@ async function saveTagSourceCard(app, card, newData) {
   const file = app.vault.getAbstractFileByPath(card.notePath);
   if (file) {
     let content = await app.vault.read(file);
-    // Match "front :: back" — use function replacement to avoid $ interpretation issues
+    const frontKey = card.rawFront !== undefined ? card.rawFront : card.front;
+    const backKey = card.rawBack !== undefined ? card.rawBack : card.back;
+
+    let modified = false;
+    // Try exact front :: back match using raw (possibly markdown-decorated) values
     const re = new RegExp(
-      `^([ \t]*)${escapeRegExp(card.front)}([ \t]*)::[ \t]*${escapeRegExp(card.back)}[ \t]*$`,
+      `^([ \t]*)${escapeRegExp(frontKey)}([ \t]*)::[ \t]*${escapeRegExp(backKey)}[ \t]*$`,
       "m"
     );
     if (re.test(content)) {
       content = content.replace(re, () => `${newData.front} :: ${newData.back}`);
+      modified = true;
     } else {
-      // Fallback: match by front only (in case back has trailing whitespace differences)
-      const reFront = new RegExp(`^([ \t]*)${escapeRegExp(card.front)}([ \t]*)::(.*)$`, "m");
-      content = content.replace(reFront, () => `${newData.front} :: ${newData.back}`);
+      // Fallback: match by raw front only
+      const reFront = new RegExp(`^([ \t]*)${escapeRegExp(frontKey)}([ \t]*)::(.*)$`, "m");
+      if (reFront.test(content)) {
+        content = content.replace(reFront, () => `${newData.front} :: ${newData.back}`);
+        modified = true;
+      } else if (frontKey !== card.front) {
+        // Second fallback: stripped front
+        const reFront2 = new RegExp(`^([ \t]*)${escapeRegExp(card.front)}([ \t]*)::(.*)$`, "m");
+        content = content.replace(reFront2, () => `${newData.front} :: ${newData.back}`);
+        modified = true;
+      } else {
+        content = content.replace(re, () => `${newData.front} :: ${newData.back}`);
+        modified = true;
+      }
     }
+
+    // Q:/A: format fallback (for cards not using :: format)
+    if (!modified) {
+      const frontLine = card.front.split("\n")[0].trim();
+      const backLine = (card.rawBack || card.back).split("\n")[0].trim();
+      if (frontLine && backLine) {
+        const qaRe = new RegExp(
+          `(Q:\\s*${escapeRegExp(frontLine)}.*\\n)(A:\\s*)${escapeRegExp(backLine)}`,
+          "m"
+        );
+        if (qaRe.test(content)) {
+          content = content.replace(qaRe, (_, qLine, aPrefix) => `${qLine}${aPrefix}${newData.back}`);
+        }
+      }
+    }
+
     await app.vault.modify(file, content);
   }
 
@@ -128,7 +160,69 @@ async function saveInlineCard(app, sourcePath, card, newData) {
   await app.vault.modify(file, content);
 }
 
-module.exports = { saveTagSourceCard, saveInlineCard, replaceCardInBlock, deleteTagSourceCard, deleteDeckCards };
+module.exports = { saveTagSourceCard, saveInlineCard, replaceCardInBlock, deleteTagSourceCard, deleteDeckCards, applyFormatToCardBack };
+
+/**
+ * Apply a format wrap (== or **) to card.back in the source note.
+ * oldBack is the pre-wrap back value; newBack is the post-wrap back value.
+ * Updates card.rawBack after a successful write.
+ * @param {object} app - Obsidian app
+ * @param {object} card - card object (must have notePath)
+ * @param {string} oldBack - previous back text
+ * @param {string} newBack - new back text with wrapping applied
+ */
+async function applyFormatToCardBack(app, card, oldBack, newBack) {
+  if (!card.notePath) return;
+  const file = app.vault.getAbstractFileByPath(card.notePath);
+  if (!file) return;
+
+  let content = await app.vault.read(file);
+  let modified = false;
+
+  const frontKey = card.rawFront !== undefined ? card.rawFront : card.front;
+  const backKey = card.rawBack !== undefined ? card.rawBack : oldBack;
+
+  // 1. Try front :: back format using rawBack as the current value in the file
+  const re = new RegExp(
+    `^([ \t]*)${escapeRegExp(frontKey)}([ \t]*)::[ \t]*${escapeRegExp(backKey)}[ \t]*$`,
+    "m"
+  );
+  if (re.test(content)) {
+    content = content.replace(re, (_, indent, mid) => `${indent}${frontKey}${mid}:: ${newBack}`);
+    modified = true;
+  } else {
+    // Fallback: find line with frontKey and oldBack (in case rawBack is already updated)
+    const reFallback = new RegExp(
+      `^([ \t]*)${escapeRegExp(frontKey)}([ \t]*)::[ \t]*${escapeRegExp(oldBack)}[ \t]*$`,
+      "m"
+    );
+    if (reFallback.test(content)) {
+      content = content.replace(reFallback, (_, indent, mid) => `${indent}${frontKey}${mid}:: ${newBack}`);
+      modified = true;
+    }
+  }
+
+  // 2. Try Q:/A: format
+  if (!modified) {
+    const frontLine = card.front.split("\n")[0].trim();
+    const backLine = oldBack.split("\n")[0].trim();
+    if (frontLine && backLine) {
+      const qaRe = new RegExp(
+        `(Q:\\s*${escapeRegExp(frontLine)}.*\\n)(A:\\s*)${escapeRegExp(backLine)}`,
+        "m"
+      );
+      if (qaRe.test(content)) {
+        content = content.replace(qaRe, (_, qLine, aPrefix) => `${qLine}${aPrefix}${newBack}`);
+        modified = true;
+      }
+    }
+  }
+
+  if (modified) {
+    await app.vault.modify(file, content);
+    if (card.rawBack !== undefined) card.rawBack = newBack;
+  }
+}
 
 /**
  * Delete all cards belonging to a deck.
