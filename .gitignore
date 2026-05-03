@@ -12,3 +12,5 @@ CLAUDE.md
 doc/
 !node_modules/obsidian
 debug/
+
+.agents/

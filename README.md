@@ -118,7 +118,7 @@ Scientific long-term memory powered by the **FSRS Algorithm**.
 - **Image support:** Embed `![[image.png]]` or `![](path)` directly in `Q:/A:` or `::` cards — images render in the review session
 - **Auto-detection:** Scans any note tagged with `#flashcards/topic` — write cards wherever it fits your workflow
 - **AI cards stay separate:** AI-generated cards and scheduling data live in `engram-review/` — AI never touches your source notes
-- **Your own cards stay editable:** Edit, Highlight (`==`), and Bold (`**`) tools in the review session write changes directly back to your source note, keeping it as the single source of truth
+- **Your own cards stay editable:** Edit, Highlight (`==`), and Quote (`>`) tools in the review session write changes directly back to your source note, keeping it as the single source of truth
 - **Source note link:** Every card connects back to its origin note — tap to read context, then resume right where you left off
 - **Triple-level Hints:** Stuck? AI provides L1 (active recall prompt), L2 (context anchored to your own vault notes), or L3 (narrowing hint). L2 is what makes AI useful here — it links new knowledge to things you already know in your vault.
 - **FSRS scheduling:** The latest spaced-repetition algorithm — intervals adapt to your actual recall performance, not fixed multipliers
@@ -172,7 +172,7 @@ EngramQuest is built on three pillars of cognitive science:
 AI adds value in two specific ways: generating cards and quest challenges from notes you haven't formatted yet, and building L2 contextual hints that anchor each card to your personal vault knowledge — making recall stronger than isolated memorization.
 
 **Q: Where is my progress stored?**
-**A:** Review scheduling data is stored in `engram-review/sr/` inside your vault as JSON files. AI-generated cards live in `engram-review/ai-cards/`. Neither touches your source notes. Cards you write yourself: the Edit, Highlight, and Bold tools in the review session write changes directly back to your note — intentionally, so your note stays the source of truth.
+**A:** Review scheduling data is stored in `engram-review/sr/` inside your vault as JSON files. AI-generated cards live in `engram-review/ai-cards/`. Neither touches your source notes. Cards you write yourself: the Edit, Highlight, and Quote tools in the review session write changes directly back to your note — intentionally, so your note stays the source of truth.
 
 **Q: Does EngramQuest support Anki?**
 **A:** Partially. The `::` and `{{c1::}}` formats are Anki-compatible. Pair them with the **Obsidian_to_Anki** community plugin — install Obsidian_to_Anki + AnkiConnect, enable RemNote-style (`::`) syntax in its settings, and sync. Your cards will appear in Anki automatically.

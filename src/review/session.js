@@ -413,8 +413,9 @@ var Q=class extends I.Modal{
         if(!sel||sel.rangeCount===0){selectedAnswerText="";return "";}
         const text=sel.toString();
         if(!text||!text.trim()){selectedAnswerText="";return "";}
-        const node=sel.anchorNode;
-        if(!answerEl||!node||!answerEl.contains(node)){selectedAnswerText="";return "";}
+        const anchor=sel.anchorNode;
+        const focus=sel.focusNode;
+        if(!answerEl||(!answerEl.contains(anchor)&&!answerEl.contains(focus))){selectedAnswerText="";return "";}
         selectedAnswerText=text.trim();
         return selectedAnswerText;
       };
@@ -436,9 +437,33 @@ var Q=class extends I.Modal{
         let hlBtn=fmtBtns.createEl("button",{text:c(t,"FORMAT_HIGHLIGHT"),attr:{class:"lh-rc-edit-btn lh-fmt-btn"}});
         hlBtn.addEventListener("mousedown",(ev)=>{captureAnswerSelection();ev.preventDefault();});
         hlBtn.addEventListener("click",()=>applyAnswerFmt("=="));
-        let bdBtn=fmtBtns.createEl("button",{text:c(t,"FORMAT_BOLD"),attr:{class:"lh-rc-edit-btn lh-fmt-btn"}});
-        bdBtn.addEventListener("mousedown",(ev)=>{captureAnswerSelection();ev.preventDefault();});
-        bdBtn.addEventListener("click",()=>applyAnswerFmt("**"));
+        const applyBlockquoteToBack=async()=>{
+          const selectedText=(captureAnswerSelection()||selectedAnswerText||'').trim();
+          if(!selectedText){new I.Notice(c(t,"FORMAT_SELECT_PARA"));return;}
+          const lines=e.back.split('\n');
+          const selParts=selectedText.split('\n').map(p=>p.trim()).filter(Boolean);
+          let startIdx=-1,endIdx=-1;
+          for(let i=0;i<lines.length;i++){
+            const raw=lines[i].replace(/^>\s*/,'').trim();
+            if(startIdx===-1&&selParts[0]&&raw.includes(selParts[0])){startIdx=i;}
+            if(startIdx!==-1&&selParts[selParts.length-1]&&raw.includes(selParts[selParts.length-1])){endIdx=i;break;}
+          }
+          if(startIdx===-1){startIdx=0;endIdx=lines.length-1;}
+          if(endIdx===-1)endIdx=startIdx;
+          const oldBack=e.back;
+          const newLines=lines.map((line,i)=>(i>=startIdx&&i<=endIdx&&!line.startsWith('> '))?'> '+line:line);
+          const newBack=newLines.join('\n');
+          if(newBack===oldBack)return;
+          try{
+            const saved=await applyFormatToCardBack(this.app,e,oldBack,newBack);
+            if(!saved){new I.Notice(c(t,"CREATE_CARD_SAVE_FAILED"));return;}
+            e.back=newBack;
+            this._renderCardContent(e);
+          }catch(err){console.error("blockquote-apply failed",err);new I.Notice(c(t,"CREATE_CARD_SAVE_FAILED"));}
+        };
+        let bqBtn=fmtBtns.createEl("button",{text:c(t,"FORMAT_BLOCKQUOTE"),attr:{class:"lh-rc-edit-btn lh-fmt-btn"}});
+        bqBtn.addEventListener("mousedown",(ev)=>{captureAnswerSelection();ev.preventDefault();});
+        bqBtn.addEventListener("click",applyBlockquoteToBack);
       }
       answerEl=p.createEl("div",{attr:{class:"lh-answer-text"}});
       I.MarkdownRenderer.renderMarkdown(e.back||"",answerEl,e.notePath||"",null);
@@ -669,14 +694,17 @@ var Q=class extends I.Modal{
     }
 
     let taFront=field("EDIT_FRONT", e.front);
-    let taBack=field("EDIT_BACK", e.back);
+    // Back field: inline creation so format bar lives in the label row
+    let backField=body.createEl("div",{attr:{class:"lh-edit-field"}});
+    let backHeader=backField.createEl("div",{attr:{class:"lh-edit-field-header"}});
+    backHeader.createEl("label",{text:c(t,"EDIT_BACK"),attr:{class:"lh-edit-label"}});
+    let backFmtBar=backHeader.createEl("div",{attr:{class:"lh-edit-fmt-bar"}});
+    let taBack=backField.createEl("textarea",{attr:{class:"lh-edit-textarea"}});
+    taBack.value=e.back||"";
     taBack.style.minHeight="140px";
     function autoResize(ta){ta.style.height="auto";ta.style.height=ta.scrollHeight+"px";}
     autoResize(taBack);
     taBack.addEventListener("input",()=>autoResize(taBack));
-
-    // Format toolbar for the back textarea
-    let backFmtBar=body.createEl("div",{attr:{class:"lh-edit-fmt-bar"}});
     const applyEditFmt=(ta,wrap)=>{
       const start=ta.selectionStart;
       const end=ta.selectionEnd;
@@ -690,8 +718,21 @@ var Q=class extends I.Modal{
     };
     let hlEditBtn=backFmtBar.createEl("button",{text:c(t,"FORMAT_HIGHLIGHT"),attr:{class:"lh-rc-edit-btn lh-fmt-btn"}});
     hlEditBtn.addEventListener("click",()=>applyEditFmt(taBack,"=="));
-    let bdEditBtn=backFmtBar.createEl("button",{text:c(t,"FORMAT_BOLD"),attr:{class:"lh-rc-edit-btn lh-fmt-btn"}});
-    bdEditBtn.addEventListener("click",()=>applyEditFmt(taBack,"**"));
+    const applyBlockquoteEdit=(ta)=>{
+      const lineStart=ta.value.lastIndexOf('\n',ta.selectionStart-1)+1;
+      let lineEnd=ta.value.indexOf('\n',ta.selectionEnd);
+      if(lineEnd===-1)lineEnd=ta.value.length;
+      const sel=ta.value.slice(lineStart,lineEnd);
+      if(!sel.trim())return;
+      const quoted=sel.split('\n').map(l=>l.startsWith('> ')?l:'> '+l).join('\n');
+      ta.value=ta.value.slice(0,lineStart)+quoted+ta.value.slice(lineEnd);
+      ta.selectionStart=lineStart;
+      ta.selectionEnd=lineStart+quoted.length;
+      ta.focus();
+      autoResize(ta);
+    };
+    let bqEditBtn=backFmtBar.createEl("button",{text:c(t,"FORMAT_BLOCKQUOTE"),attr:{class:"lh-rc-edit-btn lh-fmt-btn"}});
+    bqEditBtn.addEventListener("click",()=>applyBlockquoteEdit(taBack));
 
     // Hints section
     let hintsWrap=body.createEl("div",{attr:{class:"lh-edit-hints-section"}});

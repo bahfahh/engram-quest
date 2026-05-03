@@ -96,7 +96,7 @@ A: 在快忘記時複習，可以用最少時間達到最高記憶保留率。
               <li>AI 讀取你的筆記，在 <code>engram-review/ai-cards/</code> 建立卡片檔（含 <code>#flashcards/math</code> tag 和 <code>question :: answer</code> 格式）</li>
               <li>開 Hub → Review Deck → 開始複習</li>
             </ol>
-            <div class="lh-help-sub"><div class="lh-help-sub-icon">💡</div><div>你的一般筆記不需要有任何 tag，AI 可以直接讀取。AI <strong>產生的卡片檔</strong>存在 <code>engram-review/ai-cards/</code>，<strong>不會修改你的原始筆記</strong>。你自己手寫的卡片，在複習時使用「編輯」、「高亮」或「粗體」功能，變更會直接寫回原始筆記。卡片檔需要有 <code>#flashcards/...</code> tag，插件才能偵測到。</div></div>
+            <div class="lh-help-sub"><div class="lh-help-sub-icon">💡</div><div>你的一般筆記不需要有任何 tag，AI 可以直接讀取。AI <strong>產生的卡片檔</strong>存在 <code>engram-review/ai-cards/</code>，<strong>不會修改你的原始筆記</strong>。你自己手寫的卡片，在複習時使用「編輯」、「高亮」或「重點」功能，變更會直接寫回原始筆記。卡片檔需要有 <code>#flashcards/...</code> tag，插件才能偵測到。</div></div>
             <p><strong>相容模式：</strong>如果你有舊式 <code>::</code> 卡片筆記，可以到設定中開啟 legacy <code>::</code> 掃描。這是遷移模式，不是新手預設。</p>
           `},{icon:"🗺️",title:"Quest Map",tag:c(e,"HELP_QUEST_TAG"),html:`
             <ol>
@@ -229,7 +229,7 @@ A: 一連串的本地交易。
             <p><strong>Q6：我有很多舊 <code>::</code> 卡片，但沒有 tag。要怎麼遷移？</strong></p>
             <p>到設定打開 <code>Include legacy :: notes</code>，保留原本的 <code>question :: answer</code> 格式，再回到 Hub 的 Review Deck 檢查是否已被納入。若要長期維護，建議之後慢慢補上 <code>#flashcards/...</code> tag。</p>
             <p><strong>Q7：Review Deck 進度存在哪裡？</strong></p>
-            <p>複習排程資料存放在 <code>engram-review/sr/{筆記名稱}.json</code>，AI 生成的卡片存在 <code>engram-review/ai-cards/</code>，兩者都不會寫入你的原始筆記。你自己手寫的卡片，在複習時使用「編輯」、「高亮」或「粗體」功能，變更會直接寫回原始筆記。</p>
+            <p>複習排程資料存放在 <code>engram-review/sr/{筆記名稱}.json</code>，AI 生成的卡片存在 <code>engram-review/ai-cards/</code>，兩者都不會寫入你的原始筆記。你自己手寫的卡片，在複習時使用「編輯」、「高亮」或「重點」功能，變更會直接寫回原始筆記。</p>
             <p><strong>Q8：手機可以用嗎？</strong></p>
             <p>Review Deck 可以。Quest Map 與 Memory Map 目前仍較適合桌面版。</p>
             <p><strong>Q9：手機上的插件不會自動更新怎麼辦？</strong></p>
@@ -252,7 +252,7 @@ A: 一連串的本地交易。
 字卡難度不要太基礎，需包含分析與應用層次的問題。
 所有卡片問題請用繁體中文撰寫。</pre>
             <p><strong>Q12：如何讓 AI 每次建立 Review Deck 時都依照我想要的固定模式？</strong></p>
-            <p>用你習慣的任何語法在筆記中標記重要答案，例如 Obsidian 高亮 <code>==文字==</code>、粗體 <code>**文字**</code>，或任何自訂記號都可以。接著在 AI 設定檔（<code>CLAUDE.md</code>、<code>GEMINI.md</code> 或 <code>AGENTS.md</code>）中加入對應指令，告訴 AI 把那個記號當作卡片答案：</p>
+            <p>用你習慣的任何語法在筆記中標記重要答案，例如 Obsidian 高亮 <code>==文字==</code>、引用區塊 <code>&gt; 文字</code>，或任何自訂記號都可以。接著在 AI 設定檔（<code>CLAUDE.md</code>、<code>GEMINI.md</code> 或 <code>AGENTS.md</code>）中加入對應指令，告訴 AI 把那個記號當作卡片答案：</p>
             <pre>IMPORTANT: When building a Review Deck, every highlighted ==text== must be turned into a review card.</pre>
             <p>用你自己最順手的標記方式就好，AI 會照著規則一致執行。</p>
             <p><strong>Q13：EngramQuest 支援 Anki 嗎？</strong></p>
@@ -301,7 +301,7 @@ Pythagorean theorem :: a² + b² = c²</pre>
               <li>AI reads your notes and creates card files in <code>engram-review/ai-cards/</code> (with <code>#flashcards/math</code> tag and <code>question :: answer</code> format)</li>
               <li>Open Hub → Review Deck → start reviewing</li>
             </ol>
-            <div class="lh-help-sub"><div class="lh-help-sub-icon">💡</div><div>Your source notes don't need any tag — AI can read them directly. Card files AI generates are saved to <code>engram-review/ai-cards/</code> and <strong>never touch your source notes</strong>. Cards you write yourself: Edit, Highlight, and Bold tools in the review session write changes back to your source note. Card files need a <code>#flashcards/...</code> tag for the plugin to detect them.</div></div>
+            <div class="lh-help-sub"><div class="lh-help-sub-icon">💡</div><div>Your source notes don't need any tag — AI can read them directly. Card files AI generates are saved to <code>engram-review/ai-cards/</code> and <strong>never touch your source notes</strong>. Cards you write yourself: Edit, Highlight, and Emphasis tools in the review session write changes back to your source note. Card files need a <code>#flashcards/...</code> tag for the plugin to detect them.</div></div>
             <p><strong>Migration mode:</strong> if you have old plain <code>::</code> flashcard notes, enable legacy <code>::</code> scanning in Settings. Optional, off by default.</p>
           `},{icon:"🗺️",title:"Quest Map",tag:c(e,"HELP_QUEST_TAG"),html:`
             <ol>
@@ -435,7 +435,7 @@ A: A sequence of local transactions.
             <p><strong>Q6. I already have many old <code>::</code> cards without tags. How do I migrate?</strong></p>
             <p>Turn on <code>Include legacy :: notes</code> in Settings, keep the existing <code>question :: answer</code> format, and reopen Hub → Review Deck. For long-term maintenance, gradually add <code>#flashcards/...</code> tags.</p>
             <p><strong>Q7. Where is review progress stored?</strong></p>
-            <p>Review scheduling data is stored in <code>engram-review/sr/{note-name}.json</code>. AI-generated cards live in <code>engram-review/ai-cards/</code> — neither touches your source notes. Cards you write yourself: Edit, Highlight, and Bold tools in the review session write changes directly back to your note.</p>
+            <p>Review scheduling data is stored in <code>engram-review/sr/{note-name}.json</code>. AI-generated cards live in <code>engram-review/ai-cards/</code> — neither touches your source notes. Cards you write yourself: Edit, Highlight, and Emphasis tools in the review session write changes directly back to your note.</p>
             <p><strong>Q8. Does this work on mobile?</strong></p>
             <p>Review Deck works on mobile. Quest Map and Memory Map are still best on desktop.</p>
             <p><strong>Q9. Why doesn't the plugin update on my phone?</strong></p>
@@ -458,7 +458,7 @@ A: A sequence of local transactions.
 Keep card difficulty at an advanced level — include analysis and application questions.
 Write all card questions in formal academic English.</pre>
             <p><strong>Q12. How can I make AI always follow a specific pattern when building a Review Deck?</strong></p>
-            <p>Mark key answers in your notes using any syntax you prefer — for example, Obsidian's highlight <code>==text==</code>, bold <code>**text**</code>, or any custom marker. Then add a rule to your AI config file (<code>CLAUDE.md</code>, <code>GEMINI.md</code>, or <code>AGENTS.md</code>) telling it to treat that marker as a card answer:</p>
+            <p>Mark key answers in your notes using any syntax you prefer — for example, Obsidian's highlight <code>==text==</code>, blockquote <code>&gt; text</code>, or any custom marker. Then add a rule to your AI config file (<code>CLAUDE.md</code>, <code>GEMINI.md</code>, or <code>AGENTS.md</code>) telling it to treat that marker as a card answer:</p>
             <pre>IMPORTANT: When building a Review Deck, every highlighted ==text== must be turned into a review card.</pre>
             <p>Use whatever convention fits your note-taking style — the AI will follow it consistently.</p>
             <p><strong>Q13. Does EngramQuest support Anki?</strong></p>
