@@ -100,7 +100,7 @@ A: 在快忘記時複習，可以用最少時間達到最高記憶保留率。
             <p><strong>相容模式：</strong>如果你有舊式 <code>::</code> 卡片筆記，可以到設定中開啟 legacy <code>::</code> 掃描。這是遷移模式，不是新手預設。</p>
           `},{icon:"🃏",title:"AI 長答案卡片",tag:"%%card%%",html:`
             <p><strong>Q：如何把 AI 長回答做成 Review Deck 卡片？</strong></p>
-            <p><strong>A：</strong>平常寫卡片仍然用 <code>Q:/A:</code>。如果你要貼上很長的 AI 回答，而且答案裡可能有 <code>---</code>、表格、程式碼區塊或很多空行，就用 <code>%%card%%</code> 包住一張卡。</p>
+            <p><strong>A：</strong>平常寫卡片仍然用 <span style="background:#dcfce7;color:#166534;padding:2px 6px;border-radius:6px;font-weight:700;"><code>Q:/A:</code> 日常格式</span>。如果你要貼上很長的 AI 回答，而且答案裡可能有 <code>---</code>、表格、程式碼區塊或很多空行，就用 <span style="background:#fef3c7;color:#92400e;padding:2px 6px;border-radius:6px;font-weight:700;"><code>%%card%%</code> 安全模式</span> 包住一張卡。</p>
             <pre>#flashcards/ai
 
 %%card%%
@@ -119,7 +119,7 @@ Agentic testing 檢查的是 AI 系統能不能可靠完成任務，而不只是
 expect(result.completed).toBe(true)
 &#96;&#96;&#96;
 %%card%%</pre>
-            <p><code>A:</code> 後面的內容會一直保留到結尾的 <code>%%card%%</code>。中間的 <code>---</code> 不會截斷卡片；既有 <code>---</code> fenced 卡片也仍然支援，不需要重建。</p>
+            <p><strong>重點：</strong><code>A:</code> 後面的內容會一直保留到結尾的 <span style="background:#fef3c7;color:#92400e;padding:2px 6px;border-radius:6px;font-weight:700;"><code>%%card%%</code></span>。中間的 <span style="background:#dbeafe;color:#1d4ed8;padding:2px 6px;border-radius:6px;font-weight:700;"><code>---</code></span> 不會截斷卡片；既有 <code>---</code> fenced 卡片也仍然支援，不需要重建。</p>
           `},{icon:"🗺️",title:"Quest Map",tag:c(e,"HELP_QUEST_TAG"),html:`
             <ol>
               <li>跟 AI 說：「把微積分.md 做成 quest-map medium」</li>
@@ -210,8 +210,9 @@ A:
 法國首都 {{c1::巴黎}}，日本首都 {{c2::東京}}</pre>
             <table>
               <tr><th>格式</th><th>適合</th><th>寫法</th></tr>
-              <tr><td><code>Q:/A:</code> 問答 ⭐</td><td>推薦。多行答案、圖片、表格</td><td><code>Q: 問題</code> 換行 <code>A: 答案</code>（答案可以從下一行開始，可有多行）</td></tr>
-              <tr><td><code>Q:/A:</code> fenced ⭐</td><td>答案有很多空行（例如貼上 AI 輸出）</td><td>前後各加一行 <code>---</code> 包住卡片，裡面的空行永遠不會被當成卡片邊界</td></tr>
+              <tr><td><span style="background:#dcfce7;color:#166534;padding:2px 6px;border-radius:6px;font-weight:700;"><code>Q:/A:</code> 問答</span> ⭐</td><td>日常推薦格式。多行答案、圖片、表格</td><td><code>Q: 問題</code> 換行 <code>A: 答案</code>（答案可以從下一行開始，可有多行）</td></tr>
+              <tr><td><span style="background:#dbeafe;color:#1d4ed8;padding:2px 6px;border-radius:6px;font-weight:700;"><code>---</code> fenced</span> ⭐</td><td>既有長答案筆記、一般 Markdown 友善用法</td><td>前後各加一行 <code>---</code> 包住卡片，裡面的空行永遠不會被當成卡片邊界</td></tr>
+              <tr><td><span style="background:#fef3c7;color:#92400e;padding:2px 6px;border-radius:6px;font-weight:700;"><code>%%card%%</code> 長答案</span></td><td>貼上 AI 長答案的安全模式，適合內容可能包含 <code>---</code></td><td>前後各一行 <code>%%card%%</code> 包住一張卡；<code>A:</code> 後面直到結束標記前都會保留為答案</td></tr>
               <tr><td>Cloze 填空</td><td>填空記憶，同 Anki 語法</td><td><code>{{c1::答案}}</code> 或 <code>{{c1::答案::提示}}</code></td></tr>
               <tr><td><code>::</code> 問答</td><td>簡短答案，僅限一行</td><td><code>問題 :: 答案</code></td></tr>
             </table>
@@ -327,7 +328,7 @@ Pythagorean theorem :: a² + b² = c²</pre>
             <p><strong>Migration mode:</strong> if you have old plain <code>::</code> flashcard notes, enable legacy <code>::</code> scanning in Settings. Optional, off by default.</p>
           `},{icon:"🃏",title:"Long AI Answer Cards",tag:"%%card%%",html:`
             <p><strong>Q: How do I turn a long AI answer into a Review Deck card?</strong></p>
-            <p><strong>A:</strong> Use normal <code>Q:/A:</code> for everyday cards. If you paste a long AI answer that may contain <code>---</code>, tables, code blocks, or many blank lines, wrap one card with <code>%%card%%</code>.</p>
+            <p><strong>A:</strong> Use normal <span style="background:#dcfce7;color:#166534;padding:2px 6px;border-radius:6px;font-weight:700;"><code>Q:/A:</code> everyday format</span>. If you paste a long AI answer that may contain <code>---</code>, tables, code blocks, or many blank lines, wrap one card with <span style="background:#fef3c7;color:#92400e;padding:2px 6px;border-radius:6px;font-weight:700;"><code>%%card%%</code> safe mode</span>.</p>
             <pre>#flashcards/ai
 
 %%card%%
@@ -346,7 +347,7 @@ Example:
 expect(result.completed).toBe(true)
 &#96;&#96;&#96;
 %%card%%</pre>
-            <p>Everything after <code>A:</code> stays in the answer until the closing <code>%%card%%</code>. The <code>---</code> line above will not cut the card early. Existing <code>---</code> fenced cards still work and do not need to be rebuilt.</p>
+            <p><strong>Key point:</strong> everything after <code>A:</code> stays in the answer until the closing <span style="background:#fef3c7;color:#92400e;padding:2px 6px;border-radius:6px;font-weight:700;"><code>%%card%%</code></span>. The <span style="background:#dbeafe;color:#1d4ed8;padding:2px 6px;border-radius:6px;font-weight:700;"><code>---</code></span> line above will not cut the card early. Existing <code>---</code> fenced cards still work and do not need to be rebuilt.</p>
           `},{icon:"🗺️",title:"Quest Map",tag:c(e,"HELP_QUEST_TAG"),html:`
             <ol>
               <li>Ask AI: "Turn calculus.md into a quest-map medium"</li>
@@ -448,9 +449,9 @@ This separator stays inside the answer.
 Capitals: France {{c1::Paris}}, Japan {{c2::Tokyo}}</pre>
             <table>
               <tr><th>Format</th><th>Best for</th><th>Syntax</th></tr>
-              <tr><td><code>Q:/A:</code> Q&amp;A ⭐</td><td>Recommended. Multi-line, images, tables</td><td><code>Q: question</code> → <code>A: answer</code> (answer can start on the next line; multiple lines ok)</td></tr>
+              <tr><td><span style="background:#dcfce7;color:#166534;padding:2px 6px;border-radius:6px;font-weight:700;"><code>Q:/A:</code> Q&amp;A</span> ⭐</td><td>Recommended everyday format. Multi-line, images, tables</td><td><code>Q: question</code> → <code>A: answer</code> (answer can start on the next line; multiple lines ok)</td></tr>
               <tr><td><code>Q:/A:</code> fenced ⭐</td><td>Long answers with many blank lines (e.g. pasted AI output)</td><td>Wrap with <code>---</code> on its own line before and after — blank lines inside never end the card</td></tr>
-              <tr><td><code>%%card%%</code> long answer</td><td>Occasional pasted AI answers that may include <code>---</code></td><td>Wrap one card between two <code>%%card%%</code> lines; everything after <code>A:</code> stays in the answer until the closing marker</td></tr>
+              <tr><td><span style="background:#fef3c7;color:#92400e;padding:2px 6px;border-radius:6px;font-weight:700;"><code>%%card%%</code> long answer</span></td><td>Safe mode for pasted AI answers that may include <code>---</code></td><td>Wrap one card between two <code>%%card%%</code> lines; everything after <code>A:</code> stays in the answer until the closing marker</td></tr>
               <tr><td>Cloze</td><td>Fill-in-the-blank, same as Anki</td><td><code>{{c1::answer}}</code> or <code>{{c1::answer::hint}}</code></td></tr>
               <tr><td><code>::</code> Q&amp;A</td><td>Short answers, one line only</td><td><code>question :: answer</code></td></tr>
             </table>

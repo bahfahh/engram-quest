@@ -71,21 +71,22 @@ Capitals: France {{c1::Paris}}, Japan {{c2::Tokyo}}
 Pythagorean theorem :: a² + b² = c²
 ```
 
-> **Tip — long pasted answers (`%%card%%`):** `Q:/A:` is still the recommended everyday format. Use `%%card%%` only when pasting a long AI answer that may contain its own `---` separators. Existing `---` fenced cards remain supported and do not need to be rebuilt.
+> [!TIP]
+> **Format roles at a glance:** 🟢 <mark><code>Q:/A:</code></mark> is the everyday format. 🟡 <mark><code>%%card%%</code></mark> is the safe mode for long pasted AI answers. 🔵 <mark><code>---</code> fenced Q/A</mark> remains supported for existing notes and normal Markdown-friendly use.
 
 | Format | Best for | Syntax |
 |---|---|---|
-| `Q:/A:` Q&A ⭐ | **Recommended.** Multi-line answers, images, tables, code blocks | `Q: question` → `A:` (answer can span multiple lines; single blank line within answer is ok; **two blank lines** end the card) |
-| `Q:/A:` fenced ⭐ | Existing long-answer notes and normal markdown-friendly use | Wrap with `---` on its own line before and after — blank lines inside are never treated as card boundaries |
-| `%%card%%` long answer | Occasional pasted AI answers that may include `---` separators | Wrap one card between two `%%card%%` lines; everything after `A:` stays in the answer until the closing marker |
-| `{{c1::}}` Cloze | Fill-in-the-blank, Anki-compatible | `{{c1::answer}}` or `{{c1::answer::hint}}` |
-| `::` Q&A | Quick one-liners only — answer must fit on a single line | `question :: answer` |
+| 🟢 <mark><code>Q:/A:</code> Q&A</mark> ⭐ | **Recommended daily format.** Multi-line answers, images, tables, code blocks | `Q: question` → `A:` (answer can span multiple lines; single blank line within answer is ok; **two blank lines** end the card) |
+| 🔵 <mark><code>---</code> fenced Q&A</mark> ⭐ | Existing long-answer notes and normal Markdown-friendly use | Wrap `Q:/A:` with `---` lines — blank lines inside are never treated as card boundaries |
+| 🟡 <mark><code>%%card%%</code> long answer</mark> | **Safe mode for pasted AI answers** that may include `---` separators | Wrap one card between two `%%card%%` lines; everything after `A:` stays in the answer until the closing marker |
+| 🧩 <mark><code>{{c1::}}</code> Cloze</mark> | Fill-in-the-blank, Anki-compatible | `{{c1::answer}}` or `{{c1::answer::hint}}` |
+| ⚪ <mark><code>::</code> Q&A</mark> | Quick one-liners only — answer must fit on a single line | `question :: answer` |
 
 **Tag format:** `#flashcards/topic` — the name after the slash is the Deck name. Change the prefix (`flashcards`) in Settings.
 
 ### How do I turn a long AI answer into a Review Deck card?
 
-Use the normal `Q:/A:` format for everyday cards. Use `%%card%%` when you paste a long AI answer that may contain its own `---` separators, headings, tables, code blocks, or many blank lines.
+Use the normal 🟢 <mark><code>Q:/A:</code></mark> format for everyday cards. Use 🟡 <mark><code>%%card%%</code></mark> when you paste a long AI answer that may contain its own `---` separators, headings, tables, code blocks, or many blank lines.
 
 ````md
 #flashcards/ai
@@ -108,7 +109,7 @@ expect(result.completed).toBe(true)
 %%card%%
 ````
 
-Everything after `A:` stays in the answer until the closing `%%card%%`. The `---` line above is preserved as part of the answer, so the card will not be cut early. Existing `---` fenced cards still work; `%%card%%` is only the safer option for long pasted AI output.
+**Why this is safe:** everything after `A:` stays in the answer until the closing <mark><code>%%card%%</code></mark>. The `---` line above is preserved as part of the answer, so the card will not be cut early. Existing 🔵 `---` fenced cards still work; <mark><code>%%card%%</code></mark> is only the safer option for long pasted AI output.
 
 **Embedding images in cards:** Use Obsidian's wiki-link image syntax inside any card format:
 
@@ -282,21 +283,22 @@ A: 一連串的本地交易。
 畢氏定理 :: a² + b² = c²
 ```
 
-> **提示 — 長篇貼上答案（`%%card%%`）：** `Q:/A:` 仍然是日常推薦格式。只有在貼上很長的 AI 答案、且答案裡可能自己包含 `---` 分隔線時，才需要用 `%%card%%`。既有的 `---` fenced 卡片仍然支援，不需要重建。
+> [!TIP]
+> **格式角色快速看：** 🟢 <mark><code>Q:/A:</code></mark> 是日常主力格式。🟡 <mark><code>%%card%%</code></mark> 是貼上 AI 長答案時的安全模式。🔵 <mark><code>---</code> fenced 問答</mark> 仍然支援既有筆記和一般 Markdown 友善用法。
 
 | 格式 | 適合 | 寫法 |
 |---|---|---|
-| `Q:/A:` 問答 ⭐ | **推薦。** 多行答案、圖片、表格、程式碼區塊 | `Q: 問題` → `A:` 後可空（答案從下行開始）；答案裡一個空行沒問題；**兩個連續空行**代表卡片結束 |
-| `Q:/A:` fenced ⭐ | 既有長答案筆記、一般 Markdown 友善用法 | 前後各加一行 `---` 包住 — 裡面的空行永遠不會被當成卡片邊界 |
-| `%%card%%` 長答案 | 偶爾貼上可能包含 `---` 分隔線的 AI 長答案 | 前後各一行 `%%card%%` 包住一張卡；`A:` 後面直到結束標記前都會保留為答案 |
-| `{{c1::}}` 填空 | 填空記憶，Anki 相容語法 | `{{c1::答案}}` 或 `{{c1::答案::提示}}` |
-| `::` 問答 | 簡短答案，僅限一行 | `問題 :: 答案` |
+| 🟢 <mark><code>Q:/A:</code> 問答</mark> ⭐ | **日常推薦格式。** 多行答案、圖片、表格、程式碼區塊 | `Q: 問題` → `A:` 後可空（答案從下行開始）；答案裡一個空行沒問題；**兩個連續空行**代表卡片結束 |
+| 🔵 <mark><code>---</code> fenced 問答</mark> ⭐ | 既有長答案筆記、一般 Markdown 友善用法 | 前後各加一行 `---` 包住 `Q:/A:` — 裡面的空行永遠不會被當成卡片邊界 |
+| 🟡 <mark><code>%%card%%</code> 長答案</mark> | **貼上 AI 長答案的安全模式**，適合內容可能包含 `---` 分隔線 | 前後各一行 `%%card%%` 包住一張卡；`A:` 後面直到結束標記前都會保留為答案 |
+| 🧩 <mark><code>{{c1::}}</code> 填空</mark> | 填空記憶，Anki 相容語法 | `{{c1::答案}}` 或 `{{c1::答案::提示}}` |
+| ⚪ <mark><code>::</code> 問答</mark> | 簡短答案，僅限一行 | `問題 :: 答案` |
 
 **Tag 格式：** `#flashcards/主題` — 斜線後的名稱就是 Deck 的名字。前綴（`flashcards`）可在設定中修改。
 
 ### 如何把 AI 長回答做成 Review Deck 卡片？
 
-平常寫卡片仍然建議用一般 `Q:/A:`。只有當你要貼上很長的 AI 回答，而且內容裡可能有 `---` 分隔線、標題、表格、程式碼區塊或很多空行時，才使用 `%%card%%`。
+平常寫卡片仍然建議用 🟢 <mark><code>Q:/A:</code></mark>。只有當你要貼上很長的 AI 回答，而且內容裡可能有 `---` 分隔線、標題、表格、程式碼區塊或很多空行時，才使用 🟡 <mark><code>%%card%%</code></mark>。
 
 ````md
 #flashcards/ai
@@ -319,7 +321,7 @@ expect(result.completed).toBe(true)
 %%card%%
 ````
 
-`A:` 後面的所有內容都會保留為答案，直到結尾的 `%%card%%`。上面的 `---` 會被當成答案內容，不會提早截斷卡片。既有的 `---` fenced 卡片仍然可以用；`%%card%%` 只是針對貼上 AI 長回答時的安全選項。
+**為什麼安全：** `A:` 後面的所有內容都會保留為答案，直到結尾的 <mark><code>%%card%%</code></mark>。上面的 `---` 會被當成答案內容，不會提早截斷卡片。既有的 🔵 `---` fenced 卡片仍然可以用；<mark><code>%%card%%</code></mark> 只是針對貼上 AI 長回答時的安全選項。
 
 **在卡片中嵌入圖片：** 在任何卡片格式中使用 Obsidian 的 wiki-link 圖片語法：
 

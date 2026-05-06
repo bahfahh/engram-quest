@@ -12,14 +12,14 @@ Review Deck is the flashcard and spaced-repetition module in EngramQuest.
 
 ## Card formats
 
-Core formats are supported and freely mixable in one note. `Q:/A:` remains the everyday multi-line format; `%%card%%` is only for occasional long pasted AI answers that may contain their own `---` separators.
+Core formats are supported and freely mixable in one note. 🟢 <mark><code>Q:/A:</code></mark> remains the everyday multi-line format; 🟡 <mark><code>%%card%%</code></mark> is only for occasional long pasted AI answers that may contain their own `---` separators.
 
 | Format | Best for | Syntax |
 |---|---|---|
-| `::` Q&A | Short answers, one line | `question :: answer` |
-| `Q:/A:` Q&A | Multi-line or bullet answers | `Q: question` → `A:` (two blank lines end the card) |
-| `%%card%%` long answer | Long pasted AI answers that may include `---` | Wrap one card between two `%%card%%` lines; everything after `A:` stays in the answer until the closing marker |
-| `{{c1::}}` Cloze | Fill-in-the-blank, Anki-compatible | `{{c1::answer}}` or `{{c1::answer::hint}}` |
+| 🟢 <mark><code>Q:/A:</code> Q&A</mark> | Everyday multi-line or bullet answers | `Q: question` → `A:` (two blank lines end the card) |
+| 🟡 <mark><code>%%card%%</code> long answer</mark> | Safe mode for long pasted AI answers that may include `---` | Wrap one card between two `%%card%%` lines; everything after `A:` stays in the answer until the closing marker |
+| ⚪ <mark><code>::</code> Q&A</mark> | Short answers, one line | `question :: answer` |
+| 🧩 <mark><code>{{c1::}}</code> Cloze</mark> | Fill-in-the-blank, Anki-compatible | `{{c1::answer}}` or `{{c1::answer::hint}}` |
 
 Example:
 
@@ -37,7 +37,7 @@ This separator stays inside the answer.
 
 ## How do I turn a long AI answer into a Review Deck card?
 
-Use normal `Q:/A:` for everyday cards. Use `%%card%%` when pasting a long AI answer that may contain its own `---` separators, headings, tables, code blocks, or many blank lines.
+Use normal 🟢 <mark><code>Q:/A:</code></mark> for everyday cards. Use 🟡 <mark><code>%%card%%</code></mark> when pasting a long AI answer that may contain its own `---` separators, headings, tables, code blocks, or many blank lines.
 
 ````md
 #flashcards/ai
@@ -60,7 +60,7 @@ expect(result.completed).toBe(true)
 %%card%%
 ````
 
-Everything after `A:` stays in the answer until the closing `%%card%%`. The `---` line above is preserved as answer content, so the card will not be cut early. Existing `---` fenced cards still work and do not need to be rebuilt.
+**Why this is safe:** everything after `A:` stays in the answer until the closing <mark><code>%%card%%</code></mark>. The `---` line above is preserved as answer content, so the card will not be cut early. Existing `---` fenced cards still work and do not need to be rebuilt.
 
 ## Embedding images in cards
 
