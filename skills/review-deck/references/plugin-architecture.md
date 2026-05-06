@@ -12,13 +12,13 @@ This is reference material; the execution steps are in `skills.md`.
 
 The plugin calls `scanReviewDecks()` which iterates over **every** `.md` file in the vault (including `engram-review/ai-cards/`). For each file it:
 
-1. Parses all `question :: answer` lines → cards
+1. Parses supported card formats (`question :: answer`, `Q:/A:`, `---` fenced Q/A, `%%card%%`, and Cloze) → cards
 2. Reads the file's tags (YAML frontmatter + inline `#tags`)
 3. Checks if any tag matches the user-configured `flashcardTags` prefix (default `flashcards`)
 4. If no tag matches **and** legacy `enableSRScan` is off → file is skipped entirely
 
 Both conditions must be true for a file to appear as a deck:
-- The file contains at least one `question :: answer` line
+- The file contains at least one supported card
 - The file has a tag matching the configured prefix (e.g. `#flashcards/math`)
 
 ## Two Card Flows
@@ -31,14 +31,14 @@ Both conditions must be true for a file to appear as a deck:
 In both flows the plugin scans the **file that contains the cards**. The tag must be on that same file.
 
 ### User-written cards flow
-The user writes `question :: answer` lines directly in their source note and adds a `#flashcards/...` tag. The plugin scans the source note.
+The user writes supported card formats directly in their source note and adds a `#flashcards/...` tag. `Q:/A:` remains the everyday multi-line format; `%%card%%` is only for long pasted answers where `---` must stay inside the answer. The plugin scans the source note.
 
 Cards support embedded images using `![[image.png]]` (wiki-link) or `![](path/to/image.png)` (standard markdown). The plugin post-processes `MarkdownRenderer` output to resolve `.internal-embed` elements into actual `<img>` tags via `vault.getResourcePath()`.
 
 ### AI-generated cards flow
 AI reads the source note for content, then creates a separate file under `engram-review/ai-cards/`. That ai-cards file must contain:
 - YAML frontmatter with a `tags:` field matching the configured prefix
-- `question :: answer` lines
+- supported card formats
 
 The source note is never modified. The plugin scans the ai-cards file, not the source note.
 
@@ -61,7 +61,7 @@ This means aggregated AI decks remain supported as long as the hints and deck na
 | Plugin config | `engram-review/config.json` |
 | Hints | `engram-review/hints/{note-name}.json` |
 | Scan record | `engram-review/scan-record.json` |
-| User-written cards | source notes (any `.md` with `question :: answer` + matching tag) |
+| User-written cards | source notes (any `.md` with supported cards + matching tag) |
 | AI-generated cards | `engram-review/ai-cards/{note-name}.md` |
 | SR schedules | `engram-review/sr/{srFileName}.json` |
 

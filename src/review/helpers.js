@@ -49,6 +49,10 @@ function getReviewStatus(srMeta) {
   return (srMeta.stability ?? srMeta.interval) >= 21 ? "mastered" : "learning";
 }
 
+function makeReviewCard(front, back) {
+  return { front, back, emoji: "", hint_l1: "", hint_l2: "", hint_l3: "", srMeta: null, srComment: "", notePath: null };
+}
+
 // Parse Q:/A: cards from a fenced block — blank lines never terminate a card.
 // Only the next Q: line or end-of-block ends the current card.
 function parseFencedQA(text) {
@@ -83,10 +87,44 @@ function parseFencedQA(text) {
     const front = frontLines.join("\n").trim();
     const back = backLines.join("\n").trim();
     if (front && back) {
-      cards.push({ front, back, emoji: "", hint_l1: "", hint_l2: "", hint_l3: "", srMeta: null, srComment: "", notePath: null });
+      cards.push(makeReviewCard(front, back));
     }
   }
   return cards;
+}
+
+// Parse %%card%% blocks for long pasted answers. Inside the block, only the
+// closing %%card%% marker ends the answer; markdown separators like --- are content.
+function parseCommentCardBlock(text) {
+  const lines = text.split("\n");
+  let qIndex = -1;
+  let aIndex = -1;
+
+  for (let i = 0; i < lines.length; i++) {
+    if (qIndex === -1 && /^\s*Q:\s*/i.test(lines[i])) {
+      qIndex = i;
+      continue;
+    }
+    if (qIndex !== -1 && /^\s*A:\s*/i.test(lines[i])) {
+      aIndex = i;
+      break;
+    }
+  }
+
+  if (qIndex === -1 || aIndex === -1 || aIndex <= qIndex) return null;
+
+  const qMatch = lines[qIndex].match(/^\s*Q:\s*(.*)/i);
+  const aMatch = lines[aIndex].match(/^\s*A:\s*(.*)/i);
+  const frontLines = [qMatch ? qMatch[1] : "", ...lines.slice(qIndex + 1, aIndex)];
+  const backLines = [aMatch ? aMatch[1] : "", ...lines.slice(aIndex + 1)];
+
+  while (frontLines.length > 0 && frontLines[frontLines.length - 1].trim() === "") frontLines.pop();
+  while (backLines.length > 0 && backLines[backLines.length - 1].trim() === "") backLines.pop();
+
+  const front = frontLines.join("\n").trim();
+  const back = backLines.join("\n").trim();
+  if (!front || !back) return null;
+  return makeReviewCard(front, back);
 }
 
 function parseFlashcards(markdown) {
@@ -97,6 +135,22 @@ function parseFlashcards(markdown) {
 
   for (let index = 0; index < lines.length; index++) {
     let line = lines[index];
+
+    if (/^\s*%%card%%\s*$/.test(line)) {
+      const blockLines = [];
+      let j = index + 1;
+      while (j < lines.length && !/^\s*%%card%%\s*$/.test(lines[j])) {
+        blockLines.push(lines[j]);
+        j++;
+      }
+      if (j >= lines.length) {
+        break;
+      }
+      const card = parseCommentCardBlock(blockLines.join("\n"));
+      if (card) cards.push(card);
+      index = j;
+      continue;
+    }
 
     // --- fenced card block: --- \n Q: ... \n A: ... \n ---
     // Only triggers when the --- is followed (possibly after blank lines) by a Q: line.
@@ -211,7 +265,7 @@ function parseFlashcards(markdown) {
         while (backLines.length > 0 && backLines[backLines.length - 1].trim() === "") backLines.pop();
         const back = backLines.join("\n").trim();
         if (back) {
-          cards.push({ front: frontLines.join("\n").trim(), back, emoji: "", hint_l1: "", hint_l2: "", hint_l3: "", srMeta: null, srComment: "", notePath: null });
+          cards.push(makeReviewCard(frontLines.join("\n").trim(), back));
           index = j - 1;
           continue;
         }
@@ -227,7 +281,7 @@ function parseFlashcards(markdown) {
         const front = line.replace(clozeRe, (_, g, text, hint) => g === group ? (hint ? `[${hint}]` : "[...]") : text);
         const back = line.replace(clozeRe, (_, _g, text) => text);
         if (front.trim() && back.trim()) {
-          cards.push({ front: front.trim(), back: back.trim(), emoji: "", hint_l1: "", hint_l2: "", hint_l3: "", srMeta: null, srComment: "", notePath: null });
+          cards.push(makeReviewCard(front.trim(), back.trim()));
         }
       }
       continue;
@@ -252,17 +306,9 @@ function parseFlashcards(markdown) {
     if (!front || !back) continue;
 
     cards.push({
-      front,
-      back,
+      ...makeReviewCard(front, back),
       rawFront,
-      rawBack,
-      emoji: "",
-      hint_l1: "",
-      hint_l2: "",
-      hint_l3: "",
-      srMeta: null,
-      srComment: "",
-      notePath: null
+      rawBack
     });
   }
 

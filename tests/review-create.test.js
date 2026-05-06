@@ -53,4 +53,27 @@ describe("appendManualCard", () => {
       "#flashcards/azure\n\nQ1 :: A1\nQ2 :: A2\n"
     );
   });
+
+  it("writes multi-line manual answers as %%card%% blocks", async () => {
+    const existing = new Set();
+    const writes = new Map();
+    const adapter = {
+      exists: vi.fn(async (path) => existing.has(path)),
+      mkdir: vi.fn(async (path) => {
+        existing.add(path);
+      }),
+      read: vi.fn(async (path) => writes.get(path) || ""),
+      write: vi.fn(async (path, content) => {
+        writes.set(path, content);
+        existing.add(path);
+      }),
+    };
+
+    await appendManualCard(adapter, "flashcards/fruit", "What is an apple?", "A fruit.\n\n---\n\nStill the answer.");
+
+    expect(adapter.write).toHaveBeenCalledWith(
+      "engram-review/ai-cards/flashcards__fruit-manual.md",
+      "#flashcards/fruit\n\n%%card%%\nQ: What is an apple?\nA:\nA fruit.\n\n---\n\nStill the answer.\n%%card%%\n\n"
+    );
+  });
 });

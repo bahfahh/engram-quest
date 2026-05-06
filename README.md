@@ -55,18 +55,29 @@ A: A sequence of local transactions.
    Used in: Stripe, Uber, Airbnb.
 ---
 
+%%card%%
+Q: When should I use %%card%%?
+A:
+Use it only when you want to paste a long AI answer that may contain its own Markdown separators.
+
+---
+
+This separator stays inside the answer.
+%%card%%
+
 {{c1::Calculus}} is built on limits, derivatives, and integrals
 Capitals: France {{c1::Paris}}, Japan {{c2::Tokyo}}
 
 Pythagorean theorem :: a² + b² = c²
 ```
 
-> **Tip — fenced cards (`---`):** Use `---` to wrap any card where the answer has multiple blank lines (e.g. pasted AI output). The `---` must be on its own line and the very next non-blank line must be `Q:`. A plain `---` horizontal rule in your note (not followed by `Q:`) is ignored automatically.
+> **Tip — long pasted answers (`%%card%%`):** `Q:/A:` is still the recommended everyday format. Use `%%card%%` only when pasting a long AI answer that may contain its own `---` separators. Existing `---` fenced cards remain supported and do not need to be rebuilt.
 
 | Format | Best for | Syntax |
 |---|---|---|
 | `Q:/A:` Q&A ⭐ | **Recommended.** Multi-line answers, images, tables, code blocks | `Q: question` → `A:` (answer can span multiple lines; single blank line within answer is ok; **two blank lines** end the card) |
-| `Q:/A:` fenced ⭐ | Long answers with many blank lines (e.g. pasted AI output) | Wrap with `---` on its own line before and after — blank lines inside are never treated as card boundaries |
+| `Q:/A:` fenced ⭐ | Existing long-answer notes and normal markdown-friendly use | Wrap with `---` on its own line before and after — blank lines inside are never treated as card boundaries |
+| `%%card%%` long answer | Occasional pasted AI answers that may include `---` separators | Wrap one card between two `%%card%%` lines; everything after `A:` stays in the answer until the closing marker |
 | `{{c1::}}` Cloze | Fill-in-the-blank, Anki-compatible | `{{c1::answer}}` or `{{c1::answer::hint}}` |
 | `::` Q&A | Quick one-liners only — answer must fit on a single line | `question :: answer` |
 
@@ -102,7 +113,7 @@ Scientific long-term memory powered by the **FSRS Algorithm**.
 - **Three card formats:** `Q:/A:` multi-line (recommended), `{{c1::}}` Cloze (Anki-compatible), and `::` one-liner — freely mixable in one note
 - **Rich answers:** `Q:/A:` answers support multiple paragraphs, embedded images (`![[img.png]]`), tables, and code blocks — paste long AI output directly without reformatting
 - **Multi-line Q&A (`Q:/A:`):** Both question and answer support multiple lines, embedded images, tables, and code blocks. A single blank line within a card is fine — two blank lines end the card.
-- **Fenced Q&A (`Q:/A:` wrapped in `---`):** Wrap a card with `---` on its own line before and after. Blank lines inside are never treated as card boundaries — ideal for pasting long AI-generated answers.
+- **Fenced Q&A (`Q:/A:` wrapped in `---`):** Wrap a card with `---` on its own line before and after. Blank lines inside are never treated as card boundaries. This remains supported for existing notes and normal daily use.
   ```
   ---
   Q: What is Stripe's core model?
@@ -114,6 +125,18 @@ Scientific long-term memory powered by the **FSRS Algorithm**.
 
      You only receive the result.
   ---
+  ```
+- **Long AI answers (`%%card%%`):** Use this only when the answer may contain its own `---` separators. It is an extra safe mode, not a replacement for normal `Q:/A:`.
+  ```
+  %%card%%
+  Q: What is Apple's business model?
+  A:
+  Apple sells integrated hardware, software, and services.
+
+  ---
+
+  This separator stays in the answer.
+  %%card%%
   ```
 - **Image support:** Embed `![[image.png]]` or `![](path)` directly in `Q:/A:` or `::` cards — images render in the review session
 - **Auto-detection:** Scans any note tagged with `#flashcards/topic` — write cards wherever it fits your workflow
@@ -232,12 +255,13 @@ A: 一連串的本地交易。
 畢氏定理 :: a² + b² = c²
 ```
 
-> **提示 — fenced 卡片（`---`）：** 用 `---` 包住答案有很多空行的卡片（例如貼上 AI 輸出）。`---` 必須單獨一行，且緊接的下一個非空行必須是 `Q:`。筆記裡普通的 `---` 水平線（後面不接 `Q:`）會自動被忽略。
+> **提示 — 長篇貼上答案（`%%card%%`）：** `Q:/A:` 仍然是日常推薦格式。只有在貼上很長的 AI 答案、且答案裡可能自己包含 `---` 分隔線時，才需要用 `%%card%%`。既有的 `---` fenced 卡片仍然支援，不需要重建。
 
 | 格式 | 適合 | 寫法 |
 |---|---|---|
 | `Q:/A:` 問答 ⭐ | **推薦。** 多行答案、圖片、表格、程式碼區塊 | `Q: 問題` → `A:` 後可空（答案從下行開始）；答案裡一個空行沒問題；**兩個連續空行**代表卡片結束 |
-| `Q:/A:` fenced ⭐ | 答案有很多空行（例如貼上 AI 輸出） | 前後各加一行 `---` 包住 — 裡面的空行永遠不會被當成卡片邊界 |
+| `Q:/A:` fenced ⭐ | 既有長答案筆記、一般 Markdown 友善用法 | 前後各加一行 `---` 包住 — 裡面的空行永遠不會被當成卡片邊界 |
+| `%%card%%` 長答案 | 偶爾貼上可能包含 `---` 分隔線的 AI 長答案 | 前後各一行 `%%card%%` 包住一張卡；`A:` 後面直到結束標記前都會保留為答案 |
 | `{{c1::}}` 填空 | 填空記憶，Anki 相容語法 | `{{c1::答案}}` 或 `{{c1::答案::提示}}` |
 | `::` 問答 | 簡短答案，僅限一行 | `問題 :: 答案` |
 
@@ -272,7 +296,7 @@ A: 微服務系統的架構圖。
 ![複習卡片展示](assets/review-deck-demo.png)
 - **三種卡片格式：** `Q:/A:` 多行問答（推薦）、`{{c1::}}` Cloze 填空（Anki 相容）、`::` 一行問答 — 可在同一篇筆記自由混用
 - **多行問答（`Q:/A:`）：** 問題和答案都支援多行、嵌入圖片、表格和程式碼區塊。答案裡一個空行沒問題；兩個連續空行代表卡片結束
-- **Fenced 問答（`Q:/A:` 用 `---` 包住）：** 前後各加一行 `---` 包住卡片。裡面的空行永遠不會被當成卡片邊界 — 適合貼上 AI 生成的長答案
+- **Fenced 問答（`Q:/A:` 用 `---` 包住）：** 前後各加一行 `---` 包住卡片。裡面的空行永遠不會被當成卡片邊界。這仍然支援既有筆記和日常使用
   ```
   ---
   Q: Stripe 的核心模型是什麼？

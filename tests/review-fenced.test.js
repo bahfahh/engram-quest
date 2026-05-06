@@ -68,3 +68,67 @@ A: Fenced answer.
     expect(cards[1].front).toBe("Fenced card with\n\nblank lines in answer");
   });
 });
+
+describe("parseFlashcards - comment card blocks", () => {
+  it("keeps markdown separators inside %%card%% answers", () => {
+    const md = `%%card%%
+Q: What is an apple?
+A:
+A fruit.
+
+---
+
+This separator is part of the answer.
+%%card%%`;
+    const cards = parseFlashcards(md);
+    expect(cards).toHaveLength(1);
+    expect(cards[0].front).toBe("What is an apple?");
+    expect(cards[0].back).toContain("---");
+    expect(cards[0].back).toContain("This separator is part of the answer.");
+  });
+
+  it("keeps blank lines, tables, and code blocks inside %%card%% answers", () => {
+    const md = `%%card%%
+Q: Explain the result
+A:
+Paragraph one.
+
+
+| A | B |
+|---|---|
+| 1 | 2 |
+
+\`\`\`js
+const x = "---";
+\`\`\`
+%%card%%`;
+    const cards = parseFlashcards(md);
+    expect(cards).toHaveLength(1);
+    expect(cards[0].back).toContain("Paragraph one.");
+    expect(cards[0].back).toContain("|---|---|");
+    expect(cards[0].back).toContain('const x = "---";');
+  });
+
+  it("parses multiple %%card%% blocks in order", () => {
+    const md = `%%card%%
+Q: First?
+A: One
+%%card%%
+
+%%card%%
+Q: Second?
+A: Two
+%%card%%`;
+    const cards = parseFlashcards(md);
+    expect(cards.map((card) => card.front)).toEqual(["First?", "Second?"]);
+  });
+
+  it("ignores an unclosed %%card%% block", () => {
+    const md = `%%card%%
+Q: Broken?
+A:
+This should not become a card.`;
+    const cards = parseFlashcards(md);
+    expect(cards).toHaveLength(0);
+  });
+});

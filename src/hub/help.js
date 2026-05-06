@@ -390,12 +390,23 @@ A:
 1. Review just before you forget — best timing for retention
 2. Each successful recall pushes the next review further out
 
+%%card%%
+Q: When should I use %%card%%?
+A:
+Use it only for long pasted AI answers that may contain their own --- separators.
+
+---
+
+This separator stays inside the answer.
+%%card%%
+
 {{c1::Spaced repetition}} is one of the most effective memory techniques
 Capitals: France {{c1::Paris}}, Japan {{c2::Tokyo}}</pre>
             <table>
               <tr><th>Format</th><th>Best for</th><th>Syntax</th></tr>
               <tr><td><code>Q:/A:</code> Q&amp;A ⭐</td><td>Recommended. Multi-line, images, tables</td><td><code>Q: question</code> → <code>A: answer</code> (answer can start on the next line; multiple lines ok)</td></tr>
               <tr><td><code>Q:/A:</code> fenced ⭐</td><td>Long answers with many blank lines (e.g. pasted AI output)</td><td>Wrap with <code>---</code> on its own line before and after — blank lines inside never end the card</td></tr>
+              <tr><td><code>%%card%%</code> long answer</td><td>Occasional pasted AI answers that may include <code>---</code></td><td>Wrap one card between two <code>%%card%%</code> lines; everything after <code>A:</code> stays in the answer until the closing marker</td></tr>
               <tr><td>Cloze</td><td>Fill-in-the-blank, same as Anki</td><td><code>{{c1::answer}}</code> or <code>{{c1::answer::hint}}</code></td></tr>
               <tr><td><code>::</code> Q&amp;A</td><td>Short answers, one line only</td><td><code>question :: answer</code></td></tr>
             </table>

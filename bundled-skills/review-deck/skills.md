@@ -135,17 +135,22 @@ CRITICAL: Follow these steps in order. Do not skip any step.
      - frontmatter must also include `TARGET DECK: {topic}` where `{topic}` is the sub-path after the prefix (e.g. tag `flashcards/backend/architecture` → `TARGET DECK: backend/architecture`). This enables Obsidian_to_Anki compatibility.
      - do NOT insert cards into the source note
      - **Card format rules:**
-       - Default format: `question :: answer` (single line, plain text)
-       - If the question OR answer contains code snippets, use `Q:/A:` multi-line format and wrap code in fenced code blocks with the appropriate language tag. Example:
+       - Default format: `question :: answer` (single line, plain text).
+       - Use normal `Q:/A:` for everyday multi-line cards. Existing `---` fenced Q/A is supported by the plugin and is not deprecated.
+       - Use `%%card%%` only for long pasted or AI-generated answers that may contain their own Markdown separators such as `---`. In this mode, everything after `A:` is answer content until the closing `%%card%%`.
+       - If the question OR answer contains code snippets, use `%%card%%` and wrap code in fenced code blocks with the appropriate language tag. Example:
          ```
+         %%card%%
          Q: Which approach is truly parallel?
-         A: Approach B is parallel because both tasks start simultaneously:
+         A:
+         Approach B is parallel because both tasks start simultaneously:
          ```csharp
          var sqlTask = RunSql(...);
          var vectorTask = context.CallActivity(...);
          var sqlRows = await sqlTask;
          var vectorRows = await vectorTask;
          ```
+         %%card%%
          ```
        - Never inline code directly into a `question :: answer` single-line card — it will not render correctly.
 

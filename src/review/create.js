@@ -6,7 +6,7 @@ const { t, interpolate } = require("../i18n");
 /**
  * Append a card line to the manual cards file for a deck.
  * File: engram-review/ai-cards/{deckName}-manual.md
- * Format: front :: back
+ * Format: front :: back, or %%card%% for multi-line answers
  */
 async function ensureManualCardDirs(adapter) {
   if (!(await adapter.exists("engram-review"))) {
@@ -25,10 +25,10 @@ async function appendManualCard(adapter, deckName, front, back) {
   const filePath = `${dir}/${safeFileName}-manual.md`;
   await ensureManualCardDirs(adapter);
 
-  // Use Q:/A: format for multi-line answers; :: for single-line
+  // Use %%card%% for multi-line answers so pasted AI separators like --- stay in the answer.
   const isMultiLine = back.includes("\n");
   const cardText = isMultiLine
-    ? `Q: ${front}\nA: ${back}\n\n`
+    ? `%%card%%\nQ: ${front}\nA:\n${back}\n%%card%%\n\n`
     : `${front} :: ${back}\n`;
 
   if (await adapter.exists(filePath)) {
