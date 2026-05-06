@@ -35,6 +35,33 @@ This separator stays inside the answer.
 %%card%%
 ```
 
+## How do I turn a long AI answer into a Review Deck card?
+
+Use normal `Q:/A:` for everyday cards. Use `%%card%%` when pasting a long AI answer that may contain its own `---` separators, headings, tables, code blocks, or many blank lines.
+
+````md
+#flashcards/ai
+
+%%card%%
+Q: How should I explain agentic testing?
+A:
+Agentic testing checks whether an AI system can complete a task reliably, not just whether one function returns the right value.
+
+---
+
+Example:
+- Give the agent a realistic task
+- Verify the final artifact
+- Check logs, tool calls, and failure recovery
+
+```js
+expect(result.completed).toBe(true)
+```
+%%card%%
+````
+
+Everything after `A:` stays in the answer until the closing `%%card%%`. The `---` line above is preserved as answer content, so the card will not be cut early. Existing `---` fenced cards still work and do not need to be rebuilt.
+
 ## Embedding images in cards
 
 Use Obsidian's wiki-link or standard markdown image syntax inside any card format:

@@ -83,6 +83,33 @@ Pythagorean theorem :: a² + b² = c²
 
 **Tag format:** `#flashcards/topic` — the name after the slash is the Deck name. Change the prefix (`flashcards`) in Settings.
 
+### How do I turn a long AI answer into a Review Deck card?
+
+Use the normal `Q:/A:` format for everyday cards. Use `%%card%%` when you paste a long AI answer that may contain its own `---` separators, headings, tables, code blocks, or many blank lines.
+
+````md
+#flashcards/ai
+
+%%card%%
+Q: How should I explain agentic testing?
+A:
+Agentic testing checks whether an AI system can complete a task reliably, not just whether one function returns the right value.
+
+---
+
+Example:
+- Give the agent a realistic task
+- Verify the final artifact
+- Check logs, tool calls, and failure recovery
+
+```js
+expect(result.completed).toBe(true)
+```
+%%card%%
+````
+
+Everything after `A:` stays in the answer until the closing `%%card%%`. The `---` line above is preserved as part of the answer, so the card will not be cut early. Existing `---` fenced cards still work; `%%card%%` is only the safer option for long pasted AI output.
+
 **Embedding images in cards:** Use Obsidian's wiki-link image syntax inside any card format:
 
 ```
@@ -266,6 +293,33 @@ A: 一連串的本地交易。
 | `::` 問答 | 簡短答案，僅限一行 | `問題 :: 答案` |
 
 **Tag 格式：** `#flashcards/主題` — 斜線後的名稱就是 Deck 的名字。前綴（`flashcards`）可在設定中修改。
+
+### 如何把 AI 長回答做成 Review Deck 卡片？
+
+平常寫卡片仍然建議用一般 `Q:/A:`。只有當你要貼上很長的 AI 回答，而且內容裡可能有 `---` 分隔線、標題、表格、程式碼區塊或很多空行時，才使用 `%%card%%`。
+
+````md
+#flashcards/ai
+
+%%card%%
+Q: 如何解釋 agentic testing？
+A:
+Agentic testing 檢查的是 AI 系統能不能可靠完成任務，而不只是某個函式有沒有回傳正確值。
+
+---
+
+範例：
+- 給 agent 一個真實任務
+- 驗證最後產物
+- 檢查 logs、tool calls、失敗復原
+
+```js
+expect(result.completed).toBe(true)
+```
+%%card%%
+````
+
+`A:` 後面的所有內容都會保留為答案，直到結尾的 `%%card%%`。上面的 `---` 會被當成答案內容，不會提早截斷卡片。既有的 `---` fenced 卡片仍然可以用；`%%card%%` 只是針對貼上 AI 長回答時的安全選項。
 
 **在卡片中嵌入圖片：** 在任何卡片格式中使用 Obsidian 的 wiki-link 圖片語法：
 

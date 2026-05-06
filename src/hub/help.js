@@ -98,6 +98,28 @@ A: 在快忘記時複習，可以用最少時間達到最高記憶保留率。
             </ol>
             <div class="lh-help-sub"><div class="lh-help-sub-icon">💡</div><div>你的一般筆記不需要有任何 tag，AI 可以直接讀取。AI <strong>產生的卡片檔</strong>存在 <code>engram-review/ai-cards/</code>，<strong>不會修改你的原始筆記</strong>。你自己手寫的卡片，在複習時使用「編輯」、「高亮」或「引述」功能，變更會直接寫回原始筆記。卡片檔需要有 <code>#flashcards/...</code> tag，插件才能偵測到。</div></div>
             <p><strong>相容模式：</strong>如果你有舊式 <code>::</code> 卡片筆記，可以到設定中開啟 legacy <code>::</code> 掃描。這是遷移模式，不是新手預設。</p>
+          `},{icon:"🃏",title:"AI 長答案卡片",tag:"%%card%%",html:`
+            <p><strong>Q：如何把 AI 長回答做成 Review Deck 卡片？</strong></p>
+            <p><strong>A：</strong>平常寫卡片仍然用 <code>Q:/A:</code>。如果你要貼上很長的 AI 回答，而且答案裡可能有 <code>---</code>、表格、程式碼區塊或很多空行，就用 <code>%%card%%</code> 包住一張卡。</p>
+            <pre>#flashcards/ai
+
+%%card%%
+Q: 如何解釋 agentic testing？
+A:
+Agentic testing 檢查的是 AI 系統能不能可靠完成任務，而不只是某個函式有沒有回傳正確值。
+
+---
+
+範例：
+- 給 agent 一個真實任務
+- 驗證最後產物
+- 檢查 logs、tool calls、失敗復原
+
+&#96;&#96;&#96;js
+expect(result.completed).toBe(true)
+&#96;&#96;&#96;
+%%card%%</pre>
+            <p><code>A:</code> 後面的內容會一直保留到結尾的 <code>%%card%%</code>。中間的 <code>---</code> 不會截斷卡片；既有 <code>---</code> fenced 卡片也仍然支援，不需要重建。</p>
           `},{icon:"🗺️",title:"Quest Map",tag:c(e,"HELP_QUEST_TAG"),html:`
             <ol>
               <li>跟 AI 說：「把微積分.md 做成 quest-map medium」</li>
@@ -303,6 +325,28 @@ Pythagorean theorem :: a² + b² = c²</pre>
             </ol>
             <div class="lh-help-sub"><div class="lh-help-sub-icon">💡</div><div>Your source notes don't need any tag — AI can read them directly. Card files AI generates are saved to <code>engram-review/ai-cards/</code> and <strong>never touch your source notes</strong>. Cards you write yourself: Edit, Highlight, and Emphasis tools in the review session write changes back to your source note. Card files need a <code>#flashcards/...</code> tag for the plugin to detect them.</div></div>
             <p><strong>Migration mode:</strong> if you have old plain <code>::</code> flashcard notes, enable legacy <code>::</code> scanning in Settings. Optional, off by default.</p>
+          `},{icon:"🃏",title:"Long AI Answer Cards",tag:"%%card%%",html:`
+            <p><strong>Q: How do I turn a long AI answer into a Review Deck card?</strong></p>
+            <p><strong>A:</strong> Use normal <code>Q:/A:</code> for everyday cards. If you paste a long AI answer that may contain <code>---</code>, tables, code blocks, or many blank lines, wrap one card with <code>%%card%%</code>.</p>
+            <pre>#flashcards/ai
+
+%%card%%
+Q: How should I explain agentic testing?
+A:
+Agentic testing checks whether an AI system can complete a task reliably, not just whether one function returns the right value.
+
+---
+
+Example:
+- Give the agent a realistic task
+- Verify the final artifact
+- Check logs, tool calls, and failure recovery
+
+&#96;&#96;&#96;js
+expect(result.completed).toBe(true)
+&#96;&#96;&#96;
+%%card%%</pre>
+            <p>Everything after <code>A:</code> stays in the answer until the closing <code>%%card%%</code>. The <code>---</code> line above will not cut the card early. Existing <code>---</code> fenced cards still work and do not need to be rebuilt.</p>
           `},{icon:"🗺️",title:"Quest Map",tag:c(e,"HELP_QUEST_TAG"),html:`
             <ol>
               <li>Ask AI: "Turn calculus.md into a quest-map medium"</li>
