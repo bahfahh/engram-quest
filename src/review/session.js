@@ -657,7 +657,11 @@ var Q=class extends I.Modal{
   }
 
   _minimize(){
+    if(this._minimized) return;
+    this._minimized=true;
     this.containerEl.style.display="none";
+    // Release modal keymap scope so global hotkeys (Ctrl+P / Ctrl+O) work while minimized
+    try{this.app.keymap.popScope(this.scope);}catch(e){}
     if(this._fab) return; // already exists
     let fab=document.createElement("div");
     fab.className="engram-fab";
@@ -671,11 +675,15 @@ var Q=class extends I.Modal{
     this._fab=fab;
   }
   _restore(){
+    if(!this._minimized) return;
+    this._minimized=false;
     this.containerEl.style.display="";
+    try{this.app.keymap.pushScope(this.scope);}catch(e){}
     if(this._fab){this._fab.remove();this._fab=null;}
   }
   onClose(){
     if(this._fab){this._fab.remove();this._fab=null;}
+    this._minimized=false;
   }
 
   _renderEditForm(e){
