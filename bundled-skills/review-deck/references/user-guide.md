@@ -78,6 +78,12 @@ Cell structure :: ![[cell-diagram.png]]
 
 Both `![[image.png]]` (wiki-link) and `![](path/to/image.png)` (standard markdown) are supported. Images display directly in the review card during study sessions.
 
+**Best practice when authoring image cards yourself:**
+
+- Use `%%card%%` so the answer can include extra blank lines around the image without ending the card early.
+- Default to 1 image per card. Avoid "what is this image called?" style questions — they can be answered by glancing. Prefer questions that force cross-reference or reasoning across multiple parts of the image.
+- Have the answer quote a recognizable element from the image (e.g., a label or arrow) so you can verify whether you got it right.
+
 ## Hint levels
 
 - `L1`: active recall trigger

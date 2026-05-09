@@ -71,6 +71,8 @@ Task is complete when AI card files and JSON hints are generated. Stop there.
 | User asks | Action |
 |---|---|
 | Build a review deck for a topic | Setup Flow |
+| Build image-based cards from a note's diagrams | Image Card Flow |
+| "Generate image questions from X" / "make cards from these diagrams" | Image Card Flow |
 | Update hints for a topic | Update Flow |
 | Add cards to a topic | Edit note content + update hints |
 | Make a review-deck from a note | Single Note Flow |
@@ -128,6 +130,7 @@ CRITICAL: Follow these steps in order. Do not skip any step.
    a. Key concepts/topics covered in the note
    b. Existing user-written `question :: answer` cards (read-only — do NOT modify the source note)
    c. Whether AI needs to generate new cards (note has no cards)
+   d. Whether the note contains embedded images (`![[...]]` or `![](...)` referring to png/jpg/jpeg/gif/bmp/svg/webp/avif). If it does AND the user has not opted out of image testing, follow `references/image-cards.md` (mandatory image-reading + `%%card%%` format) for those cards. This applies in addition to — not instead of — the rest of step 8.
 
    - If the note already has user-written cards → only read them, proceed to generate hints
    - If the note has no cards → AI generates cards, saves to `engram-review/ai-cards/{note-name}.md`
@@ -297,6 +300,28 @@ style: ocean
 title: Azure Review
 ```
 ````
+
+## Image Card Flow
+
+Use when the user explicitly asks for image-based cards from a specific note or set of notes. This is a streamlined flow — it skips full vault discovery and scan-record gating because the user has already pointed at the source. For full image-card pedagogy (question patterns, hint design, key-matching trap) read `references/image-cards.md`.
+
+CRITICAL: Image cards are useless if AI does not actually look at the image. Skipping the image-reading step produces "what is this diagram called?" trivia, not learnable cards.
+
+1. Read `.obsidian/plugins/engram-quest/data.json` to get the `flashcardTags` prefix (same as Setup Flow step 1).
+2. Read the source note(s) the user pointed at.
+3. Extract every `![[...]]` and `![](...)` embed path. Filter to image extensions: png, jpg, jpeg, gif, bmp, svg, webp, avif.
+4. For each image: use the Read tool with the image's vault path. This brings the image into context as visual content (vision-capable models only). Note down:
+   - Visible labels, axes, headings, legend text
+   - Spatial relationships (top/bottom, left/right, arrows, groupings)
+   - Distinctive visual tokens that an answer can quote for verification
+5. Decide which images become cards (default 1 image = 1 card; skip purely decorative images). Confirm count with the user if it differs from what they asked for.
+6. Run a single batched `bash scripts/search_vault.sh "<keywords>" 50` covering all cards' L2 anchors (same batching rule as Setup Flow step 9).
+7. Generate the ai-cards file at `engram-review/ai-cards/{note-name}.md` using `%%card%%` format. Frontmatter must include a tag matching the prefix from step 1 and `TARGET DECK: {topic}` (same rules as Setup Flow step 8). Follow `references/image-cards.md` for question design, answer requirements, and embed placement.
+8. Generate the hints JSON at `engram-review/hints/{note-name}.json`. CRITICAL: copy the parsed `front` text verbatim from the ai-cards file as the JSON key (see hint-key trap in `references/image-cards.md`).
+9. Update `engram-review/scan-record.json` for the affected note.
+10. Report: how many images were processed, how many became cards, how many were skipped as decorative.
+
+When the user did NOT explicitly ask for image cards but the source note contains images, follow Setup Flow instead and apply step 8.d's image-handling within it.
 
 ## L1 / L2 / L3 Design
 
