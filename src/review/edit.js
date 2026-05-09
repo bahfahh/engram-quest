@@ -1,6 +1,6 @@
 "use strict";
 
-const { loadSrData, saveSrData, srFileName, parseCommentCardBlock, cardFencePattern, CARD_FENCE } = require("./helpers");
+const { loadSrData, saveSrData, srFileName, parseCommentCardBlock, cardFencePattern, CARD_FENCE, isFencedQaOpener } = require("./helpers");
 
 const isCardFence = (line) => cardFencePattern.test(line);
 
@@ -130,9 +130,21 @@ function trimTrailingBlankLines(lines) {
 
 function collectQaCards(lines) {
   const cards = [];
-  for (let qStart = 0; qStart < lines.length; qStart++) {
+  // Mirror parseFencedQA: inside ---...--- fences, blank lines do NOT terminate
+  // the back. Otherwise the editor parses a shorter back than the loader and
+  // findQaCardRange's equality match fails on multi-paragraph fenced cards.
+  let inFencedBlock = false;
+  let qStart = 0;
+  while (qStart < lines.length) {
+    if (/^---\s*$/.test(lines[qStart])) {
+      if (inFencedBlock) inFencedBlock = false;
+      else if (isFencedQaOpener(lines, qStart)) inFencedBlock = true;
+      qStart++;
+      continue;
+    }
+
     const qMatch = lines[qStart].match(/^\s*Q:\s*(.+)/i);
-    if (!qMatch) continue;
+    if (!qMatch) { qStart++; continue; }
 
     const frontLines = [qMatch[1]];
     let aIndex = qStart + 1;
@@ -141,7 +153,7 @@ function collectQaCards(lines) {
       if (/^\s*A:\s*/i.test(lines[aIndex])) break;
       if (lines[aIndex].trim() === "") {
         qBlankRun++;
-        if (qBlankRun >= 2) break;
+        if (!inFencedBlock && qBlankRun >= 2) break;
         aIndex++;
       } else {
         qBlankRun = 0;
@@ -150,7 +162,7 @@ function collectQaCards(lines) {
       }
     }
 
-    if (aIndex >= lines.length || !/^\s*A:\s*/i.test(lines[aIndex])) continue;
+    if (aIndex >= lines.length || !/^\s*A:\s*/i.test(lines[aIndex])) { qStart++; continue; }
     const aMatch = lines[aIndex].match(/^\s*A:\s*(.*)/i);
     const backLines = [aMatch ? aMatch[1] : ""];
     let end = aIndex + 1;
@@ -184,11 +196,12 @@ function collectQaCards(lines) {
       }
 
       if (/^\s*Q:\s*/i.test(lines[end])) break;
+      // --- always terminates: outside a fence it's a new boundary, inside a fence it's the closing marker.
       if (/^---\s*$/.test(lines[end])) break;
       if (/\{\{c\d+::/.test(lines[end])) break;
       if (lines[end].trim() === "") {
         blankRun++;
-        if (blankRun >= 2) break;
+        if (!inFencedBlock && blankRun >= 2) break;
         backLines.push(lines[end]);
         end++;
       } else {
@@ -202,7 +215,7 @@ function collectQaCards(lines) {
     const back = trimTrailingBlankLines([...backLines]).join("\n").trim();
     while (end > qStart && lines[end - 1].trim() === "") end--;
     cards.push({ front, back, start: qStart, end });
-    qStart = end - 1;
+    qStart = end;
   }
   return cards;
 }

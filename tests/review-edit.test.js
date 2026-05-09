@@ -329,6 +329,50 @@ describe("applyFormatToCardBack", () => {
     expect(saved).toBe(false);
     expect(app._getModifyCount()).toBe(0);
   });
+
+  // Regression: parseFencedQA (loader, used inside ---...--- blocks) does NOT
+  // terminate the back on 2 consecutive blank lines, but collectQaCards (editor)
+  // did — so highlighting a fenced multi-paragraph card silently failed with
+  // "新增卡片失敗". Editor must mirror loader semantics inside fenced blocks.
+  it("formats a fenced --- Q:/A: answer that contains 2 consecutive blank lines", async () => {
+    const fileContent =
+      "#flashcards/ai\n" +
+      "---\n" +
+      "Q: skills manager .net?\n" +
+      "A: ## .NET / Enterprise 組合\n" +
+      "\n" +
+      "\n" +
+      "Microsoft Agent Framework\n" +
+      "+ AG-UI\n" +
+      "+ GitHub Copilot SDK\n" +
+      "\n" +
+      "### 適合目標\n" +
+      "\n" +
+      "- 面向企業\n" +
+      "- Windows / .NET 生態\n" +
+      "- coding agent 場景\n" +
+      "---\n";
+    const fullBack =
+      "## .NET / Enterprise 組合\n\n\n" +
+      "Microsoft Agent Framework\n+ AG-UI\n+ GitHub Copilot SDK\n\n" +
+      "### 適合目標\n\n" +
+      "- 面向企業\n- Windows / .NET 生態\n- coding agent 場景";
+    const newBack = fullBack.replace("Windows / .NET 生態", "==Windows / .NET 生態==");
+
+    const app = makeApp(fileContent);
+    const card = { front: "skills manager .net?", back: fullBack, notePath: "Notes/test.md" };
+    const saved = await applyFormatToCardBack(app, card, fullBack, newBack);
+
+    expect(saved).toBe(true);
+    const written = app._getWritten();
+    expect(written).toContain("==Windows / .NET 生態==");
+    // Closing --- fence preserved
+    expect(written.endsWith("---\n")).toBe(true);
+    // Opening --- fence preserved
+    expect(written).toContain("---\nQ: skills manager .net?");
+    // Surrounding tag preserved (above the fence)
+    expect(written).toContain("#flashcards/ai\n");
+  });
 });
 
 // ── saveInlineCard ───────────────────────────────────────────────────────────

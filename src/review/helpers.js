@@ -131,6 +131,17 @@ function parseCommentCardBlock(text) {
 // Spaces around `card` are tolerated because Obsidian's Ctrl+/ comment toggle
 // inserts `%% %%` and users often type `card` with the surrounding spaces left in.
 const cardFencePattern = /^\s*%%\s*card\s*%%\s*$/i;
+
+// True when `lines[fenceIdx]` is a `---` that opens a fenced Q:/A: block —
+// i.e. the next non-blank line is a `Q:`. Both the loader (parseFlashcards)
+// and the editor (collectQaCards) must agree on this so they extract the
+// same card.back; keep them on this single helper to prevent drift.
+function isFencedQaOpener(lines, fenceIdx) {
+  let peek = fenceIdx + 1;
+  while (peek < lines.length && lines[peek].trim() === "") peek++;
+  return peek < lines.length && /^\s*Q:\s*/i.test(lines[peek]);
+}
+
 // Writers always emit this canonical no-space form so files normalize on the next save.
 const CARD_FENCE = "%%card%%";
 
@@ -163,12 +174,7 @@ function parseFlashcards(markdown) {
     // Only triggers when the --- is followed (possibly after blank lines) by a Q: line.
     // Plain horizontal rules (--- not followed by Q:) are ignored.
     if (/^---\s*$/.test(line)) {
-      // Peek ahead past blank lines to see if a Q: follows
-      let peek = index + 1;
-      while (peek < lines.length && lines[peek].trim() === "") peek++;
-      if (peek >= lines.length || !/^\s*Q:\s*/i.test(lines[peek])) {
-        continue; // plain horizontal rule — skip
-      }
+      if (!isFencedQaOpener(lines, index)) continue; // plain horizontal rule
       // Collect lines until closing ---
       const fencedLines = [];
       let j = index + 1;
@@ -470,6 +476,7 @@ module.exports = {
   parseCommentCardBlock,
   cardFencePattern,
   CARD_FENCE,
+  isFencedQaOpener,
   parseReviewDeckBlock,
   mergeReviewHints,
   matchFlashcardTagPrefix,
