@@ -2,6 +2,7 @@
 
 const obsidian = require("obsidian");
 const { t, interpolate } = require("../i18n");
+const { CARD_FENCE } = require("./helpers");
 
 /**
  * Append a card line to the manual cards file for a deck.
@@ -28,7 +29,7 @@ async function appendManualCard(adapter, deckName, front, back) {
   // Use %%card%% for multi-line answers so pasted AI separators like --- stay in the answer.
   const isMultiLine = back.includes("\n");
   const cardText = isMultiLine
-    ? `%%card%%\nQ: ${front}\nA:\n${back}\n%%card%%\n\n`
+    ? `${CARD_FENCE}\nQ: ${front}\nA:\n${back}\n${CARD_FENCE}\n\n`
     : `${front} :: ${back}\n`;
 
   if (await adapter.exists(filePath)) {

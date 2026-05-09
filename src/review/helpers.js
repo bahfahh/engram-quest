@@ -131,6 +131,8 @@ function parseCommentCardBlock(text) {
 // Spaces around `card` are tolerated because Obsidian's Ctrl+/ comment toggle
 // inserts `%% %%` and users often type `card` with the surrounding spaces left in.
 const cardFencePattern = /^\s*%%\s*card\s*%%\s*$/i;
+// Writers always emit this canonical no-space form so files normalize on the next save.
+const CARD_FENCE = "%%card%%";
 
 function parseFlashcards(markdown) {
   markdown = markdown.replace(/\r\n/g, "\n");
@@ -467,6 +469,7 @@ module.exports = {
   parseFlashcards,
   parseCommentCardBlock,
   cardFencePattern,
+  CARD_FENCE,
   parseReviewDeckBlock,
   mergeReviewHints,
   matchFlashcardTagPrefix,
