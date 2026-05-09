@@ -111,6 +111,8 @@ expect(result.completed).toBe(true)
 
 **Why this is safe:** everything after `A:` stays in the answer until the closing <mark><code>%%card%%</code></mark>. The `---` line above is preserved as part of the answer, so the card will not be cut early. Existing 🔵 `---` fenced cards still work; <mark><code>%%card%%</code></mark> is only the safer option for long pasted AI output.
 
+**Quickest way to type the fence:** press `Ctrl+/` (or `Cmd+/`) on an empty line — Obsidian inserts `%% %%` and places the cursor in the middle. Just type `card` and you have `%% card %%`. Spacing and case are tolerated, so `%%card%%`, `%% card %%`, and `%%CARD%%` all work the same.
+
 **Embedding images in cards:** Use Obsidian's wiki-link image syntax inside any card format:
 
 ```
@@ -322,6 +324,8 @@ expect(result.completed).toBe(true)
 ````
 
 **為什麼安全：** `A:` 後面的所有內容都會保留為答案，直到結尾的 <mark><code>%%card%%</code></mark>。上面的 `---` 會被當成答案內容，不會提早截斷卡片。既有的 🔵 `---` fenced 卡片仍然可以用；<mark><code>%%card%%</code></mark> 只是針對貼上 AI 長回答時的安全選項。
+
+**最快的輸入方式：** 在空行按 `Ctrl+/`（Mac 是 `Cmd+/`），Obsidian 會直接插入 `%% %%` 並把游標放在中間。輸入 `card` 就成了 `%% card %%`。空格和大小寫都認，所以 `%%card%%`、`%% card %%`、`%%CARD%%` 三種寫法效果一樣。
 
 **在卡片中嵌入圖片：** 在任何卡片格式中使用 Obsidian 的 wiki-link 圖片語法：
 

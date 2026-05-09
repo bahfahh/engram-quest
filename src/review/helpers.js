@@ -127,6 +127,11 @@ function parseCommentCardBlock(text) {
   return makeReviewCard(front, back);
 }
 
+// Match `%%card%%`, `%% card %%`, `%%CARD%%`, `%% Card %%` etc.
+// Spaces around `card` are tolerated because Obsidian's Ctrl+/ comment toggle
+// inserts `%% %%` and users often type `card` with the surrounding spaces left in.
+const cardFencePattern = /^\s*%%\s*card\s*%%\s*$/i;
+
 function parseFlashcards(markdown) {
   markdown = markdown.replace(/\r\n/g, "\n");
   let lines = markdown.split("\n");
@@ -136,10 +141,10 @@ function parseFlashcards(markdown) {
   for (let index = 0; index < lines.length; index++) {
     let line = lines[index];
 
-    if (/^\s*%%card%%\s*$/.test(line)) {
+    if (cardFencePattern.test(line)) {
       const blockLines = [];
       let j = index + 1;
-      while (j < lines.length && !/^\s*%%card%%\s*$/.test(lines[j])) {
+      while (j < lines.length && !cardFencePattern.test(lines[j])) {
         blockLines.push(lines[j]);
         j++;
       }
@@ -461,6 +466,7 @@ module.exports = {
   getReviewStatus,
   parseFlashcards,
   parseCommentCardBlock,
+  cardFencePattern,
   parseReviewDeckBlock,
   mergeReviewHints,
   matchFlashcardTagPrefix,

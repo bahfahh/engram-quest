@@ -34,11 +34,19 @@ var fe=class extends I.Modal{constructor(e,t){super(e),this.plugin=t}onClose(){v
       .lh-help.lh-dark .lh-help-acc-hdr:hover { background:rgba(99,102,241,0.12); }
       .lh-help.lh-dark .lh-help-acc-hdr.open { background:rgba(99,102,241,0.18); }
       .lh-help.lh-dark .lh-help-acc-title { color:var(--text-normal); }
-      .lh-help.lh-dark .lh-help-acc-tag { background:rgba(255,255,255,0.06); color:var(--text-muted); }
+      .lh-help.lh-dark .lh-help-acc-tag { background:rgba(99,102,241,0.22); color:#c7d2fe; font-weight:600; }
       .lh-help.lh-dark .lh-help-acc-arrow { color:var(--text-muted); }
       .lh-help.lh-dark .lh-help-acc-body { color:var(--text-normal); border-top-color:var(--background-modifier-border); }
       .lh-help.lh-dark .lh-help-acc-body code,
       .lh-help.lh-dark .lh-help-acc-body pre { background:rgba(255,255,255,0.06); color:var(--text-normal); }
+      /* Inline-styled chip spans set their own background+color; the code inside must inherit them in both light and dark mode. */
+      .lh-help-acc-body span[style*="background:#"] code,
+      .lh-help-acc-body span[style*="background: #"] code,
+      .lh-help-acc-body span[style*="background:rgba"] code {
+        background:transparent !important;
+        color:inherit !important;
+        padding:0 !important;
+      }
       .lh-help.lh-dark .lh-help-acc-body th { background:rgba(255,255,255,0.06); border-color:var(--background-modifier-border); color:var(--text-normal); }
       .lh-help.lh-dark .lh-help-acc-body td { border-color:var(--background-modifier-border); color:var(--text-normal); }
       .lh-help.lh-dark .lh-help-acc-body tr:nth-child(even) td { background:rgba(255,255,255,0.03); }
@@ -120,6 +128,7 @@ expect(result.completed).toBe(true)
 &#96;&#96;&#96;
 %%card%%</pre>
             <p><strong>重點：</strong><code>A:</code> 後面的內容會一直保留到結尾的 <span style="background:#fef3c7;color:#92400e;padding:2px 6px;border-radius:6px;font-weight:700;"><code>%%card%%</code></span>。中間的 <span style="background:#dbeafe;color:#1d4ed8;padding:2px 6px;border-radius:6px;font-weight:700;"><code>---</code></span> 不會截斷卡片；既有 <code>---</code> fenced 卡片也仍然支援，不需要重建。</p>
+            <div class="lh-help-sub"><div class="lh-help-sub-icon">⚡</div><div><strong>最快輸入方式：</strong>在空行按 <code>Ctrl+/</code>（Mac 為 <code>Cmd+/</code>），Obsidian 會直接幫你插入 <code>%% %%</code> 並把游標放中間。輸入 <code>card</code> 就成了 <code>%% card %%</code>，可以直接用。空格和大小寫都認，<code>%%card%%</code>、<code>%% card %%</code>、<code>%%CARD%%</code> 三種寫法效果一樣。</div></div>
           `},{icon:"🗺️",title:"Quest Map",tag:c(e,"HELP_QUEST_TAG"),html:`
             <ol>
               <li>跟 AI 說：「把微積分.md 做成 quest-map medium」</li>
@@ -348,6 +357,7 @@ expect(result.completed).toBe(true)
 &#96;&#96;&#96;
 %%card%%</pre>
             <p><strong>Key point:</strong> everything after <code>A:</code> stays in the answer until the closing <span style="background:#fef3c7;color:#92400e;padding:2px 6px;border-radius:6px;font-weight:700;"><code>%%card%%</code></span>. The <span style="background:#dbeafe;color:#1d4ed8;padding:2px 6px;border-radius:6px;font-weight:700;"><code>---</code></span> line above will not cut the card early. Existing <code>---</code> fenced cards still work and do not need to be rebuilt.</p>
+            <div class="lh-help-sub"><div class="lh-help-sub-icon">⚡</div><div><strong>Quickest way to type the fence:</strong> press <code>Ctrl+/</code> (or <code>Cmd+/</code>) on an empty line — Obsidian inserts <code>%% %%</code> with the cursor between the markers. Type <code>card</code> and you have <code>%% card %%</code>, ready to use. Spacing and case are tolerated, so <code>%%card%%</code>, <code>%% card %%</code>, and <code>%%CARD%%</code> all work the same.</div></div>
           `},{icon:"🗺️",title:"Quest Map",tag:c(e,"HELP_QUEST_TAG"),html:`
             <ol>
               <li>Ask AI: "Turn calculus.md into a quest-map medium"</li>

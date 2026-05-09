@@ -131,4 +131,38 @@ This should not become a card.`;
     const cards = parseFlashcards(md);
     expect(cards).toHaveLength(0);
   });
+
+  it("accepts whitespace and case variants of the %%card%% fence", () => {
+    // Ctrl+/ in Obsidian inserts `%% %%` and users often type `card` with surrounding spaces.
+    const md = `%% card %%
+Q: With inner spaces?
+A: Yes
+%% card %%
+
+%%CARD%%
+Q: Uppercase?
+A: Yes
+%%CARD%%
+
+%%  Card  %%
+Q: Mixed case + multi-space?
+A: Yes
+%%  Card  %%`;
+    const cards = parseFlashcards(md);
+    expect(cards.map((card) => card.front)).toEqual([
+      "With inner spaces?",
+      "Uppercase?",
+      "Mixed case + multi-space?",
+    ]);
+  });
+
+  it("matches an opening `%% card %%` with a closing `%%card%%` (mixed forms)", () => {
+    const md = `%% card %%
+Q: Mixed close?
+A: Yes
+%%card%%`;
+    const cards = parseFlashcards(md);
+    expect(cards).toHaveLength(1);
+    expect(cards[0].front).toBe("Mixed close?");
+  });
 });

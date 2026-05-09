@@ -1,9 +1,10 @@
 "use strict";
 
-const { loadSrData, saveSrData, srFileName, parseCommentCardBlock } = require("./helpers");
+const { loadSrData, saveSrData, srFileName, parseCommentCardBlock, cardFencePattern } = require("./helpers");
 
+// Writer always emits the canonical no-space form; reader tolerates whitespace and case.
 const CARD_FENCE = "%%card%%";
-const isCardFence = (line) => line.trim() === CARD_FENCE;
+const isCardFence = (line) => cardFencePattern.test(line);
 
 function escapeRegExp(s) {
   return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");

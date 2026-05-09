@@ -194,6 +194,24 @@ describe("saveTagSourceCard", () => {
     expect(refreshed.back).toBe(newBack);
   });
 
+  it("re-edits a %% card %% block (with inner spaces) and normalizes to %%card%%", async () => {
+    const initialContent = "%% card %%\nQ: What is X?\nA: old\n%% card %%\n";
+    const app = makeApp({ fileContent: initialContent });
+    const card = { front: "What is X?", back: "old", notePath: "Notes/test.md" };
+    const saved = await saveTagSourceCard(app, card, {
+      front: "What is X?",
+      back: "new line 1\nnew line 2",
+      hint_l1: "",
+      hint_l2: "",
+      hint_l3: "",
+    });
+    expect(saved).toBe(true);
+    const written = app._getWritten();
+    // Block found by the relaxed parser, rewritten in canonical form
+    expect(written).toContain("%%card%%\nQ: What is X?\nA: new line 1\nnew line 2\n%%card%%");
+    expect(written).not.toContain("%% card %%");
+  });
+
   it("re-edits a card already stored as %%card%% block (no duplication)", async () => {
     const initialContent = "Q1 :: A1\n%%card%%\nQ: What is X?\nA: old line 1\nold line 2\n%%card%%\nQ2 :: A2\n";
     const app = makeApp({ fileContent: initialContent });
