@@ -301,6 +301,15 @@ var Q=class extends I.Modal{
     let t=this.plugin.settings;
     let _openedSourceLabel=L(t)==="zh-tw"?"已開啟":"Opened";
     this.contentEl.empty();
+    // Render markdown into el (clears existing children first), then run the
+    // standard embed/image-zoom post-processors. Used for question, hints,
+    // answer (initial), and answer (in-place refresh after format apply).
+    const renderMd=(el,text)=>{
+      el.empty();
+      I.MarkdownRenderer.renderMarkdown(text||"",el,e.notePath||"",null);
+      postProcessEmbed(el,this.app,e.notePath||"");
+      attachImgZoom(el);
+    };
     // Nav
     let r=this.contentEl.createEl("div",{attr:{class:"lh-review-nav"}});
     r.createEl("span",{text:c(t,"HUB_TITLE"),attr:{class:"lh-review-logo"}});
@@ -385,9 +394,7 @@ var Q=class extends I.Modal{
     delTopBtn.addEventListener("click",()=>this._renderDeleteConfirm(e));
     if(e.emoji){ i.createEl("span",{attr:{class:"lh-rc-emoji"}}).textContent=e.emoji; }
     let qEl=i.createEl("div",{attr:{class:"lh-rc-question"}});
-    I.MarkdownRenderer.renderMarkdown(e.front||"",qEl,e.notePath||"",null);
-    postProcessEmbed(qEl,this.app,e.notePath||"");
-    attachImgZoom(qEl);
+    renderMd(qEl,e.front);
 
     // Hints
     let f=[{key:"hint_l1",cls:"lh-hint-l1",label:"L1 · Active Recall"},{key:"hint_l2",cls:"lh-hint-l2",label:"L2 · Contextual Anchor"},{key:"hint_l3",cls:"lh-hint-l3",label:"L3 · Narrowing Hint"}];
@@ -395,9 +402,7 @@ var Q=class extends I.Modal{
       let g=f[p],E=i.createEl("div",{attr:{class:`lh-hint ${g.cls}`}});
       E.createEl("div",{text:g.label,attr:{class:"lh-hint-label"}});
       let hintEl=E.createEl("div",{attr:{class:"lh-hint-text"}});
-      I.MarkdownRenderer.renderMarkdown(e[g.key]||C("NO_HINT",t),hintEl,e.notePath||"",null);
-      postProcessEmbed(hintEl,this.app,e.notePath||"");
-      attachImgZoom(hintEl);
+      renderMd(hintEl,e[g.key]||C("NO_HINT",t));
     }
 
     // Answer block
@@ -421,6 +426,10 @@ var Q=class extends I.Modal{
       };
       if(e.notePath){
         let fmtBtns=answerHeader.createEl("div",{attr:{class:"lh-answer-fmt-btns"}});
+        // In-place answer refresh — full _renderCardContent rebuilds .lh-review-card and
+        // resets scrollTop, which the user perceives as a flash + jump-to-top when they
+        // had scrolled down to highlight something. Updating just answerEl preserves scroll.
+        const refreshAnswerEl=()=>{ renderMd(answerEl,e.back); selectedAnswerText=""; };
         const applyAnswerFmt=async(wrap)=>{
           const selectedText=captureAnswerSelection()||selectedAnswerText;
           if(!selectedText){new I.Notice(c(t,"FORMAT_SELECT_TEXT"));return;}
@@ -431,7 +440,7 @@ var Q=class extends I.Modal{
             const saved=await applyFormatToCardBack(this.app,e,oldBack,newBack);
             if(!saved){new I.Notice(c(t,"CREATE_CARD_SAVE_FAILED"));return;}
             e.back=newBack;
-            this._renderCardContent(e);
+            refreshAnswerEl();
           }catch(err){console.error("format-apply failed",err);new I.Notice(c(t,"CREATE_CARD_SAVE_FAILED"));}
         };
         let hlBtn=fmtBtns.createEl("button",{text:c(t,"FORMAT_HIGHLIGHT"),attr:{class:"lh-rc-edit-btn lh-fmt-btn"}});
@@ -458,7 +467,7 @@ var Q=class extends I.Modal{
             const saved=await applyFormatToCardBack(this.app,e,oldBack,newBack);
             if(!saved){new I.Notice(c(t,"CREATE_CARD_SAVE_FAILED"));return;}
             e.back=newBack;
-            this._renderCardContent(e);
+            refreshAnswerEl();
           }catch(err){console.error("blockquote-apply failed",err);new I.Notice(c(t,"CREATE_CARD_SAVE_FAILED"));}
         };
         let bqBtn=fmtBtns.createEl("button",{text:c(t,"FORMAT_BLOCKQUOTE"),attr:{class:"lh-rc-edit-btn lh-fmt-btn"}});
@@ -466,9 +475,7 @@ var Q=class extends I.Modal{
         bqBtn.addEventListener("click",applyBlockquoteToBack);
       }
       answerEl=p.createEl("div",{attr:{class:"lh-answer-text"}});
-      I.MarkdownRenderer.renderMarkdown(e.back||"",answerEl,e.notePath||"",null);
-      postProcessEmbed(answerEl,this.app,e.notePath||"");
-      attachImgZoom(answerEl);
+      renderMd(answerEl,e.back);
       answerEl.addEventListener("mouseup",captureAnswerSelection);
       answerEl.addEventListener("keyup",captureAnswerSelection);
       this.browseOnly&&i.createEl("div",{text:c(t,"BROWSE_NOTE"),attr:{class:"lh-browse-note"}});
