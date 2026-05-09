@@ -62,6 +62,7 @@ function createInstaller() {
       { source: "review-deck/references/user-guide.md", target: "references/user-guide.md" },
       { source: "review-deck/references/plugin-architecture.md", target: "references/plugin-architecture.md" },
       { source: "review-deck/references/obsidian-cli.md", target: "references/obsidian-cli.md" },
+      { source: "review-deck/references/image-cards.md", target: "references/image-cards.md" },
       { source: "review-deck/scripts/search_vault.sh", target: "scripts/search_vault.sh" },
       { source: "review-deck/scripts/get_mtime.sh", target: "scripts/get_mtime.sh" }
     ],
