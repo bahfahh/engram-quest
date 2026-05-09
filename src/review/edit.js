@@ -1,6 +1,9 @@
 "use strict";
 
-const { loadSrData, saveSrData, srFileName } = require("./helpers");
+const { loadSrData, saveSrData, srFileName, parseCommentCardBlock } = require("./helpers");
+
+const CARD_FENCE = "%%card%%";
+const isCardFence = (line) => line.trim() === CARD_FENCE;
 
 function escapeRegExp(s) {
   return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -30,9 +33,28 @@ function cardBackCandidates(card, fallbackBack) {
   ].filter(v => typeof v === "string" && v.trim()))];
 }
 
+function buildCommentCardBlock(newData) {
+  const backLines = String(newData.back || "").split("\n");
+  return [
+    CARD_FENCE,
+    `Q: ${newData.front}`,
+    `A: ${backLines[0] || ""}`,
+    ...backLines.slice(1),
+    CARD_FENCE,
+  ].join("\n");
+}
+
 function replaceDoubleColonCard(content, card, newData, fallbackBack) {
   const fronts = cardFrontCandidates(card);
   const backs = cardBackCandidates(card, fallbackBack);
+  const isMultilineBack = String(newData.back || "").includes("\n");
+
+  // Multi-line back can't fit in single-line :: format; convert to %%card%% block,
+  // which is the parser's native fenced format for long answers (see parseFlashcards).
+  const buildReplacement = (indent, mid) => {
+    if (isMultilineBack) return buildCommentCardBlock(newData);
+    return `${indent}${newData.front}${mid}:: ${newData.back}`;
+  };
 
   for (const front of fronts) {
     for (const back of backs) {
@@ -42,7 +64,7 @@ function replaceDoubleColonCard(content, card, newData, fallbackBack) {
       );
       if (re.test(content)) {
         return {
-          content: content.replace(re, (_match, indent, mid) => `${indent}${newData.front}${mid}:: ${newData.back}`),
+          content: content.replace(re, (_match, indent, mid) => buildReplacement(indent, mid)),
           modified: true,
         };
       }
@@ -53,13 +75,53 @@ function replaceDoubleColonCard(content, card, newData, fallbackBack) {
     const reFront = new RegExp(`^([ \t]*)${escapeRegExp(front)}([ \t]*)::(.*)$`, "m");
     if (reFront.test(content)) {
       return {
-        content: content.replace(reFront, (_match, indent, mid) => `${indent}${newData.front}${mid}:: ${newData.back}`),
+        content: content.replace(reFront, (_match, indent, mid) => buildReplacement(indent, mid)),
         modified: true,
       };
     }
   }
 
   return { content, modified: false };
+}
+
+function collectCommentCardBlocks(content) {
+  const lines = content.split("\n");
+  const cards = [];
+  let i = 0;
+  while (i < lines.length) {
+    if (!isCardFence(lines[i])) { i++; continue; }
+    const blockStart = i;
+    let j = i + 1;
+    while (j < lines.length && !isCardFence(lines[j])) j++;
+    if (j >= lines.length) break;
+    const parsed = parseCommentCardBlock(lines.slice(blockStart + 1, j).join("\n"));
+    if (parsed) cards.push({ front: parsed.front, back: parsed.back, start: blockStart, end: j + 1 });
+    i = j + 1;
+  }
+  return cards;
+}
+
+function findCommentCardRange(lines, card, fallbackBack) {
+  const fronts = new Set(cardFrontCandidates(card));
+  const backs = new Set(cardBackCandidates(card, fallbackBack));
+  const collected = collectCommentCardBlocks(lines.join("\n"));
+  for (const parsed of collected) {
+    if (!fronts.has(parsed.front) && !fronts.has(stripMdEdge(parsed.front))) continue;
+    if (!backs.has(parsed.back) && !backs.has(stripMdEdge(parsed.back))) continue;
+    return { start: parsed.start, end: parsed.end };
+  }
+  return null;
+}
+
+function replaceCommentCard(content, card, newData, fallbackBack) {
+  const hasFinalNewline = content.endsWith("\n");
+  const lines = content.split("\n");
+  if (hasFinalNewline) lines.pop();
+  const range = findCommentCardRange(lines, card, fallbackBack);
+  if (!range) return { content, modified: false };
+  const newBlock = buildCommentCardBlock(newData).split("\n");
+  lines.splice(range.start, range.end - range.start, ...newBlock);
+  return { content: lines.join("\n") + (hasFinalNewline ? "\n" : ""), modified: true };
 }
 
 function trimTrailingBlankLines(lines) {
@@ -175,6 +237,9 @@ function replaceQaCard(content, card, newData, fallbackBack) {
 }
 
 function replaceSourceCard(content, card, newData, fallbackBack) {
+  // Try fenced comment card block first — most specific, multi-line safe
+  const cc = replaceCommentCard(content, card, newData, fallbackBack);
+  if (cc.modified) return cc;
   const dc = replaceDoubleColonCard(content, card, newData, fallbackBack);
   if (dc.modified) return dc;
   return replaceQaCard(content, card, newData, fallbackBack);
@@ -196,6 +261,10 @@ function findCurrentSourceCard(content, card) {
   const matchesFront = parsed => fronts.has(parsed.front) || fronts.has(stripMdEdge(parsed.front));
   const matchesBack = parsed => backs.has(parsed.back) || backs.has(stripMdEdge(parsed.back));
 
+  const commentCards = collectCommentCardBlocks(content);
+  const exactComment = commentCards.find(parsed => matchesFront(parsed) && matchesBack(parsed));
+  if (exactComment) return { front: exactComment.front, back: exactComment.back };
+
   const doubleColonCards = collectDoubleColonCards(content);
   const exactDc = doubleColonCards.find(parsed => matchesFront(parsed) && matchesBack(parsed));
   if (exactDc) return { front: exactDc.front, back: exactDc.back, rawFront: exactDc.front, rawBack: exactDc.back };
@@ -204,7 +273,7 @@ function findCurrentSourceCard(content, card) {
   const exactQa = qaCards.find(parsed => matchesFront(parsed) && matchesBack(parsed));
   if (exactQa) return { front: exactQa.front, back: exactQa.back };
 
-  const frontMatches = [...doubleColonCards, ...qaCards].filter(matchesFront);
+  const frontMatches = [...commentCards, ...doubleColonCards, ...qaCards].filter(matchesFront);
   if (frontMatches.length === 1) {
     const parsed = frontMatches[0];
     return { front: parsed.front, back: parsed.back, rawFront: parsed.front, rawBack: parsed.back };

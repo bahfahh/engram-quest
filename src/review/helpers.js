@@ -460,6 +460,7 @@ module.exports = {
   parseSrComment,
   getReviewStatus,
   parseFlashcards,
+  parseCommentCardBlock,
   parseReviewDeckBlock,
   mergeReviewHints,
   matchFlashcardTagPrefix,

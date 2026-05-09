@@ -146,6 +146,72 @@ describe("saveTagSourceCard", () => {
     await saveTagSourceCard(app, card, { front: "Q2", back: "A2", hint_l1: "", hint_l2: "", hint_l3: "" });
     expect(app._getWritten()).toBeNull();
   });
+
+  it("converts :: card to %%card%% block when new back is multi-line", async () => {
+    const app = makeApp({ fileContent: "What is X? :: original\n" });
+    const card = { front: "What is X?", back: "original", rawFront: "What is X?", rawBack: "original", notePath: "Notes/test.md" };
+    const saved = await saveTagSourceCard(app, card, {
+      front: "What is X?",
+      back: "para1\n\npara2\n\npara3",
+      hint_l1: "",
+      hint_l2: "",
+      hint_l3: "",
+    });
+    expect(saved).toBe(true);
+    expect(app._getWritten()).toBe("%%card%%\nQ: What is X?\nA: para1\n\npara2\n\npara3\n%%card%%\n");
+    expect(app._getWritten()).not.toMatch(/What is X\? :: para1/);
+  });
+
+  it("multi-line save preserves adjacent :: cards when converting", async () => {
+    const initialContent = "Q1 :: A1\nWhat is X? :: original\nQ2 :: A2\n";
+    const app = makeApp({ fileContent: initialContent });
+    const card = { front: "What is X?", back: "original", rawFront: "What is X?", rawBack: "original", notePath: "Notes/test.md" };
+    const newBack = "first paragraph\n\nsecond paragraph\n\nthird paragraph";
+    await saveTagSourceCard(app, card, { front: "What is X?", back: newBack, hint_l1: "", hint_l2: "", hint_l3: "" });
+    const written = app._getWritten();
+    // The %%card%% fence isolates the multi-line back; adjacent :: cards stay intact
+    expect(written).toContain("Q1 :: A1");
+    expect(written).toContain("Q2 :: A2");
+    expect(written).toContain("%%card%%\nQ: What is X?\nA: first paragraph\n\nsecond paragraph\n\nthird paragraph\n%%card%%");
+  });
+
+  it("multi-line save survives a re-parse round-trip without truncation", async () => {
+    const initialContent = "Q1 :: A1\nWhat is X? :: original\nQ2 :: A2\n";
+    const app = makeApp({ fileContent: initialContent });
+    const card = { front: "What is X?", back: "original", rawFront: "What is X?", rawBack: "original", notePath: "Notes/test.md" };
+    const newBack = "first paragraph\n\nsecond paragraph\n\nthird paragraph";
+    await saveTagSourceCard(app, card, { front: "What is X?", back: newBack, hint_l1: "", hint_l2: "", hint_l3: "" });
+    const written = app._getWritten();
+
+    // Step 2: simulate refresh — re-parse via findCurrentSourceCard with the now-fresh back
+    const refreshed = findCurrentSourceCard(written, {
+      front: "What is X?",
+      back: newBack,
+      rawFront: "What is X?",
+      rawBack: newBack,
+    });
+    expect(refreshed).not.toBeNull();
+    expect(refreshed.back).toBe(newBack);
+  });
+
+  it("re-edits a card already stored as %%card%% block (no duplication)", async () => {
+    const initialContent = "Q1 :: A1\n%%card%%\nQ: What is X?\nA: old line 1\nold line 2\n%%card%%\nQ2 :: A2\n";
+    const app = makeApp({ fileContent: initialContent });
+    const card = { front: "What is X?", back: "old line 1\nold line 2", notePath: "Notes/test.md" };
+    const saved = await saveTagSourceCard(app, card, {
+      front: "What is X?",
+      back: "new line 1\n\nnew line 2",
+      hint_l1: "",
+      hint_l2: "",
+      hint_l3: "",
+    });
+    expect(saved).toBe(true);
+    const written = app._getWritten();
+    expect(written).toContain("%%card%%\nQ: What is X?\nA: new line 1\n\nnew line 2\n%%card%%");
+    expect(written).not.toContain("old line 1");
+    expect(written).not.toContain("old line 2");
+    expect(written.match(/%%card%%/g)).toHaveLength(2); // exactly one block, two fences
+  });
 });
 
 describe("refreshTagSourceCard", () => {
