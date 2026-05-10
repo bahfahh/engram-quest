@@ -38,31 +38,48 @@ async function renderSynapseProBanner(parent, plugin, app) {
   }
 
   const onboarding = !status.generatedAt;
+  // Skill ran but pool gate denied: status has generatedAt + enabled=false + reason.
+  // Without this third state the UI was silent — user had no idea why ⚡ never appeared.
+  const poolTooSmall = !!status.generatedAt && status.enabled === false && status.reason === "pool-too-small";
   const refresh = isSynapseEnabled(status)
     && shouldShowRefreshBanner({ status, currentMastered, now: Date.now(), dismissedAt }).show;
 
-  if (!onboarding && !refresh) return;
+  if (!onboarding && !refresh && !poolTooSmall) return;
 
   const banner = parent.createEl("div", { attr: { class: "lh-synapse-banner" } });
   const text = banner.createEl("div", { attr: { class: "lh-synapse-banner-text" } });
+  let title;
+  if (poolTooSmall) {
+    const have = (status.masteredPoolSize != null) ? status.masteredPoolSize : (currentMastered || 0);
+    const need = (status.threshold != null) ? status.threshold : 10;
+    title = c(t, "SYNAPSE_POOL_TOO_SMALL").replace("{have}", String(have)).replace("{need}", String(need));
+  } else if (onboarding) {
+    title = c(t, "SYNAPSE_ONBOARDING_TITLE");
+  } else {
+    title = c(t, "SYNAPSE_REFRESH_BANNER");
+  }
   text.createEl("div", {
-    text: onboarding ? c(t, "SYNAPSE_ONBOARDING_TITLE") : c(t, "SYNAPSE_REFRESH_BANNER"),
+    text: title,
     attr: { style: "font-weight:600;font-size:13px;line-height:1.4;" }
   });
-  text.createEl("div", {
-    text: SKILL_COMMAND,
-    attr: { style: "font-family:monospace;font-size:11px;color:var(--text-muted,#6b7280);margin-top:4px;" }
-  });
+  if (!poolTooSmall) {
+    text.createEl("div", {
+      text: SKILL_COMMAND,
+      attr: { style: "font-family:monospace;font-size:11px;color:var(--text-muted,#6b7280);margin-top:4px;" }
+    });
+  }
 
   const actions = banner.createEl("div", { attr: { class: "lh-synapse-banner-actions" } });
-  const copyBtn = actions.createEl("button", {
-    text: c(t, "SYNAPSE_REFRESH_BUTTON"),
-    attr: { class: "lh-synapse-banner-btn" }
-  });
-  copyBtn.addEventListener("click", async () => {
-    try { await navigator.clipboard.writeText(SKILL_COMMAND); new I.Notice("Copied: " + SKILL_COMMAND); }
-    catch { new I.Notice(SKILL_COMMAND); }
-  });
+  if (!poolTooSmall) {
+    const copyBtn = actions.createEl("button", {
+      text: c(t, "SYNAPSE_REFRESH_BUTTON"),
+      attr: { class: "lh-synapse-banner-btn" }
+    });
+    copyBtn.addEventListener("click", async () => {
+      try { await navigator.clipboard.writeText(SKILL_COMMAND); new I.Notice("Copied: " + SKILL_COMMAND); }
+      catch { new I.Notice(SKILL_COMMAND); }
+    });
+  }
 
   if (!onboarding) {
     const dismissBtn = actions.createEl("button", {

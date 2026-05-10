@@ -84,7 +84,9 @@ function createInstaller() {
       { source: "synapse/skills.md", target: "SKILL.md" },
       { source: "synapse/references/scoring-guide.md", target: "references/scoring-guide.md" },
       { source: "synapse/references/plugin-architecture.md", target: "references/plugin-architecture.md" },
-      { source: "synapse/references/obsidian-cli.md", target: "references/obsidian-cli.md" }
+      { source: "synapse/references/obsidian-cli.md", target: "references/obsidian-cli.md" },
+      { source: "synapse/scripts/dump_sr_pool.sh", target: "scripts/dump_sr_pool.sh" },
+      { source: "synapse/scripts/dump_sr_pool.js", target: "scripts/dump_sr_pool.js" }
     ]
   };
 

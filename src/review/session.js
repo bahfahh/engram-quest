@@ -667,7 +667,7 @@ var Q=class extends I.Modal{
       // licenseValid is the future Polar.sh swap point — keep this check inline.
       const synapseEnabled=this.plugin.settings.licenseValid && isSynapseEnabled(this._synapseStatus);
       if(synapseEnabled){
-        g.classList.add("lh-pill-row-2x2");
+        g.classList.add("lh-pill-row-4");
         let syBtn=g.createEl("button",{attr:{class:"lh-pill-btn lh-pill-synapse"}});
         const anchors=Array.isArray(e.synapseAnchors)?e.synapseAnchors:[];
         syBtn.textContent="⚡ "+c(t,"SYNAPSE");
