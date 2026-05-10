@@ -94,32 +94,25 @@ async function renderSynapseProBanner(parent, plugin, app) {
   }
 }
 
-// `openSession(cards, name, onBack)` is provided by the caller so this module
+// `openSession(cards, name, backFn, minutes)` is provided by the caller so this module
 // stays decoupled from the review session class import in hub/modal.js.
+// Renders 3 compact ⏱ buttons inline into `parent` (the card-header row).
 function renderTimeboxRow(parent, plugin, app, decks, openSession, backToHub) {
   if (!plugin.settings.licenseValid) return;
   const t = plugin.settings;
-  const wrap = parent.createEl("div", { attr: { style: "padding:0 16px 8px;" } });
-  wrap.createEl("div", {
-    text: "⏱ " + c(t, "TIMEBOX_LABEL"),
-    attr: { style: "font-size:12px;font-weight:700;color:var(--text-muted,#6b7280);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;" }
-  });
-  const row = wrap.createEl("div", { attr: { class: "lh-timebox-row" } });
+  const minSuffix = c(t, "TIMEBOX_MIN_SUFFIX");
+  const row = parent.createEl("div", { attr: { class: "lh-timebox-row" } });
   [5, 10, 15].forEach((minutes) => {
     const btn = row.createEl("button", { attr: { class: "lh-timebox-btn" } });
-    btn.textContent = `${minutes} ${c(t, "TIMEBOX_MIN_SUFFIX")}`;
+    btn.textContent = `⏱ ${minutes} ${minSuffix}`;
     btn.addEventListener("click", () => {
       const all = collectAllCards(decks);
       if (all.length === 0) { new I.Notice(c(t, "TIMEBOX_NO_CARDS")); return; }
       const today = new Date();
       const picked = pickTopN(all, minutes, (card) => computeCardPriority(card, today));
       if (picked.length === 0) { new I.Notice(c(t, "TIMEBOX_NO_CARDS")); return; }
-      openSession(picked, `⏱ ${minutes} ${c(t, "TIMEBOX_MIN_SUFFIX")}`, backToHub, minutes);
+      openSession(picked, `⏱ ${minutes} ${minSuffix}`, backToHub, minutes);
     });
-  });
-  wrap.createEl("div", {
-    text: c(t, "TIMEBOX_PRO_HINT"),
-    attr: { class: "lh-timebox-pro-hint" }
   });
 }
 
