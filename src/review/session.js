@@ -3,6 +3,7 @@ const I = require("obsidian");
 const { computeFsrs: P } = require("../fsrs");
 const { t: c, tAlt: C, getLocale: _getLocale } = require("../i18n");
 const { anySrPattern: ge, getReviewStatus: $, loadSrData, saveSrData } = require("./helpers");
+const { ACHIEVEMENTS, RARITY_DARK, RARITY_LIGHT } = require("../hub/achievement");
 const { saveTagSourceCard, saveInlineCard, deleteTagSourceCard, applyFormatToCardBack, refreshTagSourceCard } = require("./edit");
 const W_ref = { get locale() { try { return I.moment && I.moment.locale && I.moment.locale(); } catch(e) { return "en"; } } };
 function L(s) { return _getLocale(s, W_ref.locale); }
@@ -238,6 +239,17 @@ function attachImgZoom(el){
   });
 }
 
+function buildEvalContext(st) {
+  const vals = Object.values((st && st.dailyReviewLog) || {});
+  return {
+    totalCardsReviewed: (st && st.totalCardsReviewed) || 0,
+    longestStreak:      (st && st.longestStreak)      || 0,
+    maxDaily:           vals.length > 0 ? Math.max(...vals) : 0,
+    perfectSessions:    (st && st.perfectSessions)    || 0,
+    totalAgainCount:    (st && st.totalAgainCount)    || 0,
+  };
+}
+
 var Q=class extends I.Modal{
   constructor(e,t,r,s,l,a={}){
     super(e);
@@ -252,6 +264,7 @@ var Q=class extends I.Modal{
     // Save initial progress on open
     this.plugin.settings._reviewProgress={deck:this.deckName,idx:this.idx};
     this.plugin.saveData(this.plugin.settings);
+    this._preSessionEvalCtx = buildEvalContext(this.plugin.settings._stats);
     const _isDark=document.body.classList.contains("theme-dark");const _bgPrimary=_isDark?"#1e1e2e":"#ffffff";const _bgSecondary=_isDark?"#252538":"#f3f4f6";const _textNormal=_isDark?"#e2e8f0":"#1f2937";const _textMuted=_isDark?"#94a3b8":"#6b7280";
     this.modalEl.addClass("lh-hub");
     if(_isDark)this.modalEl.addClass("lh-dark");
@@ -278,20 +291,49 @@ var Q=class extends I.Modal{
   // Task 6: completion screen
   _renderComplete(){
     let t=this.plugin.settings;
-    // Clear progress
     delete this.plugin.settings._reviewProgress;
     this.plugin.saveData(this.plugin.settings);
+
+    const _postCtx = buildEvalContext(this.plugin.settings._stats);
+    const _preCtx  = this._preSessionEvalCtx || {};
+    const newlyUnlocked = ACHIEVEMENTS.filter(ach => {
+      const pre  = _preCtx[ach.field]  ?? -1;
+      const post = _postCtx[ach.field] ?? -1;
+      if (pre < 0 || post < 0) return false; // needs deck/map data, not in session stats
+      return pre < ach.threshold && post >= ach.threshold;
+    });
+
+    const isDark = document.body.classList.contains("theme-dark");
+    const rarityStyles = isDark ? RARITY_DARK : RARITY_LIGHT;
+
     this.contentEl.empty();
-    let wrap=this.contentEl.createEl("div",{attr:{class:"lh-complete-screen",style:"flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;text-align:center;gap:16px;"}});
+    let wrap=this.contentEl.createEl("div",{attr:{class:"lh-complete-screen",style:"flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;text-align:center;gap:16px;overflow-y:auto;"}});
     wrap.createEl("div",{attr:{style:"font-size:56px;line-height:1;"}}).textContent="🎉";
     wrap.createEl("div",{attr:{class:"lh-complete-title",style:"font-size:24px;font-weight:800;color:var(--text-normal, #1e293b);"}}).textContent=c(t,"REVIEW_COMPLETE");
     wrap.createEl("div",{attr:{style:"font-size:14px;color:var(--text-muted, #64748b);line-height:1.6;max-width:260px;"}}).textContent=`${this.deckName} · ${this.cards.length} ${c(t,"CARDS_REVIEWED")}`;
+
+    // Show newly unlocked achievements
+    if(newlyUnlocked.length>0){
+      const achWrap=wrap.createEl("div",{attr:{style:"width:100%;max-width:320px;margin-top:4px;"}});
+      achWrap.createEl("div",{attr:{style:"font-size:12px;font-weight:700;color:#f59e0b;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;"}}).textContent="🏆 "+c(t,"ACH_SESSION_UNLOCKED");
+      const achRow=achWrap.createEl("div",{attr:{style:"display:flex;flex-wrap:wrap;gap:12px;justify-content:center;"}});
+      for(const ach of newlyUnlocked){
+        const rs=rarityStyles[ach.rarity];
+        const card=achRow.createEl("div",{attr:{style:`display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 10px 10px;border-radius:16px;background:${rs.bg};box-shadow:0 0 20px ${rs.glow};width:94px;position:relative;`}});
+        card.createEl("div",{attr:{style:`font-size:9px;font-weight:800;color:${rs.badge};background:${rs.badge}22;padding:2px 8px;border-radius:99px;`}}).textContent=ach.rarity;
+        const iconWrap=card.createEl("div",{attr:{style:"position:relative;margin:4px 0;"}});
+        iconWrap.createEl("div",{attr:{style:`position:absolute;inset:-10px;border-radius:50%;background:radial-gradient(circle,${rs.glow} 0%,transparent 70%);pointer-events:none;`}});
+        const iconSrc=this.plugin.app.vault.adapter.getResourcePath(this.plugin.app.vault.configDir+"/plugins/engram-quest/"+ach.icon);
+        const img=iconWrap.createEl("img",{attr:{src:iconSrc,width:"56",height:"56",style:"object-fit:contain;display:block;position:relative;z-index:1;"}});
+        img.onerror=()=>{iconWrap.empty();iconWrap.createEl("span",{attr:{style:"font-size:36px;line-height:1;"}}).textContent="🏆";};
+        card.createEl("div",{attr:{style:`font-size:10px;font-weight:700;color:${isDark?"#e2e8f0":"#1e293b"};text-align:center;line-height:1.3;padding:0 2px;`}}).textContent=c(t,ach.nameKey);
+      }
+    }
+
     let btnRow=wrap.createEl("div",{attr:{style:"display:flex;flex-direction:column;gap:10px;width:100%;max-width:280px;margin-top:8px;"}});
-    // Continue → back to hub
     let btnHub=btnRow.createEl("button",{attr:{class:"lh-complete-btn",style:"border-radius:99px;padding:14px 24px;font-size:15px;font-weight:700;cursor:pointer;border:none;background:linear-gradient(135deg,#4f46e5,#818cf8);color:#fff;box-shadow:0 4px 16px rgba(79,70,229,0.4);min-height:52px;"}});
     btnHub.textContent=c(t,"BACK_TO_HUB");
     btnHub.addEventListener("click",()=>{ this.close(); this.onBack&&this.onBack(); });
-    // Close
     let btnClose=btnRow.createEl("button",{attr:{class:"lh-complete-btn",style:"border-radius:99px;padding:14px 24px;font-size:15px;font-weight:600;cursor:pointer;border:1.5px solid #e2e8f0;background:#f8faff;color:#475569;min-height:52px;"}});
     btnClose.textContent=c(t,"HUB_CLOSE");
     btnClose.addEventListener("click",()=>this.close());
@@ -684,6 +726,7 @@ var Q=class extends I.Modal{
   onClose(){
     if(this._fab){this._fab.remove();this._fab=null;}
     this._minimized=false;
+    this._preSessionEvalCtx=null;
   }
 
   _renderEditForm(e){

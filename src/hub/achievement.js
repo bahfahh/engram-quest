@@ -15,14 +15,19 @@ const ACHIEVEMENTS = [
   { id: "streak_3",     icon: "assets/icons/streak_3.webp",     rarity: "UC",  threshold: 3,    field: "longestStreak",      nameKey: "ACH_STREAK_3_NAME",    descKey: "ACH_STREAK_3_DESC"     },
   { id: "streak_7",     icon: "assets/icons/streak_7.webp",     rarity: "R",   threshold: 7,    field: "longestStreak",      nameKey: "ACH_STREAK_7_NAME",    descKey: "ACH_STREAK_7_DESC"     },
   { id: "streak_30",    icon: "assets/icons/streak_30.webp",    rarity: "LEG", threshold: 30,   field: "longestStreak",      nameKey: "ACH_STREAK_30_NAME",   descKey: "ACH_STREAK_30_DESC"    },
-  { id: "daily_surge",  icon: "assets/icons/daily_surge.webp",  rarity: "R",   threshold: 20,   field: "maxDaily",           nameKey: "ACH_DAILY_SURGE_NAME", descKey: "ACH_DAILY_SURGE_DESC"  },
+  { id: "daily_20",     icon: "assets/icons/daily_20.webp",     rarity: "UC",  threshold: 20,   field: "maxDaily",           nameKey: "ACH_DAILY_20_NAME",    descKey: "ACH_DAILY_20_DESC"     },
+  { id: "daily_50",     icon: "assets/icons/daily_50.webp",     rarity: "R",   threshold: 50,   field: "maxDaily",           nameKey: "ACH_DAILY_50_NAME",    descKey: "ACH_DAILY_50_DESC"     },
+  { id: "daily_80",     icon: "assets/icons/daily_80.webp",     rarity: "LEG", threshold: 80,   field: "maxDaily",           nameKey: "ACH_DAILY_80_NAME",    descKey: "ACH_DAILY_80_DESC"     },
+  { id: "daily_100",    icon: "assets/icons/daily_100.webp",    rarity: "LEG", threshold: 100,  field: "maxDaily",           nameKey: "ACH_DAILY_100_NAME",   descKey: "ACH_DAILY_100_DESC"    },
+  { id: "daily_150",    icon: "assets/icons/daily_150.webp",    rarity: "LEG", threshold: 150,  field: "maxDaily",           nameKey: "ACH_DAILY_150_NAME",   descKey: "ACH_DAILY_150_DESC"    },
+  { id: "daily_200",    icon: "assets/icons/daily_200.webp",    rarity: "LEG", threshold: 200,  field: "maxDaily",           nameKey: "ACH_DAILY_200_NAME",   descKey: "ACH_DAILY_200_DESC"    },
   { id: "master_50",    icon: "assets/icons/master_50.webp",    rarity: "LEG", threshold: 50,   field: "masteredCards",      nameKey: "ACH_MASTER_50_NAME",   descKey: "ACH_MASTER_50_DESC"    },
   // --- New 12 ---
   { id: "four_thousand",    icon: "assets/icons/four_thousand.webp",    rarity: "LEG", threshold: 4000,  field: "totalCardsReviewed", nameKey: "ACH_FOUR_THOUSAND_NAME",    descKey: "ACH_FOUR_THOUSAND_DESC"    },
   { id: "ten_thousand",     icon: "assets/icons/ten_thousand.webp",     rarity: "LEG", threshold: 10000, field: "totalCardsReviewed", nameKey: "ACH_TEN_THOUSAND_NAME",     descKey: "ACH_TEN_THOUSAND_DESC"     },
   { id: "streak_100",       icon: "assets/icons/streak_100.webp",       rarity: "LEG", threshold: 100,   field: "longestStreak",      nameKey: "ACH_STREAK_100_NAME",       descKey: "ACH_STREAK_100_DESC"       },
   { id: "streak_365",       icon: "assets/icons/streak_365.webp",       rarity: "LEG", threshold: 365,   field: "longestStreak",      nameKey: "ACH_STREAK_365_NAME",       descKey: "ACH_STREAK_365_DESC"       },
-  { id: "daily_storm",      icon: "assets/icons/daily_storm.webp",      rarity: "LEG", threshold: 100,   field: "maxDaily",           nameKey: "ACH_DAILY_STORM_NAME",      descKey: "ACH_DAILY_STORM_DESC"      },
+
   { id: "master_200",       icon: "assets/icons/master_200.webp",       rarity: "LEG", threshold: 200,   field: "masteredCards",      nameKey: "ACH_MASTER_200_NAME",       descKey: "ACH_MASTER_200_DESC"       },
   { id: "first_memory_map", icon: "assets/icons/first_memory_map.webp", rarity: "R",   threshold: 1,     field: "memoryMapCount",     nameKey: "ACH_FIRST_MEMORY_MAP_NAME", descKey: "ACH_FIRST_MEMORY_MAP_DESC" },
   { id: "first_quest_map",  icon: "assets/icons/first_quest_map.webp",  rarity: "R",   threshold: 1,     field: "questMapCount",      nameKey: "ACH_FIRST_QUEST_MAP_NAME",  descKey: "ACH_FIRST_QUEST_MAP_DESC"  },
@@ -385,4 +390,4 @@ function renderAchievementTab(containerEl, plugin, decks, quests=[], memories=[]
   }
 }
 
-module.exports = { renderAchievementTab, openAchievementDetail };
+module.exports = { renderAchievementTab, openAchievementDetail, ACHIEVEMENTS, RARITY_DARK, RARITY_LIGHT };
