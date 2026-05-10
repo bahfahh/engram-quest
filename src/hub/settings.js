@@ -7,7 +7,17 @@ var pe = class extends I.PluginSettingTab {
   constructor(e, t) { super(e, t); this.plugin = t; }
   display() {
     let { containerEl: e } = this, t = this.plugin.settings;
-    e.empty(),
+    e.empty();
+
+    // Support row — top of settings tab
+    const _support = e.createEl("div", { attr: { style: "display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;margin:0 0 18px;" } });
+    const _sponsor = _support.createEl("a", { attr: { href: "https://github.com/bahfahh/engram-quest", target: "_blank", rel: "noopener", style: "display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:8px;background:#ec4899;color:#fff;text-decoration:none;font-size:13px;font-weight:600;border:none;" } });
+    _sponsor.createEl("span", { text: "♥" });
+    _sponsor.createEl("span", { text: "Sponsor" });
+    const _coffee = _support.createEl("a", { attr: { href: "https://ko-fi.com/wen_aidev", target: "_blank", rel: "noopener", style: "display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:8px;background:#fcd34d;color:#1f2937;text-decoration:none;font-size:13px;font-weight:600;border:none;" } });
+    _coffee.createEl("span", { text: "☕" });
+    _coffee.createEl("span", { text: "Buy me a coffee" });
+
     new I.Setting(e).setName(c(t, "LANGUAGE")).setDesc(c(t, "LANGUAGE_DESC")).addDropdown(r => r.addOption("en", c(t, "LANGUAGE_ENGLISH")).addOption("zh-tw", c(t, "LANGUAGE_ZH_TW")).addOption("system", c(t, "LANGUAGE_SYSTEM")).setValue(t.language || "en").onChange(async s => { this.plugin.settings.language = s; await this.plugin.saveData(this.plugin.settings); this.display(); })),
     new I.Setting(e).setName(c(t, "SETTINGS_APPEARANCE")).setHeading(),
     new I.Setting(e).setName(c(t, "SETTINGS_THEME_NAME")).setDesc(c(t, "SETTINGS_THEME_DESC")).addDropdown(r => r.addOption("bright", `☀️ ${c(t, "SETTINGS_THEME_BRIGHT")}`).addOption("dark", `🌙 ${c(t, "SETTINGS_THEME_DARK")}`).addOption("minimal", `✨ ${c(t, "SETTINGS_THEME_MINIMAL")}`).setValue(t.lhTheme).onChange(async s => { this.plugin.settings.lhTheme = s; await this.plugin.saveData(this.plugin.settings); })),
