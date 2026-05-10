@@ -498,19 +498,30 @@ var Q=class extends I.Modal{
     let qEl=i.createEl("div",{attr:{class:"lh-rc-question"}});
     renderMd(qEl,e.front);
 
-    // Hints
+    // Stable containers for hints + synapse — refreshed in-place so toggling
+    // doesn't rebuild the whole card (preserves scroll, avoids flash).
+    // Mutex: hints render only when synapse is closed; clicking a hint closes synapse.
     let f=[{key:"hint_l1",cls:"lh-hint-l1",label:"L1 · Active Recall"},{key:"hint_l2",cls:"lh-hint-l2",label:"L2 · Contextual Anchor"},{key:"hint_l3",cls:"lh-hint-l3",label:"L3 · Narrowing Hint"}];
-    for(let p=0;p<this.hintLevel;p++){
-      let g=f[p],E=i.createEl("div",{attr:{class:`lh-hint ${g.cls}`}});
-      E.createEl("div",{text:g.label,attr:{class:"lh-hint-label"}});
-      let hintEl=E.createEl("div",{attr:{class:"lh-hint-text"}});
-      renderMd(hintEl,e[g.key]||C("NO_HINT",t));
-    }
-
-    // Synapse panel — only show before answer is revealed; opens on user click
-    if(this.synapseOpen && !this.answerShown){
-      this._renderSynapsePanel(i,e,t,renderMd);
-    }
+    const hintsContainer=i.createEl("div",{attr:{class:"lh-hints-container"}});
+    const synapseContainer=i.createEl("div",{attr:{class:"lh-synapse-container"}});
+    const synapseEnabled=this.plugin.settings.licenseValid && isSynapseEnabled(this._synapseStatus);
+    const refreshHintsContainer=()=>{
+      hintsContainer.empty();
+      if(this.synapseOpen) return;
+      for(let p=0;p<this.hintLevel;p++){
+        let g=f[p],E=hintsContainer.createEl("div",{attr:{class:`lh-hint ${g.cls}`}});
+        E.createEl("div",{text:g.label,attr:{class:"lh-hint-label"}});
+        let hintEl=E.createEl("div",{attr:{class:"lh-hint-text"}});
+        renderMd(hintEl,e[g.key]||C("NO_HINT",t));
+      }
+    };
+    const refreshSynapseContainer=()=>{
+      synapseContainer.empty();
+      if(!this.synapseOpen) return;
+      this._renderSynapsePanel(synapseContainer,e,t,renderMd,refreshSynapseContainer);
+    };
+    refreshHintsContainer();
+    refreshSynapseContainer();
 
     // Answer block
     if(this.answerShown){
@@ -531,18 +542,33 @@ var Q=class extends I.Modal{
         selectedAnswerText=text.trim();
         return selectedAnswerText;
       };
+      // Answer-header button row — always present so post-reveal Synapse toggle has a home.
+      let fmtBtns=answerHeader.createEl("div",{attr:{class:"lh-answer-fmt-btns"}});
+      // Post-reveal Synapse access: ⚡ toggle next to Highlight/Blockquote.
+      const _syAnchors=Array.isArray(e.synapseAnchors)?e.synapseAnchors:[];
+      if(synapseEnabled&&_syAnchors.length>0){
+        const syHeaderBtn=fmtBtns.createEl("button",{text:"⚡",attr:{class:"lh-rc-edit-btn lh-fmt-btn",title:c(t,"SYNAPSE_HINT")}});
+        syHeaderBtn.addEventListener("click",()=>{ this.synapseOpen=!this.synapseOpen; refreshSynapseContainer(); });
+      }
       if(e.notePath){
-        let fmtBtns=answerHeader.createEl("div",{attr:{class:"lh-answer-fmt-btns"}});
         // In-place answer refresh — full _renderCardContent rebuilds .lh-review-card and
         // resets scrollTop, which the user perceives as a flash + jump-to-top when they
         // had scrolled down to highlight something. Updating just answerEl preserves scroll.
         const refreshAnswerEl=()=>{ renderMd(answerEl,e.back); selectedAnswerText=""; };
         const applyAnswerFmt=async(wrap)=>{
-          const selectedText=captureAnswerSelection()||selectedAnswerText;
-          if(!selectedText){new I.Notice(c(t,"FORMAT_SELECT_TEXT"));return;}
-          if(!e.back.includes(selectedText)){new I.Notice(c(t,"FORMAT_SELECT_TEXT"));return;}
+          const rawSel=(captureAnswerSelection()||selectedAnswerText).replace(/\r\n/g,"\n");
+          if(!rawSel){new I.Notice(c(t,"FORMAT_SELECT_TEXT"));return;}
+          // Markdown renders soft line breaks (\n) as spaces; if exact match fails,
+          // find the actual substring in e.back using a whitespace-flexible regex.
+          let matchedSel=rawSel;
+          if(!e.back.includes(rawSel)){
+            const escaped=rawSel.replace(/[.*+?^${}()|[\]\\]/g,"\\$&").replace(/ /g,"\\s+");
+            const m=new RegExp(escaped).exec(e.back);
+            if(!m){new I.Notice(c(t,"FORMAT_SELECT_TEXT"));return;}
+            matchedSel=m[0];
+          }
           const oldBack=e.back;
-          const newBack=e.back.replace(selectedText,wrap+selectedText+wrap);
+          const newBack=e.back.replace(matchedSel,wrap+matchedSel+wrap);
           try{
             const saved=await applyFormatToCardBack(this.app,e,oldBack,newBack);
             if(!saved){new I.Notice(c(t,"CREATE_CARD_SAVE_FAILED"));return;}
@@ -675,7 +701,13 @@ var Q=class extends I.Modal{
       let x=g.createEl("button",{attr:{class:"lh-pill-btn lh-pill-recall"}});
       x.textContent="L1 "+(this.hintLevel===0?C("RECALL",t):C("HINT_NEXT",t));
       if(!m||this.hintLevel>=3) this._disablePillBtn(x);
-      else x.addEventListener("click",()=>{this.hintLevel++;this._renderCardContent(e);});
+      else x.addEventListener("click",()=>{
+        // Hints render top-down so a full re-render (scroll-to-top) is acceptable here;
+        // the flash bug only mattered for Synapse, where the panel sits mid-card.
+        // synapseOpen=false enforces the mutex (opening a hint closes Synapse).
+        this.hintLevel++; this.synapseOpen=false;
+        this._renderCardContent(e);
+      });
 
       // Memory Map button — Plan A (sync) then Plan B (async fallback)
       let k=g.createEl("button",{attr:{class:"lh-pill-btn lh-pill-memory"}});
@@ -700,8 +732,7 @@ var Q=class extends I.Modal{
         findMemoryMapCandidatesByCanvasContent(this.app,e,w).then(found=>{if(this._mmGen===gen&&k.isConnected)setMemoryMapAction(found||[]);}).catch(()=>{});}
 
       // Three states: hidden (feature off / not Pro), dim (no anchors), active.
-      // licenseValid is the future Polar.sh swap point — keep this check inline.
-      const synapseEnabled=this.plugin.settings.licenseValid && isSynapseEnabled(this._synapseStatus);
+      // synapseEnabled hoisted above (single source of truth for both pre- and post-answer paths).
       if(synapseEnabled){
         g.classList.add("lh-pill-row-4");
         let syBtn=g.createEl("button",{attr:{class:"lh-pill-btn lh-pill-synapse"}});
@@ -711,7 +742,10 @@ var Q=class extends I.Modal{
           this._disablePillBtn(syBtn,c(t,"SYNAPSE_EMPTY"));
         }else{
           syBtn.title=c(t,"SYNAPSE_HINT");
-          syBtn.addEventListener("click",()=>{ this.synapseOpen=!this.synapseOpen; this._renderCardContent(e); });
+          syBtn.addEventListener("click",()=>{
+            this.synapseOpen=!this.synapseOpen;
+            refreshHintsContainer(); refreshSynapseContainer();
+          });
         }
       }
 
@@ -738,7 +772,7 @@ var Q=class extends I.Modal{
     if(title) btn.title=title;
   }
 
-  _renderSynapsePanel(parent,card,t,renderMd){
+  _renderSynapsePanel(parent,card,t,renderMd,refresh){
     const anchors=Array.isArray(card.synapseAnchors)?card.synapseAnchors:[];
     const panel=parent.createEl("div",{attr:{class:"lh-synapse-panel"}});
     panel.createEl("div",{text:"⚡ "+c(t,"SYNAPSE"),attr:{class:"lh-synapse-title"}});
@@ -771,7 +805,8 @@ var Q=class extends I.Modal{
       row.addEventListener("click",(ev)=>{
         ev.stopPropagation();
         this._synapseExpandedAnchorIdx=isExpanded?-1:idx;
-        this._renderCardContent(card);
+        if(typeof refresh==="function") refresh();
+        else this._renderCardContent(card);
       });
     });
   }
