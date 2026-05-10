@@ -17,6 +17,11 @@ function createInstaller() {
       id: "memory-map",
       title: "Memory Map",
       summary: "Generate memory-map canvas files for the EngramQuest plugin."
+    },
+    {
+      id: "synapse",
+      title: "Synapse (Pro)",
+      summary: "Pre-compute memory anchors that link difficult cards to mastered ones. Pro feature."
     }
   ];
   const TOOL_TARGETS = {
@@ -74,6 +79,12 @@ function createInstaller() {
       { source: "memory-map/references/user-guide.md", target: "references/user-guide.md" },
       { source: "memory-map/references/obsidian-cli.md", target: "references/obsidian-cli.md" },
       { source: "memory-map/scripts/search_vault.sh", target: "scripts/search_vault.sh" }
+    ],
+    "synapse": [
+      { source: "synapse/skills.md", target: "SKILL.md" },
+      { source: "synapse/references/scoring-guide.md", target: "references/scoring-guide.md" },
+      { source: "synapse/references/plugin-architecture.md", target: "references/plugin-architecture.md" },
+      { source: "synapse/references/obsidian-cli.md", target: "references/obsidian-cli.md" }
     ]
   };
 

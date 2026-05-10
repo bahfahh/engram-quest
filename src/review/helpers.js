@@ -471,6 +471,7 @@ module.exports = {
   legacySrPattern,
   anySrPattern,
   parseSrComment,
+  getLocalDateStr,
   getReviewStatus,
   parseFlashcards,
   parseCommentCardBlock,

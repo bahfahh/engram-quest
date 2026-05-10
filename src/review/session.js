@@ -3,6 +3,7 @@ const I = require("obsidian");
 const { computeFsrs: P } = require("../fsrs");
 const { t: c, tAlt: C, getLocale: _getLocale } = require("../i18n");
 const { anySrPattern: ge, getReviewStatus: $, loadSrData, saveSrData } = require("./helpers");
+const { loadSynapseStatus, loadSynapseBatch, attachSynapseToCards, isSynapseEnabled } = require("./synapse");
 const { ACHIEVEMENTS, RARITY_DARK, RARITY_LIGHT } = require("../hub/achievement");
 const { saveTagSourceCard, saveInlineCard, deleteTagSourceCard, applyFormatToCardBack, refreshTagSourceCard } = require("./edit");
 const W_ref = { get locale() { try { return I.moment && I.moment.locale && I.moment.locale(); } catch(e) { return "en"; } } };
@@ -257,6 +258,9 @@ var Q=class extends I.Modal{
     this.idx=0; this.hintLevel=0; this.answerShown=false;
     this.onBack=l||null; this.browseOnly=!!a.browseOnly;
     this._rating_locked=false; // Task 4: lock flag
+    this.synapseOpen=false;
+    this._synapseStatus=null;
+    this._synapseExpandedAnchorIdx=-1;
   }
 
   onOpen(){
@@ -278,10 +282,29 @@ var Q=class extends I.Modal{
     let e=this.app.vault.adapter.getResourcePath(this.app.vault.configDir+"/plugins/engram-quest/"+_bgFile);
     this.contentEl.style.cssText=`padding:0;display:flex;flex-direction:column;height:100%;overflow:hidden;background-image:url('${e}');background-size:cover;background-position:center top;color:${_isDark?"#e2e8f0":"#1f2937"}`;
     this.renderCard();
+    this._loadSynapseAsync();
+  }
+
+  // Fire-and-forget after the modal opens; on success re-renders the pre-answer
+  // card so the ⚡ button appears without blocking initial render.
+  async _loadSynapseAsync(){
+    try{
+      if(!this.plugin.settings.licenseValid){ this._synapseStatus={ enabled:false, reason:"not-pro" }; return; }
+      const adapter=this.app.vault.adapter;
+      this._synapseStatus=await loadSynapseStatus(adapter);
+      if(!isSynapseEnabled(this._synapseStatus)) return;
+      const notePaths=this.cards.map(c=>c&&c.notePath).filter(Boolean);
+      const batch=await loadSynapseBatch(adapter,notePaths);
+      attachSynapseToCards(this.cards,batch);
+      if(!this.answerShown && this.cards[this.idx] && this.contentEl && this.contentEl.isConnected){
+        this._renderCardContent(this.cards[this.idx]);
+      }
+    }catch(err){ console.warn("synapse: load failed",err); }
   }
 
   renderCard(){
     this.hintLevel=0; this.answerShown=false; this._rating_locked=false;
+    this.synapseOpen=false; this._synapseExpandedAnchorIdx=-1;
     // Save progress
     this.plugin.settings._reviewProgress={deck:this.deckName,idx:this.idx};
     this.plugin.saveData(this.plugin.settings);
@@ -447,6 +470,11 @@ var Q=class extends I.Modal{
       renderMd(hintEl,e[g.key]||C("NO_HINT",t));
     }
 
+    // Synapse panel — only show before answer is revealed; opens on user click
+    if(this.synapseOpen && !this.answerShown){
+      this._renderSynapsePanel(i,e,t,renderMd);
+    }
+
     // Answer block
     if(this.answerShown){
       let p=i.createEl("div",{attr:{class:"lh-answer-block"}});
@@ -610,7 +638,7 @@ var Q=class extends I.Modal{
       let m=e.hint_l1||e.hint_l2||e.hint_l3;
       let x=g.createEl("button",{attr:{class:"lh-pill-btn lh-pill-recall"}});
       x.textContent="L1 "+(this.hintLevel===0?C("RECALL",t):C("HINT_NEXT",t));
-      if(!m||this.hintLevel>=3){ x.disabled=true; x.style.opacity="0.38"; x.style.cursor="not-allowed"; }
+      if(!m||this.hintLevel>=3) this._disablePillBtn(x);
       else x.addEventListener("click",()=>{this.hintLevel++;this._renderCardContent(e);});
 
       // Memory Map button — Plan A (sync) then Plan B (async fallback)
@@ -620,9 +648,7 @@ var Q=class extends I.Modal{
       const setMemoryMapAction=(candidates)=>{
         if(!candidates||candidates.length===0){
           memoryMapAction=null;
-          k.disabled=true;
-          k.style.opacity="0.38";
-          k.style.cursor="not-allowed";
+          this._disablePillBtn(k);
           return;
         }
         k.disabled=false;
@@ -636,6 +662,22 @@ var Q=class extends I.Modal{
       else{setMemoryMapAction([]);
         const gen=this._mmGen=(this._mmGen||0)+1;
         findMemoryMapCandidatesByCanvasContent(this.app,e,w).then(found=>{if(this._mmGen===gen&&k.isConnected)setMemoryMapAction(found||[]);}).catch(()=>{});}
+
+      // Three states: hidden (feature off / not Pro), dim (no anchors), active.
+      // licenseValid is the future Polar.sh swap point — keep this check inline.
+      const synapseEnabled=this.plugin.settings.licenseValid && isSynapseEnabled(this._synapseStatus);
+      if(synapseEnabled){
+        g.classList.add("lh-pill-row-2x2");
+        let syBtn=g.createEl("button",{attr:{class:"lh-pill-btn lh-pill-synapse"}});
+        const anchors=Array.isArray(e.synapseAnchors)?e.synapseAnchors:[];
+        syBtn.textContent="⚡ "+c(t,"SYNAPSE");
+        if(anchors.length===0){
+          this._disablePillBtn(syBtn,c(t,"SYNAPSE_EMPTY"));
+        }else{
+          syBtn.title=c(t,"SYNAPSE_HINT");
+          syBtn.addEventListener("click",()=>{ this.synapseOpen=!this.synapseOpen; this._renderCardContent(e); });
+        }
+      }
 
       let y=p.createEl("div",{attr:{class:"lh-footer-meta"}});
       let b=y.createEl("button",{attr:{class:"lh-pill-reset"}});
@@ -651,6 +693,59 @@ var Q=class extends I.Modal{
     let v=Math.round(this.idx/this.cards.length*100);
     u.createEl("div",{attr:{class:"lh-review-prog-bar",style:`width:${v}%`}});
     h.createEl("span",{text:`${this.idx+1} / ${this.cards.length}`,attr:{class:"lh-review-badge"}});
+  }
+
+  _disablePillBtn(btn,title){
+    btn.disabled=true;
+    btn.style.opacity="0.38";
+    btn.style.cursor="not-allowed";
+    if(title) btn.title=title;
+  }
+
+  _renderSynapsePanel(parent,card,t,renderMd){
+    const anchors=Array.isArray(card.synapseAnchors)?card.synapseAnchors:[];
+    const panel=parent.createEl("div",{attr:{class:"lh-synapse-panel"}});
+    panel.createEl("div",{text:"⚡ "+c(t,"SYNAPSE"),attr:{class:"lh-synapse-title"}});
+    panel.createEl("div",{text:c(t,"SYNAPSE_HINT"),attr:{class:"lh-synapse-hint"}});
+    if(anchors.length===0){
+      panel.createEl("div",{text:c(t,"SYNAPSE_EMPTY"),attr:{class:"lh-synapse-empty"}});
+      return;
+    }
+    anchors.forEach((a,idx)=>{
+      const row=panel.createEl("div",{attr:{class:"lh-synapse-card"}});
+      const head=row.createEl("div",{attr:{class:"lh-synapse-card-head"}});
+      // Stability → emoji badge (self-contained; avoids ACHIEVEMENTS coupling)
+      const stab=typeof a.stability==="number"?a.stability:0;
+      const badge=stab>=30?"👑":(stab>=15?"🌟":"⭐");
+      head.createEl("span",{text:badge,attr:{class:"lh-synapse-card-badge"}});
+      head.createEl("span",{text:a.front||"",attr:{class:"lh-synapse-card-front"}});
+      if(a.reason){
+        row.createEl("div",{text:c(t,"SYNAPSE_REASON_PREFIX")+a.reason,attr:{class:"lh-synapse-card-reason"}});
+      }
+      // Click row → toggle expanded back (best-effort; back is only available
+      // for anchors whose notePath was loaded into the current session's cards)
+      const isExpanded=this._synapseExpandedAnchorIdx===idx;
+      if(isExpanded){
+        const back=this._lookupAnchorBack(a);
+        const backEl=row.createEl("div",{attr:{class:"lh-synapse-card-back"}});
+        if(back && typeof renderMd==="function"){ renderMd(backEl,back); }
+        else if(back){ backEl.textContent=back; }
+        else backEl.textContent=c(t,"SYNAPSE_NO_BACK");
+      }
+      row.addEventListener("click",(ev)=>{
+        ev.stopPropagation();
+        this._synapseExpandedAnchorIdx=isExpanded?-1:idx;
+        this._renderCardContent(card);
+      });
+    });
+  }
+
+  // Find an anchor's back text by matching (notePath, front) against current session cards
+  _lookupAnchorBack(anchor){
+    if(!anchor||!anchor.front) return "";
+    const np=anchor.notePath||"";
+    const hit=this.cards.find(c=>c && c.front===anchor.front && (np?c.notePath===np:true));
+    return (hit&&hit.back)||"";
   }
 
   _openMemoryMapChooser(candidates){

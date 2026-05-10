@@ -151,6 +151,30 @@ expect(result.completed).toBe(true)
               <li>找不到時，會掃描所有 memory canvas 的內容，如果 canvas 裡有指向該筆記的 file node，就會自動關聯</li>
             </ol>
             <div class="lh-help-sub" style="border-color:#7c3aed"><div class="lh-help-sub-icon">💡</div><div>建議讓 canvas 裡包含一個指向來源筆記的 file node（AI 生成時會自動加入），這樣即使檔案移動或改名，Obsidian 也會自動更新路徑，關聯不會斷掉。</div></div>
+          `},{icon:"⚡",title:"Synapse (Pro)",tag:"Pro",html:`
+            <p>複習一張難記的卡時，自動連結到你已掌握的相關卡，作為「記憶錨點」。</p>
+            <p><strong>運作機制</strong></p>
+            <ol>
+              <li>跟 AI 說「跑 engram-quest-synapse」</li>
+              <li>AI 掃描所有 SR 紀錄找出 mastered pool（FSRS stability ≥ 7）</li>
+              <li>對每張卡找出最多 3 張強連結錨點，存進 <code>engram-review/synapse/</code></li>
+              <li>複習時，Review session 看答案前會多一個 ⚡ Synapse 按鈕</li>
+            </ol>
+            <p><strong>三大記憶機制</strong></p>
+            <div class="lh-help-sub"><div class="lh-help-sub-icon">EE</div><div><strong>精緻化編碼</strong> — 把難記的卡掛在已熟悉的卡上</div></div>
+            <div class="lh-help-sub"><div class="lh-help-sub-icon">AR</div><div><strong>主動提取</strong> — 強迫回想錨點答案，雙倍記憶強化</div></div>
+            <div class="lh-help-sub"><div class="lh-help-sub-icon">CA</div><div><strong>情節錨定</strong> — 已掌握的卡作為熟悉的記憶情境</div></div>
+            <p><strong>需要 Pro license</strong>。Mastered pool 至少要 10 張卡才會啟用。</p>
+          `},{icon:"⏱",title:"Time-boxed Review (Pro)",tag:"Pro",html:`
+            <p>沒時間複習全部？選 5 / 10 / 15 分鐘，系統挑出最該複習的 N 張卡（1 卡約 1 分鐘）。</p>
+            <p><strong>挑卡優先順序</strong></p>
+            <ol>
+              <li>從未複習過的新卡（unseen）</li>
+              <li>已過期最久的卡（overdue）</li>
+              <li>最快到期的卡（即將 due）</li>
+            </ol>
+            <p>跟「全部複習」共用同一個 review session UI 與 SR 寫回流程，沒有額外風險。</p>
+            <p><strong>需要 Pro license</strong>。</p>
           `},{icon:"🔬",title:"Learning Science",tag:c(e,"HELP_SCIENCE_TAG"),html:`
             <div class="lh-help-sub"><div class="lh-help-sub-icon">SR</div><div><strong>Spaced Repetition</strong><br>在快忘記時複習，提升效率。Review Deck 使用 FSRS 自動安排下次複習。</div></div>
             <div class="lh-help-sub"><div class="lh-help-sub-icon">RP</div><div><strong>Retrieval Practice</strong><br>先回想，再看答案，比重讀更有效。Review Deck 與 Quest Map 都會強迫主動回想。</div></div>
@@ -380,6 +404,30 @@ expect(result.completed).toBe(true)
               <li>If not found, it scans all memory canvases — if a canvas contains a file node pointing to that note, it links automatically</li>
             </ol>
             <div class="lh-help-sub" style="border-color:#7c3aed"><div class="lh-help-sub-icon">💡</div><div>Tip: include a file node in your canvas that points back to the source note (AI does this automatically). This way, even if files are moved or renamed, Obsidian updates the path and the link stays intact.</div></div>
+          `},{icon:"⚡",title:"Synapse (Pro)",tag:"Pro",html:`
+            <p>While reviewing a hard card, automatically surface 1–3 cards you have already mastered that link conceptually — memory anchors that make the new card easier to remember.</p>
+            <p><strong>How it works</strong></p>
+            <ol>
+              <li>Tell your AI assistant: "run engram-quest-synapse"</li>
+              <li>The skill scans every SR file and builds a "mastered pool" (FSRS stability ≥ 7)</li>
+              <li>For each card in the vault, the AI picks up to 3 strong anchors and writes them to <code>engram-review/synapse/</code></li>
+              <li>During review, a ⚡ Synapse button appears before you reveal the answer</li>
+            </ol>
+            <p><strong>Three memory mechanisms triggered</strong></p>
+            <div class="lh-help-sub"><div class="lh-help-sub-icon">EE</div><div><strong>Elaborative encoding</strong> — hang new knowledge onto an existing network</div></div>
+            <div class="lh-help-sub"><div class="lh-help-sub-icon">AR</div><div><strong>Active recall</strong> — recalling the anchor doubles the review effect</div></div>
+            <div class="lh-help-sub"><div class="lh-help-sub-icon">CA</div><div><strong>Contextual anchoring</strong> — mastered cards serve as familiar memory hooks</div></div>
+            <p><strong>Requires a Pro license.</strong> Needs at least 10 mastered cards before it activates.</p>
+          `},{icon:"⏱",title:"Time-boxed Review (Pro)",tag:"Pro",html:`
+            <p>Short on time? Pick 5 / 10 / 15 minutes — the plugin selects the N cards you most need to review (~1 card per minute).</p>
+            <p><strong>Picking priority</strong></p>
+            <ol>
+              <li>Unseen cards (new content)</li>
+              <li>Most-overdue cards</li>
+              <li>Cards closest to their due date</li>
+            </ol>
+            <p>Reuses the regular review session UI and SR write-back path, so there is no risk to your scheduling data.</p>
+            <p><strong>Requires a Pro license.</strong></p>
           `},{icon:"🔬",title:"Why It Works",tag:c(e,"HELP_SCIENCE_TAG"),html:`
             <div class="lh-help-sub"><div class="lh-help-sub-icon">SR</div><div><strong>Spaced Repetition</strong><br>Review at the point of near-forgetting. FSRS calculates the next interval automatically.</div></div>
             <div class="lh-help-sub"><div class="lh-help-sub-icon">RP</div><div><strong>Retrieval Practice</strong><br>Active recall is more effective than re-reading. Review Deck and Quest Map force retrieval before the answer appears.</div></div>
