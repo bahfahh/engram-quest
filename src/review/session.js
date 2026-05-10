@@ -261,6 +261,11 @@ var Q=class extends I.Modal{
     this.synapseOpen=false;
     this._synapseStatus=null;
     this._synapseExpandedAnchorIdx=-1;
+    this._timeboxMinutes=a.timeboxMinutes||0;
+    this._sessionStartMs=0;
+    this._timerIntervalId=null;
+    this._timerEl=null;
+    this._timeboxExpired=false;
   }
 
   onOpen(){
@@ -281,8 +286,29 @@ var Q=class extends I.Modal{
     const _bgFile=_isDark?"bg_dark.webp":"bg.png";
     let e=this.app.vault.adapter.getResourcePath(this.app.vault.configDir+"/plugins/engram-quest/"+_bgFile);
     this.contentEl.style.cssText=`padding:0;display:flex;flex-direction:column;height:100%;overflow:hidden;background-image:url('${e}');background-size:cover;background-position:center top;color:${_isDark?"#e2e8f0":"#1f2937"}`;
+    if(this._timeboxMinutes>0) this._sessionStartMs=Date.now();
     this.renderCard();
     this._loadSynapseAsync();
+    if(this._timeboxMinutes>0) this._timerIntervalId=setInterval(()=>this._tickTimer(),1000);
+  }
+
+  _tickTimer(){
+    const t=this.plugin.settings;
+    const elapsed=Math.floor((Date.now()-this._sessionStartMs)/1000);
+    const remaining=this._timeboxMinutes*60-elapsed;
+    if(remaining<=0&&!this._timeboxExpired){
+      this._timeboxExpired=true;
+      clearInterval(this._timerIntervalId); this._timerIntervalId=null;
+    }
+    if(!this._timerEl||!this._timerEl.isConnected) return;
+    if(remaining<=0){
+      this._timerEl.textContent=`⏱ ${c(t,"TIMEBOX_TIMES_UP")}`;
+      this._timerEl.style.color="#ef4444";
+    } else {
+      const mm=Math.floor(remaining/60),ss=remaining%60;
+      this._timerEl.textContent=`⏱ ${mm}:${ss.toString().padStart(2,"0")}`;
+      this._timerEl.style.color=remaining<=60?"#f59e0b":"var(--lh-cyan,#22d3ee)";
+    }
   }
 
   // Fire-and-forget after the modal opens; on success re-renders the pre-answer
@@ -333,7 +359,14 @@ var Q=class extends I.Modal{
     let wrap=this.contentEl.createEl("div",{attr:{class:"lh-complete-screen",style:"flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;text-align:center;gap:16px;overflow-y:auto;"}});
     wrap.createEl("div",{attr:{style:"font-size:56px;line-height:1;"}}).textContent="🎉";
     wrap.createEl("div",{attr:{class:"lh-complete-title",style:"font-size:24px;font-weight:800;color:var(--text-normal, #1e293b);"}}).textContent=c(t,"REVIEW_COMPLETE");
-    wrap.createEl("div",{attr:{style:"font-size:14px;color:var(--text-muted, #64748b);line-height:1.6;max-width:260px;"}}).textContent=`${this.deckName} · ${this.cards.length} ${c(t,"CARDS_REVIEWED")}`;
+    {
+      let _statLine=`${this.deckName} · ${this.cards.length} ${c(t,"CARDS_REVIEWED")}`;
+      if(this._timeboxMinutes>0){
+        const _es=Math.floor((Date.now()-this._sessionStartMs)/1000);
+        _statLine+=` · ${Math.floor(_es/60)}:${(_es%60).toString().padStart(2,"0")}`;
+      }
+      wrap.createEl("div",{attr:{style:"font-size:14px;color:var(--text-muted, #64748b);line-height:1.6;max-width:260px;"}}).textContent=_statLine;
+    }
 
     // Show newly unlocked achievements
     if(newlyUnlocked.length>0){
@@ -392,6 +425,10 @@ var Q=class extends I.Modal{
     minBtn.textContent="⏬";
     minBtn.title="Minimize";
     minBtn.addEventListener("click",()=>this._minimize());
+    if(this._timeboxMinutes>0){
+      this._timerEl=r.createEl("span",{attr:{class:"lh-timebox-clock"}});
+      this._tickTimer();
+    }
 
     // Card body
     let i=this.contentEl.createEl("div",{attr:{class:"lh-review-body"}}).createEl("div",{attr:{class:"lh-review-card"}});
@@ -621,8 +658,7 @@ var Q=class extends I.Modal{
             e.srMeta={due:w.due,interval:w.interval,stability:w.stability,difficulty:w.difficulty,state:w.state,repetitions:w.repetitions};
             e.srComment="";
             this.idx++;
-            // Task 6: show completion screen instead of closing
-            if(this.idx>=this.cards.length){ this._renderComplete(); return; }
+            if(this.idx>=this.cards.length||this._timeboxExpired){ this._renderComplete(); return; }
             this.renderCard();
           });
         });
@@ -819,6 +855,8 @@ var Q=class extends I.Modal{
     if(this._fab){this._fab.remove();this._fab=null;}
   }
   onClose(){
+    if(this._timerIntervalId){clearInterval(this._timerIntervalId);this._timerIntervalId=null;}
+    this._timerEl=null;
     if(this._fab){this._fab.remove();this._fab=null;}
     this._minimized=false;
     this._preSessionEvalCtx=null;

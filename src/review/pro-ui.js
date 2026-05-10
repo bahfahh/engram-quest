@@ -114,7 +114,7 @@ function renderTimeboxRow(parent, plugin, app, decks, openSession, backToHub) {
       const today = new Date();
       const picked = pickTopN(all, minutes, (card) => computeCardPriority(card, today));
       if (picked.length === 0) { new I.Notice(c(t, "TIMEBOX_NO_CARDS")); return; }
-      openSession(picked, `⏱ ${minutes} ${c(t, "TIMEBOX_MIN_SUFFIX")}`, backToHub);
+      openSession(picked, `⏱ ${minutes} ${c(t, "TIMEBOX_MIN_SUFFIX")}`, backToHub, minutes);
     });
   });
   wrap.createEl("div", {
