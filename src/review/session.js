@@ -776,9 +776,10 @@ var Q=class extends I.Modal{
     });
   }
 
-  // Find an anchor's back text by matching (notePath, front) against current session cards
+  // Fallback to session-card lookup for anchors pre-dating stored `back` (backward compat).
   _lookupAnchorBack(anchor){
     if(!anchor||!anchor.front) return "";
+    if(anchor.back) return anchor.back;
     const np=anchor.notePath||"";
     const hit=this.cards.find(c=>c && c.front===anchor.front && (np?c.notePath===np:true));
     return (hit&&hit.back)||"";

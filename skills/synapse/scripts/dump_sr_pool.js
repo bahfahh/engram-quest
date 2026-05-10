@@ -15,6 +15,10 @@
 // after Again rating). Anchors that point to a card no longer in sr/ at all are
 // also stale.
 //
+// Each mastered entry now includes a `back` field extracted from the source note,
+// so the skill can embed back text into anchor records for runtime display without
+// relying on the target card being present in the same review session.
+//
 // Usage:  node scripts/dump_sr_pool.js [--full]
 //         (cwd should be the vault root)
 
@@ -32,6 +36,143 @@ const forceFull = process.argv.includes("--full");
 
 function srFileNameToNotePath(srFileName) {
   return srFileName.replace(/__/g, "/") + ".md";
+}
+
+// Parse card formats (::, %%card%%, fenced ---Q:A---, plain Q:/A:) and return
+// Map<front, back>. Mirrors the subset of parseFlashcards used by the plugin runtime.
+// Self-contained because the script is deployed without access to the repo's src/.
+function extractBacksFromMarkdown(text) {
+  const backs = new Map();
+  const lines = text.replace(/\r\n/g, "\n").split("\n");
+  const CARD_FENCE = /^\s*%%\s*card\s*%%\s*$/i;
+  const STRIP_MD = s => s.replace(/^[*_=]+|[*_=]+$/g, "").trim();
+
+  let i = 0;
+  let inCodeFence = false;
+  let codeFenceChar = "";
+  let codeFenceLen = 0;
+
+  while (i < lines.length) {
+    const line = lines[i];
+
+    // Track fenced code blocks (``` or ~~~) to avoid false :: matches inside them
+    const fenceMatch = /^[ \t]*(`{3,}|~{3,})/.exec(line);
+    if (fenceMatch) {
+      const ch = fenceMatch[1][0], len = fenceMatch[1].length;
+      if (!inCodeFence) { inCodeFence = true; codeFenceChar = ch; codeFenceLen = len; i++; continue; }
+      if (ch === codeFenceChar && len >= codeFenceLen) { inCodeFence = false; }
+      i++; continue;
+    }
+    if (inCodeFence) { i++; continue; }
+
+    // %%card%% block with embedded Q:/A: (single pair, same as plugin runtime)
+    if (CARD_FENCE.test(line)) {
+      const blockLines = [];
+      let j = i + 1;
+      while (j < lines.length && !CARD_FENCE.test(lines[j])) blockLines.push(lines[j++]);
+      i = j + 1;
+      let qi = -1, ai = -1;
+      for (let k = 0; k < blockLines.length; k++) {
+        if (qi === -1 && /^\s*Q:\s*/i.test(blockLines[k])) { qi = k; continue; }
+        if (qi !== -1 && /^\s*A:\s*/i.test(blockLines[k])) { ai = k; break; }
+      }
+      if (qi !== -1 && ai !== -1) {
+        const qm = blockLines[qi].match(/^\s*Q:\s*(.*)/i);
+        const am = blockLines[ai].match(/^\s*A:\s*(.*)/i);
+        const frontLines = [qm ? qm[1] : "", ...blockLines.slice(qi + 1, ai)];
+        const backLines  = [am ? am[1] : "", ...blockLines.slice(ai + 1)];
+        while (frontLines.length && !frontLines[frontLines.length - 1].trim()) frontLines.pop();
+        while (backLines.length  && !backLines[backLines.length  - 1].trim()) backLines.pop();
+        const front = frontLines.join("\n").trim();
+        const back  = backLines.join("\n").trim();
+        if (front && back) backs.set(front, back);
+      }
+      continue;
+    }
+
+    // --- fenced Q:/A: block (multiple cards inside)
+    if (/^---\s*$/.test(line)) {
+      let peek = i + 1;
+      while (peek < lines.length && lines[peek].trim() === "") peek++;
+      if (peek < lines.length && /^\s*Q:\s*/i.test(lines[peek])) {
+        const fencedLines = [];
+        let j = i + 1;
+        while (j < lines.length && !/^---\s*$/.test(lines[j])) fencedLines.push(lines[j++]);
+        i = j + 1;
+        let fi = 0;
+        while (fi < fencedLines.length) {
+          const qmf = fencedLines[fi].match(/^\s*Q:\s*(.+)/i);
+          if (!qmf) { fi++; continue; }
+          const frontLines = [qmf[1]];
+          fi++;
+          while (fi < fencedLines.length && !/^\s*A:\s*/i.test(fencedLines[fi])) frontLines.push(fencedLines[fi++]);
+          while (frontLines.length && !frontLines[frontLines.length - 1].trim()) frontLines.pop();
+          const amf = fi < fencedLines.length ? fencedLines[fi].match(/^\s*A:\s*(.*)/i) : null;
+          if (!amf) continue;
+          const backLines = [amf[1]];
+          fi++;
+          while (fi < fencedLines.length && !/^\s*Q:\s*/i.test(fencedLines[fi])) backLines.push(fencedLines[fi++]);
+          while (backLines.length && !backLines[backLines.length - 1].trim()) backLines.pop();
+          const front = frontLines.join("\n").trim();
+          const back = backLines.join("\n").trim();
+          if (front && back) backs.set(front, back);
+        }
+        continue;
+      }
+    }
+
+    // Q:/A: non-fenced (stop at 2 blank lines or next Q: or ---)
+    const qaMatch = line.match(/^\s*Q:\s*(.+)/i);
+    if (qaMatch) {
+      const frontLines = [qaMatch[1]];
+      let j = i + 1;
+      while (j < lines.length && !/^\s*A:\s*/i.test(lines[j])) {
+        if (lines[j].trim() !== "") frontLines.push(lines[j]);
+        j++;
+      }
+      const am = j < lines.length ? lines[j].match(/^\s*A:\s*(.*)/i) : null;
+      if (am) {
+        const backLines = [am[1]];
+        j++;
+        let blanks = 0;
+        while (j < lines.length && !/^\s*Q:\s*/i.test(lines[j]) && !/^---\s*$/.test(lines[j])) {
+          if (lines[j].trim() === "") { if (++blanks >= 2) break; }
+          else blanks = 0;
+          backLines.push(lines[j]);
+          j++;
+        }
+        while (backLines.length && !backLines[backLines.length - 1].trim()) backLines.pop();
+        const front = frontLines.join("\n").trim();
+        const back = backLines.join("\n").trim();
+        if (front && back) backs.set(front, back);
+        i = j;
+        continue;
+      }
+    }
+
+    // front :: back (single-line; skip inline-code and cloze lines)
+    const sepIdx = line.indexOf("::");
+    if (sepIdx >= 1) {
+      const before = line.slice(0, sepIdx);
+      if ((before.match(/`/g) || []).length % 2 === 0 && !/\{\{c\d+::/.test(before)) {
+        const front = STRIP_MD(before.trim());
+        const back = STRIP_MD(line.slice(sepIdx + 2).trim());
+        if (front && back) backs.set(front, back);
+      }
+    }
+
+    i++;
+  }
+  return backs;
+}
+
+function readBacksFromNote(notePath) {
+  try {
+    return extractBacksFromMarkdown(fs.readFileSync(notePath, "utf8"));
+  } catch (e) {
+    if (e.code !== "ENOENT") console.warn(`[synapse] could not read backs from ${notePath}:`, e.message);
+    return new Map();
+  }
 }
 
 function readJsonOrNull(p) {
@@ -149,6 +290,7 @@ function main() {
     process.exit(2);
   }
   const { masteredByFront, targetsByFront, fileErrors } = result;
+
   const status = readJsonOrNull(STATUS_FILE);
   const { existingByFront, skillFiles } = loadExistingSynapseFiles();
 
@@ -157,7 +299,7 @@ function main() {
   const masteredArr = [...masteredByFront.values()];
   const targetsArr = [...targetsByFront.values()];
 
-  // Pool gate (same threshold as runtime)
+  // Pool gate (same threshold as runtime) — checked before the note-file reads below
   if (masteredArr.length < 10) {
     process.stdout.write(JSON.stringify({
       mode: "pool-too-small",
@@ -170,6 +312,16 @@ function main() {
       }
     }, null, 2));
     return;
+  }
+
+  // Attach back text to mastered entries so the skill can embed it into anchor records.
+  // Read each source note once (cache by notePath) and look up the back by front text.
+  const masteredNotePaths = new Set(masteredArr.map(e => e.notePath).filter(Boolean));
+  const noteBacksCache = new Map();
+  for (const np of masteredNotePaths) noteBacksCache.set(np, readBacksFromNote(np));
+  for (const entry of masteredArr) {
+    const cache = noteBacksCache.get(entry.notePath);
+    entry.back = (cache && cache.get(entry.front)) || "";
   }
 
   if (mode === "full" || forceFull) {

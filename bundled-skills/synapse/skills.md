@@ -118,7 +118,7 @@ available, running in fallback mode (full rebuild every run)."
              "staleTargets": 1, "preservedTargets": 83, "threshold": 7,
              "filesScanned": 96, "fileErrors": 0 },
   "mastered": [
-    { "id": "m1", "front": "<front>", "notePath": "engram-review/ai-cards/Foo.md", "stability": 17.108 }
+    { "id": "m1", "front": "<front>", "back": "<back>", "notePath": "engram-review/ai-cards/Foo.md", "stability": 17.108 }
   ],
   "targets":   [ /* full mode only — full target list */ ],
   "workQueue": [ /* incremental mode only — only these need LLM work */
@@ -273,6 +273,7 @@ For each affected notePath, write `engram-review/synapse/{srFileName(notePath)}.
       "anchors": [
         {
           "front": "Aggregate 劃分應該基於什麼需求？",
+          "back": "<back text copied from mastered pool entry — do NOT pass to LLM; copy from mastered[].back after LLM returns>",
           "notePath": "engram-review/ai-cards/Event_Storming_01_Fundamentals.md",
           "stability": 17.108,
           "score": 9,
