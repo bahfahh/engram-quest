@@ -19,6 +19,11 @@ function createInstaller() {
       summary: "Generate memory-map canvas files for the EngramQuest plugin."
     },
     {
+      id: "macro-review",
+      title: "Macro Review",
+      summary: "Batch-teach a tag's worth of cards in one session, then write FSRS scheduling back."
+    },
+    {
       id: "synapse",
       title: "Synapse (Pro)",
       summary: "Pre-compute memory anchors that link difficult cards to mastered ones. Pro feature."
@@ -79,6 +84,11 @@ function createInstaller() {
       { source: "memory-map/references/user-guide.md", target: "references/user-guide.md" },
       { source: "memory-map/references/obsidian-cli.md", target: "references/obsidian-cli.md" },
       { source: "memory-map/scripts/search_vault.sh", target: "scripts/search_vault.sh" }
+    ],
+    "macro-review": [
+      { source: "macro-review/skills.md", target: "SKILL.md" },
+      { source: "macro-review/references/obsidian-cli.md", target: "references/obsidian-cli.md" },
+      { source: "macro-review/scripts/search_vault.sh", target: "scripts/search_vault.sh" }
     ],
     "synapse": [
       { source: "synapse/skills.md", target: "SKILL.md" },

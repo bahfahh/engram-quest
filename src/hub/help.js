@@ -90,6 +90,7 @@ A: 在快忘記時複習，可以用最少時間達到最高記憶保留率。
             <div class="lh-help-sub" style="border-color:#2563eb"><div class="lh-help-sub-icon">🃏</div><div>「把 tag:math 的筆記都做成 Review Deck」<br>「把和行銷相關的筆記做成 Review Deck」</div></div>
             <div class="lh-help-sub" style="border-color:#059669"><div class="lh-help-sub-icon">🗺️</div><div>「把微積分.md 做成 quest-map medium」<br>「把 tag:math 的筆記合成一個 quest-map hard」</div></div>
             <div class="lh-help-sub" style="border-color:#7c3aed"><div class="lh-help-sub-icon">🧠</div><div>「幫作業系統概論.md 建立 memory-map」<br>「把和網路協定相關的筆記做成 memory-map」</div></div>
+            <div class="lh-help-sub" style="border-color:#d97706"><div class="lh-help-sub-icon">🎓</div><div>「跑 macro-review tag:azure」<br>「我有一堆沒看的 Azure 卡，幫我一次學完」</div></div>
             <p><strong>Step 3：開 Hub 開始學</strong></p>
             <p style="margin:4px 0">點側邊欄的 EngramQuest 圖示 → 切到對應分頁 → 開始學習。</p>
           `},{icon:"🃏",title:"Review Deck",tag:c(e,"HELP_REVIEW_TAG"),html:`
@@ -151,6 +152,17 @@ expect(result.completed).toBe(true)
               <li>找不到時，會掃描所有 memory canvas 的內容，如果 canvas 裡有指向該筆記的 file node，就會自動關聯</li>
             </ol>
             <div class="lh-help-sub" style="border-color:#7c3aed"><div class="lh-help-sub-icon">💡</div><div>建議讓 canvas 裡包含一個指向來源筆記的 file node（AI 生成時會自動加入），這樣即使檔案移動或改名，Obsidian 也會自動更新路徑，關聯不會斷掉。</div></div>
+          `},{icon:"🎓",title:"Macro Review",tag:"批量學習",html:`
+            <p>累積一堆沒複習的卡時，AI 用「老師講解」的方式一次教完，自動寫回 FSRS 排程。</p>
+            <p><strong>運作機制</strong></p>
+            <ol>
+              <li>跟 AI 說：「跑 macro-review tag:azure」或「幫我把 azure 的卡都複習一遍」</li>
+              <li>AI 找出該 tag 下所有 unseen / overdue 的卡，按來源筆記分組（5-15 張一組）</li>
+              <li>每組用平實語言解說所有相關概念（5 分鐘像老師教學）</li>
+              <li>看完每組後回答「Got it / Roughly / Unfamiliar」，AI 把對應 FSRS 排程寫進 <code>engram-review/sr/*.json</code></li>
+              <li>結束後打開 plugin，原本灰色（unseen）的卡都變藍色（learning）</li>
+            </ol>
+            <div class="lh-help-sub"><div class="lh-help-sub-icon">💡</div><div>適用情境：堆積 30+ 張 unseen 卡覺得壓力大、想一次清完某個主題、長時間沒複習想重新熱身。AI 不會修改原始筆記，只更新 SR 排程。</div></div>
           `},{icon:"⚡",title:"Synapse (Pro)",tag:"Pro",html:`
             <p>複習一張難記的卡時，自動連結到你已掌握的相關卡，作為「記憶錨點」。</p>
             <p><strong>運作機制</strong></p>
@@ -343,6 +355,7 @@ Pythagorean theorem :: a² + b² = c²</pre>
             <div class="lh-help-sub" style="border-color:#2563eb"><div class="lh-help-sub-icon">🃏</div><div>"Turn notes tagged with math into a Review Deck"<br>"Make a Review Deck from all notes about marketing"</div></div>
             <div class="lh-help-sub" style="border-color:#059669"><div class="lh-help-sub-icon">🗺️</div><div>"Turn calculus.md into a quest-map medium"<br>"Combine tag:math notes into a quest-map hard"</div></div>
             <div class="lh-help-sub" style="border-color:#7c3aed"><div class="lh-help-sub-icon">🧠</div><div>"Create a memory-map for OS-overview.md"<br>"Make a memory-map from notes about network protocols"</div></div>
+            <div class="lh-help-sub" style="border-color:#d97706"><div class="lh-help-sub-icon">🎓</div><div>"Run macro-review tag:azure"<br>"I have a pile of unseen azure cards — teach me through them"</div></div>
             <p><strong>Step 3: Open Hub and learn</strong></p>
             <p style="margin:4px 0">Click the EngramQuest ribbon icon → switch tabs → start learning.</p>
           `},{icon:"🃏",title:"Review Deck",tag:c(e,"HELP_REVIEW_TAG"),html:`
@@ -404,6 +417,17 @@ expect(result.completed).toBe(true)
               <li>If not found, it scans all memory canvases — if a canvas contains a file node pointing to that note, it links automatically</li>
             </ol>
             <div class="lh-help-sub" style="border-color:#7c3aed"><div class="lh-help-sub-icon">💡</div><div>Tip: include a file node in your canvas that points back to the source note (AI does this automatically). This way, even if files are moved or renamed, Obsidian updates the path and the link stays intact.</div></div>
+          `},{icon:"🎓",title:"Macro Review",tag:"Batch teach",html:`
+            <p>When unseen cards pile up, ask AI to teach you through them in one session — concept by concept — then it writes FSRS scheduling back automatically.</p>
+            <p><strong>How it works</strong></p>
+            <ol>
+              <li>Ask AI: "Run macro-review tag:azure" or "Help me batch-review all my azure cards"</li>
+              <li>AI finds every unseen / overdue card under that tag and groups them by source note (5–15 cards per group)</li>
+              <li>Each group is taught in plain language (~5 minutes per group, like a real teacher)</li>
+              <li>After each group, you answer "Got it / Roughly / Unfamiliar"; AI writes the matching FSRS schedule into <code>engram-review/sr/*.json</code></li>
+              <li>Reopen the plugin afterward — every previously grey (unseen) card is now blue (learning)</li>
+            </ol>
+            <div class="lh-help-sub"><div class="lh-help-sub-icon">💡</div><div>Use it when: 30+ unseen cards have stacked up, you want to clear a topic in one sitting, or you're returning after a break. AI never edits your source notes — only SR scheduling.</div></div>
           `},{icon:"⚡",title:"Synapse (Pro)",tag:"Pro",html:`
             <p>While reviewing a hard card, automatically surface 1–3 cards you have already mastered that link conceptually — memory anchors that make the new card easier to remember.</p>
             <p><strong>How it works</strong></p>

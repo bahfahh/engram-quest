@@ -250,6 +250,10 @@ const DICT = {
 
     ACH_MASTER_200_NAME: "Grandmaster Realm",
     ACH_MASTER_200_DESC: "200 mastered cards",
+    ACH_SYNAPSE_AWAKEN_NAME: "Synapse Awakening",
+    ACH_SYNAPSE_AWAKEN_DESC: "10 mastered cards",
+    ACH_SYNAPSE_NETWORK_NAME: "Omniscient Web",
+    ACH_SYNAPSE_NETWORK_DESC: "300 mastered cards",
     ACH_FIRST_MEMORY_MAP_NAME: "Cartographer",
     ACH_FIRST_MEMORY_MAP_DESC: "Generate 1 Memory Map",
     ACH_FIRST_QUEST_MAP_NAME: "Adventure Begins",
@@ -514,6 +518,10 @@ const DICT = {
 
     ACH_MASTER_200_NAME: "宗師之境",
     ACH_MASTER_200_DESC: "熟練卡片達 200 張",
+    ACH_SYNAPSE_AWAKEN_NAME: "神經覺醒",
+    ACH_SYNAPSE_AWAKEN_DESC: "熟練卡片達 10 張",
+    ACH_SYNAPSE_NETWORK_NAME: "全知智網",
+    ACH_SYNAPSE_NETWORK_DESC: "熟練卡片達 300 張",
     ACH_FIRST_MEMORY_MAP_NAME: "地圖測繪師",
     ACH_FIRST_MEMORY_MAP_DESC: "生成第一張 Memory Map",
     ACH_FIRST_QUEST_MAP_NAME: "冒險啟程",

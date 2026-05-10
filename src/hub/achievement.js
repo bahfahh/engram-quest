@@ -29,6 +29,8 @@ const ACHIEVEMENTS = [
   { id: "streak_365",       icon: "assets/icons/streak_365.webp",       rarity: "LEG", threshold: 365,   field: "longestStreak",      nameKey: "ACH_STREAK_365_NAME",       descKey: "ACH_STREAK_365_DESC"       },
 
   { id: "master_200",       icon: "assets/icons/master_200.webp",       rarity: "LEG", threshold: 200,   field: "masteredCards",      nameKey: "ACH_MASTER_200_NAME",       descKey: "ACH_MASTER_200_DESC"       },
+  { id: "synapse_awaken",   icon: "assets/icons/synapse_awaken.webp",   rarity: "R",   threshold: 10,    field: "masteredCards",      nameKey: "ACH_SYNAPSE_AWAKEN_NAME",   descKey: "ACH_SYNAPSE_AWAKEN_DESC"    },
+  { id: "synapse_network",  icon: "assets/icons/synapse_network.webp",  rarity: "LEG", threshold: 300,   field: "masteredCards",      nameKey: "ACH_SYNAPSE_NETWORK_NAME",  descKey: "ACH_SYNAPSE_NETWORK_DESC"   },
   { id: "first_memory_map", icon: "assets/icons/first_memory_map.webp", rarity: "R",   threshold: 1,     field: "memoryMapCount",     nameKey: "ACH_FIRST_MEMORY_MAP_NAME", descKey: "ACH_FIRST_MEMORY_MAP_DESC" },
   { id: "first_quest_map",  icon: "assets/icons/first_quest_map.webp",  rarity: "R",   threshold: 1,     field: "questMapCount",      nameKey: "ACH_FIRST_QUEST_MAP_NAME",  descKey: "ACH_FIRST_QUEST_MAP_DESC"  },
   { id: "quest_cleared",    icon: "assets/icons/quest_cleared.webp",    rarity: "LEG", threshold: 1,     field: "clearedQuestCount",  nameKey: "ACH_QUEST_CLEARED_NAME",    descKey: "ACH_QUEST_CLEARED_DESC"    },

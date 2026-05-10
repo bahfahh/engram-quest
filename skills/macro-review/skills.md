@@ -213,6 +213,40 @@ Open the EngramQuest plugin — all grey cards are gone.
 
 ---
 
+## Step 6: Auto-refresh Synapse (Pro feature, OPTIONAL)
+
+Macro Review heavily mutates `engram-review/sr/*.json`, which is exactly the input
+Synapse depends on. New ratings often push cards across the `stability ≥ 7` threshold,
+making them eligible as memory anchors. To save the user a manual `/engram-quest-synapse`
+step, the skill SHOULD chain into Synapse incremental mode at the end IF:
+
+1. The user has Synapse installed (check `.claude/skills/engram-quest-synapse/SKILL.md`
+   or `.gemini/skills/engram-quest-synapse/SKILL.md` exists)
+2. `engram-review/synapse/_status.json` exists AND `enabled: true` (Synapse already
+   bootstrapped — skip on first-time users since pool is probably too small)
+
+If both conditions hold, run Synapse's pool dumper directly:
+
+```bash
+bash {synapse-skill-dir}/scripts/dump_sr_pool.sh
+```
+
+Read its output:
+- `mode === "noop"` → skip, no LLM work needed
+- `mode === "incremental"` → run Synapse's Step 3 (LLM call) over `workQueue` only,
+  then write per-note files per Synapse's Step 5
+- `mode === "full"` → tell the user "Synapse needs a full rebuild after this many
+  changes; run `/engram-quest-synapse` separately when ready" and stop. Don't chain
+  into a long full rebuild without consent.
+- `mode === "pool-too-small"` → silently skip
+
+For the full Synapse contract, scoring rubric, and prompt, see:
+`{synapse-skill-dir}/SKILL.md` and `{synapse-skill-dir}/references/scoring-guide.md`.
+
+If Synapse is not installed, skip Step 6 silently. Macro Review remains useful without it.
+
+---
+
 ## Important Rules
 
 - **Never skip writing back** — the whole point is that the plugin reflects the learning.

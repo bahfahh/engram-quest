@@ -67,42 +67,76 @@ Source notes are read-only. AI artifacts live exclusively in `engram-review/`.
 
 ---
 
-## Step 1: ONE script call → ready-to-feed JSON
+## Step 1: ONE script call → mode + ready-to-feed JSON
 
-Run the bundled dumper. It reads every `engram-review/sr/*.json`, splits by stability,
-and emits a single JSON document containing both pools. **Do NOT iterate sr/ with
-individual Read calls — it will be 10× slower.**
+Run the bundled dumper. It reads `engram-review/sr/*.json` plus any existing
+`engram-review/synapse/*.json`, decides whether this run should be full / incremental /
+no-op, and emits a single JSON document with everything needed for the next steps.
 
 ```bash
+# Default: auto-detect mode based on _status.json + pool drift
 bash scripts/dump_sr_pool.sh
+
+# Force a full rebuild (re-pair every target against the current pool)
+bash scripts/dump_sr_pool.sh --full
 ```
 
-Output schema (parse this directly into the Step 3 prompt):
+**Do NOT iterate sr/ or synapse/ with individual Read tool calls — it will be 10× slower.**
+
+### If `node` is not available
+
+The dumper requires Node.js (≥ 18). If the script exits with `node-not-found` or
+the shell reports `command not found: node`, you have two options:
+
+1. **Recommended** — install Node.js and re-run. The script is < 1 second; nothing
+   else in this skill substitutes for the diff logic it implements.
+2. **Last-resort fallback** — if node truly cannot be installed in this environment,
+   read every `engram-review/sr/*.json` with one Read call per file, in-memory filter
+   `stability >= 7` for the mastered pool and `< 7` for targets, and skip incremental
+   mode entirely (treat every run as `full`, no `_status.json` diffing). This is
+   intentionally slow — only acceptable on environments without node.
+
+Do NOT silently fall through. If you choose option 2, tell the user: "node not
+available, running in fallback mode (full rebuild every run)."
+
+### Output `mode` field — five possible values
+
+| `mode` | When | What the skill should do next |
+|---|---|---|
+| `full` | First run, no `_status.json`, or pool drifted > 20% / ≥ 10 cards, or `--full` | Run the full LLM prompt over `targets[]` (Step 2 onward) |
+| `incremental` | `_status.json` exists, pool drifted < 20%, and `workQueue[]` is non-empty | Run the LLM prompt only over `workQueue[]`. **Do NOT touch `synapse/*.json` files for fronts in `preservedFronts[]`.** |
+| `noop` | `_status.json` exists, no new targets, no stale anchors | Skip the LLM. Just bump `_status.json.generatedAt` to now and report "nothing to update" |
+| `pool-too-small` | Mastered pool < 10 cards | Write `_status.json` with `enabled: false, reason: "pool-too-small"` and tell the user to keep reviewing |
+| `error` | sr/ folder missing | Tell the user no SR data exists yet |
+
+### Output schema (`full` and `incremental`)
 
 ```json
 {
+  "mode": "full" | "incremental",
+  "stats": { "masteredCount": 164, "targetCount": 89, "newTargets": 5,
+             "staleTargets": 1, "preservedTargets": 83, "threshold": 7,
+             "filesScanned": 96, "fileErrors": 0 },
   "mastered": [
-    { "id": "m1", "front": "<card front>", "notePath": "engram-review/ai-cards/Foo.md", "stability": 17.108 }
+    { "id": "m1", "front": "<front>", "notePath": "engram-review/ai-cards/Foo.md", "stability": 17.108 }
   ],
-  "targets": [
-    { "id": "t1", "front": "<card front>", "notePath": "Study/Bar.md", "stability": 0.5 }
+  "targets":   [ /* full mode only — full target list */ ],
+  "workQueue": [ /* incremental mode only — only these need LLM work */
+    { "id": "t1", "front": "<front>", "notePath": "Study/Bar.md", "stability": 2.3,
+      "reason": "new-target" },
+    { "id": "t7", "front": "<front>", "notePath": "Study/Baz.md", "stability": 4.1,
+      "reason": "stale-anchor", "staleAnchors": ["<old anchor front>"] }
   ],
-  "stats": {
-    "masteredCount": 23,
-    "targetCount": 87,
-    "threshold": 7,
-    "filesScanned": 50,
-    "fileErrors": 0
-  }
+  "preservedFronts": [ "<front>", "<front>", ... ]
 }
 ```
 
-Pool semantics:
+### Pool semantics (same in all modes)
 
 | Set | Condition | Role |
 |---|---|---|
 | **Mastered pool** | `stability ≥ 7` | Stable memory hooks — eligible to be recommended as anchors |
-| **Targets** | `stability < 7` (or missing) | Cards that need help — we generate anchor recommendations for these |
+| **Targets** | `stability < 7` (or missing) | Cards that need help — anchors are generated for these |
 
 Mastered cards do NOT become targets. They already remember themselves; recommending
 anchors for them adds runtime cost without user value.
@@ -128,9 +162,15 @@ If `masteredPool.length < 10` → write status as disabled and stop:
 Tell the user: "Synapse needs at least 10 mastered cards (FSRS stability ≥ 7).
 You currently have N. Keep reviewing — the plugin will prompt you again."
 
-## Step 3: ONE LLM call — full pool × full targets, no batching
+## Step 3: ONE LLM call — full pool × the work queue
 
-Send a SINGLE prompt to the AI with the entire mastered pool and the entire target list.
+Send a SINGLE prompt to the AI with the entire mastered pool and **only the cards that
+need pairing this run**:
+
+- `mode === "full"`: send `mastered` + the full `targets` list
+- `mode === "incremental"`: send `mastered` + the `workQueue` list (subset of targets)
+- `mode === "noop"`: skip Step 3 entirely; jump to Step 5 to bump `generatedAt`
+
 Do NOT split into batches. Modern models (Claude Sonnet 4+, Gemini 2.5+, GPT-5) handle
 hundreds of cards in one prompt without issue.
 
@@ -208,10 +248,17 @@ Wall time drops ~K× because Claude API parallelizes well. Skip this if:
 
 This is an OPTIONAL optimization — the single-shot path is the canonical flow.
 
-## Step 5: Write Per-Note Synapse Files
+## Step 4: Write Per-Note Synapse Files
 
-Group results by the target card's `notePath`. For each notePath, write
-`engram-review/synapse/{srFileName(notePath)}.json`:
+**In `incremental` mode**: read the existing `engram-review/synapse/{srFileName}.json`
+first (if it exists), and **merge** the new `cards` entries with old ones — preserving
+all `cards.{front}` entries that are NOT in the workQueue (i.e. preserved fronts) and
+all `userRejected` arrays. Only overwrite the entries you just paired.
+
+**In `full` mode**: regenerate each file from scratch, but still preserve `userRejected`
+arrays from any pre-existing file (the v2 user-feedback hook depends on this).
+
+For each affected notePath, write `engram-review/synapse/{srFileName(notePath)}.json`:
 
 ```json
 {
@@ -246,39 +293,68 @@ preserving previous `userRejected` lists. (See incremental update below.)
 **Resolve anchor `notePath`**: look up the mastered card's notePath from the pool entry.
 If a mastered card's source SR file maps to a real file in the vault, use that path.
 
-## Step 6: Write Status File
+## Step 5: Write Status File
+
+Always write this, including in `noop` mode (just bumps `generatedAt`):
 
 ```json
 // engram-review/synapse/_status.json
 {
   "enabled": true,
-  "masteredPoolSize": 23,
+  "masteredPoolSize": 164,
   "generatedAt": "2026-05-10T10:00:00Z",
-  "skillVersion": "1.0"
+  "skillVersion": "1.0",
+  "lastMode": "incremental"
 }
 ```
 
 The plugin reads this on load. `enabled: true` activates the ⚡ feature globally.
 
-## Step 7: Final Report
+## Step 6: Final Report
 
-Report to the user:
+Report tailored to `mode`:
 
 ```
-✅ Synapse build complete
+[full mode]
+✅ Synapse rebuilt
+  Mastered pool: 164 cards (stability ≥ 7)
+  Targets paired: 89 (76 found anchors, 13 left empty — no strong link)
+  Files written: 41 in engram-review/synapse/
 
-  Mastered pool: 23 cards (stability ≥ 7)
-  Target cards scanned: 198
-  Targets with ≥1 anchor: 87 (44%)
-  Targets with 0 anchors: 111 (algorithm chose not to pad weak links)
-  Files written: 34 in engram-review/synapse/
+[incremental mode]
+✅ Synapse updated (incremental)
+  New targets paired: 5 (4 found anchors, 1 empty)
+  Stale targets re-paired: 1
+  Preserved (no change): 83
+  Total runtime: 12s
 
-Open the EngramQuest Review Deck — cards with anchors now show a ⚡ button.
+[noop mode]
+ℹ️  Synapse already up to date — nothing to do.
+  Mastered pool: 164 (unchanged)
+  Last update: 2026-05-09 23:00 (less than a day ago)
 ```
 
 ---
 
-## Incremental Update (subsequent runs)
+## Mode flow summary (the contract this skill implements)
+
+```
+[Step 1] bash scripts/dump_sr_pool.sh
+   └→ mode in JSON output
+
+mode === "pool-too-small"  → Step 5 only (write disabled status), tell user
+mode === "noop"            → Step 5 only (bump generatedAt), Step 6 ℹ
+mode === "incremental"     → Steps 3-4 over workQueue + preserve preservedFronts → Step 5, 6
+mode === "full"            → Steps 3-4 over targets → Step 5, 6
+mode === "error"           → Tell user, exit
+```
+
+The skill is invoked by:
+- User saying `/engram-quest-synapse` (auto mode-detect)
+- User saying `/engram-quest-synapse --full` (force full)
+- The `engram-quest-macro-review` skill at the end of its run (incremental — see that skill's Step 6)
+
+## Stale logic detail
 
 When `engram-review/synapse/_status.json` already exists:
 
