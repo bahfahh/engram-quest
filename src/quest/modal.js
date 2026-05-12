@@ -1,6 +1,7 @@
 "use strict";
 
 const obsidian = require("obsidian");
+const { activeDocument } = obsidian;
 const { resolveImageOcclusionRect } = require("./helpers");
 
 function attachImgZoom(el){
@@ -10,7 +11,7 @@ function attachImgZoom(el){
     img.classList.add("eq-zoomable");
     img.addEventListener("click",e=>{
       e.stopPropagation();
-      const lb=document.body.createEl("div",{attr:{class:"eq-lightbox"}});
+      const lb=activeDocument.body.createEl("div",{attr:{class:"eq-lightbox"}});
       const close=lb.createEl("button",{attr:{class:"eq-lightbox-close"},text:"✕"});
       const lbImg=lb.createEl("img",{attr:{src:img.src,alt:img.alt||""}});
       const dismiss=()=>lb.remove();
@@ -63,7 +64,7 @@ function setSolved(buttons, onSolved, feedbackEl) {
     feedbackEl.style.borderColor = "#22c55e";
     feedbackEl.style.color = "#15803d";
   }
-  setTimeout(() => onSolved(true), 600);
+  window.setTimeout(() => onSolved(true), 600);
 }
 
 function renderQuestChallenge(container, challenge, difficulty, onSolved, settings, app, sourcePath, deps, gameState) {
@@ -152,12 +153,12 @@ function renderQuestChallenge(container, challenge, difficulty, onSolved, settin
       cdLabel.textContent = `${time}s`;
 
       let cdVal = time;
-      let cdInterval = setInterval(() => {
+      let cdInterval = window.setInterval(() => {
         cdVal -= 1;
         cdFill.style.width = ((cdVal / time) * 100) + "%";
         cdLabel.textContent = `${cdVal}s`;
         if (cdVal <= 0) {
-          clearInterval(cdInterval);
+          window.clearInterval(cdInterval);
           // Transition to quiz phase
           phaseTag.textContent = zh ? "🎯 作答階段" : "🎯 Quiz Phase";
           phaseTag.style.background = "rgba(34,197,94,0.08)";
@@ -346,10 +347,10 @@ function renderQuestChallenge(container, challenge, difficulty, onSolved, settin
     let buttons = [];
     const optLabels = ["A","B","C","D","E","F"];
     let expired = false;
-    let interval = setInterval(() => {
+    let interval = window.setInterval(() => {
       timerSec -= 0.1;
       if (timerSec <= 0) {
-        clearInterval(interval);
+        window.clearInterval(interval);
         timerSec = 0;
         timerFill.style.width = "0%";
         timerLabel.textContent = "0s";
@@ -360,7 +361,7 @@ function renderQuestChallenge(container, challenge, difficulty, onSolved, settin
           buttons[challenge.answer].style.color = "white";
           buttons[challenge.answer].style.borderColor = "#22c55e";
           handleWrong(wrapper);
-          setTimeout(() => onSolved(false), 1200);
+          window.setTimeout(() => onSolved(false), 1200);
         }
         return;
       }
@@ -376,7 +377,7 @@ function renderQuestChallenge(container, challenge, difficulty, onSolved, settin
       buttons.push(button);
       button.addEventListener("click", () => {
         if (button.disabled || expired) return;
-        clearInterval(interval);
+        window.clearInterval(interval);
         if (index === challenge.answer) {
           setSolved(buttons, onSolved);
         } else {
@@ -402,10 +403,10 @@ function renderQuestChallenge(container, challenge, difficulty, onSolved, settin
     });
     cdLabel.textContent = (zh ? "記住以上內容 — " : "Memorize — ") + snapTime + "s";
     let cdVal = snapTime;
-    let cdInterval = setInterval(() => {
+    let cdInterval = window.setInterval(() => {
       cdVal -= 1;
       if (cdVal <= 0) {
-        clearInterval(cdInterval);
+        window.clearInterval(cdInterval);
         phase = "quiz";
         snapBox.empty();
         snapBox.createEl("div", { text: "?", attr: { style: "font-size:48px;color:var(--text-faint);font-style:italic" } });
@@ -484,7 +485,7 @@ function renderQuestChallenge(container, challenge, difficulty, onSolved, settin
       resultEl.style.display = "block";
       resultEl.textContent = (win ? "✓ +" : "✗ ") + delta + " ◈ — " + (zh ? "餘額 " : "Balance ") + totalCoins;
       resultEl.style.color = win ? "#22c55e" : "#ef4444";
-      setTimeout(() => onSolved(win), 1200);
+      window.setTimeout(() => onSolved(win), 1200);
     });
     return;
   }
@@ -552,10 +553,10 @@ function renderQuestChallenge(container, challenge, difficulty, onSolved, settin
         }
       });
       if (correctCount === challenge.slots.length) {
-        setTimeout(() => onSolved(true), 800);
+        window.setTimeout(() => onSolved(true), 800);
       } else {
         handleWrong(wrapper);
-        setTimeout(() => onSolved(false), 2000);
+        window.setTimeout(() => onSolved(false), 2000);
       }
     });
     return;
@@ -598,14 +599,14 @@ function renderQuestChallenge(container, challenge, difficulty, onSolved, settin
           mistakes++;
           deps.retriggerShake(node);
           node.style.borderColor = "#ef4444";
-          setTimeout(() => { node.style.borderColor = "var(--background-modifier-border)"; }, 400);
+          window.setTimeout(() => { node.style.borderColor = "var(--background-modifier-border)"; }, 400);
           if (mistakes >= 3) { endChain(false); }
         }
       });
     });
-    let interval = setInterval(() => {
+    let interval = window.setInterval(() => {
       timerSec -= 0.1;
-      if (timerSec <= 0) { clearInterval(interval); if (!done) endChain(false); return; }
+      if (timerSec <= 0) { window.clearInterval(interval); if (!done) endChain(false); return; }
       let pct = (timerSec / (challenge.timer || 20)) * 100;
       timerFill.style.width = pct + "%";
       timerFill.style.background = pct > 50 ? "var(--interactive-accent)" : pct > 25 ? "#f59e0b" : "#ef4444";
@@ -614,10 +615,10 @@ function renderQuestChallenge(container, challenge, difficulty, onSolved, settin
     function endChain(success) {
       if (done) return;
       done = true;
-      clearInterval(interval);
+      window.clearInterval(interval);
       nodeEls.forEach(n => { n.disabled = true; n.style.cursor = "default"; });
       if (success) {
-        setTimeout(() => onSolved(true), 800);
+        window.setTimeout(() => onSolved(true), 800);
       } else {
         correctOrder.forEach((origIdx, step) => {
           let el = nodeEls.find(n => n._origIdx === origIdx);
@@ -628,7 +629,7 @@ function renderQuestChallenge(container, challenge, difficulty, onSolved, settin
           }
         });
         handleWrong(wrapper);
-        setTimeout(() => onSolved(false), 2000);
+        window.setTimeout(() => onSolved(false), 2000);
       }
     }
     return;
@@ -652,10 +653,10 @@ function renderQuestChallenge(container, challenge, difficulty, onSolved, settin
     });
     cdLabel.textContent = (zh ? "記住這張知識地圖 — " : "Memorize this map — ") + studyTime + "s";
     let cdVal = studyTime;
-    let cdInterval = setInterval(() => {
+    let cdInterval = window.setInterval(() => {
       cdVal -= 1;
       if (cdVal <= 0) {
-        clearInterval(cdInterval);
+        window.clearInterval(cdInterval);
         phase = "recall";
         palaceBox.empty();
         palaceBox.style.textAlign = "center";
@@ -685,7 +686,7 @@ function renderQuestChallenge(container, challenge, difficulty, onSolved, settin
             card.style.borderColor = "#22c55e";
             card.style.background = "rgba(34,197,94,0.08)";
             card.style.color = "#22c55e";
-            setTimeout(() => onSolved(true), 800);
+            window.setTimeout(() => onSolved(true), 800);
           } else {
             card.style.borderColor = "#ef4444";
             card.style.background = "rgba(239,68,68,0.08)";
@@ -693,7 +694,7 @@ function renderQuestChallenge(container, challenge, difficulty, onSolved, settin
             let correctCard = cards.find(c => c.textContent.trim().toLowerCase() === answerStr.trim().toLowerCase());
             if (correctCard) { correctCard.style.borderColor = "#22c55e"; correctCard.style.background = "rgba(34,197,94,0.08)"; correctCard.style.color = "#22c55e"; }
             handleWrong(wrapper);
-            setTimeout(() => onSolved(false), 2000);
+            window.setTimeout(() => onSolved(false), 2000);
           }
         });
       });
@@ -743,7 +744,7 @@ function renderQuestChallenge(container, challenge, difficulty, onSolved, settin
           button.style.borderColor = "#22c55e";
           seqRow.createEl("span", { text: (step + 1) + ". " + item, attr: { style: "padding:2px 8px;border-radius:10px;background:rgba(34,197,94,0.15);color:#22c55e;font-size:11px;font-weight:600" } });
           step++;
-          if (step === correctOrder.length) { setTimeout(() => onSolved(true), 500); }
+          if (step === correctOrder.length) { window.setTimeout(() => onSolved(true), 500); }
         } else {
           handleWrong(button);
         }
@@ -793,7 +794,7 @@ function renderQuestChallenge(container, challenge, difficulty, onSolved, settin
           selected = null;
           solved += 1;
           if (solved === challenge.pairs.length) {
-            setTimeout(() => onSolved(true), 500);
+            window.setTimeout(() => onSolved(true), 500);
           }
           return;
         }
@@ -922,7 +923,7 @@ function renderQuestChallenge(container, challenge, difficulty, onSolved, settin
         x <= (challenge.region_x ?? 0) + (challenge.region_width ?? 0) &&
         y <= (challenge.region_y ?? 0) + (challenge.region_height ?? 0);
       if (correct) {
-        setTimeout(() => onSolved(true), 300);
+        window.setTimeout(() => onSolved(true), 300);
       } else {
         handleWrong(stage);
       }
@@ -1035,7 +1036,7 @@ function renderQuestChallenge(container, challenge, difficulty, onSolved, settin
         getFeedback().textContent = zh ? "答對了" : "Correct";
         input.disabled = true;
         submitBtn.disabled = true;
-        setTimeout(() => onSolved(true), 500);
+        window.setTimeout(() => onSolved(true), 500);
       } else {
         handleWrong(input);
         getFeedback().textContent = zh ? "答案不正確。你可以再試一次，或直接顯示答案。" : "That is not correct. Try once more or reveal the answer.";

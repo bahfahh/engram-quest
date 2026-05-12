@@ -12,6 +12,14 @@ export class Notice { constructor(msg) {} }
 export function normalizePath(p) { return p; }
 export const moment = { locale: () => "en" };
 export const MarkdownRenderer = { renderMarkdown: () => {} };
+export const activeDocument = typeof document !== "undefined" ? document : {
+  body: { classList: { contains: () => false }, appendChild: () => {}, createEl: () => ({}) },
+  head: { appendChild: () => {} },
+  getElementById: () => null,
+  createElement: () => ({ textContent: "", id: "", style: {}, remove: () => {}, addEventListener: () => {} }),
+  addEventListener: () => {},
+  removeEventListener: () => {},
+};
 
 class MockEl {
   constructor() { this.style = {}; this.classList = { add() {}, remove() {}, toggle() {}, contains() { return false; } }; this.dataset = {}; }

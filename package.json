@@ -14,7 +14,10 @@
     "build:sync": "npm run build && node scripts/sync-to-vault.mjs"
   },
   "devDependencies": {
+    "@typescript-eslint/parser": "^8.59.3",
     "esbuild": "^0.25.3",
+    "eslint": "^9.39.4",
+    "eslint-plugin-obsidianmd": "^0.3.0",
     "sharp": "^0.34.5",
     "vitest": "^4.1.4"
   }

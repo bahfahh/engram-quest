@@ -133,7 +133,7 @@ function openCreateCardModal(app, deck, settings, onSaved) {
   });
 
   modal.open();
-  setTimeout(() => frontInput.focus(), 50);
+  window.setTimeout(() => frontInput.focus(), 50);
 }
 
 module.exports = { openCreateCardModal, appendManualCard, ensureManualCardDirs };
