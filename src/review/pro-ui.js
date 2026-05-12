@@ -24,7 +24,7 @@ async function renderSynapseProBanner(parent, plugin, app) {
   // Banner is dismissed for 24h after the user closes it — short-circuit before
   // any I/O so re-renders during dismissal don't read every sr/*.json file.
   const dismissedAt = (t._synapseBannerDismissedAt) || 0;
-  if (dismissedAt && Date.now() - dismissedAt < 24 * 60 * 60 * 1000) return;
+  if (dismissedAt && Date.now() - dismissedAt < 120 * 60 * 60 * 1000) return;
 
   let status, currentMastered;
   try {

@@ -183,36 +183,36 @@ describe("shouldShowRefreshBanner", () => {
     expect(r.show).toBe(false);
   });
 
-  it("shows when delta >= 5 (pool grew)", () => {
-    const r = shouldShowRefreshBanner({ status: baseStatus, currentMastered: 26, now });
+  it("shows when delta >= 15 (pool grew)", () => {
+    const r = shouldShowRefreshBanner({ status: baseStatus, currentMastered: 35, now });
     expect(r.show).toBe(true);
     expect(r.reason).toBe("pool-changed");
-    expect(r.delta).toBe(6);
+    expect(r.delta).toBe(15);
   });
 
-  it("shows when delta >= 5 (pool shrank)", () => {
-    const r = shouldShowRefreshBanner({ status: baseStatus, currentMastered: 14, now });
+  it("shows when delta >= 15 (pool shrank)", () => {
+    const r = shouldShowRefreshBanner({ status: baseStatus, currentMastered: 5, now });
     expect(r.show).toBe(true);
     expect(r.reason).toBe("pool-changed");
   });
 
-  it("shows when generatedAt is older than 7 days", () => {
-    const stale = Date.parse("2026-05-09T00:00:00Z");
+  it("shows when generatedAt is older than 28 days", () => {
+    const stale = Date.parse("2026-05-30T00:00:00Z"); // 29 days after generatedAt
     const r = shouldShowRefreshBanner({ status: baseStatus, currentMastered: 20, now: stale });
     expect(r.show).toBe(true);
     expect(r.reason).toBe("stale");
   });
 
-  it("suppresses when dismissed within 24h regardless of trigger", () => {
+  it("suppresses when dismissed within 120h regardless of trigger", () => {
     const dismissedAt = now - 60 * 60 * 1000; // 1h ago
     const r = shouldShowRefreshBanner({ status: baseStatus, currentMastered: 30, now, dismissedAt });
     expect(r.show).toBe(false);
     expect(r.reason).toBe("dismissed-recently");
   });
 
-  it("re-shows after dismissal expires", () => {
-    const dismissedAt = now - 25 * 60 * 60 * 1000; // 25h ago
-    const r = shouldShowRefreshBanner({ status: baseStatus, currentMastered: 30, now, dismissedAt });
+  it("re-shows after dismissal expires (121h ago)", () => {
+    const dismissedAt = now - 121 * 60 * 60 * 1000; // 121h ago
+    const r = shouldShowRefreshBanner({ status: baseStatus, currentMastered: 35, now, dismissedAt });
     expect(r.show).toBe(true);
   });
 });

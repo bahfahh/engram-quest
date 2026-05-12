@@ -8,8 +8,8 @@ const { srFileName } = require("./helpers");
 
 const SYNAPSE_DIR = "engram-review/synapse";
 const STATUS_FILE = `${SYNAPSE_DIR}/_status.json`;
-const POOL_DELTA_THRESHOLD = 5;
-const POOL_AGE_DAYS_THRESHOLD = 7;
+const POOL_DELTA_THRESHOLD = 15;
+const POOL_AGE_DAYS_THRESHOLD = 28;
 const MASTERED_STABILITY_THRESHOLD = 7;
 
 function defaultStatus() {
@@ -93,7 +93,7 @@ async function countMasteredFromSr(adapter) {
 // Reason is also used in dogfood debug logs.
 function shouldShowRefreshBanner({ status, currentMastered, now = Date.now(), dismissedAt = 0 }) {
   if (!status || status.enabled !== true) return { show: false, reason: "not-enabled" };
-  if (dismissedAt && now - dismissedAt < 24 * 60 * 60 * 1000) return { show: false, reason: "dismissed-recently" };
+  if (dismissedAt && now - dismissedAt < 120 * 60 * 60 * 1000) return { show: false, reason: "dismissed-recently" };
 
   const last = status.masteredPoolSize || 0;
   const delta = Math.abs((currentMastered || 0) - last);
