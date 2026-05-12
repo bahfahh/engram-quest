@@ -232,7 +232,7 @@ function openAchievementDetail(app, plugin, ach, val, settings, decks, quests, m
   progRow.createEl("span", { text: `${val} / ${ach.threshold}`, attr: { style: `font-size:12px;font-weight:700;color:${textProgress};` } });
   const barBg = progSec.createEl("div", { attr: { style: `height:6px;background:${barBgColor};border-radius:99px;overflow:hidden;margin-bottom:14px;` } });
   const barFill = barBg.createEl("div", { attr: { style: `height:100%;border-radius:99px;background:${rs.badge};width:0%;transition:width 0.6s ease;` } });
-  setTimeout(() => { barFill.style.width = `${Math.round(progress * 100)}%`; }, 80);
+  window.setTimeout(() => { barFill.style.width = `${Math.round(progress * 100)}%`; }, 80);
 
   modal.open();
 }

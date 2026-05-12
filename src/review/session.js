@@ -289,7 +289,7 @@ var Q=class extends I.Modal{
     if(this._timeboxMinutes>0) this._sessionStartMs=Date.now();
     this.renderCard();
     this._loadSynapseAsync();
-    if(this._timeboxMinutes>0) this._timerIntervalId=setInterval(()=>this._tickTimer(),1000);
+    if(this._timeboxMinutes>0) this._timerIntervalId=window.setInterval(()=>this._tickTimer(),1000);
   }
 
   _tickTimer(){
@@ -298,7 +298,7 @@ var Q=class extends I.Modal{
     const remaining=this._timeboxMinutes*60-elapsed;
     if(remaining<=0&&!this._timeboxExpired){
       this._timeboxExpired=true;
-      clearInterval(this._timerIntervalId); this._timerIntervalId=null;
+      window.clearInterval(this._timerIntervalId); this._timerIntervalId=null;
     }
     if(!this._timerEl||!this._timerEl.isConnected) return;
     if(remaining<=0){
@@ -454,8 +454,8 @@ var Q=class extends I.Modal{
         btn.addEventListener("click",()=>{
           btn.textContent="✓ "+_openedSourceLabel;
           btn.style.color="#10b981";
-          if(btn._feedbackTimer) clearTimeout(btn._feedbackTimer);
-          btn._feedbackTimer=setTimeout(()=>{
+          if(btn._feedbackTimer) window.clearTimeout(btn._feedbackTimer);
+          btn._feedbackTimer=window.setTimeout(()=>{
             btn.textContent=defaultLabel;
             btn.style.color="#6366f1";
             btn._feedbackTimer=null;
@@ -475,7 +475,7 @@ var Q=class extends I.Modal{
       if(e.hint_l2) parts.push("L2: "+e.hint_l2);
       if(e.hint_l3) parts.push("L3: "+e.hint_l3);
       parts.push("A: "+e.back);
-      navigator.clipboard.writeText(parts.join("\n")).then(()=>{ copyTopBtn.textContent="✅ Copied"; setTimeout(()=>copyTopBtn.textContent="📋 Copy",1500); });
+      navigator.clipboard.writeText(parts.join("\n")).then(()=>{ copyTopBtn.textContent="✅ Copied"; window.setTimeout(()=>copyTopBtn.textContent="📋 Copy",1500); });
     });
     // Edit button
     let editTopBtn=btnGroup.createEl("button",{attr:{class:"lh-rc-edit-btn"}});
@@ -891,7 +891,7 @@ var Q=class extends I.Modal{
     if(this._fab){this._fab.remove();this._fab=null;}
   }
   onClose(){
-    if(this._timerIntervalId){clearInterval(this._timerIntervalId);this._timerIntervalId=null;}
+    if(this._timerIntervalId){window.clearInterval(this._timerIntervalId);this._timerIntervalId=null;}
     this._timerEl=null;
     if(this._fab){this._fab.remove();this._fab=null;}
     this._minimized=false;

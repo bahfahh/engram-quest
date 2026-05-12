@@ -4,6 +4,14 @@ import obsidianmd from "eslint-plugin-obsidianmd";
 
 // Extract only obsidianmd/* rules from recommended config
 const recommended = obsidianmd.configs.recommended;
+const jsonRecommended = recommended.find((config) =>
+  Array.isArray(config.files) &&
+  config.files.includes("package.json") &&
+  config.language === "json/json"
+);
+const disabledRecommendedRules = Object.fromEntries(
+  recommended.flatMap((config) => Object.keys(config.rules || {})).map((rule) => [rule, "off"])
+);
 
 export default [
   ...recommended,
@@ -35,7 +43,13 @@ export default [
   },
   {
     files: ["manifest.json"],
-    // obsidianmd/validate-manifest handles this
+    language: "json/json",
+    plugins: jsonRecommended.plugins,
+    rules: {
+      ...disabledRecommendedRules,
+      "no-irregular-whitespace": "off",
+      "obsidianmd/validate-manifest": "error",
+    },
   },
   {
     ignores: [
