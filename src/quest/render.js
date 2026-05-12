@@ -1,8 +1,11 @@
+"use strict";
+const I = require("obsidian");
+
 // Remove near-grey background from island images using canvas
 function removeIslandBg(imgEl) {
   imgEl.addEventListener('load', () => {
     try {
-      const canvas = document.createElement('canvas');
+      const canvas = I.activeDocument.createElement('canvas');
       canvas.width = imgEl.naturalWidth;
       canvas.height = imgEl.naturalHeight;
       const ctx = canvas.getContext('2d');
@@ -22,12 +25,10 @@ function removeIslandBg(imgEl) {
   }, { once: true });
 }
 
-"use strict";
-
 function renderQuestMap(nodes, styleName, activeIndex, visitedSet, app, getNodePositions) {
   let configDir = app.vault.configDir;
   let assetRoot = configDir + "/plugins/engram-quest/assets/quest-map/";
-  let isDark = document.body.classList.contains("theme-dark");
+  let isDark = I.activeDocument.body.classList.contains("theme-dark");
 
   let bgFile = isDark ? "bg_dark.png" : "bg_light.png";
   let background = app.vault.adapter.getResourcePath(assetRoot + bgFile);

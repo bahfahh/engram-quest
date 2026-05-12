@@ -10,7 +10,7 @@ function attachImgZoom(el){
     img.classList.add("eq-zoomable");
     img.addEventListener("click",e=>{
       e.stopPropagation();
-      const lb=document.body.createEl("div",{attr:{class:"eq-lightbox"}});
+      const lb=obsidian.activeDocument.body.createEl("div",{attr:{class:"eq-lightbox"}});
       const close=lb.createEl("button",{attr:{class:"eq-lightbox-close"},text:"✕"});
       const lbImg=lb.createEl("img",{attr:{src:img.src,alt:img.alt||""}});
       const dismiss=()=>lb.remove();

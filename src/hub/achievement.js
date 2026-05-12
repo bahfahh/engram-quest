@@ -190,7 +190,7 @@ function openAchievementDetail(app, plugin, ach, val, settings, decks, quests, m
   const t = settings;
   const isUnlocked = val >= ach.threshold;
   const progress = Math.min(1, val / ach.threshold);
-  const isDark = document.body.classList.contains("theme-dark");
+  const isDark = I.activeDocument.body.classList.contains("theme-dark");
   const rs = (isDark ? RARITY_DARK : RARITY_LIGHT)[ach.rarity] || RARITY_DARK.UC;
   const rarityColors = { UC: "#6b7280", R: "#3b82f6", LEG: "#d97706" };
 
@@ -240,7 +240,7 @@ function openAchievementDetail(app, plugin, ach, val, settings, decks, quests, m
 function renderAchievementTab(containerEl, plugin, decks, quests=[], memories=[]) {
   const t = plugin.settings;
   const st = t._stats || {};
-  const isDark = document.body.classList.contains("theme-dark");
+  const isDark = I.activeDocument.body.classList.contains("theme-dark");
   const cardBg   = isDark ? "#252538" : "#f8faff";
   const border   = isDark ? "#3a3a5a" : "#e5e7eb";
   const divider  = isDark ? "rgba(255,255,255,0.08)" : "#f1f5f9";
