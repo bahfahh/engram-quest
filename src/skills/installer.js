@@ -59,7 +59,6 @@ function createInstaller() {
       summary: "Project-local Cursor skills."
     }
   };
-  const BUNDLED_SKILLS_ROOT = ".obsidian/plugins/engram-quest/bundled-skills";
   const MODULE_ASSETS = {
     "quest-map": [
       { source: "quest-map/skills.md", target: "SKILL.md" },
@@ -104,16 +103,16 @@ function createInstaller() {
     return Array.from(arguments).filter(Boolean).join("/").replace(/\/+/g, "/");
   }
 
-  async function readBundledSkill(adapter, relativePath) {
-    return adapter.read(joinPath(BUNDLED_SKILLS_ROOT, relativePath));
+  async function readBundledSkill(adapter, bundledSkillsRoot, relativePath) {
+    return adapter.read(joinPath(bundledSkillsRoot, relativePath));
   }
 
-  async function buildSkillEntries(toolTarget, adapter) {
+  async function buildSkillEntries(toolTarget, adapter, bundledSkillsRoot) {
     const entries = [];
     for (const moduleDefinition of MODULES) {
       const targetRoot = joinPath(toolTarget.baseDir, `engram-quest-${moduleDefinition.id}`);
       for (const asset of MODULE_ASSETS[moduleDefinition.id] || []) {
-        let content = await readBundledSkill(adapter, asset.source);
+        let content = await readBundledSkill(adapter, bundledSkillsRoot, asset.source);
         if (asset.target === "SKILL.md") {
           // Rewrite `bash scripts/` → `bash {targetRoot}/scripts/` so the path resolves
           // correctly when CWD is the vault root (not the skill directory).
@@ -125,10 +124,10 @@ function createInstaller() {
     return entries;
   }
 
-  async function buildCursorRuleEntries(toolTarget, adapter) {
+  async function buildCursorRuleEntries(toolTarget, adapter, bundledSkillsRoot) {
     const entries = [];
     for (const moduleDefinition of MODULES) {
-      const source = await readBundledSkill(adapter, `${moduleDefinition.id}/skills.md`);
+      const source = await readBundledSkill(adapter, bundledSkillsRoot, `${moduleDefinition.id}/skills.md`);
       entries.push({
         path: joinPath(toolTarget.baseDir, `engram-quest-${moduleDefinition.id}.mdc`),
         content: [
@@ -137,7 +136,7 @@ function createInstaller() {
           "globs:",
           "alwaysApply: false",
           "---",
-          `<!-- engram-quest-installer:${INSTALLER_VERSION};tool:cursor;module:${moduleDefinition.id};source:${BUNDLED_SKILLS_ROOT}/${moduleDefinition.id}/skills.md -->`,
+          `<!-- engram-quest-installer:${INSTALLER_VERSION};tool:cursor;module:${moduleDefinition.id};source:${bundledSkillsRoot}/${moduleDefinition.id}/skills.md -->`,
           "",
           source.trim(),
           ""
@@ -147,12 +146,13 @@ function createInstaller() {
     return entries;
   }
 
-  async function getInstallEntries(toolId, adapter) {
+  async function getInstallEntries(toolId, adapter, configDir) {
+    const bundledSkillsRoot = configDir + "/plugins/engram-quest/bundled-skills";
     const toolTarget = TOOL_TARGETS[toolId];
     if (!toolTarget || !adapter) return [];
     return toolTarget.kind === "rules"
-      ? buildCursorRuleEntries(toolTarget, adapter)
-      : buildSkillEntries(toolTarget, adapter);
+      ? buildCursorRuleEntries(toolTarget, adapter, bundledSkillsRoot)
+      : buildSkillEntries(toolTarget, adapter, bundledSkillsRoot);
   }
 
   return {

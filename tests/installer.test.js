@@ -34,7 +34,7 @@ describe("installer script path rewriting", () => {
       ".obsidian/plugins/engram-quest/bundled-skills/memory-map/scripts/search_vault.sh": "",
     });
 
-    const entries = await installer.getInstallEntries("claude", adapter);
+    const entries = await installer.getInstallEntries("claude", adapter, ".obsidian");
     const skillMd = entries.find(e => e.path === ".claude/skills/engram-quest-review-deck/SKILL.md");
 
     expect(skillMd).toBeDefined();
@@ -65,7 +65,7 @@ describe("installer script path rewriting", () => {
       ".obsidian/plugins/engram-quest/bundled-skills/memory-map/scripts/search_vault.sh": "",
     };
 
-    const entries = await installer.getInstallEntries("gemini", makeAdapter(files));
+    const entries = await installer.getInstallEntries("gemini", makeAdapter(files), ".obsidian");
     const skillMd = entries.find(e => e.path === ".gemini/skills/engram-quest-review-deck/SKILL.md");
 
     expect(skillMd.content).toContain("bash .gemini/skills/engram-quest-review-deck/scripts/get_mtime.sh");
@@ -94,7 +94,7 @@ describe("installer script path rewriting", () => {
       ".obsidian/plugins/engram-quest/bundled-skills/memory-map/scripts/search_vault.sh": shContent,
     };
 
-    const entries = await installer.getInstallEntries("claude", makeAdapter(files));
+    const entries = await installer.getInstallEntries("claude", makeAdapter(files), ".obsidian");
     const sh = entries.find(e => e.path === ".claude/skills/engram-quest-review-deck/scripts/get_mtime.sh");
 
     expect(sh.content).toBe(shContent); // untouched
