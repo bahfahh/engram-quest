@@ -147,9 +147,9 @@ function createInstaller() {
   }
 
   async function getInstallEntries(toolId, adapter, configDir) {
-    const bundledSkillsRoot = configDir + "/plugins/engram-quest/bundled-skills";
     const toolTarget = TOOL_TARGETS[toolId];
     if (!toolTarget || !adapter) return [];
+    const bundledSkillsRoot = configDir + "/plugins/engram-quest/bundled-skills";
     return toolTarget.kind === "rules"
       ? buildCursorRuleEntries(toolTarget, adapter, bundledSkillsRoot)
       : buildSkillEntries(toolTarget, adapter, bundledSkillsRoot);

@@ -85,7 +85,7 @@ function openHarnessChapter(app, chapterIndex) {
     title.createEl("h2", { text: chapter.titleEn, attr: { style: "font-size:22px;font-weight:800;margin:0;line-height:1.3;color:var(--text-normal)" } });
     title.createEl("p", { text: `Chapter ${activeIndex + 1} of ${chapters.length} · ${chapter.titleZh}`, attr: { style: "margin:4px 0 0;font-size:12px;color:var(--text-muted)" } });
     content.createEl("p", { text: chapter.summary, attr: { style: "font-size:14px;line-height:1.7;color:var(--text-normal);margin-bottom:24px" } });
-    content.createEl("h3", { text: "Key Takeaways", attr: { style: "font-size:11px;font-weight:700;color:var(--text-faint);letter-spacing:.08em;text-transform:uppercase;margin-bottom:16px" } });
+    content.createEl("h3", { text: "Key takeaways", attr: { style: "font-size:11px;font-weight:700;color:var(--text-faint);letter-spacing:.08em;text-transform:uppercase;margin-bottom:16px" } });
     chapter.keyPoints.forEach((point, index) => {
       let block = content.createEl("div", { attr: { style: "border-radius:12px;border:1px solid var(--background-modifier-border);background:var(--background-secondary);padding:16px 20px;margin-bottom:12px" } });
       let blockHeader = block.createEl("div", { attr: { style: "display:flex;align-items:flex-start;gap:12px;margin-bottom:8px" } });
@@ -93,13 +93,13 @@ function openHarnessChapter(app, chapterIndex) {
       blockHeader.createEl("p", { text: point.title, attr: { style: "font-size:15px;font-weight:700;margin:0;color:var(--text-normal)" } });
       block.createEl("p", { text: point.why, attr: { style: "font-size:14px;line-height:1.65;color:var(--text-normal);margin:0 0 12px 36px" } });
       let example = block.createEl("div", { attr: { style: "margin-left:36px;border-radius:8px;border:1px solid var(--background-modifier-border);background:var(--background-primary);padding:12px 16px" } });
-      example.createEl("span", { text: "e.g. ", attr: { style: "font-size:10px;font-weight:700;color:var(--text-faint);letter-spacing:.08em;text-transform:uppercase" } });
+      example.createEl("span", { text: "E.g. ", attr: { style: "font-size:10px;font-weight:700;color:var(--text-faint);letter-spacing:.08em;text-transform:uppercase" } });
       example.createEl("span", { text: point.example, attr: { style: "font-size:13px;line-height:1.65;color:var(--text-normal);white-space:pre-wrap" } });
     });
     let insight = content.createEl("div", { attr: { style: "margin-bottom:32px;border-radius:12px;border:1px solid var(--interactive-accent);background:var(--background-secondary);padding:16px 20px" } });
     let insightHeader = insight.createEl("div", { attr: { style: "display:flex;align-items:center;gap:8px;margin-bottom:8px" } });
     insightHeader.createEl("span", { text: "💡" });
-    insightHeader.createEl("span", { text: "Real-world Insight", attr: { style: "font-size:10px;font-weight:700;color:var(--interactive-accent);letter-spacing:.08em;text-transform:uppercase" } });
+    insightHeader.createEl("span", { text: "Real-world insight", attr: { style: "font-size:10px;font-weight:700;color:var(--interactive-accent);letter-spacing:.08em;text-transform:uppercase" } });
     insight.createEl("p", { text: chapter.realWorld, attr: { style: "font-size:14px;line-height:1.7;color:var(--text-normal);margin:0" } });
     let footer = content.createEl("div", { attr: { style: "display:flex;align-items:center;justify-content:space-between;border-top:1px solid var(--background-modifier-border);padding-top:20px" } });
     let prev = footer.createEl("button", { text: "Prev", attr: { style: `border-radius:9999px;padding:8px 16px;font-size:14px;font-weight:600;color:var(--text-muted);background:transparent;border:none;cursor:pointer;visibility:${activeIndex === 0 ? "hidden" : "visible"}` } });

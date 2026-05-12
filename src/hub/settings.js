@@ -22,12 +22,13 @@ var pe = class extends I.PluginSettingTab {
     new I.Setting(e).setName(c(t, "SETTINGS_APPEARANCE")).setHeading(),
     new I.Setting(e).setName(c(t, "SETTINGS_THEME_NAME")).setDesc(c(t, "SETTINGS_THEME_DESC")).addDropdown(r => r.addOption("bright", `☀️ ${c(t, "SETTINGS_THEME_BRIGHT")}`).addOption("dark", `🌙 ${c(t, "SETTINGS_THEME_DARK")}`).addOption("minimal", `✨ ${c(t, "SETTINGS_THEME_MINIMAL")}`).setValue(t.lhTheme).onChange(async s => { this.plugin.settings.lhTheme = s; await this.plugin.saveData(this.plugin.settings); })),
     new I.Setting(e).setName(c(t, "SETTINGS_REVIEW_DECK")).setHeading(),
-    new I.Setting(e).setName(c(t, "SETTINGS_FLASHCARD_TAGS_NAME")).setDesc(c(t, "SETTINGS_FLASHCARD_TAGS_DESC")).addTextArea(r => { r.setPlaceholder("flashcards").setValue(t.flashcardTags).onChange(async s => { this.plugin.settings.flashcardTags = s.trim(); await this.plugin.saveData(this.plugin.settings); }); r.inputEl.style.cssText = "width:200px;height:72px;font-family:monospace;font-size:13px"; }),
+    new I.Setting(e).setName(c(t, "SETTINGS_FLASHCARD_TAGS_NAME")).setDesc(c(t, "SETTINGS_FLASHCARD_TAGS_DESC")).addTextArea(r => { r.setPlaceholder("Flashcards").setValue(t.flashcardTags).onChange(async s => { this.plugin.settings.flashcardTags = s.trim(); await this.plugin.saveData(this.plugin.settings); }); r.inputEl.style.cssText = "width:200px;height:72px;font-family:monospace;font-size:13px"; }),
     new I.Setting(e).setName(c(t, "SETTINGS_SR_SCAN_NAME")).setDesc(c(t, "SETTINGS_SR_SCAN_DESC")).addToggle(r => r.setValue(t.enableSRScan).onChange(async s => { this.plugin.settings.enableSRScan = s; await this.plugin.saveData(this.plugin.settings); })),
     new I.Setting(e).setName(c(t, "SETTINGS_MAX_INTERVAL_NAME")).setDesc(c(t, "SETTINGS_MAX_INTERVAL_DESC")).addText(r => r.setPlaceholder("36525").setValue(String(t.maxInterval)).onChange(async s => { let l = parseInt(s); !isNaN(l) && l >= 1 && (this.plugin.settings.maxInterval = l, await this.plugin.saveData(this.plugin.settings)); })),
     new I.Setting(e).setName(c(t, "SETTINGS_RETENTION_NAME")).setDesc(c(t, "SETTINGS_RETENTION_DESC")).addSlider(r => { var s; return r.setLimits(.7, .99, .01).setValue((s = t.requestedRetention) != null ? s : .9).setDynamicTooltip().onChange(async l => { this.plugin.settings.requestedRetention = l; await this.plugin.saveData(this.plugin.settings); }); }),
     new I.Setting(e).setName(c(t, "SETTINGS_MEMORY_MAP")).setHeading(),
     new I.Setting(e).setName(c(t, "SETTINGS_MEMORY_MAP_FOLDER_NAME")).setDesc(c(t, "SETTINGS_MEMORY_MAP_FOLDER_DESC")).addText(r => {
+      // eslint-disable-next-line obsidianmd/ui/sentence-case
       r.setPlaceholder("Maps/MemoryMaps").setValue(t.memoryMapFolder || "").onChange(async s => {
         this.plugin.settings.memoryMapFolder = s.trim();
         await this.plugin.saveData(this.plugin.settings);
