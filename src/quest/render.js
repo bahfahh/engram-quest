@@ -5,7 +5,7 @@ const I = require("obsidian");
 function removeIslandBg(imgEl) {
   imgEl.addEventListener('load', () => {
     try {
-      const canvas = I.activeDocument.createElement('canvas');
+      const canvas = activeDocument.createElement('canvas');
       canvas.width = imgEl.naturalWidth;
       canvas.height = imgEl.naturalHeight;
       const ctx = canvas.getContext('2d');
@@ -28,7 +28,7 @@ function removeIslandBg(imgEl) {
 function renderQuestMap(nodes, styleName, activeIndex, visitedSet, app, getNodePositions) {
   let configDir = app.vault.configDir;
   let assetRoot = configDir + "/plugins/engram-quest/assets/quest-map/";
-  let isDark = I.activeDocument.body.classList.contains("theme-dark");
+  let isDark = activeDocument.body.classList.contains("theme-dark");
 
   let bgFile = isDark ? "bg_dark.png" : "bg_light.png";
   let background = app.vault.adapter.getResourcePath(assetRoot + bgFile);

@@ -11,8 +11,8 @@ function L(s) { return _getLocale(s, W_ref.locale); }
 
 const REVIEW_MOBILE_PATCH_ID = "engram-quest-review-mobile-patch";
 function ensureReviewMobilePatch() {
-  if (I.activeDocument.getElementById(REVIEW_MOBILE_PATCH_ID)) return;
-  const styleEl = I.activeDocument.createElement("style");
+  if (activeDocument.getElementById(REVIEW_MOBILE_PATCH_ID)) return;
+  const styleEl = activeDocument.createElement("style");
   styleEl.id = REVIEW_MOBILE_PATCH_ID;
   styleEl.textContent = `
 body.is-phone .lh-review-nav {
@@ -65,7 +65,7 @@ body.is-phone .lh-review-footer .lh-pill-btn {
   flex:1 1 calc(50% - 6px);
 }
 `;
-  I.activeDocument.head.appendChild(styleEl);
+  activeDocument.head.appendChild(styleEl);
 }
 
 /** Plan A — sync name-based lookup (fast, no I/O) */
@@ -229,7 +229,7 @@ function attachImgZoom(el){
     img.classList.add("eq-zoomable");
     img.addEventListener("click",e=>{
       e.stopPropagation();
-      const lb=I.activeDocument.body.createEl("div",{attr:{class:"eq-lightbox"}});
+      const lb=activeDocument.body.createEl("div",{attr:{class:"eq-lightbox"}});
       const close=lb.createEl("button",{attr:{class:"eq-lightbox-close"},text:"✕"});
       const lbImg=lb.createEl("img",{attr:{src:img.src,alt:img.alt||""}});
       const dismiss=()=>lb.remove();
@@ -274,7 +274,7 @@ var Q=class extends I.Modal{
     this.plugin.settings._reviewProgress={deck:this.deckName,idx:this.idx};
     this.plugin.saveData(this.plugin.settings);
     this._preSessionEvalCtx = buildEvalContext(this.plugin.settings._stats);
-    const _isDark=I.activeDocument.body.classList.contains("theme-dark");const _bgPrimary=_isDark?"#1e1e2e":"#ffffff";const _bgSecondary=_isDark?"#252538":"#f3f4f6";const _textNormal=_isDark?"#e2e8f0":"#1f2937";const _textMuted=_isDark?"#94a3b8":"#6b7280";
+    const _isDark=activeDocument.body.classList.contains("theme-dark");const _bgPrimary=_isDark?"#1e1e2e":"#ffffff";const _bgSecondary=_isDark?"#252538":"#f3f4f6";const _textNormal=_isDark?"#e2e8f0":"#1f2937";const _textMuted=_isDark?"#94a3b8":"#6b7280";
     this.modalEl.addClass("lh-hub");
     if(_isDark)this.modalEl.addClass("lh-dark");
     this.modalEl.style.cssText="width:min(95vw,700px);max-width:none;height:min(90vh,640px);max-height:none;padding:0;overflow:hidden;border-radius:24px";
@@ -352,7 +352,7 @@ var Q=class extends I.Modal{
       return pre < ach.threshold && post >= ach.threshold;
     });
 
-    const isDark = I.activeDocument.body.classList.contains("theme-dark");
+    const isDark = activeDocument.body.classList.contains("theme-dark");
     const rarityStyles = isDark ? RARITY_DARK : RARITY_LIGHT;
 
     this.contentEl.empty();
@@ -872,7 +872,7 @@ var Q=class extends I.Modal{
     // Release modal keymap scope so global hotkeys (Ctrl+P / Ctrl+O) work while minimized
     try{this.app.keymap.popScope(this.scope);}catch(e){}
     if(this._fab) return; // already exists
-    let fab=I.activeDocument.createElement("div");
+    let fab=activeDocument.createElement("div");
     fab.className="engram-fab";
     fab.textContent="📖";
     fab.title="Resume review";
@@ -880,7 +880,7 @@ var Q=class extends I.Modal{
     fab.addEventListener("mouseenter",()=>{fab.style.transform="scale(1.12)";});
     fab.addEventListener("mouseleave",()=>{fab.style.transform="scale(1)";});
     fab.addEventListener("click",()=>this._restore());
-    I.activeDocument.body.appendChild(fab);
+    activeDocument.body.appendChild(fab);
     this._fab=fab;
   }
   _restore(){
