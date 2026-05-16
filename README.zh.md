@@ -92,7 +92,7 @@ Anki 解決的是「什麼時候複習」。EngramQuest 解決的是「怎麼真
 
 ## ⚡ 快速上手（AI 路徑）
 
-1. **安裝外掛** — 在 Obsidian 社群外掛商店搜尋 **EngramQuest**，或從 [GitHub Releases](https://github.com/bahfahh/engram-quest/releases) 下載。
+1. **安裝外掛** — [直接在 Obsidian 中開啟](obsidian://show-plugin?id=engram-quest)，或在社群外掛商店搜尋 **EngramQuest**，或從 [GitHub Releases](https://github.com/bahfahh/engram-quest/releases) 下載。
 2. **安裝 Skills** — 前往 `設定 → EngramQuest → AI Skills`，選你用的工具（Claude Code、Gemini CLI、Cursor 或 Codex）點 **Install**。
    ![安裝 Skills](assets/install-skills.png)
 3. **告訴 AI** — *「把 `筆記名稱.md` 做成 quest-map medium」* 或 *「把 tag:math 的筆記做成 review deck」*。

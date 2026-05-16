@@ -92,7 +92,7 @@ Seamless automatic theme detection — no manual toggle. Hub, review session, an
 
 ## ⚡ Quick Start (AI Path)
 
-1. **Install Plugin** — search **EngramQuest** in Obsidian Community Plugins, or download from [GitHub Releases](https://github.com/bahfahh/engram-quest/releases).
+1. **Install Plugin** — [Open directly in Obsidian](obsidian://show-plugin?id=engram-quest), search **EngramQuest** in Community Plugins, or download from [GitHub Releases](https://github.com/bahfahh/engram-quest/releases).
 2. **Install Skills** — go to `Settings → EngramQuest → AI Skills` and click **Install** for your tool (Claude Code, Gemini CLI, Cursor, or Codex).
    ![Install Skills](assets/install-skills.png)
 3. **Ask AI** — *"Turn `Note.md` into a quest-map medium"* or *"Build a review deck from notes tagged with math."*
