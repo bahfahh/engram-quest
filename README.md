@@ -1,21 +1,119 @@
+<div align="center">
+
+[![繁體中文](https://img.shields.io/badge/繁體中文-README.zh.md-blue?style=flat-square)](README.zh.md)
+
 # 🗺️ EngramQuest
 
-[English](#english) | [繁體中文](#chinese)
+**Carve your notes into memory.**  
+*Not just records — traces in your mind.*
+
+Generate flashcard decks and quest maps from your Obsidian notes — AI deepens memory connections, FSRS spaced repetition makes the knowledge truly last.
+
+![EngramQuest Hub](assets/hub-dark.png)
+
+[![GitHub Release](https://img.shields.io/github/v/release/bahfahh/engram-quest?style=flat-square)](https://github.com/bahfahh/engram-quest/releases)
+
+</div>
 
 ---
 
-<a name="english"></a>
-## English
+## 💡 Why EngramQuest?
 
-**The spaced-repetition system built for Obsidian notes. Write cards yourself, or let AI help — your notes stay clean, your memory stays yours.**
+Anki solves *when* to review. EngramQuest solves *how* to actually remember.
 
-![EngramQuest Exhibit](assets/exhibit.png)
+- **L2 Contextual Anchor** — AI searches your vault, finds what you already knew when you first learned this topic, and rebuilds that moment of understanding. No other flashcard tool does this.
+- **FSRS algorithm** — newer and more accurate than Anki's SM-2. Intervals adapt to your actual recall performance, not fixed multipliers.
+- **Quest Maps** — turn dense long notes into game-like island challenges. You engage with the material instead of re-reading it.
 
-EngramQuest turns your Obsidian vault into a long-term memory system. Write flashcards directly in your notes, or use AI tools (Claude Code, Gemini CLI, Cursor) to generate cards, quest challenges, and visual memory maps — all without touching your original markdown.
+---
 
-### ✍️ Write Cards Yourself (No AI Required)
+## ✨ Features
 
-Add a tag and pick a format. Three formats are supported and freely mixable in one note:
+### 🃏 Review Deck — Remember More, Study Less
+
+![Review Deck Hub](assets/review-deck-hub.png)
+
+A three-stage recall system that builds real memory — not just familiarity:
+
+![L1 L2 L3 Hints in action](assets/review-hint.png)
+
+| Stage | What it does |
+|---|---|
+| **L1 Active Recall** | Question only — forces your brain to search first, before any hint |
+| **L2 Contextual Anchor** ⭐ | AI finds related notes in *your* vault and rebuilds the moment you first learned this. Anki can't do this. |
+| **L3 Narrowing Hint** | A keyword direction as last resort — never gives the full answer |
+
+- **FSRS scheduling** — intervals adapt to your actual recall, not preset multipliers
+- **AI cards stay separate** — generated cards live in `engram-review/`, AI never touches your source notes
+- **Edit writes back** — Highlight and Edit tools write changes directly to your source note, keeping it the single source of truth
+- **Auto-detection** — any note tagged `#flashcards/topic` is picked up automatically
+- **Source note link** — jump from any card to its origin note mid-session, then return right where you left off
+
+### 🗺️ Quest Map — Turn Notes into Challenges
+
+![Quest Map Island Overview](assets/quest-map-overview.png)
+
+![Quest Challenge in Action](assets/quest-challenge.png)
+
+Transforms any note into a game-like island map, embedded directly in your vault as a `.md` file.
+
+- **5 challenge types:** multiple-choice, cloze fill-in, ordering, matching, and **image occlusion** (mask regions of your own images as questions)
+- **Difficulty tiers:** Easy / Medium / Hard — ask your AI for the level you need
+- **5 visual themes:** Sky Island, Sci-Fi, RPG, Ocean, Minimal
+- **Boss Battle** — a chapter mastery test at the end of each stage
+
+### 🏆 Achievements
+
+![Achievements Collection](assets/achievements.png)
+
+Track your learning milestones with 3D-rendered icons and rarity tiers.
+
+- **10 milestones:** from your first card to 2,000 total reviews, 30-day streaks, 50 mastered cards, and more
+- **Rarity tiers:** Uncommon (UC) → Rare (R) → Legendary (LEG) — rarer achievements glow with special borders
+- Click any achievement card for your progress data, activity calendar, and daily review records
+
+### 🧠 Memory Map — See the Big Picture
+
+![Memory Map Context](assets/memory-map-context.png)
+
+Visualizes abstract concepts using Obsidian Canvas.
+
+- AI generates a visual knowledge graph — analogies, contrasts, and contextual anchoring make abstract topics stick
+- Any file named `{note-name}-memory.canvas` is auto-detected in Hub → Memory Map
+- During review, the Memory Map button finds and opens the matching canvas automatically
+
+### 🌙 Dark Mode
+
+![Dark Mode Aurora](assets/bg_dark.webp)
+
+Seamless automatic theme detection — no manual toggle. Hub, review session, and achievements all switch between light and dark assets automatically.
+
+---
+
+## ⚡ Quick Start (AI Path)
+
+1. **Install Plugin** — search **EngramQuest** in Obsidian Community Plugins, or download from [GitHub Releases](https://github.com/bahfahh/engram-quest/releases).
+2. **Install Skills** — go to `Settings → EngramQuest → AI Skills` and click **Install** for your tool (Claude Code, Gemini CLI, Cursor, or Codex).
+   ![Install Skills](assets/install-skills.png)
+3. **Ask AI** — *"Turn `Note.md` into a quest-map medium"* or *"Build a review deck from notes tagged with math."*
+4. **Open Hub** — click the EngramQuest ribbon icon, switch to the relevant tab, and start learning.
+
+---
+
+## ✍️ Write Cards Yourself (No AI Required)
+
+Add a `#flashcards/topic` tag and pick a format. Three formats are freely mixable in one note:
+
+| Format | Best for | Syntax |
+|---|---|---|
+| 🟢 `Q:/A:` Q&A ⭐ | **Recommended daily format.** Multi-line answers, images, tables, code blocks | `Q: question` → `A:` — two blank lines end the card |
+| 🔵 `---` fenced Q&A | Existing notes where blank lines appear inside answers | Wrap `Q:/A:` with `---` lines |
+| 🟡 `%%card%%` long answer | Pasted AI output that may contain its own `---` separators | Wrap one card between two `%%card%%` lines |
+| 🧩 `{{c1::}}` Cloze | Fill-in-the-blank, Anki-compatible | `{{c1::answer}}` or `{{c1::answer::hint}}` |
+| ⚪ `::` one-liner | Quick single-line Q&A only | `question :: answer` |
+
+<details>
+<summary>See card format examples</summary>
 
 ```
 #flashcards/math
@@ -27,415 +125,69 @@ A: The instantaneous rate of change of a function at a point.
 Q: What does this diagram show?
 ![[architecture.png]]
 A: The architecture of a microservice system.
-   Key components:
-   - API Gateway
-   - Service mesh
-   - Message queue
 
 ---
 Q: What is Stripe's core model?
 A: Stripe is essentially a Saga system.
-   It handles:
-
-   - payment_intent state machine
-   - retry / failure handling
-   - fund consistency
-   - webhook events
-
-   You only receive the result.
+   It handles payment_intent state machine, retry / failure handling,
+   and fund consistency. You only receive the result.
 ---
-
----
-Q: What is a Saga pattern?
-A: A sequence of local transactions.
-
-   Each step publishes an event.
-   On failure, compensating transactions roll back.
-
-   Used in: Stripe, Uber, Airbnb.
----
-
-%%card%%
-Q: When should I use %%card%%?
-A:
-Use it only when you want to paste a long AI answer that may contain its own Markdown separators.
-
----
-
-This separator stays inside the answer.
-%%card%%
-
-{{c1::Calculus}} is built on limits, derivatives, and integrals
-Capitals: France {{c1::Paris}}, Japan {{c2::Tokyo}}
-
-Pythagorean theorem :: a² + b² = c²
-```
-
-> [!TIP]
-> **Format roles at a glance:** 🟢 <mark><code>Q:/A:</code></mark> is the everyday format. 🟡 <mark><code>%%card%%</code></mark> is the safe mode for long pasted AI answers. 🔵 <mark><code>---</code> fenced Q/A</mark> remains supported for existing notes and normal Markdown-friendly use.
-
-| Format | Best for | Syntax |
-|---|---|---|
-| 🟢 <mark><code>Q:/A:</code> Q&A</mark> ⭐ | **Recommended daily format.** Multi-line answers, images, tables, code blocks | `Q: question` → `A:` (answer can span multiple lines; single blank line within answer is ok; **two blank lines** end the card) |
-| 🔵 <mark><code>---</code> fenced Q&A</mark> ⭐ | Existing long-answer notes and normal Markdown-friendly use | Wrap `Q:/A:` with `---` lines — blank lines inside are never treated as card boundaries |
-| 🟡 <mark><code>%%card%%</code> long answer</mark> | **Safe mode for pasted AI answers** that may include `---` separators | Wrap one card between two `%%card%%` lines; everything after `A:` stays in the answer until the closing marker |
-| 🧩 <mark><code>{{c1::}}</code> Cloze</mark> | Fill-in-the-blank, Anki-compatible | `{{c1::answer}}` or `{{c1::answer::hint}}` |
-| ⚪ <mark><code>::</code> Q&A</mark> | Quick one-liners only — answer must fit on a single line | `question :: answer` |
-
-**Tag format:** `#flashcards/topic` — the name after the slash is the Deck name. Change the prefix (`flashcards`) in Settings.
-
-### How do I turn a long AI answer into a Review Deck card?
-
-Use the normal 🟢 <mark><code>Q:/A:</code></mark> format for everyday cards. Use 🟡 <mark><code>%%card%%</code></mark> when you paste a long AI answer that may contain its own `---` separators, headings, tables, code blocks, or many blank lines.
-
-````md
-#flashcards/ai
 
 %%card%%
 Q: How should I explain agentic testing?
 A:
-Agentic testing checks whether an AI system can complete a task reliably, not just whether one function returns the right value.
+Agentic testing checks whether an AI system can complete a task reliably.
+---
+This separator stays inside the answer.
+%%card%%
+
+{{c1::Calculus}} is built on limits, derivatives, and integrals.
+
+Pythagorean theorem :: a² + b² = c²
+```
+
+> **Tip:** Press `Ctrl+/` (or `Cmd+/`) on an empty line — Obsidian inserts `%% %%` and places the cursor inside. Type `card` and you get `%%card%%` instantly.
+
+</details>
 
 ---
 
-Example:
-- Give the agent a realistic task
-- Verify the final artifact
-- Check logs, tool calls, and failure recovery
+## 🔬 Why It Works
 
-```js
-expect(result.completed).toBe(true)
-```
-%%card%%
-````
+EngramQuest is built on four pillars of cognitive science:
 
-**Why this is safe:** everything after `A:` stays in the answer until the closing <mark><code>%%card%%</code></mark>. The `---` line above is preserved as part of the answer, so the card will not be cut early. Existing 🔵 `---` fenced cards still work; <mark><code>%%card%%</code></mark> is only the safer option for long pasted AI output.
+| Principle | Feature |
+|---|---|
+| Spaced Repetition | FSRS schedules reviews at the moment of near-forgetting |
+| Retrieval Practice | L1 forces active recall before any hint is shown |
+| Contextual Anchoring | L2 anchors each card to knowledge already in your vault |
+| Elaborative Encoding | Memory Map builds visual structure for abstract concepts |
 
-**Quickest way to type the fence:** press `Ctrl+/` (or `Cmd+/`) on an empty line — Obsidian inserts `%% %%` and places the cursor in the middle. Just type `card` and you have `%% card %%`. Spacing and case are tolerated, so `%%card%%`, `%% card %%`, and `%%CARD%%` all work the same.
+---
 
-**Embedding images in cards:** Use Obsidian's wiki-link image syntax inside any card format:
+## ❓ FAQ
 
-```
-Q: What does this diagram show?
-![[diagram.png]]
-A: The architecture of a microservice system.
+**Q: Do I have to use AI?**  
+No — many users don't. Write cards with `::`, `Q:/A:`, or `{{c1::}}`, add a `#flashcards/topic` tag, and the plugin picks them up automatically.
 
-Cell structure :: ![[cell-diagram.png]]
-```
+**Q: Where is my progress stored?**  
+Scheduling data lives in `engram-review/sr/` inside your vault as JSON files. AI-generated cards are in `engram-review/ai-cards/`. Neither touches your source notes.
 
-Both `![[image.png]]` (wiki-link) and `![](path/to/image.png)` (standard markdown) are supported. Images display directly in the review card during study sessions.
+**Q: Does EngramQuest support Anki?**  
+Partially. The `::` and `{{c1::}}` formats are Anki-compatible — pair them with the **Obsidian_to_Anki** community plugin. The `Q:/A:` format is EngramQuest-native (rich multi-line answers) and does not sync to Anki.
 
-Open Hub → Review Deck to see all your cards automatically.
-
-### ⚡ Quick Start (AI Path)
-
-1. **Install Plugin:** Install **EngramQuest** via Obsidian Community Plugins or [GitHub Releases](https://github.com/bahfahh/engram-quest/releases).
-2. **Install Skills:** Go to `Settings → EngramQuest → AI Skills` and click **Install** for your tool (Claude Code, Gemini CLI, Cursor, or Codex).
-   ![Install Skills](assets/install-skills.png)
-3. **Ask AI:** *"Turn `Note.md` into a quest-map medium"* or *"Build a review deck from notes tagged with math."*
-4. **Open Hub:** Click the EngramQuest ribbon icon, switch to the relevant tab, and start learning.
-
-### ✨ Key Features
-
-#### 🃏 Review Deck
-Scientific long-term memory powered by the **FSRS Algorithm**.
-![Review Deck Demo](assets/review-deck-demo.png)
-- **Three card formats:** `Q:/A:` multi-line (recommended), `{{c1::}}` Cloze (Anki-compatible), and `::` one-liner — freely mixable in one note
-- **Rich answers:** `Q:/A:` answers support multiple paragraphs, embedded images (`![[img.png]]`), tables, and code blocks — paste long AI output directly without reformatting
-- **Multi-line Q&A (`Q:/A:`):** Both question and answer support multiple lines, embedded images, tables, and code blocks. A single blank line within a card is fine — two blank lines end the card.
-- **Fenced Q&A (`Q:/A:` wrapped in `---`):** Wrap a card with `---` on its own line before and after. Blank lines inside are never treated as card boundaries. This remains supported for existing notes and normal daily use.
-  ```
-  ---
-  Q: What is Stripe's core model?
-  A: Stripe is essentially a Saga System.
-
-     It handles:
-     - payment_intent state machine
-     - retry / failure handling
-
-     You only receive the result.
-  ---
-  ```
-- **Long AI answers (`%%card%%`):** Use this only when the answer may contain its own `---` separators. It is an extra safe mode, not a replacement for normal `Q:/A:`.
-  ```
-  %%card%%
-  Q: What is Apple's business model?
-  A:
-  Apple sells integrated hardware, software, and services.
-
-  ---
-
-  This separator stays in the answer.
-  %%card%%
-  ```
-- **Image support:** Embed `![[image.png]]` or `![](path)` directly in `Q:/A:` or `::` cards — images render in the review session
-- **Auto-detection:** Scans any note tagged with `#flashcards/topic` — write cards wherever it fits your workflow
-- **AI cards stay separate:** AI-generated cards and scheduling data live in `engram-review/` — AI never touches your source notes
-- **Your own cards stay editable:** Edit, Highlight (`==`), and Quote (`>`) tools in the review session write changes directly back to your source note, keeping it as the single source of truth
-- **Source note link:** Every card connects back to its origin note — tap to read context, then resume right where you left off
-- **Triple-level Hints:** Stuck? AI provides L1 (active recall prompt), L2 (context anchored to your own vault notes), or L3 (narrowing hint). L2 is what makes AI useful here — it links new knowledge to things you already know in your vault.
-- **FSRS scheduling:** The latest spaced-repetition algorithm — intervals adapt to your actual recall performance, not fixed multipliers
-
-#### 🗺️ Quest Map
-Turn long notes into structured, game-like learning stages — embedded directly in your vault as a `.md` file.
-- **AI-generated challenges:** Multiple-choice, cloze fill-in, ordering, matching, and **image occlusion** (mask regions of your vault images as questions)
-- **Difficulty Scaling:** Request **Easy**, **Medium**, or **Hard** modes from your AI
-- **Visual Progress:** Track mastery per chapter and unlock the final Boss challenge
-
-#### 🧠 Memory Map
-Visualize abstract concepts using Obsidian Canvas.
-- **Three ways to create:** Ask AI to generate one, manually create a Canvas named `{note-name}-memory.canvas`, or set a dedicated folder in Settings
-- **Auto-detection:** Any file ending with `-memory.canvas` is automatically listed in Hub → Memory Map
-- **Association Building:** AI maps note relationships into visual knowledge chunks
-- **Deep Intuition:** Contrast, analogy, and contextual anchoring for difficult topics
-- **Review Deck link:** During review, the Memory Map button finds the matching canvas — first by name, then by scanning canvas content for a file node pointing to the source note. Include a file node in your canvas for reliable linking even after moves or renames
-
-#### 🌙 Dark Mode
-EngramQuest adapts seamlessly to your Obsidian theme.
-
-![Dark Mode Aurora](assets/bg_dark.webp)
-
-- **Automatic theme detection:** Hub background, review session, and achievement area all switch between light and dark assets automatically — no manual toggle needed
-- **Aurora-inspired dark theme:** A custom deep-space floating island scene replaces the light background in dark mode, keeping the visual story consistent
-- **Cohesive dark palette:** Difficulty badges (Easy / Medium / Hard), READY counts, and achievement badges all shift from their light-mode colors to an indigo-purple palette that reads cleanly against dark backgrounds
-
-#### 🏆 Achievements
-Track your learning milestones and celebrate progress.
-- **10 milestone achievements:** From your very first card to 2,000 total reviews, 30-day streaks, 50 mastered cards, and more — each with a unique 3D-rendered icon
-- **Rarity tiers:** Uncommon (UC) → Rare (R) → Legendary (LEG) — rarer achievements get glowing borders and special visual treatment
-- **Click any achievement card** to open a detail panel showing your progress data — reviewed decks, mastered cards, activity calendar, and daily records linked directly to your learning history
-- **Aurora background:** The achievement gallery uses the same dark-mode scene as a subtle translucent backdrop, giving it a premium cosmic feel
-
-### ☕ Support My Work
-If you find EngramQuest helpful, consider supporting its development!
-
-[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/wen_aidev)
-
-### 🔬 Why It Works
-EngramQuest is built on three pillars of cognitive science:
-1. **Spaced Repetition:** Review at the moment of near-forgetting. FSRS calculates intervals automatically.
-2. **Retrieval Practice:** Active recall before seeing the answer is far more effective than re-reading.
-3. **Elaborative Encoding:** Visual structures and concept maps build deeper cognitive links than text alone.
-
-### ❓ FAQ
-
-**Q: Do I have to use AI?**
-**A:** No — and many users don't. Write cards yourself with `::`, `Q:/A:`, or `{{c1::}}` syntax, add a `#flashcards/topic` tag, and the plugin picks them up automatically.
-
-AI adds value in two specific ways: generating cards and quest challenges from notes you haven't formatted yet, and building L2 contextual hints that anchor each card to your personal vault knowledge — making recall stronger than isolated memorization.
-
-**Q: Where is my progress stored?**
-**A:** Review scheduling data is stored in `engram-review/sr/` inside your vault as JSON files. AI-generated cards live in `engram-review/ai-cards/`. Neither touches your source notes. Cards you write yourself: the Edit, Highlight, and Quote tools in the review session write changes directly back to your note — intentionally, so your note stays the source of truth.
-
-**Q: Does EngramQuest support Anki?**
-**A:** Partially. The `::` and `{{c1::}}` formats are Anki-compatible. Pair them with the **Obsidian_to_Anki** community plugin — install Obsidian_to_Anki + AnkiConnect, enable RemNote-style (`::`) syntax in its settings, and sync. Your cards will appear in Anki automatically.
-
-The `Q:/A:` format is EngramQuest-native and does **not** sync to Anki — it's designed for rich multi-line answers, images, and tables that don't map cleanly to Anki's card model. Use `::` or `{{c1::}}` for cards you want in both places.
-
-**Q: How can I make AI always follow a specific pattern when building a Review Deck?**
-**A:** Mark key answers in your notes using any syntax — Obsidian highlight `==text==`, bold `**text**`, or any custom marker. Then add a rule to your AI config file (`CLAUDE.md`, `GEMINI.md`, or `AGENTS.md`):
+**Q: How do I make AI always follow a specific pattern when building decks?**  
+Mark key answers in your notes using `==highlight==` or `**bold**`, then add a rule to your AI config file (`CLAUDE.md`, `GEMINI.md`, or `AGENTS.md`):
 > `IMPORTANT: When building a Review Deck, every highlighted ==text== must be turned into a review card.`
 
 ---
 
-<a name="chinese"></a>
-## 繁體中文
+## ☕ Support
 
-**Obsidian AI 原生學習系統 — 手動寫卡與 AI 生成，兩種用法都是一等公民。**
-
-![EngramQuest 展示](assets/exhibit.png)
-
-EngramQuest 將你的筆記變成互動學習路徑。你可以自己在任何筆記裡寫卡片，也可以讓 AI 工具（Claude Code、Gemini CLI、Cursor）幫你生成。兩條路用的是同一個間隔重複引擎、同一套 Quest Map 和 Memory Map。
-
-### ✍️ 自己手動寫卡（不需要 AI）
-
-加一個 tag，選一種格式，三種格式可以在同一篇筆記裡自由混用：
-
-```
-#flashcards/學習科學
-
-Q: 間隔重複的原理是什麼？
-A: 在快忘記時複習，可以用最少時間達到最高記憶保留率。
-   每次成功回想後，下次複習的間隔會自動拉長。
-
----
-Q: Stripe 的核心模型是什麼？
-A: Stripe 本質是一個 Saga System。
-
-   它處理：
-   - payment_intent 狀態機
-   - retry / failure handling
-
-   你只要「接結果」。
----
-
----
-Q: 什麼是 Saga 模式？
-A: 一連串的本地交易。
-
-   每個步驟發布一個事件。
-   失敗時，補償交易負責回滾。
-
-   應用於：Stripe、Uber、Airbnb。
----
-
-{{c1::間隔重複}} 是最有效的長期記憶方法之一
-法國首都 {{c1::巴黎}}，日本首都 {{c2::東京}}
-
-畢氏定理 :: a² + b² = c²
-```
-
-> [!TIP]
-> **格式角色快速看：** 🟢 <mark><code>Q:/A:</code></mark> 是日常主力格式。🟡 <mark><code>%%card%%</code></mark> 是貼上 AI 長答案時的安全模式。🔵 <mark><code>---</code> fenced 問答</mark> 仍然支援既有筆記和一般 Markdown 友善用法。
-
-| 格式 | 適合 | 寫法 |
-|---|---|---|
-| 🟢 <mark><code>Q:/A:</code> 問答</mark> ⭐ | **日常推薦格式。** 多行答案、圖片、表格、程式碼區塊 | `Q: 問題` → `A:` 後可空（答案從下行開始）；答案裡一個空行沒問題；**兩個連續空行**代表卡片結束 |
-| 🔵 <mark><code>---</code> fenced 問答</mark> ⭐ | 既有長答案筆記、一般 Markdown 友善用法 | 前後各加一行 `---` 包住 `Q:/A:` — 裡面的空行永遠不會被當成卡片邊界 |
-| 🟡 <mark><code>%%card%%</code> 長答案</mark> | **貼上 AI 長答案的安全模式**，適合內容可能包含 `---` 分隔線 | 前後各一行 `%%card%%` 包住一張卡；`A:` 後面直到結束標記前都會保留為答案 |
-| 🧩 <mark><code>{{c1::}}</code> 填空</mark> | 填空記憶，Anki 相容語法 | `{{c1::答案}}` 或 `{{c1::答案::提示}}` |
-| ⚪ <mark><code>::</code> 問答</mark> | 簡短答案，僅限一行 | `問題 :: 答案` |
-
-**Tag 格式：** `#flashcards/主題` — 斜線後的名稱就是 Deck 的名字。前綴（`flashcards`）可在設定中修改。
-
-### 如何把 AI 長回答做成 Review Deck 卡片？
-
-平常寫卡片仍然建議用 🟢 <mark><code>Q:/A:</code></mark>。只有當你要貼上很長的 AI 回答，而且內容裡可能有 `---` 分隔線、標題、表格、程式碼區塊或很多空行時，才使用 🟡 <mark><code>%%card%%</code></mark>。
-
-````md
-#flashcards/ai
-
-%%card%%
-Q: 如何解釋 agentic testing？
-A:
-Agentic testing 檢查的是 AI 系統能不能可靠完成任務，而不只是某個函式有沒有回傳正確值。
-
----
-
-範例：
-- 給 agent 一個真實任務
-- 驗證最後產物
-- 檢查 logs、tool calls、失敗復原
-
-```js
-expect(result.completed).toBe(true)
-```
-%%card%%
-````
-
-**為什麼安全：** `A:` 後面的所有內容都會保留為答案，直到結尾的 <mark><code>%%card%%</code></mark>。上面的 `---` 會被當成答案內容，不會提早截斷卡片。既有的 🔵 `---` fenced 卡片仍然可以用；<mark><code>%%card%%</code></mark> 只是針對貼上 AI 長回答時的安全選項。
-
-**最快的輸入方式：** 在空行按 `Ctrl+/`（Mac 是 `Cmd+/`），Obsidian 會直接插入 `%% %%` 並把游標放在中間。輸入 `card` 就成了 `%% card %%`。空格和大小寫都認，所以 `%%card%%`、`%% card %%`、`%%CARD%%` 三種寫法效果一樣。
-
-**在卡片中嵌入圖片：** 在任何卡片格式中使用 Obsidian 的 wiki-link 圖片語法：
-
-```
-Q: 這張圖表示什麼？
-![[diagram.png]]
-A: 微服務系統的架構圖。
-
-細胞結構 :: ![[cell-diagram.png]]
-```
-
-支援 `![[image.png]]`（wiki-link）和 `![](path/to/image.png)`（標準 markdown）兩種語法。圖片會直接顯示在複習卡片中。
-
-開 Hub → Review Deck，你寫的卡片會自動出現。
-
-### ⚡ 快速上手（AI 路徑）
-
-1. **安裝外掛：** 在 Obsidian 安裝 **EngramQuest**（社群外掛商店或 [GitHub Releases](https://github.com/bahfahh/engram-quest/releases)）。
-2. **安裝 Skills：** 前往 `設定 → EngramQuest → AI Skills`，選你用的工具（Claude Code、Gemini CLI、Cursor 或 Codex）點 **Install**。
-   ![安裝 Skills](assets/install-skills.png)
-3. **告訴 AI：** *「把 `筆記名稱.md` 做成 quest-map medium」* 或 *「把 tag:math 的筆記做成 review deck」*。
-4. **開 Hub：** 點側邊欄的 EngramQuest 圖示，切到對應分頁，開始學習。
-
-### ✨ 核心特色
-
-#### 🃏 Review Deck（長期記憶）
-基於 **FSRS 演算法** 的科學間隔重複。
-![複習卡片展示](assets/review-deck-demo.png)
-- **三種卡片格式：** `Q:/A:` 多行問答（推薦）、`{{c1::}}` Cloze 填空（Anki 相容）、`::` 一行問答 — 可在同一篇筆記自由混用
-- **多行問答（`Q:/A:`）：** 問題和答案都支援多行、嵌入圖片、表格和程式碼區塊。答案裡一個空行沒問題；兩個連續空行代表卡片結束
-- **Fenced 問答（`Q:/A:` 用 `---` 包住）：** 前後各加一行 `---` 包住卡片。裡面的空行永遠不會被當成卡片邊界。這仍然支援既有筆記和日常使用
-  ```
-  ---
-  Q: Stripe 的核心模型是什麼？
-  A: Stripe 本質是一個 Saga System。
-
-     它處理：
-     - payment_intent 狀態機
-     - retry / failure handling
-
-     你只要「接結果」。
-  ---
-  ```
-- **圖片支援：** 在 `Q:/A:` 或 `::` 卡片中嵌入 `![[image.png]]` 或 `![](path)` — 圖片直接顯示在複習卡片中
-- **自動偵測：** 任何帶有 `#flashcards/主題` tag 的筆記都會被掃描，卡片寫在哪裡都能偵測到
-- **AI 卡片獨立存放：** AI 生成的卡片與排程資料存在 `engram-review/`，AI 不會修改你的原始筆記
-- **手寫卡片可直接編輯：** 複習時使用「編輯」、「高亮」或「粗體」功能，變更會直接寫回你的原始筆記，讓筆記始終是最新版
-- **來源筆記連結：** 每張卡片上方有 📄 按鈕 — 複習途中可即時跳轉到原始筆記查看脈絡，看完直接回到剛才的卡片
-- **三段式提示：** 想不起來時，AI 提供 L1（主動回想提示）、L2（錨定你自己 vault 筆記的情境）或 L3（縮小範圍提示）。L2 是 AI 真正有價值的地方 — 把新知識連結到你已經知道的東西
-- **FSRS 排程：** 間隔根據你的實際回想表現自動調整，不會堆積複習壓力
-
-#### 🗺️ Quest Map（學習地圖）
-將枯燥的長篇筆記變成結構化的遊戲關卡，直接嵌入 vault 成為一個 `.md` 檔案。
-- **AI 生成挑戰：** 選擇題、Cloze 填空、排序題、連連看，以及**圖片遮蔽題**（把你 vault 裡的圖片局部遮住當題目）
-- **難度分級：** 可要求 AI 生成 **Easy**（初探）、**Medium**（鞏固）或 **Hard**（精通）模式
-- **視覺進度：** 直觀看到每個章節的掌握程度，解鎖最終 Boss 挑戰
-
-#### 🧠 Memory Map（視覺記憶）
-利用 Obsidian Canvas 將抽象概念具象化。
-- **三種建立方式：** 請 AI 生成、手動建立命名為 `{筆記名}-memory.canvas` 的 Canvas 檔案、或在設定中指定專用資料夾
-- **自動偵測：** 任何檔名以 `-memory.canvas` 結尾的檔案都會自動出現在 Hub → Memory Map
-- **關聯建構：** AI 自動分析筆記間的關聯，建立視覺化知識區塊
-- **深度理解：** 透過對比、類比與情境錨定攻克最難記的知識點
-- **Review Deck 連動：** 複習時，Memory Map 按鈕會自動尋找對應的 canvas — 先比對同名檔案，找不到再掃描 canvas 內容中指向來源筆記的 file node。建議讓 canvas 包含指向來源筆記的 file node，即使檔案移動或改名也不會斷掉關聯
-
-#### 🌙 Dark Mode（深色模式）
-EngramQuest 完整支援 Obsidian 深色主題，自動偵測、無需手動切換。
-
-![深色模式極光背景](assets/bg_dark.webp)
-
-- **自動主題偵測：** Hub 頭部背景、複習卡片介面、成就頁面，全部根據 `theme-dark` 自動切換對應圖片，不需任何設定
-- **極光深色背景：** 深色模式下換成自製的深太空浮島場景，視覺風格與淺色版本完全對稱，不是單純調暗色調
-- **深色配色系統：** 難度 badge（Easy / Medium / Hard）、READY 數字、成就卡邊框，全部從淺色系轉換為靛紫色系（`#a5b4fc` / `#c4b5fd`），在深色背景下清晰易讀
-
-#### 🏆 成就系統（Achievements）
-記錄學習里程碑，讓持之以恆的努力被看見。
-- **10 個里程碑成就：** 從第一張卡片到累計 2,000 次複習、連續 30 天學習、精通 50 張卡片，每個成就都有專屬 3D 渲染圖示
-- **稀有度分級：** Uncommon（UC）→ Rare（R）→ Legendary（LEG）— 越稀有的成就有發光邊框與特殊視覺效果
-- **點擊成就卡片** 開啟詳細面板，顯示你的進度資料 — 已複習的牌組、精通卡片、活動日曆、每日紀錄，直接連結到你的學習歷程
-- **極光背景：** 成就展示區使用與深色模式相同的場景圖作為半透明裝飾背景，呈現質感宇宙感
-
-### ☕ 支持我的工作
-如果你覺得 EngramQuest 對你有幫助，歡迎贊助支持開發！
+If EngramQuest is useful to you, consider supporting its development:
 
 [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/wen_aidev)
 
-### 🔬 為什麼有效？
-EngramQuest 結合了三大學習科學原理：
-1. **間隔重複 (Spaced Repetition)：** FSRS 演算法在快忘記時安排複習，最大化記憶效率。
-2. **提取練習 (Retrieval Practice)：** 先回想再看答案，效果遠勝重複閱讀。
-3. **精細編碼 (Elaborative Encoding)：** 將文字轉化為視覺結構，建立更深層的認知連結。
-
-### ❓ 常見問題
-
-**Q: 我一定要用 AI 嗎？**
-**A:** 不需要 — 很多使用者根本不用 AI。用 `::` 問答、`Q:/A:` 多行問答或 `{{c1::}}` Cloze 填空在任何筆記裡寫卡片，加上 `#flashcards/主題` tag，插件就會自動偵測。
-
-AI 在兩個地方真正有價值：從你還沒整理的筆記快速生成卡片和 Quest 關卡，以及建立 L2 情境提示 — 把每張卡片錨定到你個人 vault 裡已有的知識，讓回想比孤立記憶更有效。
-
-**Q: 我的學習進度存哪裡？**
-**A:** 複習排程資料存放在 vault 內的 `engram-review/sr/` 資料夾，以 JSON 格式儲存。AI 生成的卡片存在 `engram-review/ai-cards/`，兩者都不會修改你的原始筆記。你自己手寫的卡片，在複習時使用「編輯」、「高亮」或「粗體」功能，變更會直接寫回原始筆記。
-
-**Q: EngramQuest 支援 Anki 嗎？**
-**A:** 部分支援。`::` 和 `{{c1::}}` 格式與 Anki 相容，可搭配 **Obsidian_to_Anki** 社群插件使用。只需安裝 Obsidian_to_Anki + AnkiConnect，在設定中開啟 RemNote style（`::` 語法），同步後卡片就會自動出現在 Anki 中。
-
-`Q:/A:` 格式是 EngramQuest 專屬，**不會**同步到 Anki — 它是為多行答案、圖片、表格設計的，這些內容無法直接對應到 Anki 的卡片模型。如果你需要同時在兩邊使用，請改用 `::` 或 `{{c1::}}`。
-
-**Q: 如何讓 AI 每次建立 Review Deck 時都依照我想要的固定模式？**
-**A:** 用你習慣的語法在筆記中標記重要答案，例如高亮 `==文字==`、粗體 `**文字**` 或自訂記號，再到 AI 設定檔（`CLAUDE.md`、`GEMINI.md` 或 `AGENTS.md`）加入規則：
-> `IMPORTANT: When building a Review Deck, every highlighted ==text== must be turned into a review card.`
-
 ---
-*為終身學習者打造。Made with ❤️.*
+
+*Built for lifelong learners. Made with ❤️*
