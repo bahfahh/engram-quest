@@ -40,6 +40,23 @@ challenge:
   questions_json: [{"q":"Question 1","opts":["A","B","C","D"],"ans":1,"explanation":"Why B is correct."},{"q":"Question 2","opts":["X","Y"],"ans":0,"explanation":"Why X is correct."}]
 ```
 
+### Per-question type override
+
+Each item in `questions_json` may include an optional `type` to override the round's outer `challenge.type` for that single question:
+
+```yaml
+challenge:
+  type: auction
+  coins: 100
+  questions_json: [
+    {"q":"Which is fastest?","opts":["Edge","Regional","Origin"],"ans":0},
+    {"type":"cloze","sentence":"Vercel deploys to the {{c1::edge}}.","answers":["edge"]},
+    {"type":"input","q":"Define ISR in one phrase.","keywords":["incremental","static","regeneration"]}
+  ]
+```
+
+Supported overrides: `quiz`, `truefalse`, `cloze`, `input`, `auction`, `countdown`. Items without `type` use the round's outer `challenge.type`. Inherently single-question mechanics (`order`, `match`, `chain`, `timeline`, `image-quiz`, `image-occlusion`, `memory-palace`, `snapshot`, `iframe`) are NOT valid as item overrides — they must be their own challenge node.
+
 ### Round UX behavior
 
 Every multi-question round displays:
@@ -118,7 +135,7 @@ Boss challenges should test integrated judgment through deterministic interactio
 
 - Good boss tasks: diagnose a failure, pick the safest tradeoff, pair symptoms with causes, order a repair sequence, or recall one precise decision rule.
 - Bad boss tasks: five cloze blanks in a row, open essay questions, or generic "what would you do and why?" prompts that the runtime cannot grade.
-- A boss can use one rich mechanic (`match`, `chain`, `auction`, scenario `quiz`) or one multi-question round with one outer type. Do not mix per-question `type` values inside `questions_json`; the renderer uses the outer `challenge.type`.
+- A boss can use one rich mechanic (`match`, `chain`, `auction`, scenario `quiz`) or one multi-question round. Within `questions_json`, items may declare an individual `type` to override the outer `challenge.type` — combining e.g. `auction` recognition with `cloze` / `input` recall in the same round. Do NOT mix in inherently single-question mechanics (`match`, `chain`, `order`, `timeline`, `image-quiz`, `image-occlusion`, `memory-palace`, `snapshot`, `iframe`) — they own their whole node.
 - Include `explanation` / `explain` for every boss question.
 
 Example deterministic boss question:

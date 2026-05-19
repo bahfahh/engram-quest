@@ -1,5 +1,6 @@
-// Verifies the questions_json per-item field mapping in renderQuestChallenge.
-// Ticket-005: truefalse falls back to `q` for its statement.
+// Verifies the questions_json per-item field mapping in renderQuestChallenge:
+// - truefalse falls back to `q` for its statement (ticket-005)
+// - items may override the round's challenge type (ticket-006)
 
 import { describe, expect, it, vi } from "vitest";
 import { createRequire } from "module";
@@ -73,5 +74,66 @@ describe("questions_json field mapping", () => {
       restore();
     }
     expect(texts).toContain("Vercel runs at the edge.");
+  });
+
+  it("per-question type override routes cloze through cloze renderer (ticket-006)", () => {
+    const deps = makeDeps();
+    const { container, restore } = makeContainerAndTextSpy();
+    try {
+      renderQuestChallenge(
+        container,
+        {
+          type: "auction",
+          coins: 100,
+          questions_json: [
+            {
+              type: "cloze",
+              sentence: "Vercel deploys to the {{c1::edge}}.",
+              answers: ["edge"],
+            },
+          ],
+        },
+        "medium",
+        () => {},
+        {},
+        makeApp(),
+        "Folder/Note.md",
+        deps,
+        { score: 0, lives: 3, coins: 100, streak: 0 },
+      );
+    } finally {
+      restore();
+    }
+    // cloze renderer uniquely calls collectExpectedAnswers + renderClozeSentence;
+    // auction does not. Their invocation proves the per-item type override took effect.
+    expect(deps.collectExpectedAnswers).toHaveBeenCalled();
+    expect(deps.renderClozeSentence).toHaveBeenCalled();
+  });
+
+  it("falls through to the round's outer type when item omits type (ticket-006 regression)", () => {
+    const deps = makeDeps();
+    const { container, restore } = makeContainerAndTextSpy();
+    try {
+      renderQuestChallenge(
+        container,
+        {
+          type: "auction",
+          coins: 100,
+          questions_json: [{ q: "Pick A or B.", opts: ["A", "B"], ans: 0 }],
+        },
+        "medium",
+        () => {},
+        {},
+        makeApp(),
+        "Folder/Note.md",
+        deps,
+        { score: 0, lives: 3, coins: 100, streak: 0 },
+      );
+    } finally {
+      restore();
+    }
+    // auction does not invoke cloze-only deps
+    expect(deps.collectExpectedAnswers).not.toHaveBeenCalled();
+    expect(deps.renderClozeSentence).not.toHaveBeenCalled();
   });
 });

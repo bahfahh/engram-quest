@@ -125,6 +125,25 @@ For cloze: `{"q":"","sentence":"... {{c1::term}} ...","answers":["term"]}`.
 For input: `{"q":"What is X?","keywords":["answer1","answer2"]}`.
 Use `explanation` or `explain` on every question where a wrong answer should teach a misconception.
 
+### Per-question type override
+
+Each item may declare its own `type` to override the round's outer `challenge.type` for that single question. The runtime maps these fields per-item — `question / sentence / answers / keywords / options / answer / statement` — so any combination of `quiz / truefalse / cloze / input / auction / countdown` works inside one round.
+
+Use this only when the round genuinely benefits from mixing recall and recognition. The default is to keep one type per round.
+
+```yaml
+challenge:
+  type: auction              # round flavor: coins + bet UI
+  coins: 100
+  questions_json: [
+    {"q":"Which is fastest?","opts":["Edge","Regional","Origin"],"ans":0},
+    {"type":"cloze","sentence":"Vercel deploys to the {{c1::edge}}.","answers":["edge"]},
+    {"type":"input","q":"Define ISR in one phrase.","keywords":["incremental","static","regeneration"]}
+  ]
+```
+
+**Do NOT mix in** `order`, `match`, `chain`, `timeline`, `image-quiz`, `image-occlusion`, `memory-palace`, `snapshot`, or `iframe` — they are inherently single-question mechanics and own their whole node (see next section).
+
 Minimum questions per round by type:
 
 | Type | Min questions | Why |

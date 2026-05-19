@@ -201,7 +201,7 @@ function renderQuestChallenge(container, challenge, difficulty, onSolved, settin
       let hadWrongAttempt = false;
       let qOpts = q.opts || q.options || challenge.options;
       let qAns = q.ans != null ? q.ans : q.answer != null ? q.answer : challenge.answer;
-      let singleType = (challenge.type === "memory-palace" || challenge.type === "snapshot") ? "quiz" : challenge.type;
+      let singleType = q.type || ((challenge.type === "memory-palace" || challenge.type === "snapshot") ? "quiz" : challenge.type);
       let singleChallenge = Object.assign({}, challenge, {
         type: singleType,
         question: q.q || q.question || "",
