@@ -1,6 +1,12 @@
 // Minimal Obsidian API mock for unit tests
 export class Modal {
-  constructor(app) { this.app = app; this.contentEl = new MockEl(); this.modalEl = new MockEl(); }
+  static lastCreated = null;
+  constructor(app) {
+    this.app = app;
+    this.contentEl = new MockEl();
+    this.modalEl = new MockEl();
+    Modal.lastCreated = this;
+  }
   open() {}
   close() {}
 }
@@ -22,10 +28,27 @@ export const activeDocument = typeof document !== "undefined" ? document : {
 };
 
 class MockEl {
-  constructor() { this.style = {}; this.classList = { add() {}, remove() {}, toggle() {}, contains() { return false; } }; this.dataset = {}; }
+  constructor() {
+    this.style = {};
+    this.classNames = new Set();
+    this.classList = {
+      add: (...names) => names.forEach((name) => this.classNames.add(name)),
+      remove: (...names) => names.forEach((name) => this.classNames.delete(name)),
+      toggle: (name) => {
+        if (this.classNames.has(name)) {
+          this.classNames.delete(name);
+          return false;
+        }
+        this.classNames.add(name);
+        return true;
+      },
+      contains: (name) => this.classNames.has(name),
+    };
+    this.dataset = {};
+  }
   createEl(tag, opts = {}) { const el = new MockEl(); if (opts.text) el.textContent = opts.text; if (opts.attr) Object.assign(el.dataset, opts.attr); return el; }
   empty() {}
-  addClass() {}
+  addClass(name) { this.classList.add(name); }
   querySelector() { return new MockEl(); }
   querySelectorAll() { return []; }
   appendChild() {}

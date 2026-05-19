@@ -198,6 +198,37 @@ describe("quest-map learning UX", () => {
     expect(container.textContent).toContain("What condition makes rollback reliable?");
   });
 
+  it("renders match-pair challenge text without inline selection blocking", () => {
+    const container = new TestEl();
+
+    renderQuestChallenge(
+      container,
+      {
+        type: "match",
+        question: "Match each layer to its defense.",
+        pairs: [
+          ["Application layer", "Token budget quota"],
+          ["Network edge", "DDoS protection"],
+        ],
+      },
+      "medium",
+      () => {},
+      {},
+      {},
+      "Security.md",
+      makeDeps(),
+    );
+
+    const buttons = container.querySelectorAll(".qm-ch-btn");
+    expect(container.textContent).toContain("Application layer");
+    expect(container.textContent).toContain("Token budget quota");
+    expect(buttons).toHaveLength(4);
+    buttons.forEach((button) => {
+      expect(button.attributes.style || "").not.toContain("user-select:none");
+      expect(button.attributes.style || "").not.toContain("user-select: none");
+    });
+  });
+
   it("lets input challenges reveal the answer without counting as first-try correct", () => {
     const container = new TestEl();
 

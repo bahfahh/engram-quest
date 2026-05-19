@@ -2,7 +2,20 @@
 class MockEl {
   constructor() {
     this.style = {};
-    this.classList = { add() {}, remove() {}, toggle() {}, contains() { return false; } };
+    this.classNames = new Set();
+    this.classList = {
+      add: (...names) => names.forEach((name) => this.classNames.add(name)),
+      remove: (...names) => names.forEach((name) => this.classNames.delete(name)),
+      toggle: (name) => {
+        if (this.classNames.has(name)) {
+          this.classNames.delete(name);
+          return false;
+        }
+        this.classNames.add(name);
+        return true;
+      },
+      contains: (name) => this.classNames.has(name),
+    };
     this.dataset = {};
   }
   createEl(tag, opts = {}) {
@@ -12,7 +25,7 @@ class MockEl {
     return el;
   }
   empty() {}
-  addClass() {}
+  addClass(name) { this.classList.add(name); }
   setAttr(key, value) { this[key] = value; }
   querySelector() { return new MockEl(); }
   querySelectorAll() { return []; }
@@ -32,10 +45,12 @@ class Modal {
     this.app = app;
     this.contentEl = new MockEl();
     this.modalEl = new MockEl();
+    Modal.lastCreated = this;
   }
   open() {}
   close() {}
 }
+Modal.lastCreated = null;
 
 class Plugin {}
 class PluginSettingTab {}

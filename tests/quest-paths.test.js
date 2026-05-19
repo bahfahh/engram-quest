@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createRequire } from "module";
+import { readFileSync } from "node:fs";
 
 const require = createRequire(import.meta.url);
 const questHelpers = require("../src/quest/helpers.js");
@@ -120,6 +121,36 @@ describe("quest path resolution", () => {
 });
 
 describe("quest source path propagation", () => {
+  it("marks chapter modals as selectable quest UI", () => {
+    const app = makeApp();
+    const deps = {
+      getQuestTheme: vi.fn(() => ({ g1: "#60a5fa", g2: "#2563eb" })),
+      getLanguage: vi.fn(() => "en"),
+      renderQuestChallenge: vi.fn(),
+    };
+
+    Modal.lastCreated = null;
+    openQuestChapterModal(
+      app,
+      [{ title: "Chapter 1", summary: "Selectable summary" }],
+      0,
+      "ocean",
+      "medium",
+      {},
+      "Folder/Note.md",
+      deps,
+    );
+
+    const modal = Modal.lastCreated;
+    expect(modal).toBeTruthy();
+    expect(modal.modalEl.classList.contains("qm-modal")).toBe(true);
+  });
+
+  it("keeps quest modal text selectable in plugin CSS", () => {
+    const cssModule = readFileSync(new URL("../src/styles/index.js", import.meta.url), "utf8");
+    expect(cssModule).toContain(".qm-modal { user-select:text; }");
+  });
+
   it("passes sourcePath into image challenge resource lookup", () => {
     const container = new Modal({}).contentEl;
     const app = makeApp();

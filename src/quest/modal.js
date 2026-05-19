@@ -1130,6 +1130,7 @@ function renderQuestChallenge(container, challenge, difficulty, onSolved, settin
 
 function openQuestChapterModal(app, nodes, activeIndex, styleName, difficulty, settings, sourcePath, deps, onComplete) {
   let modal = new obsidian.Modal(app);
+  modal.modalEl.addClass("qm-modal");
   let currentIndex = activeIndex;
   let gameState = { score: 0, lives: 3, coins: 100, streak: 0 };
   let theme = deps.getQuestTheme(styleName, currentIndex, {
