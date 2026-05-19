@@ -42,11 +42,7 @@ var pe = class extends I.PluginSettingTab {
     }),
     new I.Setting(e).setName(c(t, "SETTINGS_AI_SKILLS")).setHeading(),
     new I.Setting(e).setName(c(t, "SETTINGS_AI_SKILLS")).setDesc(c(t, "SETTINGS_AI_SKILLS_DESC")).addButton(r => r.setButtonText(c(t, "SETTINGS_AI_SKILLS_BUTTON")).setCta().onClick(() => { if (!me()) { new I.Notice("EngramQuest installer assets are unavailable."); return; } new de(this.app, this.plugin).open(); })),
-    new I.Setting(e).setName(c(t, "SETTINGS_AUTO_UPDATE_SKILLS_NAME")).setDesc(c(t, "SETTINGS_AUTO_UPDATE_SKILLS_DESC")).addToggle(r => r.setValue(!!t.autoUpdateInstalledSkills).onChange(async s => { this.plugin.settings.autoUpdateInstalledSkills = s; await this.plugin.saveData(this.plugin.settings); })),
-    new I.Setting(e).setName(c(t, "SETTINGS_PRO")).setHeading(),
-    // Pro license toggle. Future Polar.sh integration replaces this with a key input
-    // that calls a validate API; the same `licenseValid` flag remains the runtime gate.
-    new I.Setting(e).setName(c(t, "SETTINGS_PRO_LICENSE_NAME")).setDesc(c(t, "SETTINGS_PRO_LICENSE_DESC")).addToggle(r => r.setValue(!!t.licenseValid).onChange(async s => { this.plugin.settings.licenseValid = s; await this.plugin.saveData(this.plugin.settings); }));
+    new I.Setting(e).setName(c(t, "SETTINGS_AUTO_UPDATE_SKILLS_NAME")).setDesc(c(t, "SETTINGS_AUTO_UPDATE_SKILLS_DESC")).addToggle(r => r.setValue(!!t.autoUpdateInstalledSkills).onChange(async s => { this.plugin.settings.autoUpdateInstalledSkills = s; await this.plugin.saveData(this.plugin.settings); }));
   }
 };
 

@@ -26,7 +26,8 @@ function createInstaller() {
     {
       id: "synapse",
       title: "Synapse (Pro)",
-      summary: "Pre-compute memory anchors that link difficult cards to mastered ones. Pro feature."
+      summary: "Pre-compute memory anchors that link difficult cards to mastered ones. Pro feature.",
+      pro: true
     }
   ];
   const TOOL_TARGETS = {
@@ -107,9 +108,9 @@ function createInstaller() {
     return adapter.read(joinPath(bundledSkillsRoot, relativePath));
   }
 
-  async function buildSkillEntries(toolTarget, adapter, bundledSkillsRoot) {
+  async function buildSkillEntries(toolTarget, adapter, bundledSkillsRoot, modules) {
     const entries = [];
-    for (const moduleDefinition of MODULES) {
+    for (const moduleDefinition of modules) {
       const targetRoot = joinPath(toolTarget.baseDir, `engram-quest-${moduleDefinition.id}`);
       for (const asset of MODULE_ASSETS[moduleDefinition.id] || []) {
         let content = await readBundledSkill(adapter, bundledSkillsRoot, asset.source);
@@ -124,9 +125,9 @@ function createInstaller() {
     return entries;
   }
 
-  async function buildCursorRuleEntries(toolTarget, adapter, bundledSkillsRoot) {
+  async function buildCursorRuleEntries(toolTarget, adapter, bundledSkillsRoot, modules) {
     const entries = [];
-    for (const moduleDefinition of MODULES) {
+    for (const moduleDefinition of modules) {
       const source = await readBundledSkill(adapter, bundledSkillsRoot, `${moduleDefinition.id}/skills.md`);
       entries.push({
         path: joinPath(toolTarget.baseDir, `engram-quest-${moduleDefinition.id}.mdc`),
@@ -146,13 +147,14 @@ function createInstaller() {
     return entries;
   }
 
-  async function getInstallEntries(toolId, adapter, configDir) {
+  async function getInstallEntries(toolId, adapter, configDir, { isPro = false } = {}) {
     const toolTarget = TOOL_TARGETS[toolId];
     if (!toolTarget || !adapter) return [];
     const bundledSkillsRoot = configDir + "/plugins/engram-quest/bundled-skills";
+    const modules = isPro ? MODULES : MODULES.filter(m => !m.pro);
     return toolTarget.kind === "rules"
-      ? buildCursorRuleEntries(toolTarget, adapter, bundledSkillsRoot)
-      : buildSkillEntries(toolTarget, adapter, bundledSkillsRoot);
+      ? buildCursorRuleEntries(toolTarget, adapter, bundledSkillsRoot, modules)
+      : buildSkillEntries(toolTarget, adapter, bundledSkillsRoot, modules);
   }
 
   return {
