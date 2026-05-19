@@ -212,4 +212,30 @@ describe("quest source path propagation", () => {
     expect(deps.renderQuestChallenge).toHaveBeenCalled();
     expect(deps.renderQuestChallenge.mock.calls[0][6]).toBe("Folder/Note.md");
   });
+
+  it("reports node completion without mutating the source quest markdown", () => {
+    const app = makeApp();
+    app.vault.modify = vi.fn();
+    const onComplete = vi.fn();
+    const deps = {
+      getQuestTheme: vi.fn(() => ({ g1: "#60a5fa", g2: "#2563eb" })),
+      getLanguage: vi.fn(() => "en"),
+      renderQuestChallenge: vi.fn((container, challenge, difficulty, solved) => solved(true, { scorePct: 80 })),
+    };
+
+    openQuestChapterModal(
+      app,
+      [{ id: "round1", title: "Round 1", challenge: { type: "quiz" } }],
+      0,
+      "ocean",
+      "medium",
+      {},
+      "Folder/Note.md",
+      deps,
+      onComplete,
+    );
+
+    expect(app.vault.modify).not.toHaveBeenCalled();
+    expect(onComplete).toHaveBeenCalledWith("round1", 0, expect.objectContaining({ completed: true, scorePct: 80 }));
+  });
 });

@@ -101,6 +101,7 @@ function parseQuestMap(markdown) {
       else if (trimmed.startsWith("explain:")) challenge.explain = trimmed.slice(8).trim();
       else if (trimmed.startsWith("link:")) challenge.link = trimmed.slice(5).trim();
       else if (trimmed.startsWith("image:")) challenge.image = trimmed.slice(6).trim();
+      else if (trimmed.startsWith("html:")) challenge.html = trimmed.slice(5).trim();
       else if (trimmed.startsWith("mode:")) challenge.mode = trimmed.slice(5).trim();
       else if (trimmed.startsWith("options:")) challenge.options = splitInlineList(trimmed);
       else if (trimmed.startsWith("items:")) challenge.items = splitInlineList(trimmed);
@@ -116,6 +117,7 @@ function parseQuestMap(markdown) {
       else if (trimmed.startsWith("region_width_pct:")) challenge.region_width_pct = parseNumericField(trimmed, "region_width_pct:");
       else if (trimmed.startsWith("region_height_pct:")) challenge.region_height_pct = parseNumericField(trimmed, "region_height_pct:");
       else if (trimmed.startsWith("timer:")) challenge.timer = parseNumericField(trimmed, "timer:");
+      else if (trimmed.startsWith("height:")) challenge.height = parseNumericField(trimmed, "height:");
       else if (trimmed.startsWith("coins:")) challenge.coins = parseNumericField(trimmed, "coins:");
       else if (trimmed.startsWith("snapshot_time:")) challenge.snapshot_time = parseNumericField(trimmed, "snapshot_time:");
       else if (trimmed.startsWith("snapshot_items:")) challenge.snapshot_items = splitInlineList(trimmed);
@@ -144,7 +146,7 @@ function parseQuestMap(markdown) {
         if (match) challenge.pairs.push(match[1].split(",").map((item) => item.trim()));
       }
 
-      let challengeKeys = ["type:", "question:", "statement:", "sentence:", "prompt:", "hint:", "explanation:", "explain:", "link:", "image:", "mode:", "options:", "items:", "keywords:", "answers:", "answer:", "reveal_answer:", "region_x:", "region_y:", "region_width:", "region_height:", "region_left_pct:", "region_top_pct:", "region_width_pct:", "region_height_pct:", "pairs:", "- [", "timer:", "coins:", "snapshot_time:", "snapshot_items:", "snapshot_labels:", "slots:", "events:", "chain_items:", "palace_items:", "palace_descs:", "palace_time:", "questions_json:"];
+      let challengeKeys = ["type:", "question:", "statement:", "sentence:", "prompt:", "hint:", "explanation:", "explain:", "link:", "image:", "html:", "mode:", "options:", "items:", "keywords:", "answers:", "answer:", "reveal_answer:", "region_x:", "region_y:", "region_width:", "region_height:", "region_left_pct:", "region_top_pct:", "region_width_pct:", "region_height_pct:", "pairs:", "- [", "timer:", "height:", "coins:", "snapshot_time:", "snapshot_items:", "snapshot_labels:", "slots:", "events:", "chain_items:", "palace_items:", "palace_descs:", "palace_time:", "questions_json:"];
       if (indent <= 4 && !challengeKeys.some((prefix) => trimmed.startsWith(prefix))) {
         inChallenge = false;
       }
@@ -315,8 +317,8 @@ function getQuestTheme(themeName, nodeIndex, themes) {
 function getQuestNodePositions(nodeCount) {
   if (nodeCount === 0) return [];
   if (nodeCount === 1) return [{ cx: 400, cy: 240 }];
-  // Vertical pattern scaled to new mapH=480
-  let pattern = [140, 340, 100, 320, 140, 360, 90, 300, 120];
+  // Vertical pattern scaled to new mapH=650 (bottom ~170px reserved for panel)
+  let pattern = [120, 300, 90, 280, 130, 310, 80, 270, 110];
   // ~200px spacing → 4-5 islands visible at once in a ~900px container
   let spacing = 200;
   return Array.from({ length: nodeCount }, (_, index) => ({

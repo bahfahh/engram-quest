@@ -128,6 +128,8 @@ expect(result.completed).toBe(true)
             <ol>
               <li>跟 AI 說：「把微積分.md 做成 quest-map medium」</li>
               <li>AI 建立學習地圖</li>
+              <li>進度會另外儲存，AI 更新 quest 時不會清掉已完成節點</li>
+              <li>進階 quest 可以使用本機 iframe HTML 模擬互動系統</li>
               <li>開 Hub → Quest Map → 依序點開節點和挑戰</li>
             </ol>
             <table>
@@ -393,6 +395,8 @@ expect(result.completed).toBe(true)
             <ol>
               <li>Ask AI: "Turn calculus.md into a quest-map medium"</li>
               <li>AI builds the learning map</li>
+              <li>Progress is saved separately, so AI can update a quest without clearing completed nodes</li>
+              <li>Advanced quests may include local iframe HTML simulations for interactive systems</li>
               <li>Open Hub → Quest Map → click nodes to progress</li>
             </ol>
             <table>

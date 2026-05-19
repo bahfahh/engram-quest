@@ -139,6 +139,17 @@ Minimum questions per round by type:
 
 `order`, `match`, `chain`, `timeline`, `image-quiz`, `image-occlusion` — these are already multi-step interactions within one question. Do NOT use `questions_json` with them.
 
+## Update Mode
+
+When a matching `<source-note-name>-quest.md` already exists, update the quest instead of replacing it wholesale.
+
+- Read the existing quest-map YAML and the updated source note before writing.
+- Preserve existing node `id` values when the learning objective and tested content are materially the same.
+- Assign a new stable `id` when a node is genuinely new or the old node changed enough that the learner should replay it.
+- Append new nodes in a coherent learning order without reshuffling unchanged nodes.
+- Do not write progress fields such as `completed:` into YAML. Runtime progress lives in `engram-quest/state/`, keyed by node `id`.
+- If using iframe challenges, store generated HTML under `engram-quest/html/{quest-base}/{nodeId}.html` and reference it with `html:`.
+
 ## Generation Flow
 
 0. Check for a pre-existing knowledge index or graph in the vault (e.g. `graphify-out/GRAPH_REPORT.md`, `graph.json`). If found, read it first — use its key concepts as boss-challenge candidates, community groupings to inform chapter splits, and relationship edges to shape challenge content. Skip raw-file discovery for anything the index already covers.
@@ -239,6 +250,7 @@ AI must analyze the source note content before choosing challenge types. Do NOT 
 | Historical evolution, version timeline | `timeline` |
 | Terminology, fill-in-the-blank | `cloze` |
 | Diagram or architecture image | `image-quiz`, `image-occlusion` |
+| Dynamic simulation, timed process, or interactive system behavior | `iframe` |
 | True/false factual statement | `truefalse` |
 | Concept pairing | `match` |
 | Free recall, precise term | `input` |
@@ -312,9 +324,9 @@ region:
 
 ## Challenge Formats
 
-For the full list of all 14 challenge types with YAML syntax, fields, behavior, and design guidance, read `references/challenge-formats.md`.
+For the full list of all 15 challenge types with YAML syntax, fields, behavior, and design guidance, read `references/challenge-formats.md`.
 
-Supported types: `quiz`, `truefalse`, `order`, `match`, `input`, `cloze`, `countdown`, `snapshot`, `auction`, `timeline`, `chain`, `memory-palace`, `image-quiz`, `image-occlusion`.
+Supported types: `quiz`, `truefalse`, `order`, `match`, `input`, `cloze`, `countdown`, `snapshot`, `auction`, `timeline`, `chain`, `memory-palace`, `image-quiz`, `image-occlusion`, `iframe`.
 
 ## Image Challenge Selection Rules
 

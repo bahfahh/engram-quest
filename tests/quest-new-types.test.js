@@ -293,6 +293,27 @@ describe("parseQuestMap questions_json field", () => {
   });
 });
 
+describe("parseQuestMap iframe fields", () => {
+  it("parses iframe html path and height fields", () => {
+    const cfg = parseQuestMap([
+      "version: 1",
+      "nodes:",
+      "  - id: sim1",
+      "    title: Token Bucket Simulator",
+      "    challenge:",
+      "      type: iframe",
+      "      html: engram-quest/html/token-bucket/sim1.html",
+      "      height: 520",
+    ].join("\n"));
+
+    expect(cfg.nodes[0].challenge).toMatchObject({
+      type: "iframe",
+      html: "engram-quest/html/token-bucket/sim1.html",
+      height: 520,
+    });
+  });
+});
+
 describe("parseQuestMap learning feedback fields", () => {
   it("parses explanation aliases and keyword answers for deterministic feedback", () => {
     const cfg = parseQuestMap([

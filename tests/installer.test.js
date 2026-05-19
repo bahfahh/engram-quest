@@ -7,6 +7,30 @@ function makeAdapter(files) {
   return { read: async (path) => files[path] ?? "" };
 }
 
+function makeAllBundledFiles(overrides = {}) {
+  return {
+    ".obsidian/plugins/engram-quest/bundled-skills/review-deck/skills.md": "",
+    ".obsidian/plugins/engram-quest/bundled-skills/review-deck/references/user-guide.md": "",
+    ".obsidian/plugins/engram-quest/bundled-skills/review-deck/references/plugin-architecture.md": "",
+    ".obsidian/plugins/engram-quest/bundled-skills/review-deck/references/obsidian-cli.md": "",
+    ".obsidian/plugins/engram-quest/bundled-skills/review-deck/scripts/search_vault.sh": "",
+    ".obsidian/plugins/engram-quest/bundled-skills/review-deck/scripts/get_mtime.sh": "",
+    ".obsidian/plugins/engram-quest/bundled-skills/quest-map/skills.md": "",
+    ".obsidian/plugins/engram-quest/bundled-skills/quest-map/references/user-guide.md": "",
+    ".obsidian/plugins/engram-quest/bundled-skills/quest-map/references/obsidian-cli.md": "",
+    ".obsidian/plugins/engram-quest/bundled-skills/quest-map/references/challenge-formats.md": "iframe docs",
+    ".obsidian/plugins/engram-quest/bundled-skills/quest-map/scripts/list_quest_icons.sh": "",
+    ".obsidian/plugins/engram-quest/bundled-skills/memory-map/skills.md": "",
+    ".obsidian/plugins/engram-quest/bundled-skills/memory-map/references/create.md": "",
+    ".obsidian/plugins/engram-quest/bundled-skills/memory-map/references/update.md": "",
+    ".obsidian/plugins/engram-quest/bundled-skills/memory-map/references/explain.md": "",
+    ".obsidian/plugins/engram-quest/bundled-skills/memory-map/references/user-guide.md": "",
+    ".obsidian/plugins/engram-quest/bundled-skills/memory-map/references/obsidian-cli.md": "",
+    ".obsidian/plugins/engram-quest/bundled-skills/memory-map/scripts/search_vault.sh": "",
+    ...overrides,
+  };
+}
+
 describe("installer script path rewriting", () => {
   it("rewrites bash scripts/ to skill-relative path in SKILL.md for claude", async () => {
     const fakeSkillMd = [
@@ -98,5 +122,22 @@ describe("installer script path rewriting", () => {
     const sh = entries.find(e => e.path === ".claude/skills/engram-quest-review-deck/scripts/get_mtime.sh");
 
     expect(sh.content).toBe(shContent); // untouched
+  });
+});
+
+describe("installer quest-map reference assets", () => {
+  it("installs challenge-formats.md with the quest-map skill", async () => {
+    const entries = await installer.getInstallEntries(
+      "claude",
+      makeAdapter(makeAllBundledFiles()),
+      ".obsidian",
+    );
+
+    const challengeFormats = entries.find(
+      (entry) => entry.path === ".claude/skills/engram-quest-quest-map/references/challenge-formats.md",
+    );
+
+    expect(challengeFormats).toBeDefined();
+    expect(challengeFormats.content).toBe("iframe docs");
   });
 });

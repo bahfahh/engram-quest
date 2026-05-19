@@ -25,28 +25,12 @@ function isZh(deps, settings) {
   return deps.getLanguage(settings) === "zh-tw";
 }
 
-async function markNodeCompleted(app, sourcePath, nodeId) {
-  if (!sourcePath || !nodeId) return;
-  let file = app.vault.getAbstractFileByPath(sourcePath);
-  if (!file) return;
-  let content = await app.vault.read(file);
-  let lines = content.split('\n');
-  let nodeLineIdx = -1, nodeIndentLen = 0;
-  for (let i = 0; i < lines.length; i++) {
-    let trimmed = lines[i].trim();
-    let indent = lines[i].length - lines[i].trimStart().length;
-    if (trimmed === `- id: ${nodeId}` && indent <= 2) { nodeLineIdx = i; nodeIndentLen = indent; break; }
-  }
-  if (nodeLineIdx === -1) return;
-  let propIndent = ' '.repeat(nodeIndentLen + 2);
-  for (let i = nodeLineIdx + 1; i < lines.length; i++) {
-    let trimmed = lines[i].trim();
-    let indent = lines[i].length - lines[i].trimStart().length;
-    if (trimmed.startsWith('- id:') && indent <= nodeIndentLen) break;
-    if (trimmed.startsWith('completed:')) { lines[i] = propIndent + 'completed: true'; await app.vault.modify(file, lines.join('\n')); return; }
-  }
-  lines.splice(nodeLineIdx + 1, 0, propIndent + 'completed: true');
-  await app.vault.modify(file, lines.join('\n'));
+function markNodeCompleted(nodeId, result = {}) {
+  return {
+    nodeId,
+    completed: true,
+    scorePct: Number.isFinite(Number(result.scorePct)) ? Math.round(Number(result.scorePct)) : 100,
+  };
 }
 
 function setSolved(buttons, onSolved, feedbackEl) {
@@ -63,7 +47,7 @@ function setSolved(buttons, onSolved, feedbackEl) {
     feedbackEl.style.borderColor = "#22c55e";
     feedbackEl.style.color = "#15803d";
   }
-  window.setTimeout(() => onSolved(true), 600);
+  window.setTimeout(() => onSolved(true, { scorePct: 100 }), 600);
 }
 
 function getChallengeQuestionText(question) {
@@ -314,7 +298,7 @@ function renderQuestChallenge(container, challenge, difficulty, onSolved, settin
       });
 
       let btn = roundBody.createEl("button", { text: zh ? "繼續 →" : "Continue →", attr: { class: "qm-continue-btn" } });
-      btn.addEventListener("click", () => onSolved());
+      btn.addEventListener("click", () => onSolved(true, { scorePct: pct }));
     }
 
     renderCurrentQuestion();
@@ -400,7 +384,7 @@ function renderQuestChallenge(container, challenge, difficulty, onSolved, settin
           buttons[challenge.answer].style.color = "white";
           buttons[challenge.answer].style.borderColor = "#22c55e";
           handleWrong(wrapper);
-          window.setTimeout(() => onSolved(false), 1200);
+          window.setTimeout(() => onSolved(false, { scorePct: 0 }), 1200);
         }
         return;
       }
@@ -1005,6 +989,66 @@ function renderQuestChallenge(container, challenge, difficulty, onSolved, settin
     return;
   }
 
+  if (challenge.type === "iframe") {
+    let frameHeight = Number.isFinite(Number(challenge.height)) ? Math.max(180, Math.min(900, Math.round(Number(challenge.height)))) : 480;
+    let box = wrapper.createEl("div", { attr: { style: "border:1px solid var(--background-modifier-border);border-radius:14px;overflow:hidden;background:var(--background-secondary)" } });
+    let status = wrapper.createEl("div", { attr: { style: "margin-top:10px;font-size:12px;color:var(--text-muted);line-height:1.5" } });
+    let iframe = null;
+    let resolved = challenge.html || "";
+
+    function showIframeError(message) {
+      box.empty();
+      box.createEl("div", { text: message, attr: { style: "padding:14px 16px;color:#dc2626;background:#fef2f2;border:1px solid #fca5a5;font-size:13px;line-height:1.5" } });
+    }
+
+    (async () => {
+      try {
+        if (!resolved) {
+          showIframeError(zh ? "iframe 題型缺少 html 欄位。" : "Iframe challenge is missing an html field.");
+          return;
+        }
+        if (app.vault.adapter.exists && !(await app.vault.adapter.exists(resolved))) {
+          showIframeError(zh ? `找不到 HTML 檔案：${resolved}` : `HTML file not found: ${resolved}`);
+          return;
+        }
+        let html = await app.vault.adapter.read(resolved);
+        iframe = box.createEl("iframe", {
+          attr: {
+            sandbox: "allow-scripts",
+            srcdoc: html,
+            style: `display:block;width:100%;height:${frameHeight}px;border:0;background:white;`,
+          },
+        });
+        status.textContent = zh ? "完成互動後會自動前進。" : "Complete the interaction to continue.";
+        let handler = (event) => {
+          if (iframe && event.source && event.source !== iframe.contentWindow) return;
+          let data = event.data || {};
+          if (!data || typeof data !== "object") return;
+          if (data.type === "engram-quest-resize") {
+            let nextHeight = Math.max(180, Math.min(900, Math.round(Number(data.height) || frameHeight)));
+            iframe.style.height = nextHeight + "px";
+          }
+          if (data.type === "engram-quest-solved") {
+            let scorePct = Math.max(0, Math.min(100, Math.round(Number(data.score) || 0)));
+            status.textContent = zh ? `已完成：${scorePct}%` : `Completed: ${scorePct}%`;
+            window.setTimeout(() => onSolved(true, { scorePct }), 250);
+          }
+        };
+        window.addEventListener("message", handler);
+        if (deps.registerCleanup) deps.registerCleanup(() => window.removeEventListener("message", handler));
+        iframe.addEventListener("load", () => {
+          iframe.contentWindow?.postMessage({
+            type: "engram-quest-theme",
+            dark: activeDocument.body.classList.contains("theme-dark"),
+          }, "*");
+        });
+      } catch (error) {
+        showIframeError((zh ? "HTML 題型載入失敗：" : "Failed to load iframe challenge: ") + String(error && error.message || error));
+      }
+    })();
+    return;
+  }
+
   if (challenge.type === "image-occlusion" && challenge.image) {
     let expected = deps.collectExpectedAnswers(challenge);
     let resource = deps.getQuestImageResource(app, challenge.image, sourcePath);
@@ -1133,6 +1177,19 @@ function openQuestChapterModal(app, nodes, activeIndex, styleName, difficulty, s
   modal.modalEl.addClass("qm-modal");
   let currentIndex = activeIndex;
   let gameState = { score: 0, lives: 3, coins: 100, streak: 0 };
+  let scorePcts = [];
+  let cleanupFns = [];
+  function registerCleanup(fn) {
+    if (typeof fn === "function") cleanupFns.push(fn);
+  }
+  function runCleanups() {
+    let pending = cleanupFns;
+    cleanupFns = [];
+    pending.forEach((fn) => {
+      try { fn(); } catch (error) { console.warn("EngramQuest: quest cleanup failed", error); }
+    });
+  }
+  modal.onClose = runCleanups;
   let theme = deps.getQuestTheme(styleName, currentIndex, {
     ocean: { colors: [{ g1: "#60a5fa", g2: "#2563eb" }] },
     forest: { colors: [{ g1: "#4ade80", g2: "#16a34a" }] },
@@ -1149,8 +1206,9 @@ function openQuestChapterModal(app, nodes, activeIndex, styleName, difficulty, s
     wrap.createEl("div", { attr: { style: "font-size:64px;line-height:1;" } }).textContent = "🏆";
     wrap.createEl("div", { attr: { style: "font-size:22px;font-weight:800;color:var(--text-normal);" } }).textContent = deps.t ? deps.t(settings, "QUEST_COMPLETE") : (zh ? "Quest 通關！🏆" : "Quest Complete! 🏆");
     wrap.createEl("div", { attr: { style: "font-size:13px;color:var(--text-muted);line-height:1.6;max-width:260px;" } }).textContent = `${nodes.length} ${zh ? "個章節全部完成" : "chapters completed"}`;
-    if (gameState.score > 0) {
-      wrap.createEl("div", { attr: { style: "font-size:28px;font-weight:800;color:var(--text-normal);margin-top:4px;" } }).textContent = gameState.score + " pts";
+    if (scorePcts.length > 0) {
+      let avgScorePct = Math.round(scorePcts.reduce((sum, scorePct) => sum + scorePct, 0) / scorePcts.length);
+      wrap.createEl("div", { attr: { style: "font-size:28px;font-weight:800;color:var(--text-normal);margin-top:4px;" } }).textContent = avgScorePct + "%";
     }
     let btn = wrap.createEl("button", { attr: { style: "margin-top:12px;border-radius:99px;padding:14px 32px;font-size:15px;font-weight:700;cursor:pointer;border:none;background:linear-gradient(135deg,#4f46e5,#818cf8);color:#fff;box-shadow:0 4px 16px rgba(79,70,229,0.4);" } });
     btn.textContent = zh ? "關閉" : "Close";
@@ -1160,6 +1218,7 @@ function openQuestChapterModal(app, nodes, activeIndex, styleName, difficulty, s
   function render() {
     let node = nodes[currentIndex];
     let zh = isZh(deps, settings);
+    runCleanups();
     modal.contentEl.empty();
     modal.modalEl.style.cssText = "width:min(92vw,820px);max-width:none;max-height:90vh;overflow:hidden;display:flex;flex-direction:column";
     modal.contentEl.style.cssText = "padding:0;flex:1;display:flex;flex-direction:column;overflow:hidden;min-height:0";
@@ -1200,16 +1259,20 @@ function openQuestChapterModal(app, nodes, activeIndex, styleName, difficulty, s
     }
 
     if (node.challenge) {
-      deps.renderQuestChallenge(content, node.challenge, difficulty, () => {
-        markNodeCompleted(app, sourcePath, node.id);
-        if (onComplete) onComplete(node.id, currentIndex);
+      deps.renderQuestChallenge(content, node.challenge, difficulty, (correct, result = {}) => {
+        const completion = markNodeCompleted(node.id, {
+          ...result,
+          scorePct: result.scorePct ?? (correct ? 100 : 0),
+        });
+        scorePcts.push(completion.scorePct);
+        if (onComplete) onComplete(node.id, currentIndex, completion);
         if (currentIndex < nodes.length - 1) {
           currentIndex += 1;
           render();
         } else {
           showComplete();
         }
-      }, settings, app, sourcePath, deps, gameState);
+      }, settings, app, sourcePath, { ...deps, registerCleanup }, gameState);
       // attach zoom after challenge renders (skip occlusion — it has its own reveal mechanic)
       if (node.challenge.type !== "image-occlusion") {
         attachImgZoom(content);
@@ -1227,11 +1290,19 @@ function openQuestChapterModal(app, nodes, activeIndex, styleName, difficulty, s
     });
     next.addEventListener("click", () => {
       if (currentIndex < nodes.length - 1) {
-        if (!nodes[currentIndex].challenge) markNodeCompleted(app, sourcePath, nodes[currentIndex].id);
+        if (!nodes[currentIndex].challenge) {
+          let completion = markNodeCompleted(nodes[currentIndex].id);
+          scorePcts.push(completion.scorePct);
+          if (onComplete) onComplete(nodes[currentIndex].id, currentIndex, completion);
+        }
         currentIndex += 1;
         render();
       } else {
-        if (!nodes[currentIndex].challenge) markNodeCompleted(app, sourcePath, nodes[currentIndex].id);
+        if (!nodes[currentIndex].challenge) {
+          let completion = markNodeCompleted(nodes[currentIndex].id);
+          scorePcts.push(completion.scorePct);
+          if (onComplete) onComplete(nodes[currentIndex].id, currentIndex, completion);
+        }
         showComplete();
       }
     });

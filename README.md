@@ -57,7 +57,8 @@ A three-stage recall system that builds real memory — not just familiarity:
 
 Transforms any note into a game-like island map, embedded directly in your vault as a `.md` file.
 
-- **5 challenge types:** multiple-choice, cloze fill-in, ordering, matching, and **image occlusion** (mask regions of your own images as questions)
+- **15 challenge types:** quiz, true/false, cloze, input, ordering, matching, countdown, snapshot, auction, timeline, chain, memory palace, image quiz, image occlusion, and iframe HTML simulations.
+- **Persistent progress:** completed nodes, progress, and best scores are stored separately from quest YAML, so AI can update a quest without wiping your progress.
 - **Difficulty tiers:** Easy / Medium / Hard — ask your AI for the level you need
 - **5 visual themes:** Sky Island, Sci-Fi, RPG, Ocean, Minimal
 - **Boss Battle** — a chapter mastery test at the end of each stage
