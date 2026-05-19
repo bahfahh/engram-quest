@@ -208,6 +208,10 @@ Design guidance:
 - The statement must be unambiguous. Avoid "sometimes true" situations.
 - Best for easy difficulty — it's a 50/50 guess, so pair with a good hint or explanation.
 
+Multi-question form (`questions_json`):
+- Each item uses `q` for the statement text (same convention as other types) and `ans` for the boolean.
+- `{"q":"Vercel runs at the edge.","ans":true}` is correct; do not put the text in `statement` inside an item.
+
 ---
 
 ### order

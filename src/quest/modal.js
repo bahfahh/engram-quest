@@ -208,7 +208,7 @@ function renderQuestChallenge(container, challenge, difficulty, onSolved, settin
         prompt: q.prompt || challenge.prompt,
         options: qOpts,
         answer: qAns,
-        statement: q.statement || "",
+        statement: q.statement || q.q || q.question || "",
         sentence: q.sentence || "",
         keywords: q.keywords || challenge.keywords,
         answers: q.answers || challenge.answers,
