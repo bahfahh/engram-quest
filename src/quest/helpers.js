@@ -316,13 +316,15 @@ function getQuestTheme(themeName, nodeIndex, themes) {
 
 function getQuestNodePositions(nodeCount) {
   if (nodeCount === 0) return [];
-  if (nodeCount === 1) return [{ cx: 400, cy: 240 }];
-  // Vertical pattern scaled to new mapH=650 (bottom ~170px reserved for panel)
-  let pattern = [120, 300, 90, 280, 130, 310, 80, 270, 110];
-  // ~200px spacing → 4-5 islands visible at once in a ~900px container
-  let spacing = 200;
+  if (nodeCount === 1) return [{ cx: 420, cy: 280 }];
+  // Gentle wave inside a safe band [210,345] on the mapH=650 canvas:
+  // the top margin clears the node group, the low band stays above the
+  // bottom progress panel. Mild per-node jitter keeps it organic.
+  let pattern = [230, 340, 215, 330, 240, 345, 210, 335, 225];
+  // ~225px spacing leaves a clear horizontal gap between islands/labels
+  let spacing = 225;
   return Array.from({ length: nodeCount }, (_, index) => ({
-    cx: 130 + index * spacing,
+    cx: 160 + index * spacing,
     cy: pattern[index % pattern.length]
   }));
 }

@@ -56,7 +56,8 @@ function renderQuestMap(nodes, styleName, activeIndex, visitedSet, app, getNodeP
   let glowFilter = isDark ? '<defs><filter id="qmGlow"><feGaussianBlur stdDeviation="2.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>' : '';
   let pathFilterAttr = isDark ? ' filter="url(#qmGlow)"' : '';
   let html = `
-  <div class="qm-scroll-wrapper">
+  <div class="qm-map-outer">
+    <div class="qm-scroll-wrapper">
     <div class="qm-hybrid-container" style="background-image:url('${background}');min-width:${width}px;height:${mapH}px;">
       <svg class="qm-svg-layer" viewBox="0 0 ${width} ${mapH}" preserveAspectRatio="xMinYMin slice">
         ${glowFilter}
@@ -100,6 +101,10 @@ function renderQuestMap(nodes, styleName, activeIndex, visitedSet, app, getNodeP
     `;
   });
 
+  // Close hybrid-container + scroll-wrapper so the panel sits outside the
+  // horizontal scroll area and stays fixed to the viewport.
+  html += "</div></div>";
+
   // Bottom panel
   let currentNode = nodes[activeIndex] || {};
   let progressPct = questProgress && Number.isFinite(questProgress.progressPct) ? questProgress.progressPct : (nodes.length > 0 ? Math.round((completedCount / nodes.length) * 100) : 0);
@@ -130,7 +135,7 @@ function renderQuestMap(nodes, styleName, activeIndex, visitedSet, app, getNodeP
     </div>
   `;
 
-  html += "</div></div>";
+  html += "</div>";
   return html;
 }
 
