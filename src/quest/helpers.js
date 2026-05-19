@@ -97,6 +97,8 @@ function parseQuestMap(markdown) {
       else if (trimmed.startsWith("sentence:")) challenge.sentence = trimmed.slice(9).trim();
       else if (trimmed.startsWith("prompt:")) challenge.prompt = trimmed.slice(7).trim();
       else if (trimmed.startsWith("hint:")) challenge.hint = trimmed.slice(5).trim();
+      else if (trimmed.startsWith("explanation:")) challenge.explanation = trimmed.slice(12).trim();
+      else if (trimmed.startsWith("explain:")) challenge.explain = trimmed.slice(8).trim();
       else if (trimmed.startsWith("link:")) challenge.link = trimmed.slice(5).trim();
       else if (trimmed.startsWith("image:")) challenge.image = trimmed.slice(6).trim();
       else if (trimmed.startsWith("mode:")) challenge.mode = trimmed.slice(5).trim();
@@ -142,7 +144,7 @@ function parseQuestMap(markdown) {
         if (match) challenge.pairs.push(match[1].split(",").map((item) => item.trim()));
       }
 
-      let challengeKeys = ["type:", "question:", "statement:", "sentence:", "prompt:", "hint:", "link:", "image:", "mode:", "options:", "items:", "keywords:", "answers:", "answer:", "reveal_answer:", "region_x:", "region_y:", "region_width:", "region_height:", "region_left_pct:", "region_top_pct:", "region_width_pct:", "region_height_pct:", "pairs:", "- [", "timer:", "coins:", "snapshot_time:", "snapshot_items:", "snapshot_labels:", "slots:", "events:", "chain_items:", "palace_items:", "palace_descs:", "palace_time:", "questions_json:"];
+      let challengeKeys = ["type:", "question:", "statement:", "sentence:", "prompt:", "hint:", "explanation:", "explain:", "link:", "image:", "mode:", "options:", "items:", "keywords:", "answers:", "answer:", "reveal_answer:", "region_x:", "region_y:", "region_width:", "region_height:", "region_left_pct:", "region_top_pct:", "region_width_pct:", "region_height_pct:", "pairs:", "- [", "timer:", "coins:", "snapshot_time:", "snapshot_items:", "snapshot_labels:", "slots:", "events:", "chain_items:", "palace_items:", "palace_descs:", "palace_time:", "questions_json:"];
       if (indent <= 4 && !challengeKeys.some((prefix) => trimmed.startsWith(prefix))) {
         inChallenge = false;
       }
@@ -239,6 +241,7 @@ function normalizeAnswer(value) {
 function collectExpectedAnswers(challenge) {
   let answers = [];
   if (Array.isArray(challenge.answers)) answers.push(...challenge.answers);
+  if (Array.isArray(challenge.keywords)) answers.push(...challenge.keywords);
   if (typeof challenge.answer === "string" && challenge.answer.trim()) answers.push(challenge.answer.trim());
   if (typeof challenge.sentence === "string") {
     (challenge.sentence.match(/\{\{c\d+::(.*?)\}\}/g) || []).forEach((cloze) => {
@@ -254,7 +257,7 @@ function matchesExpectedAnswer(input, expectedAnswers) {
   if (!normalizedInput) return false;
   return expectedAnswers.some((expected) => {
     let normalizedExpected = normalizeAnswer(expected);
-    return normalizedInput === normalizedExpected || normalizedInput.includes(normalizedExpected) || normalizedExpected.includes(normalizedInput);
+    return normalizedInput === normalizedExpected || normalizedInput.includes(normalizedExpected);
   });
 }
 

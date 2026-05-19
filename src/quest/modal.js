@@ -66,6 +66,29 @@ function setSolved(buttons, onSolved, feedbackEl) {
   window.setTimeout(() => onSolved(true), 600);
 }
 
+function getChallengeQuestionText(question) {
+  return question.q || question.question || question.prompt || question.statement || "";
+}
+
+function getChallengeExplanation(question, outerChallenge) {
+  return question.explanation || question.explain || question.hint || outerChallenge.explanation || outerChallenge.explain || outerChallenge.hint || "";
+}
+
+function getExpectedAnswerText(question, outerChallenge, deps) {
+  let opts = question.opts || question.options || outerChallenge.options || [];
+  let ans = question.ans != null ? question.ans : question.answer != null ? question.answer : outerChallenge.answer;
+  if (typeof ans === "number" && opts[ans]) return opts[ans];
+  if (typeof ans === "boolean") return ans ? "True" : "False";
+  if (typeof ans === "string" && ans.trim()) return ans.trim();
+  let expected = deps.collectExpectedAnswers(Object.assign({}, outerChallenge, {
+    sentence: question.sentence || outerChallenge.sentence,
+    answers: question.answers || outerChallenge.answers,
+    keywords: question.keywords || outerChallenge.keywords,
+    answer: ans,
+  }));
+  return expected.join(" / ");
+}
+
 function renderQuestChallenge(container, challenge, difficulty, onSolved, settings, app, sourcePath, deps, gameState) {
   if (!gameState) gameState = { score: 0, lives: 3, coins: 100, streak: 0 };
   let preset = deps.questDifficultyPresets[difficulty] || deps.questDifficultyPresets.medium;
@@ -79,7 +102,7 @@ function renderQuestChallenge(container, challenge, difficulty, onSolved, settin
     let qIdx = 0;
     let roundCoins = challenge.coins || gameState.coins;
     let roundScore = 0;
-    let roundCorrect = 0;
+    let roundResults = [];
 
     // ── Game rules banner ──
     let rulesMap = {
@@ -191,12 +214,14 @@ function renderQuestChallenge(container, challenge, difficulty, onSolved, settin
       }
       updatePips();
       let q = questions[qIdx];
+      let hadWrongAttempt = false;
       let qOpts = q.opts || q.options || challenge.options;
       let qAns = q.ans != null ? q.ans : q.answer != null ? q.answer : challenge.answer;
       let singleType = (challenge.type === "memory-palace" || challenge.type === "snapshot") ? "quiz" : challenge.type;
       let singleChallenge = Object.assign({}, challenge, {
         type: singleType,
         question: q.q || q.question || "",
+        prompt: q.prompt || challenge.prompt,
         options: qOpts,
         answer: qAns,
         statement: q.statement || "",
@@ -204,6 +229,9 @@ function renderQuestChallenge(container, challenge, difficulty, onSolved, settin
         keywords: q.keywords || challenge.keywords,
         answers: q.answers || challenge.answers,
         hint: q.hint || "",
+        explanation: q.explanation || challenge.explanation,
+        explain: q.explain || challenge.explain,
+        __onWrong: () => { hadWrongAttempt = true; },
       });
       delete singleChallenge.questions_json;
       delete singleChallenge.palace_items;
@@ -213,8 +241,16 @@ function renderQuestChallenge(container, challenge, difficulty, onSolved, settin
       if (challenge.type === "auction") singleChallenge.coins = roundCoins;
 
       let qWrap = roundBody.createEl("div", { attr: { class: "qm-round-q" } });
-      renderQuestChallenge(qWrap, singleChallenge, difficulty, (correct) => {
-        if (correct) { roundCorrect++; gameState.streak++; gameState.score += 10; }
+      renderQuestChallenge(qWrap, singleChallenge, difficulty, (correct, result = {}) => {
+        let firstTryCorrect = Boolean(correct && !hadWrongAttempt && !result.revealed);
+        roundResults.push({
+          question: q,
+          correct: Boolean(correct),
+          firstTryCorrect,
+          revealed: Boolean(result.revealed),
+          hadWrongAttempt,
+        });
+        if (firstTryCorrect) { gameState.streak++; gameState.score += 10; }
         else { gameState.streak = 0; if (challenge.type === "countdown") gameState.lives = Math.max(0, gameState.lives - 1); }
         if (challenge.type === "auction") {
           let coinMatch = qWrap.textContent.match(/◈\s*(\d+)/);
@@ -234,9 +270,10 @@ function renderQuestChallenge(container, challenge, difficulty, onSolved, settin
     function showRoundSummary(failed) {
       roundBody.empty();
       updatePips();
-      let pct = Math.round(roundCorrect / questions.length * 100);
-      let isPerfect = roundCorrect === questions.length;
-      let isGood = roundCorrect >= questions.length * 0.7;
+      let firstTryCount = roundResults.filter((result) => result.firstTryCorrect).length;
+      let pct = Math.round(firstTryCount / questions.length * 100);
+      let isPerfect = firstTryCount === questions.length;
+      let isGood = firstTryCount >= questions.length * 0.7;
 
       // ── Score header ──
       let sum = roundBody.createEl("div", { attr: { style: "text-align:center;padding:20px 16px 12px" } });
@@ -252,7 +289,7 @@ function renderQuestChallenge(container, challenge, difficulty, onSolved, settin
       }
       // Score bar
       let scoreRow = sum.createEl("div", { attr: { style: "display:flex;align-items:center;justify-content:center;gap:10px;margin-top:8px" } });
-      scoreRow.createEl("div", { text: `${roundCorrect} / ${questions.length}`, attr: { style: "font-size:22px;font-weight:900;color:var(--text-normal)" } });
+      scoreRow.createEl("div", { text: `${firstTryCount} / ${questions.length}`, attr: { style: "font-size:22px;font-weight:900;color:var(--text-normal)" } });
       let barWrap = scoreRow.createEl("div", { attr: { style: "width:80px;height:8px;background:var(--background-modifier-border);border-radius:99px;overflow:hidden" } });
       barWrap.createEl("div", { attr: { style: `height:100%;width:${pct}%;background:${isPerfect ? "#f59e0b" : isGood ? "#22c55e" : "#ef4444"};border-radius:99px;transition:width .6s` } });
       if (challenge.type === "auction") {
@@ -263,15 +300,17 @@ function renderQuestChallenge(container, challenge, difficulty, onSolved, settin
       let review = roundBody.createEl("div", { attr: { style: "margin-top:4px;padding:14px 16px;border-radius:12px;background:var(--background-secondary);border:1px solid var(--background-modifier-border);text-align:left" } });
       review.createEl("div", { text: zh ? "📖 本關重點" : "📖 Round Review", attr: { style: "font-size:11px;font-weight:700;color:var(--text-faint);letter-spacing:.06em;text-transform:uppercase;margin-bottom:10px" } });
       questions.forEach((q, i) => {
-        let opts = q.opts || q.options || [];
-        let ans = q.ans != null ? q.ans : q.answer;
-        let ansText = typeof ans === "number" && opts[ans] ? opts[ans] : String(ans || "");
+        let result = roundResults[i] || { firstTryCorrect: false, revealed: false, correct: false };
+        let ansText = getExpectedAnswerText(q, challenge, deps);
+        let statusText = result.firstTryCorrect ? (zh ? "答對" : "Correct") : result.revealed ? (zh ? "已揭露" : "Revealed") : (zh ? "需複習" : "Missed");
+        let statusColor = result.firstTryCorrect ? "#22c55e" : result.revealed ? "#f59e0b" : "#ef4444";
         let row = review.createEl("div", { attr: { style: "margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid var(--background-modifier-border)" } });
-        row.createEl("div", { text: `${i + 1}. ${q.q || q.question || ""}`, attr: { style: "font-size:13px;color:var(--text-normal);margin-bottom:4px;line-height:1.4" } });
+        row.createEl("div", { text: `${i + 1}. ${getChallengeQuestionText(q)}`, attr: { style: "font-size:13px;color:var(--text-normal);margin-bottom:4px;line-height:1.4" } });
         let ansRow = row.createEl("div", { attr: { style: "display:flex;align-items:center;gap:6px" } });
-        ansRow.createEl("span", { text: "✓", attr: { style: "color:#22c55e;font-weight:800;font-size:13px" } });
-        ansRow.createEl("span", { text: ansText, attr: { style: "font-size:13px;color:#22c55e;font-weight:600" } });
-        if (q.hint) row.createEl("div", { text: q.hint, attr: { style: "font-size:11px;color:var(--text-muted);margin-top:3px;line-height:1.4" } });
+        ansRow.createEl("span", { text: statusText, attr: { style: `color:${statusColor};font-weight:800;font-size:13px` } });
+        ansRow.createEl("span", { text: ansText, attr: { style: `font-size:13px;color:${statusColor};font-weight:600` } });
+        let explanation = getChallengeExplanation(q, challenge);
+        if (explanation) row.createEl("div", { text: explanation, attr: { style: "font-size:11px;color:var(--text-muted);margin-top:3px;line-height:1.4" } });
       });
 
       let btn = roundBody.createEl("button", { text: zh ? "繼續 →" : "Continue →", attr: { class: "qm-continue-btn" } });
@@ -293,6 +332,7 @@ function renderQuestChallenge(container, challenge, difficulty, onSolved, settin
 
   function handleWrong(element) {
     retryCount += 1;
+    if (typeof challenge.__onWrong === "function") challenge.__onWrong();
     deps.retriggerShake(element);
 
     if (preset.showHint && challenge.hint && !hintNotice) {
@@ -807,6 +847,8 @@ function renderQuestChallenge(container, challenge, difficulty, onSolved, settin
 
   if (challenge.type === "cloze" && challenge.sentence) {
     let expected = deps.collectExpectedAnswers(challenge);
+    let context = challenge.question || challenge.q || challenge.prompt;
+    if (context) wrapper.createEl("p", { text: context, attr: { class: "qm-question-text" } });
     let sentence = wrapper.createEl("div", { attr: { style: "font-size:15px;line-height:1.8;color:var(--text-normal);margin-bottom:12px;padding:14px 16px;border-radius:10px;background:var(--background-secondary);border:1px solid var(--background-modifier-border)" } });
     sentence.appendChild(obsidian.sanitizeHTMLToDom(deps.renderClozeSentence(challenge.sentence, false)));
     let controls = wrapper.createEl("div", { attr: { style: "display:flex;gap:8px;align-items:center;flex-wrap:wrap" } });
@@ -814,11 +856,16 @@ function renderQuestChallenge(container, challenge, difficulty, onSolved, settin
     let button = controls.createEl("button", { text: zh ? "送出" : "Submit", attr: { class: "qm-ch-btn", style: "width:auto;padding:10px 18px" } });
     let result = wrapper.createEl("div", { attr: { style: "margin-top:10px;font-size:13px;color:var(--text-muted)" } });
     let revealButton = null;
-    let revealAnswer = () => {
+    let revealAnswer = (completeAsMiss = false) => {
       sentence.empty();
       sentence.appendChild(obsidian.sanitizeHTMLToDom(deps.renderClozeSentence(challenge.sentence, true)));
       result.textContent = (zh ? "正確答案：" : "Correct answer: ") + expected.join(" / ");
       if (revealButton) revealButton.disabled = true;
+      if (completeAsMiss) {
+        input.disabled = true;
+        button.disabled = true;
+        window.setTimeout(() => onSolved(false, { revealed: true }), 700);
+      }
     };
     let submit = () => {
       if (deps.matchesExpectedAnswer(input.value, expected)) {
@@ -829,7 +876,7 @@ function renderQuestChallenge(container, challenge, difficulty, onSolved, settin
         result.textContent = zh ? "答案不正確。你可以再試一次，或直接顯示答案。" : "That is not correct. Try once more or reveal the answer.";
         if (challenge.reveal_answer !== false && !revealButton) {
           revealButton = controls.createEl("button", { text: deps.translateKey(settings, "SHOW_ANSWER"), attr: { style: "padding:10px 16px;border-radius:8px;background:#475569;color:white;border:none;cursor:pointer;font-size:13px;font-weight:700;white-space:nowrap" } });
-          revealButton.addEventListener("click", revealAnswer);
+          revealButton.addEventListener("click", () => revealAnswer(true));
         }
       }
     };
@@ -846,11 +893,25 @@ function renderQuestChallenge(container, challenge, difficulty, onSolved, settin
     let controls = wrapper.createEl("div", { attr: { style: "display:flex;gap:8px;align-items:center;flex-wrap:wrap" } });
     let input = controls.createEl("input", { attr: { type: "text", placeholder: zh ? "輸入答案" : "Type your answer", class: "qm-ch-input" } });
     let button = controls.createEl("button", { text: zh ? "送出" : "Submit", attr: { class: "qm-ch-btn", style: "width:auto;padding:10px 18px" } });
+    let result = wrapper.createEl("div", { attr: { style: "margin-top:10px;font-size:13px;color:var(--text-muted)" } });
+    let revealButton = null;
+    let revealAnswer = () => {
+      result.textContent = (zh ? "正確答案：" : "Correct answer: ") + expected.join(" / ");
+      input.disabled = true;
+      button.disabled = true;
+      if (revealButton) revealButton.disabled = true;
+      window.setTimeout(() => onSolved(false, { revealed: true }), 700);
+    };
     let submit = () => {
       if (deps.matchesExpectedAnswer(input.value, expected)) {
         setSolved([button], onSolved);
       } else {
         handleWrong(button);
+        result.textContent = zh ? "答案不正確。再試一次，或顯示答案後複習原因。" : "That is not correct. Try once more or reveal the answer.";
+        if (challenge.reveal_answer !== false && !revealButton) {
+          revealButton = controls.createEl("button", { text: deps.translateKey(settings, "SHOW_ANSWER"), attr: { style: "padding:10px 16px;border-radius:8px;background:#475569;color:white;border:none;cursor:pointer;font-size:13px;font-weight:700;white-space:nowrap" } });
+          revealButton.addEventListener("click", revealAnswer);
+        }
       }
     };
     button.addEventListener("click", submit);
@@ -898,11 +959,25 @@ function renderQuestChallenge(container, challenge, difficulty, onSolved, settin
       let controls = wrapper.createEl("div", { attr: { style: "display:flex;gap:8px;align-items:center;flex-wrap:wrap" } });
       let input = controls.createEl("input", { attr: { type: "text", placeholder: zh ? "輸入答案" : "Type your answer", class: "qm-ch-input" } });
       let button = controls.createEl("button", { text: zh ? "送出" : "Submit", attr: { class: "qm-ch-btn", style: "width:auto;padding:10px 18px" } });
+      let result = wrapper.createEl("div", { attr: { style: "margin-top:10px;font-size:13px;color:var(--text-muted)" } });
+      let revealButton = null;
+      let revealAnswer = () => {
+        result.textContent = (zh ? "正確答案：" : "Correct answer: ") + expected.join(" / ");
+        input.disabled = true;
+        button.disabled = true;
+        if (revealButton) revealButton.disabled = true;
+        window.setTimeout(() => onSolved(false, { revealed: true }), 700);
+      };
       let submit = () => {
         if (deps.matchesExpectedAnswer(input.value, expected)) {
           setSolved([button], onSolved);
         } else {
           handleWrong(button);
+          result.textContent = zh ? "答案不正確。再試一次，或顯示答案。" : "That is not correct. Try once more or reveal the answer.";
+          if (challenge.reveal_answer !== false && !revealButton) {
+            revealButton = controls.createEl("button", { text: deps.translateKey(settings, "SHOW_ANSWER"), attr: { style: "padding:10px 16px;border-radius:8px;background:#475569;color:white;border:none;cursor:pointer;font-size:13px;font-weight:700;white-space:nowrap" } });
+            revealButton.addEventListener("click", revealAnswer);
+          }
         }
       };
       button.addEventListener("click", submit);

@@ -292,3 +292,37 @@ describe("parseQuestMap questions_json field", () => {
     expect(cfg.nodes[1].challenge.timer).toBe(10);
   });
 });
+
+describe("parseQuestMap learning feedback fields", () => {
+  it("parses explanation aliases and keyword answers for deterministic feedback", () => {
+    const cfg = parseQuestMap([
+      "version: 1",
+      "nodes:",
+      "  - id: boss",
+      "    title: Boss",
+      "    challenge:",
+      "      type: input",
+      "      question: Rollback is reliable under what condition?",
+      "      keywords: [same connection, same transaction]",
+      "      explanation: Rollback only covers writes in the same transaction scope.",
+    ].join("\n"));
+    const c = cfg.nodes[0].challenge;
+    expect(c.explanation).toBe("Rollback only covers writes in the same transaction scope.");
+    expect(c.keywords).toEqual(["same connection", "same transaction"]);
+  });
+
+  it("parses explain as a compact explanation alias", () => {
+    const cfg = parseQuestMap([
+      "version: 1",
+      "nodes:",
+      "  - id: boss",
+      "    title: Boss",
+      "    challenge:",
+      "      type: truefalse",
+      "      statement: HTTP 200 proves DB state is correct.",
+      "      answer: false",
+      "      explain: Status-only assertions can miss persistence failures.",
+    ].join("\n"));
+    expect(cfg.nodes[0].challenge.explain).toBe("Status-only assertions can miss persistence failures.");
+  });
+});

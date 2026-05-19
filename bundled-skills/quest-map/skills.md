@@ -27,6 +27,16 @@ Quest Map challenges must serve active recall.
 - Only blank high-value memory targets: core terms, critical differences, required steps, easy-to-confuse concepts, and architecture nodes.
 - For image occlusion, only mask meaningful labeled targets or meaningful visual regions. Do not mask decorative areas, whitespace, or low-value text.
 
+## Learning Experience Rule
+
+Quest Map is a playable learning map, not a fixed quiz template.
+
+- Pick mechanics because they help the learner remember, distinguish, sequence, diagnose, or apply an idea.
+- Preserve novelty and rhythm: short lesson -> focused challenge -> short lesson -> transformed challenge -> recap -> boss.
+- Use deterministic interactions for grading. Do not ask open essay questions unless the runtime has AI grading or explicit self-check mode.
+- Every question that could reveal an answer should include `explanation` or `explain` so wrong answers become learning feedback.
+- Fun is valid only when it improves recall or understanding. Do not add game mechanics as decoration.
+
 ## Challenge Quality Rules
 
 ### Challenge Question Requirements
@@ -71,19 +81,21 @@ Default behavior is AI-guided selection.
 ### Two node types
 
 - **Lesson node**: has `summary` + `points` + optional `insight`. No challenge. User reads and clicks Next.
-- **Challenge round**: has `challenge` with `questions_json` (multiple questions). No points. User plays through the round, sees a round summary, then proceeds.
+- **Challenge node**: has `challenge`. It can be a multi-question round with `questions_json`, or one inherently multi-step mechanic such as `order`, `match`, `chain`, `timeline`, `image-quiz`, or `image-occlusion`. No points. User plays the challenge, sees feedback, then proceeds.
 
 ### CRITICAL rules
 
-1. **Every challenge round MUST use `questions_json` with at least 3 questions.** No exceptions — not even for `quiz`, `cloze`, or `truefalse`. A single-question challenge round is forbidden.
-2. **Boss challenge round MUST have 4–6 questions** covering the whole quest.
-3. The quest must feel like a game, not a reading exercise. Aim for at least 60% challenge nodes vs lesson nodes.
-4. **Learning loop rule**: Every challenge round MUST be immediately preceded by its own dedicated lesson node. That lesson must contain the content being tested in the round. One lesson → one round. Do NOT reuse a single lesson to support multiple rounds.
-5. **Boss recap rule**: The node immediately before the boss round MUST be a recap/synthesis lesson that summarizes the key concepts from the entire quest. Do not place the boss round directly after a regular challenge round.
+1. **Basic recall challenge rounds MUST use `questions_json` with at least 3 questions.** This applies to `quiz`, `truefalse`, `cloze`, `input`, `countdown`, and `auction`.
+2. **Inherently multi-step mechanics do NOT use `questions_json`.** Use `order`, `match`, `chain`, `timeline`, `image-quiz`, and `image-occlusion` as standalone challenge nodes when they are the best learning mechanic.
+3. **Boss must test integrated judgment with deterministic grading.** It may be one rich mechanic or a multi-question round, but each answer must be plugin-gradable.
+4. **Boss must not be all cloze or all input.** If the boss uses a single outer `challenge.type`, choose a mechanic that tests synthesis (for example `match`, `chain`, `auction`, or scenario-based `quiz`) and include at most one free-recall item elsewhere in the final section.
+5. The quest must feel like a game, not a reading exercise. Aim for at least 60% challenge nodes vs lesson nodes when the source material is large enough.
+6. **Learning loop rule**: Every challenge node MUST be immediately preceded by its own dedicated lesson node. That lesson must contain the content being tested in the challenge. One lesson -> one challenge. Do NOT reuse a single lesson to support multiple challenge nodes.
+7. **Boss recap rule**: The node immediately before the boss challenge MUST be a recap/synthesis lesson that summarizes the key concepts from the entire quest. Do not place the boss directly after a regular challenge.
 
 CORRECT structure for a medium quest (5 nodes):
 ```
-lesson → round (3q) → lesson → round (4q) → recap lesson → boss round (5q)
+lesson -> round (3q) -> lesson -> match/order/auction challenge -> recap lesson -> boss challenge
 ```
 
 WRONG — forbidden:
@@ -105,12 +117,13 @@ Use `questions_json` — an inline JSON array on one line:
 challenge:
   type: auction
   coins: 100
-  questions_json: [{"q":"Q1","opts":["A","B","C","D"],"ans":1},{"q":"Q2","opts":["A","B"],"ans":0}]
+  questions_json: [{"q":"Q1","opts":["A","B","C","D"],"ans":1,"explanation":"Why B is correct."},{"q":"Q2","opts":["A","B"],"ans":0,"explanation":"Why A is correct."}]
 ```
 
 Each object in the array: `q` (question text), `opts` (options array), `ans` (answer index).
 For cloze: `{"q":"","sentence":"... {{c1::term}} ...","answers":["term"]}`.
 For input: `{"q":"What is X?","keywords":["answer1","answer2"]}`.
+Use `explanation` or `explain` on every question where a wrong answer should teach a misconception.
 
 Minimum questions per round by type:
 
@@ -120,7 +133,7 @@ Minimum questions per round by type:
 | `countdown` | 4–5 | Lives (3) create tension only with enough questions |
 | `snapshot` | 2–3 | Memorize once, test multiple details |
 | `memory-palace` | 2–3 | Memorize map once, recall multiple components |
-| `quiz` / `cloze` / `input` | 1+ | Single-question is fine for these basic types |
+| `quiz` / `cloze` / `input` / `truefalse` | 3+ | Basic mechanics need multiple questions to feel like a round |
 
 ### Types that are inherently single-question
 
@@ -141,9 +154,10 @@ Minimum questions per round by type:
 3. Analyze the source material and identify content characteristics (see Challenge Type Selection table).
 4. Design the quest structure:
    - Scale total node count to source material size (see Node count table above).
-   - Every challenge round MUST use `questions_json` with **at least 3 questions** — no exceptions, including quiz/cloze/truefalse.
-   - Boss round MUST have 4–6 questions.
-   - **Each challenge round must be immediately preceded by its own lesson node** — one lesson per round, no sharing.
+   - Basic challenge rounds MUST use `questions_json` with **at least 3 questions**.
+   - Inherently multi-step mechanics should be standalone challenge nodes.
+   - Boss must be deterministic and plugin-gradable, not a free-form essay.
+   - **Each challenge node must be immediately preceded by its own lesson node** — one lesson per challenge, no sharing.
    - **The node before the boss round must be a recap lesson** summarizing the whole quest.
    - CRITICAL: at least 2 different challenge types across the quest. Do NOT use quiz for everything.
 5. Choose challenge type based on difficulty, source material, and the Challenge Type Selection table.
@@ -184,11 +198,12 @@ Every quest MUST follow a difficulty ramp — regardless of the user-requested d
 | Boss round | Synthesis — can the learner integrate everything? | `match`, `cloze` (hard blanks), `input`, `auction`, `countdown` (short timer) | Scenario-based: multi-step reasoning, cross-concept integration |
 
 **Boss round MUST:**
-- Use at least 2 different question types
-- Include at least 1 `input` or `cloze` question (free recall, not multiple choice)
-- Ask questions that require connecting concepts from different lessons, not just recalling one fact
-- Use scenario framing: "Given X constraint, which approach and why?" not "What is X?"
-- Have 5–6 questions (not just 4)
+- Test integrated judgment: diagnosis, tradeoff, sequence, concept pairing, or decision rule.
+- Stay deterministic: every answer must be checkable by index, pair, order, or keywords.
+- Avoid all-cloze or all-input bosses. They are usually boring and weak at synthesis.
+- Ask questions that require connecting concepts from different lessons, not just recalling one fact.
+- Use scenario framing with gradable answers: "Given X constraint, which option is safest?" not open-ended "What would you do and why?"
+- Include `explanation` / `explain` for every boss question.
 
 ### easy
 - Round 1: `truefalse` — simple true/false statements
@@ -341,7 +356,7 @@ Use `cloze` or `quiz` instead. Never force an image challenge just because an im
 ## Chapter Design
 
 - **Lesson nodes**: `summary` (1–3 sentences), `points` (short, concrete), optional `insight`. No challenge.
-- **Challenge round nodes**: `challenge` with `questions_json`. No points or summary needed (title + emoji only).
+- **Challenge nodes**: `challenge` only. Basic rounds use `questions_json`; inherently multi-step mechanics stand alone. No points or summary needed (title + emoji only).
 - A challenge must test content from the preceding lesson nodes.
 
 ## Output Skeleton
@@ -385,7 +400,7 @@ nodes:
     challenge:
       type: auction
       coins: 100
-      questions_json: [{"q":"Which plan for unpredictable traffic + budget priority?","opts":["Consumption","App Service","Premium"],"ans":0},{"q":"Which plan eliminates cold start?","opts":["Consumption","App Service","Premium"],"ans":2},{"q":"Which plan charges even when idle?","opts":["Consumption","App Service","Premium"],"ans":1}]
+      questions_json: [{"q":"Which plan for unpredictable traffic + budget priority?","opts":["Consumption","App Service","Premium"],"ans":0,"explanation":"Consumption fits bursty traffic because cost follows execution volume."},{"q":"Which plan eliminates cold start?","opts":["Consumption","App Service","Premium"],"ans":2,"explanation":"Premium keeps instances warm and removes cold-start delay."},{"q":"Which plan charges even when idle?","opts":["Consumption","App Service","Premium"],"ans":1,"explanation":"App Service reserves capacity, so cost continues even without requests."}]
 
   - id: ch3
     title: Durable Functions

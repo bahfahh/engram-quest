@@ -28,7 +28,7 @@ Read this before generating any challenge YAML.
 
 ## Multi-Question Rounds (`questions_json`)
 
-Challenge types that benefit from multiple questions should use `questions_json` — an inline JSON array. The renderer loops through questions, tracks score/lives/coins, and shows a round summary at the end.
+Challenge types that benefit from multiple questions should use `questions_json` — an inline JSON array. The renderer loops through questions, tracks score/lives/coins, and shows a round summary at the end. Score counts first-try correct answers; revealed or recovered answers are shown as review items, not fake perfect scores.
 
 ### Syntax
 
@@ -36,7 +36,7 @@ Challenge types that benefit from multiple questions should use `questions_json`
 challenge:
   type: auction
   coins: 100
-  questions_json: [{"q":"Question 1","opts":["A","B","C","D"],"ans":1},{"q":"Question 2","opts":["X","Y"],"ans":0}]
+  questions_json: [{"q":"Question 1","opts":["A","B","C","D"],"ans":1,"explanation":"Why B is correct."},{"q":"Question 2","opts":["X","Y"],"ans":0,"explanation":"Why X is correct."}]
 ```
 
 ### Round UX behavior
@@ -45,7 +45,7 @@ Every multi-question round displays:
 1. A **game rules banner** at the top explaining the mechanic (auto-generated, not in YAML)
 2. **Progress pips** showing current question / total
 3. **Stats bar** showing lives (countdown) or coins (auction)
-4. A **round summary** at the end with correct count, and a **📖 Review panel** if failed or < 50% correct
+4. A **round summary** at the end with first-try correct count and a review panel explaining missed or revealed answers
 
 Type-specific behavior:
 - `countdown`: each question has its own timer. Wrong = lose a life. ♥ 0 = round ends with failure.
@@ -64,6 +64,8 @@ Type-specific behavior:
 | `answers` | cloze/input | Acceptable answers array |
 | `keywords` | input | Acceptable keywords array |
 | `statement` | truefalse | Statement text (ans = true/false) |
+| `explanation` | all | Why the correct answer is correct; shown in round review |
+| `explain` | all | Compact alias for `explanation` |
 
 ### Examples by type
 
@@ -106,6 +108,28 @@ challenge:
 ### Types that do NOT use `questions_json`
 
 `order`, `match`, `chain`, `timeline`, `image-quiz`, `image-occlusion` — these are already multi-step within one question. Use them as single-question challenges.
+
+---
+
+## Boss Design
+
+Boss challenges should test integrated judgment through deterministic interactions.
+
+- Good boss tasks: diagnose a failure, pick the safest tradeoff, pair symptoms with causes, order a repair sequence, or recall one precise decision rule.
+- Bad boss tasks: five cloze blanks in a row, open essay questions, or generic "what would you do and why?" prompts that the runtime cannot grade.
+- A boss can use one rich mechanic (`match`, `chain`, `auction`, scenario `quiz`) or one multi-question round with one outer type. Do not mix per-question `type` values inside `questions_json`; the renderer uses the outer `challenge.type`.
+- Include `explanation` / `explain` for every boss question.
+
+Example deterministic boss question:
+
+```yaml
+challenge:
+  type: quiz
+  question: API + DB + background job tests use transaction rollback, but data leaks between tests. What is the most likely cause?
+  options: [The test did not wait long enough, App code opened a DB connection outside the test transaction, The HTTP status assertion is wrong, Testcontainers starts too slowly]
+  answer: 1
+  explanation: Transaction rollback only reverts writes inside the same connection and transaction scope. App requests and background jobs commonly use separate connections.
+```
 
 ---
 
@@ -213,13 +237,15 @@ challenge:
   type: input
   question: Fill in the missing term
   keywords: [keyword1, keyword2]
+  explanation: Why this term is the correct recall target
   hint: Optional hint
   link: relative/path/to/source.md
 ```
 
 Fields:
 - `question` (required): the prompt.
-- `keywords` (required): inline array of acceptable answers. Matching is case-insensitive and substring-tolerant.
+- `keywords` (required): inline array of acceptable answers. Matching is case-insensitive; include common synonyms explicitly.
+- `explanation` / `explain` (recommended): why the answer is correct.
 - `hint` (optional).
 - `link` (optional): source note for self-verification.
 
@@ -236,8 +262,10 @@ Fill-in-the-blank within a sentence.
 ```yaml
 challenge:
   type: cloze
+  question: What is the key memory target?
   sentence: Azure data is never used for {{c1::training}}
   answers: [training]
+  explanation: Why this blank matters
   reveal_answer: true
   hint: Optional hint
   link: relative/path/to/source.md
@@ -246,6 +274,8 @@ challenge:
 Fields:
 - `sentence` (required): text with exactly ONE `{{c1::answer}}` blank.
 - `answers` (required): inline array of acceptable inputs.
+- `question` (recommended): context shown before the cloze sentence.
+- `explanation` / `explain` (recommended): why the blank matters.
 - `reveal_answer` (optional, default true): show a "reveal" button after wrong attempts.
 - `hint`, `link` (optional).
 
@@ -253,6 +283,7 @@ CRITICAL constraints:
 - **ONE blank per challenge.** Multiple `{{c1::}}` + `{{c2::}}` are NOT supported — the UI reveals all blanks simultaneously.
 - The sentence must read naturally with `____` replacing the blank.
 - Only blank high-value terms, not numbers or trivial words.
+- Do not create cloze merely by deleting a word from a source sentence. Use it only when the blank strengthens a useful memory object.
 
 ---
 
