@@ -534,6 +534,14 @@ Design guidance:
 - Mode B (keywords) is better for precise term recall (e.g., anatomy labels, protocol names).
 - When in doubt between `image-quiz` and `quiz`: if the note has an image that illustrates the concept, use `image-quiz`. Visual context strengthens memory encoding.
 
+SVG guidance:
+- `image` may point to a `.svg` file. The renderer displays it through an `<img>` tag, so static SVG works well.
+- Create a new SVG only when the picture adds learning value beyond text: architecture structure, flow branching, color/status systems, missing-layer diagnosis, or geometric tradeoffs.
+- Do not use SVG for plain text lists, formulas, simple definitions, or comparison tables. Those are usually better as `quiz`, `cloze`, `match`, or `auction`.
+- Keep SVG files static and self-contained: no JavaScript, animation, external URLs, remote fonts, or external resources.
+- Use a readable canvas size around 460-500px by 260-330px and built-in fonts such as `sans-serif` or `monospace`.
+- Store generated SVGs near the quest/source note or under `assets/svg-quiz/`, then reference them with a vault-relative path.
+
 ---
 
 ### image-occlusion (Gemini only)

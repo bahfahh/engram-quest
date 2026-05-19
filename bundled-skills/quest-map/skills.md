@@ -353,6 +353,54 @@ Bad: "What is this?" (no understanding required)
 If no target in the image passes Step 1 AND Step 2, do NOT generate image-quiz or image-occlusion for that chapter.
 Use `cloze` or `quiz` instead. Never force an image challenge just because an image exists in the note.
 
+### Self-made SVG images for `image-quiz`
+
+If the source note has no suitable existing image, you may create a static SVG and reference it from `image-quiz` when the concept gains real learning value from spatial structure.
+
+Use SVG when the diagram itself adds information that plain text cannot express well:
+
+| Content trait | Why SVG helps | Typical examples |
+|---|---|---|
+| Flow or architecture structure | Spatial relationships are the recall target | Fan-out/Fan-in, layered defense stacks |
+| Color or status systems | The color/status mapping is what learners must remember | Event Storming sticky colors, OFFLINE defense layers |
+| Gap or error diagnosis | Learners must inspect the whole diagram to find what is missing or broken | `???` missing layer, warning-marked failure point |
+| Parallel vs sequential contrast | Branching is clearer visually than in prose | Chaining vs Fan-out |
+| Geometric tradeoffs | Position represents meaning | CAP triangle, risk matrix, spectrum placement |
+
+Do not create SVG for content that is clearer as text:
+
+| Content trait | Better challenge type |
+|---|---|
+| Math formulas | `cloze` |
+| Plain definitions or text lists | `quiz` / `truefalse` |
+| Simple linear steps with no branching | `order` / `chain` |
+| Comparison tables | `match` / `auction` |
+| Abstract concepts with no spatial relationship | `cloze` / `quiz` |
+
+Decision test: **Does the picture add information that text alone does not?** If yes, create SVG. If no, use a text-based challenge.
+
+SVG requirements:
+
+1. Store the SVG in the same folder as the quest/source note or under `assets/svg-quiz/`.
+2. Reference it with a vault-relative path: `image: assets/svg-quiz/topic-diagram.svg`.
+3. Keep the canvas around 460-500px wide and 260-330px tall so it reads well in the modal.
+4. Use only static SVG: no JavaScript, animation, external URLs, remote fonts, or external resources.
+5. Use built-in fonts such as `font-family="sans-serif"` or `font-family="monospace"`.
+6. UTF-8 text is acceptable, including Chinese, as long as labels stay readable at modal size.
+7. Add a small bottom prompt such as `Q: Which defense layer is offline?` only when it helps the image remain self-contained.
+
+Example:
+
+```yaml
+challenge:
+  type: image-quiz
+  image: assets/svg-quiz/chatbot-defense-audit.svg
+  question: According to this security architecture audit, why can indirect prompt injection reach the LLM?
+  options: [The CDN DDoS rule is disabled, The model guardrail is offline so injected instructions enter the LLM, The API gateway rate limit is too high, The token budget is missing]
+  answer: 1
+  explanation: The diagram marks the model guardrail layer as offline, which leaves the LLM exposed to injected instructions.
+```
+
 ## Chapter Design
 
 - **Lesson nodes**: `summary` (1–3 sentences), `points` (short, concrete), optional `insight`. No challenge.
