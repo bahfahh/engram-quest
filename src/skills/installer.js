@@ -66,6 +66,9 @@ function createInstaller() {
       { source: "quest-map/references/user-guide.md", target: "references/user-guide.md" },
       { source: "quest-map/references/obsidian-cli.md", target: "references/obsidian-cli.md" },
       { source: "quest-map/references/challenge-formats.md", target: "references/challenge-formats.md" },
+      { source: "quest-map/references/visual-challenges.md", target: "references/visual-challenges.md" },
+      { source: "quest-map/references/parser-constraints.md", target: "references/parser-constraints.md" },
+      { source: "quest-map/references/yaml-template.md", target: "references/yaml-template.md" },
       { source: "quest-map/scripts/list_quest_icons.sh", target: "scripts/list_quest_icons.sh" }
     ],
     "review-deck": [

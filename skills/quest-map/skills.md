@@ -245,14 +245,14 @@ Every quest MUST follow a difficulty ramp — regardless of the user-requested d
 - Round 1: `quiz` — direct recall
 - Round 2: `cloze`, `order`, or `countdown` — applied recall
 - Round 3+: `auction`, `snapshot`, or `memory-palace` — comparative reasoning
-- Boss: `match` + `cloze` (non-obvious blanks) + 1 `input` — no hints
+- Boss: if the topic has spatial structure (architecture / pipeline / dataflow) or time-based behavior (timer / rate / state), default to `image-quiz` with a self-authored SVG, or `iframe` with a self-authored HTML simulation. Otherwise `match` + `cloze` (non-obvious blanks) + 1 `input` (mixed via per-question type override) — no hints.
 - Use plausible distractors that test real confusion points
 
 ### hard
 - Round 1: `quiz` or `cloze` — no hints, plausible distractors
 - Round 2: `countdown` (15s timer), `chain`, or `timeline` — pressure + sequence
 - Round 3+: `auction` (easily confused concepts), `match` (cross-concept pairing)
-- Boss: `input` + `cloze` (hard blanks) + `countdown` (10s timer) — scenario-based, no hints
+- Boss: if the topic has spatial structure or time-based behavior, default to `image-quiz` with a self-authored SVG, or `iframe` with a self-authored HTML simulation; scenario framing, no hints. Otherwise scenario-based `input` + `cloze` (hard blanks) + `countdown` (10s timer) (mixed via per-question type override).
 - **Scenario over trivia**: "Why choose X over Y given constraint Z?" not "What is X?"
 - **Traceability**: all hard challenges **MUST** include the `link` field pointing back to the source note
 
@@ -265,81 +265,20 @@ AI must analyze the source note content before choosing challenge types. Do NOT 
 | Dense structured info (tables, layers, pipelines) | `snapshot`, `memory-palace` |
 | Easily confused concepts, multiple plausible answers | `auction` |
 | Fluency / basic recall drill | `countdown` |
-| Step-by-step process, causal flow | `order`, `chain` |
+| Discrete labeled steps the learner must recall in order (no spatial branching) | `order`, `chain` |
 | Historical evolution, version timeline | `timeline` |
 | Terminology, fill-in-the-blank | `cloze` |
-| Diagram or architecture image | `image-quiz`, `image-occlusion` |
-| Dynamic simulation, timed process, or interactive system behavior | `iframe` |
+| **Spatial structure**: architecture, pipeline, dataflow, layered stack, fan-out / fan-in, tradeoff axis (CAP, latency vs cost) | `image-quiz` — use existing image when present, otherwise author an SVG. See `references/visual-challenges.md`. |
+| **Time- or rate-based behavior**: timer, throttle, TTL, retry / backoff, rate limit, state machine, scheduler, queue dynamics | `iframe` — author a self-contained HTML simulation. See `references/visual-challenges.md`. |
 | True/false factual statement | `truefalse` |
 | Concept pairing | `match` |
 | Free recall, precise term | `input` |
 
+The two visual / interactive rows are triggered by **content signals in the source note**, not by whether an asset already exists. When the note describes a pipeline or a rate limit but has no diagram, that is still a match — author the SVG or HTML.
+
 ## Parser Constraints
 
-The plugin uses a lightweight parser. Keep these rules strict.
-
-### Arrays must be inline
-
-Correct:
-```yaml
-options: [A, B, C, D]
-answers: [CloudFront CDN, CDN]
-```
-
-Wrong:
-```yaml
-options:
-  - A
-  - B
-```
-
-### Avoid ASCII commas inside array values
-
-The parser splits on commas. Rephrase option text or accepted answers to avoid accidental splits.
-
-### Cloze: one blank per challenge
-
-Each cloze challenge **MUST** contain exactly ONE `{{c1::...}}` blank.
-Multiple blanks (`{{c1::...}}` + `{{c2::...}}`) are NOT supported — the UI reveals all blanks simultaneously, destroying the recall test.
-
-Wrong:
-```yaml
-sentence: "{{c1::Azure}} uses {{c2::RBAC}} for access control"
-```
-
-Correct:
-```yaml
-sentence: "Azure uses {{c1::RBAC}} for access control"
-```
-
-### Use flat fields for image-occlusion bbox
-
-Canonical format: use percentage-based coordinates with `region_left_pct`, `region_top_pct`, `region_width_pct`, `region_height_pct` (0–100, relative to image width/height).
-Pixel coords (`region_x`, `region_y`, `region_width`, `region_height`) are legacy-compatible.
-
-Only Gemini should produce these coordinates (it has native bounding-box detection). Other models should use `image-quiz` instead.
-
-Correct:
-```yaml
-region_left_pct: 20
-region_top_pct: 22
-region_width_pct: 32
-region_height_pct: 28
-```
-
-Legacy-compatible:
-```yaml
-region_x: 295
-region_y: 292
-region_width: 640
-region_height: 86
-```
-
-Wrong:
-```yaml
-region:
-  x: 295
-```
+The plugin uses a lightweight line-oriented parser. Arrays must be inline, cloze allows exactly one `{{c1::...}}` blank per challenge, image-occlusion uses flat `region_*_pct` fields, and option/answer text must not contain ASCII commas. See `references/parser-constraints.md` for the full rules with examples.
 
 ## Challenge Formats
 
@@ -347,90 +286,11 @@ For the full list of all 15 challenge types with YAML syntax, fields, behavior, 
 
 Supported types: `quiz`, `truefalse`, `order`, `match`, `input`, `cloze`, `countdown`, `snapshot`, `auction`, `timeline`, `chain`, `memory-palace`, `image-quiz`, `image-occlusion`, `iframe`.
 
-## Image Challenge Selection Rules
+## Visual & Interactive Challenges
 
-**Default rule: if the source note has images, use `image-quiz` for at least one challenge round.** Visual questions are more engaging and strengthen memory encoding — don't skip them just because text-only is easier to generate.
+Every medium or hard quest should include at least one visual or interactive challenge — `image-quiz` (existing image OR self-authored SVG), `image-occlusion` (Gemini only), or `iframe` (self-authored HTML). The absence of an existing asset is not a reason to skip: when the source note describes spatial structure or time-based behavior, author the SVG or HTML yourself.
 
-When a note contains images, decide between `image-quiz` and `image-occlusion`:
-
-**Model capability gate (mandatory)**
-
-- Gemini → may use `image-occlusion` or `image-quiz`
-- All other models (Claude, Cursor, etc.) → must use `image-quiz`. Do NOT generate `image-occlusion`.
-
-**Step 1 — Memory value test (mandatory)**
-
-Ask: "Is this something the learner must memorize — something that would appear on a test or is a core concept they need to retain?"
-
-- PASS: specific architecture node names, organ labels, protocol names, algorithm names, values the learner would be tested on
-- FAIL: generic labels like "Input" / "Output" / "Model", model names that appear everywhere in the note, arrows, connectors, decorative icons, anything obvious from context
-
-**Step 2 — Recall test (mandatory)**
-
-Ask: "If this image is shown, does the question require the learner to retrieve knowledge from memory?"
-
-- If the answer is obvious from the image alone without prior study → FAIL
-- Only PASS if the question creates genuine retrieval demand
-
-**Step 3 — Question design**
-
-The question must test understanding, not just label recognition. "What is this?" alone is not enough.
-
-Good: "What is the responsibility of this component?" / "Why is X used here instead of Y?" / "What is the output of this step?"
-Bad: "What is this?" (no understanding required)
-
-**Fallback rule (mandatory)**
-
-If no target in the image passes Step 1 AND Step 2, do NOT generate image-quiz or image-occlusion for that chapter.
-Use `cloze` or `quiz` instead. Never force an image challenge just because an image exists in the note.
-
-### Self-made SVG images for `image-quiz`
-
-If the source note has no suitable existing image, you may create a static SVG and reference it from `image-quiz` when the concept gains real learning value from spatial structure.
-
-Use SVG when the diagram itself adds information that plain text cannot express well:
-
-| Content trait | Why SVG helps | Typical examples |
-|---|---|---|
-| Flow or architecture structure | Spatial relationships are the recall target | Fan-out/Fan-in, layered defense stacks |
-| Color or status systems | The color/status mapping is what learners must remember | Event Storming sticky colors, OFFLINE defense layers |
-| Gap or error diagnosis | Learners must inspect the whole diagram to find what is missing or broken | `???` missing layer, warning-marked failure point |
-| Parallel vs sequential contrast | Branching is clearer visually than in prose | Chaining vs Fan-out |
-| Geometric tradeoffs | Position represents meaning | CAP triangle, risk matrix, spectrum placement |
-
-Do not create SVG for content that is clearer as text:
-
-| Content trait | Better challenge type |
-|---|---|
-| Math formulas | `cloze` |
-| Plain definitions or text lists | `quiz` / `truefalse` |
-| Simple linear steps with no branching | `order` / `chain` |
-| Comparison tables | `match` / `auction` |
-| Abstract concepts with no spatial relationship | `cloze` / `quiz` |
-
-Decision test: **Does the picture add information that text alone does not?** If yes, create SVG. If no, use a text-based challenge.
-
-SVG requirements:
-
-1. Store the SVG in the same folder as the quest/source note or under `assets/svg-quiz/`.
-2. Reference it with a vault-relative path: `image: assets/svg-quiz/topic-diagram.svg`.
-3. Keep the canvas around 460-500px wide and 260-330px tall so it reads well in the modal.
-4. Use only static SVG: no JavaScript, animation, external URLs, remote fonts, or external resources.
-5. Use built-in fonts such as `font-family="sans-serif"` or `font-family="monospace"`.
-6. UTF-8 text is acceptable, including Chinese, as long as labels stay readable at modal size.
-7. Add a small bottom prompt such as `Q: Which defense layer is offline?` only when it helps the image remain self-contained.
-
-Example:
-
-```yaml
-challenge:
-  type: image-quiz
-  image: assets/svg-quiz/chatbot-defense-audit.svg
-  question: According to this security architecture audit, why can indirect prompt injection reach the LLM?
-  options: [The CDN DDoS rule is disabled, The model guardrail is offline so injected instructions enter the LLM, The API gateway rate limit is too high, The token budget is missing]
-  answer: 1
-  explanation: The diagram marks the model guardrail layer as offline, which leaves the LLM exposed to injected instructions.
-```
+For the image-quality gate (Step 1–3), the model-capability gate (Gemini-only `image-occlusion`), the SVG decision test + canvas requirements, the iframe decision test + HTML contract, and worked examples — see `references/visual-challenges.md`.
 
 ## Chapter Design
 
@@ -438,84 +298,6 @@ challenge:
 - **Challenge nodes**: `challenge` only. Basic rounds use `questions_json`; inherently multi-step mechanics stand alone. No points or summary needed (title + emoji only).
 - A challenge must test content from the preceding lesson nodes.
 
-## Output Skeleton
+## Output Template & Style
 
-````markdown
----
-tags: [topic-tag]
----
-
-# Title
-
-```quest-map
-version: 1
-style: cyber
-difficulty: medium
-nodes:
-  - id: ch1
-    title: Triggers & Bindings
-    emoji: ⚡
-    summary: Core insight about triggers and bindings.
-    points:
-      - title: Point one
-        body: Why it matters.
-      - title: Point two
-        body: Key detail.
-    insight: Real-world implication.
-
-  - id: ch2
-    title: Hosting Plans
-    emoji: 💰
-    summary: Three hosting options and when to choose each.
-    points:
-      - title: Consumption Plan
-        body: Pay per execution, cold start, 10 min limit.
-      - title: App Service Plan
-        body: Fixed cost, always on, no time limit.
-
-  - id: round1
-    title: Knowledge Auction
-    emoji: 🪙
-    challenge:
-      type: auction
-      coins: 100
-      questions_json: [{"q":"Which plan for unpredictable traffic + budget priority?","opts":["Consumption","App Service","Premium"],"ans":0,"explanation":"Consumption fits bursty traffic because cost follows execution volume."},{"q":"Which plan eliminates cold start?","opts":["Consumption","App Service","Premium"],"ans":2,"explanation":"Premium keeps instances warm and removes cold-start delay."},{"q":"Which plan charges even when idle?","opts":["Consumption","App Service","Premium"],"ans":1,"explanation":"App Service reserves capacity, so cost continues even without requests."}]
-
-  - id: ch3
-    title: Durable Functions
-    emoji: 🔄
-    summary: How Durable Functions solve long-running workflows.
-    points:
-      - title: Three roles
-        body: Starter → Orchestrator → Activity.
-      - title: Deterministic rule
-        body: No DateTime.Now in Orchestrator.
-
-  - id: boss
-    boss: true
-    title: Chain Reaction Boss
-    emoji: 💥
-    challenge:
-      type: chain
-      timer: 25
-      question: Azure Functions request lifecycle in order
-      chain_items: [HTTP Trigger fires, Function host routes, Bindings resolve inputs, Your code executes, Output bindings write]
-      answer: [0, 1, 2, 3, 4]
-```
-````
-
-## Style Guide
-
-Choose the style that fits the topic's mood. When in doubt, `cyber` is a safe default for technical content.
-
-| Style | Best fit |
-|---|---|
-| `sky-island` | airy, philosophical, or conceptual topics |
-| `ocean` | flow-based, layered, or biological systems |
-| `forest` | organic, ecological, or living systems |
-| `galaxy` | abstract, large-scale, or cosmological ideas |
-| `dungeon` | gamified, challenge-heavy, or narrative content |
-| `space` | technology, science, or futurism |
-| `cyber` | programming, AI, architecture, or data systems |
-
-Write `style` inside the code block, not only in frontmatter.
+For the full output skeleton (frontmatter + quest-map block with multi-chapter example) and the style guide that maps topic mood → style name, see `references/yaml-template.md`.
