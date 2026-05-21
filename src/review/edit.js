@@ -431,7 +431,7 @@ async function saveInlineCard(app, sourcePath, card, newData) {
   await app.vault.modify(file, content);
 }
 
-module.exports = { saveTagSourceCard, saveInlineCard, replaceCardInBlock, deleteTagSourceCard, deleteDeckCards, applyFormatToCardBack, refreshTagSourceCard, findCurrentSourceCard };
+module.exports = { saveTagSourceCard, saveInlineCard, replaceCardInBlock, deleteTagSourceCard, deleteDeckCards, removeCardFromContent, applyFormatToCardBack, refreshTagSourceCard, findCurrentSourceCard };
 
 /**
  * Apply a format wrap (== or **) to card.back in the source note.
@@ -454,6 +454,63 @@ async function applyFormatToCardBack(app, card, oldBack, newBack) {
   await app.vault.modify(file, result.content);
   if (card.rawBack !== undefined) card.rawBack = newBack;
   return true;
+}
+
+/**
+ * Remove a single `:: ` card line from content, trying exact front+back first,
+ * then front-only fallback. Operates on the whole content string.
+ */
+function removeDoubleColonLine(content, card, fallbackBack) {
+  const fronts = cardFrontCandidates(card);
+  const backs = cardBackCandidates(card, fallbackBack);
+  for (const front of fronts) {
+    for (const back of backs) {
+      const re = new RegExp(
+        `^[ \t]*${escapeRegExp(front)}[ \t]*::[ \t]*${escapeRegExp(back)}[ \t]*\n?`,
+        "m"
+      );
+      if (re.test(content)) return { content: content.replace(re, ""), modified: true };
+    }
+  }
+  for (const front of fronts) {
+    const reFront = new RegExp(`^[ \t]*${escapeRegExp(front)}[ \t]*::.*\n?`, "m");
+    if (reFront.test(content)) return { content: content.replace(reFront, ""), modified: true };
+  }
+  return { content, modified: false };
+}
+
+/**
+ * Remove a card from note content, supporting all three formats the loader/editor
+ * understand. Mirrors replaceSourceCard's ordering: %%card%% fenced → :: line → Q:/A:.
+ * Without this parity the deleter silently no-ops on %%card%% / Q:A cards, so they
+ * reappear on the next review session.
+ * @returns {{content:string, modified:boolean}}
+ */
+function removeCardFromContent(content, card, fallbackBack) {
+  const hasFinalNewline = content.endsWith("\n");
+  const lines = content.split("\n");
+  if (hasFinalNewline) lines.pop();
+  const joinBack = (arr) => arr.join("\n") + (hasFinalNewline ? "\n" : "");
+
+  // 1. %%card%% fenced block — splice the whole block including both fences
+  const ccRange = findCommentCardRange(lines, card, fallbackBack);
+  if (ccRange) {
+    lines.splice(ccRange.start, ccRange.end - ccRange.start);
+    return { content: joinBack(lines), modified: true };
+  }
+
+  // 2. :: single line
+  const dc = removeDoubleColonLine(joinBack(lines), card, fallbackBack);
+  if (dc.modified) return { content: dc.content, modified: true };
+
+  // 3. Q:/A: block
+  const qaRange = findQaCardRange(lines, card, fallbackBack);
+  if (qaRange) {
+    lines.splice(qaRange.start, qaRange.end - qaRange.start);
+    return { content: joinBack(lines), modified: true };
+  }
+
+  return { content, modified: false };
 }
 
 /**
@@ -481,16 +538,8 @@ async function deleteDeckCards(app, deck) {
         const cardsInFile = deck.cards.filter(c => c.notePath === p);
         let content = await app.vault.read(file);
         for (const card of cardsInFile) {
-          const re = new RegExp(
-            `^[ \t]*${escapeRegExp(card.front)}[ \t]*::[ \t]*${escapeRegExp(card.back)}[ \t]*\n?`,
-            'm'
-          );
-          if (re.test(content)) {
-            content = content.replace(re, '');
-          } else {
-            const reFront = new RegExp(`^[ \t]*${escapeRegExp(card.front)}[ \t]*::.*\n?`, 'm');
-            content = content.replace(reFront, '');
-          }
+          const r = removeCardFromContent(content, card, card.back);
+          if (r.modified) content = r.content;
         }
         await app.vault.modify(file, content);
       }
@@ -520,22 +569,13 @@ async function deleteDeckCards(app, deck) {
 async function deleteTagSourceCard(app, card) {
   if (!card.notePath) return;
 
-  // 1. Remove the `front :: back` line from the ai-cards file
+  // 1. Remove the card from the ai-cards file. Supports %%card%% / :: / Q:A formats —
+  //    matching the editor's parser, so %%card%% and Q:A cards no longer silently survive.
   const file = app.vault.getAbstractFileByPath(card.notePath);
   if (file) {
-    let content = await app.vault.read(file);
-    const re = new RegExp(
-      `^[ \t]*${escapeRegExp(card.front)}[ \t]*::[ \t]*${escapeRegExp(card.back)}[ \t]*\n?`,
-      "m"
-    );
-    if (re.test(content)) {
-      content = content.replace(re, "");
-    } else {
-      // Fallback: match by front only
-      const reFront = new RegExp(`^[ \t]*${escapeRegExp(card.front)}[ \t]*::.*\n?`, "m");
-      content = content.replace(reFront, "");
-    }
-    await app.vault.modify(file, content);
+    const content = await app.vault.read(file);
+    const r = removeCardFromContent(content, card, card.back);
+    if (r.modified) await app.vault.modify(file, r.content);
   }
 
   // 2. Remove SR key

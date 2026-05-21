@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { saveTagSourceCard, saveInlineCard, replaceCardInBlock, applyFormatToCardBack, refreshTagSourceCard, findCurrentSourceCard } from "../src/review/edit.js";
+import { saveTagSourceCard, saveInlineCard, replaceCardInBlock, applyFormatToCardBack, refreshTagSourceCard, findCurrentSourceCard, removeCardFromContent } from "../src/review/edit.js";
 
 // ── replaceCardInBlock (pure, no I/O) ────────────────────────────────────────
 describe("replaceCardInBlock", () => {
@@ -413,5 +413,76 @@ describe("saveInlineCard", () => {
     const card = { front: "What is X?", back: "It is X.", notePath: null };
     await saveInlineCard(app, "nonexistent.md", card, { front: "Q2", back: "A2", hint_l1: "", hint_l2: "", hint_l3: "" });
     expect(app._getWritten()).toBeNull();
+  });
+});
+
+// ── removeCardFromContent (delete parity across 3 formats) ────────────────────
+// Regression: deleter used to handle only `::` lines, so %%card%% and Q:/A: cards
+// silently survived deletion and reappeared on the next review session.
+describe("removeCardFromContent", () => {
+  it("removes a %%card%% fenced block including both fences", () => {
+    const content = [
+      "# Notes",
+      "",
+      "%%card%%",
+      "Q: First question?",
+      "A: First answer.",
+      "%%card%%",
+      "",
+      "%%card%%",
+      "Q: Second question?",
+      "A: Second answer.",
+      "%%card%%",
+      "",
+    ].join("\n");
+    const r = removeCardFromContent(content, { front: "First question?", back: "First answer." }, "First answer.");
+    expect(r.modified).toBe(true);
+    expect(r.content).not.toContain("First question?");
+    expect(r.content).not.toContain("First answer.");
+    // The other card survives untouched
+    expect(r.content).toContain("Q: Second question?");
+    expect(r.content).toContain("A: Second answer.");
+  });
+
+  it("removes a %%card%% block with a multi-line answer", () => {
+    const content = [
+      "%%card%%",
+      "Q: Why frameworks?",
+      "A:",
+      "",
+      "**Reason one** explained.",
+      "",
+      "**Reason two** explained.",
+      "%%card%%",
+    ].join("\n");
+    const r = removeCardFromContent(content, { front: "Why frameworks?", back: "**Reason one** explained.\n\n**Reason two** explained." }, "**Reason one** explained.\n\n**Reason two** explained.");
+    expect(r.modified).toBe(true);
+    expect(r.content).not.toContain("Why frameworks?");
+    expect(r.content).not.toContain("Reason one");
+  });
+
+  it("removes a bare Q:/A: card (double blank line terminates the answer)", () => {
+    // Outside a fence the loader needs 2 blank lines to end the answer, so the
+    // card boundary must use the same separation the loader recognises.
+    const content = ["Q: Bare question?", "A: Bare answer.", "", "", "Some trailing text."].join("\n");
+    const r = removeCardFromContent(content, { front: "Bare question?", back: "Bare answer." }, "Bare answer.");
+    expect(r.modified).toBe(true);
+    expect(r.content).not.toContain("Bare question?");
+    expect(r.content).toContain("Some trailing text.");
+  });
+
+  it("removes a :: card line (regression: original behavior preserved)", () => {
+    const content = ["What is X? :: It is X.", "What is Y? :: It is Y."].join("\n");
+    const r = removeCardFromContent(content, { front: "What is X?", back: "It is X." }, "It is X.");
+    expect(r.modified).toBe(true);
+    expect(r.content).not.toContain("What is X?");
+    expect(r.content).toContain("What is Y? :: It is Y.");
+  });
+
+  it("returns modified:false when the card is not found", () => {
+    const content = "%%card%%\nQ: Existing?\nA: Yes.\n%%card%%";
+    const r = removeCardFromContent(content, { front: "Missing?", back: "No." }, "No.");
+    expect(r.modified).toBe(false);
+    expect(r.content).toBe(content);
   });
 });
