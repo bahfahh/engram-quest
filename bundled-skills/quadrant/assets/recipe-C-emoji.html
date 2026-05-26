@@ -101,6 +101,21 @@
     50% { transform: translateY(-4px) scale(1.15); opacity: 1; }
   }
 
+  /* Focus / zoom overlay — tap a quadrant's ⤢ to blow it up full-screen for content-heavy cards */
+  .zoomBtn { position: absolute; top: 6px; right: 6px; z-index: 3; width: 24px; height: 24px;
+    border: none; border-radius: 6px; background: var(--accent-soft); color: var(--accent);
+    font-size: 14px; line-height: 1; cursor: pointer; display: none; padding: 0;
+    align-items: center; justify-content: center; }
+  .quadrant.opened .zoomBtn { display: flex; }
+  .zoomBtn:hover { filter: brightness(0.95); }
+  body.focusing { overflow: hidden; }
+  .quadrant.focused { position: fixed; inset: 0; z-index: 50; background: var(--paper);
+    padding: 18px 16px; overflow: auto; }
+  .quadrant.focused .qLabel { font-size: 13px; }
+  .quadrant.focused .content { zoom: 1.45; } /* zoom (not transform:scale) reflows the scaled content into the fixed overlay's scroll box */
+  .quadrant.focused .zoomBtn { display: flex; top: 12px; right: 12px; width: 30px; height: 30px;
+    font-size: 16px; background: var(--accent); color: #fff; z-index: 60; }
+
   .controls { margin-top: 12px; display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
   .btn { background: var(--accent); color: white; border: none; border-radius: 8px; padding: 10px 18px;
     font-size: 13px; font-weight: 700; cursor: pointer; font-family: inherit; transition: all 0.15s ease; }
@@ -121,6 +136,19 @@
   .result .verdict.mid { color: var(--warn); }
   .result .verdict.bad { color: var(--danger); }
   .result .prescription { font-size: 12px; color: var(--muted); line-height: 1.5; }
+
+  /* Phones / narrow viewport: stack the 2×2 into one full-width column. At ~390px a half-cell is
+     too narrow — content overflowed and got clipped by .paper{overflow:hidden}. One column per
+     quadrant (Q1→Q2→Q3→Q4) is readable and matches the learn order; the ⤢ zoom still blows up
+     any single cell. Desktop modal (iframe ~588px) stays 2×2; only phones cross this breakpoint. */
+  @media (max-width: 520px) {
+    body { padding: 8px; }
+    .paper { grid-template-columns: 1fr; grid-template-rows: none; min-height: 0; }
+    .paper::before, .paper::after { display: none; }
+    .quadrant { min-height: 148px; }
+    .quadrant + .quadrant { border-top: 1px solid var(--crease); }
+    .zoomBtn { top: 8px; right: 8px; }
+  }
 </style>
 </head>
 <body>
@@ -139,6 +167,7 @@
   <!-- Q1 -->
   <div class="quadrant opened" data-q="1" id="q1">
     <div class="qLabel"><span class="num">Q1</span> · 問題</div>
+    <button class="zoomBtn" data-zoom="1" title="放大 / Expand" aria-label="放大 Expand">⤢</button>
     <div class="cover" data-open="1">
       <div class="lock">🔒</div><div>點擊揭曉問題</div>
     </div>
@@ -153,6 +182,7 @@
   <!-- Q2 -->
   <div class="quadrant locked" data-q="2" id="q2">
     <div class="qLabel"><span class="num">Q2</span> · 答案</div>
+    <button class="zoomBtn" data-zoom="2" title="放大 / Expand" aria-label="放大 Expand">⤢</button>
     <div class="cover" data-open="2">
       <div class="lock">🔒</div><div>點擊揭曉答案</div>
     </div>
@@ -167,6 +197,7 @@
   <!-- Q3 — 書中的諧音譬喻拆解 -->
   <div class="quadrant locked" data-q="3" id="q3">
     <div class="qLabel"><span class="num">Q3</span> · 文字 IP 化（譬喻 · 諧音拆解）</div>
+    <button class="zoomBtn" data-zoom="3" title="放大 / Expand" aria-label="放大 Expand">⤢</button>
     <div class="cover" data-open="3">
       <div class="lock">🔒</div><div>點擊揭曉譬喻</div>
     </div>
@@ -195,6 +226,7 @@
   <!-- Q4 — Recipe C 核心展示：單一大 emoji + bob 動畫 + 周圍驚訝符號 -->
   <div class="quadrant locked" data-q="4" id="q4">
     <div class="qLabel"><span class="num">Q4</span> · 圖像 IP 化（單一大 emoji）</div>
+    <button class="zoomBtn" data-zoom="4" title="放大 / Expand" aria-label="放大 Expand">⤢</button>
     <div class="cover" data-open="4">
       <div class="lock">🔒</div><div>點擊揭曉圖像</div>
     </div>
@@ -247,9 +279,34 @@
     reportHeight();
   }
   document.querySelectorAll(".cover").forEach(c => c.addEventListener("click", () => openQ(parseInt(c.dataset.open))));
+  let focusedQ = null;
+  function toggleFocus(n) {
+    const q = $("q" + n);
+    if (q.classList.contains("locked") && !q.classList.contains("focused")) return;
+    const btn = q.querySelector(".zoomBtn");
+    if (focusedQ === n) {
+      q.classList.remove("focused"); document.body.classList.remove("focusing");
+      if (btn) btn.textContent = "⤢"; focusedQ = null; reportHeight();
+    } else {
+      if (focusedQ != null) {
+        const prev = $("q" + focusedQ); prev.classList.remove("focused");
+        const pb = prev.querySelector(".zoomBtn"); if (pb) pb.textContent = "⤢";
+      }
+      q.classList.add("focused"); document.body.classList.add("focusing");
+      if (btn) btn.textContent = "✕"; focusedQ = n;
+      window.parent.postMessage({ type: "engram-quest-resize", height: 99999 }, "*");
+    }
+  }
+  document.querySelectorAll(".zoomBtn").forEach(b => b.addEventListener("click", (e) => { e.stopPropagation(); toggleFocus(parseInt(b.dataset.zoom)); }));
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && focusedQ != null) toggleFocus(focusedQ); });
   $("revealAll").addEventListener("click", () => [1,2,3,4].forEach(openQ));
 
   $("enterReview").addEventListener("click", () => {
+    if (focusedQ != null) {
+      const fq = $("q" + focusedQ); fq.classList.remove("focused");
+      const fb = fq.querySelector(".zoomBtn"); if (fb) fb.textContent = "⤢";
+      document.body.classList.remove("focusing"); focusedQ = null;
+    }
     phase = "review-thinking";
     $("phase").textContent = "🧠 複習階段 · 只看 Q1，腦中想答案";
     [2,3,4].forEach(n => {
