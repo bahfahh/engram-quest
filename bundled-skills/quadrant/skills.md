@@ -5,17 +5,19 @@ description: >
   A Quadrant Card turns a single Q/A flashcard into a four-quadrant A4 memory sheet
   (Q1 question, Q2 answer, Q3 verbal IP / metaphor, Q4 visual IP / image) rendered as an
   interactive HTML iframe with its own spaced-repetition schedule.
-  Trigger this skill whenever the user wants to "upgrade" a flashcard or note Q/A into a
-  quadrant card, says "升級" / "upgrade" near flashcards, asks to build an A4 super-memory
-  card, mentions the 四象限 / 一枚超記憶法 method, or wants a single concept turned into a
-  memorable visual memory sheet — even if they do not say "quadrant" explicitly. Also trigger
-  when the user has marked cards for upgrade in the plugin and asks to process them.
+  Trigger this skill whenever the user names a quadrant card by any of its aliases —
+  "Quadrant Card", "quadrant", "四象限卡", "四格卡", "四象限", or "超記憶卡" — or wants to
+  "upgrade" / "升級" a flashcard or note Q/A into one, asks to build an A4 super-memory card,
+  or wants a single concept turned into a memorable visual memory sheet. Trigger even when the
+  user uses only the short name (e.g. just "四格卡", "超記憶卡", or "做一張 quadrant") without
+  saying "upgrade", and also when the user has marked cards for upgrade in the plugin and asks
+  to process them.
 ---
 
 # Quadrant Card Skill (Pro)
 
-Generate **Quadrant Cards** — single-concept A4 "super memory" sheets based on the
-*A4 一枚超記憶法* method. Each card is a self-contained interactive HTML iframe with four
+Generate **Quadrant Cards** — single-concept A4 "super memory" sheets built on a
+four-quadrant layout. Each card is a self-contained interactive HTML iframe with four
 quadrants and its own review lifecycle inside the EngramQuest plugin.
 
 ## What a Quadrant Card is
