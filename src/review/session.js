@@ -6,6 +6,7 @@ const { anySrPattern: ge, getReviewStatus: $, loadSrData, saveSrData } = require
 const { loadSynapseStatus, loadSynapseBatch, attachSynapseToCards, isSynapseEnabled } = require("./synapse");
 const { ACHIEVEMENTS, RARITY_DARK, RARITY_LIGHT } = require("../hub/achievement");
 const { saveTagSourceCard, saveInlineCard, deleteTagSourceCard, applyFormatToCardBack, refreshTagSourceCard } = require("./edit");
+const { registerSelectionCopy } = require("../ui/selection-copy");
 const W_ref = { get locale() { try { return I.moment && I.moment.locale && I.moment.locale(); } catch(e) { return "en"; } } };
 function L(s) { return _getLocale(s, W_ref.locale); }
 
@@ -277,6 +278,7 @@ var Q=class extends I.Modal{
     const _isDark=activeDocument.body.classList.contains("theme-dark");const _bgPrimary=_isDark?"#1e1e2e":"#ffffff";const _bgSecondary=_isDark?"#252538":"#f3f4f6";const _textNormal=_isDark?"#e2e8f0":"#1f2937";const _textMuted=_isDark?"#94a3b8":"#6b7280";
     this.modalEl.addClass("lh-hub");
     if(_isDark)this.modalEl.addClass("lh-dark");
+    registerSelectionCopy(this);
     this.modalEl.style.cssText="width:min(95vw,700px);max-width:none;height:min(90vh,640px);max-height:none;padding:0;overflow:hidden;border-radius:24px";
     this.modalEl.style.setProperty("--background-primary",_bgPrimary,"important");
     this.modalEl.style.setProperty("--background-secondary",_bgSecondary,"important");
