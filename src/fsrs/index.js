@@ -125,4 +125,4 @@ function computeFsrs(rating, card, settings) {
   return { due: getLocalDateStr(due), interval, stability, difficulty, state, repetitions: reps };
 }
 
-module.exports = { W, DECAY, FACTOR, retrievability, intervalFromRetention, initStability, initDifficulty, clampDifficulty, nextDifficulty, nextStabilityReview, nextStabilityForgot, normalizeFsrsCard, computeFsrs };
+module.exports = { W, DECAY, FACTOR, getLocalDateStr, retrievability, intervalFromRetention, initStability, initDifficulty, clampDifficulty, nextDifficulty, nextStabilityReview, nextStabilityForgot, normalizeFsrsCard, computeFsrs };

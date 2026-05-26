@@ -7,6 +7,7 @@ const { loadSynapseStatus, loadSynapseBatch, attachSynapseToCards, isSynapseEnab
 const { ACHIEVEMENTS, RARITY_DARK, RARITY_LIGHT } = require("../hub/achievement");
 const { saveTagSourceCard, saveInlineCard, deleteTagSourceCard, applyFormatToCardBack, refreshTagSourceCard } = require("./edit");
 const { registerSelectionCopy } = require("../ui/selection-copy");
+const { addToUpgradeQueue, readUpgradeQueue, isQueued } = require("../quadrant/cards");
 const W_ref = { get locale() { try { return I.moment && I.moment.locale && I.moment.locale(); } catch(e) { return "en"; } } };
 function L(s) { return _getLocale(s, W_ref.locale); }
 
@@ -631,7 +632,7 @@ var Q=class extends I.Modal{
       } else {
         // Task 4: rating buttons with lock
         let p=e.srMeta||null;
-        let g=this.contentEl.createEl("div",{attr:{class:"lh-rating-row"}});
+        let g=this.contentEl.createEl("div",{attr:{class:"lh-rating-row"}}); if(t.licenseValid){let _uq=this.contentEl.createEl("div",{attr:{style:"display:flex;justify-content:center;margin-top:8px;"}});let _ub=_uq.createEl("button",{text:c(t,"QUADRANT_UPGRADE_BTN"),attr:{class:"lh-rc-edit-btn",style:"font-size:12px;"}});_ub.addEventListener("click",async()=>{try{const _r=await addToUpgradeQueue(this.app.vault.adapter,{source:e.notePath,q:e.front,a:e.back});new I.Notice(_r.added?c(t,"QUADRANT_MARKED"):c(t,"QUADRANT_ALREADY"));_ub.disabled=true;_ub.style.opacity="0.6";}catch(err){console.error("EngramQuest: quadrant queue failed",err);}});readUpgradeQueue(this.app.vault.adapter).then(_q=>{if(isQueued(_q,e.notePath,e.front)){_ub.textContent=c(t,"QUADRANT_ALREADY");_ub.disabled=true;_ub.style.opacity="0.6";}}).catch(()=>{});}
         [{q:1,label:C("AGAIN",t),icon:"AG",cls:"lh-rb-again"},{q:2,label:C("HARD",t),icon:"HD",cls:"lh-rb-hard"},{q:3,label:C("GOOD",t),icon:"GD",cls:"lh-rb-good"},{q:4,label:C("EASY",t),icon:"OK",cls:"lh-rb-easy"}].forEach(E=>{
           let m=P(E.q,p,t);
           let x=g.createEl("button",{attr:{class:`lh-rating-btn ${E.cls}`}});

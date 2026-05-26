@@ -83,6 +83,14 @@ Visualizes abstract concepts using Obsidian Canvas.
 - Any file named `{note-name}-memory.canvas` is auto-detected in Hub → Memory Map
 - During review, the Memory Map button finds and opens the matching canvas automatically
 
+### 🎴 Quadrant Card — A4 Super-Memory (Pro)
+
+Turns a single flashcard into an A4 four-quadrant "super memory" sheet: **Q1 question, Q2 answer, Q3 verbal metaphor, Q4 visual image**. Each card renders as an interactive sheet and carries its **own FSRS schedule** — separate from your review decks.
+
+- **Upgrade** existing flashcards: mark cards from the review session, then tell the Quadrant Card skill *"upgrade"* — it converts everything you queued in one pass
+- **Create** new cards directly: *"Make a quadrant card about the data flywheel"*
+- Review them in Hub → Quadrant Cards, with due/new counts and self-assessment driving the schedule
+
 ### 🌙 Dark Mode
 
 ![Dark Mode Aurora](assets/bg_dark.webp)

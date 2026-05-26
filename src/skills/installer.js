@@ -28,6 +28,12 @@ function createInstaller() {
       title: "Synapse (Pro)",
       summary: "Pre-compute memory anchors that link difficult cards to mastered ones. Pro feature.",
       pro: true
+    },
+    {
+      id: "quadrant",
+      title: "Quadrant Card (Pro)",
+      summary: "Upgrade a flashcard into an A4 four-quadrant super-memory card (question, answer, verbal metaphor, visual image). Pro feature.",
+      pro: true
     }
   ];
   const TOOL_TARGETS = {
@@ -101,6 +107,16 @@ function createInstaller() {
       { source: "synapse/references/obsidian-cli.md", target: "references/obsidian-cli.md" },
       { source: "synapse/scripts/dump_sr_pool.sh", target: "scripts/dump_sr_pool.sh" },
       { source: "synapse/scripts/dump_sr_pool.js", target: "scripts/dump_sr_pool.js" }
+    ],
+    "quadrant": [
+      { source: "quadrant/skills.md", target: "SKILL.md" },
+      { source: "quadrant/references/recipes.md", target: "references/recipes.md" },
+      { source: "quadrant/references/q3-q4-quality.md", target: "references/q3-q4-quality.md" },
+      { source: "quadrant/references/layout-contract.md", target: "references/layout-contract.md" },
+      { source: "quadrant/references/obsidian-cli.md", target: "references/obsidian-cli.md" },
+      { source: "quadrant/assets/recipe-A-flywheel.html", target: "assets/recipe-A-flywheel.html" },
+      { source: "quadrant/assets/recipe-B-comic.html", target: "assets/recipe-B-comic.html" },
+      { source: "quadrant/assets/recipe-C-emoji.html", target: "assets/recipe-C-emoji.html" }
     ]
   };
 

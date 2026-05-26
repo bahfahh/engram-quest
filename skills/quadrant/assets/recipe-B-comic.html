@@ -1,0 +1,329 @@
+<!--
+  Bedrock vs SageMaker × A4 四象限記憶法（測試 2 / 2）
+  原卡：ASP.NET 整合 Claude，AWS 選 Bedrock 還是 SageMaker？選錯踩什麼坑？
+  Q4 視覺策略：兩格對比漫畫（big emoji + 標籤 + 極簡 SVG 裝飾線）
+-->
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bedrock vs SageMaker · 四象限記憶法</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #f3f6fb; --paper: #ffffff; --paper2: #fafcff;
+    --ink: #1a2332; --muted: #5a6478; --accent: #0078d4;
+    --accent-soft: #e6f1fb; --border: #d6dde6; --crease: #c2cad6;
+    --success: #107c10; --warn: #d97706; --danger: #d13438;
+    --bad: #ef4444; --bad-soft: #fef2f2;
+    --good: #16a34a; --good-soft: #f0fdf4;
+  }
+  body.dark {
+    --bg: #181c22; --paper: #242a32; --paper2: #2b323b;
+    --ink: #ecf0f5; --muted: #9aa3ad; --accent: #4cc2ff;
+    --accent-soft: #1d3a52; --border: #3a414b; --crease: #4a5260;
+    --bad: #f87171; --bad-soft: #3a1717;
+    --good: #4ade80; --good-soft: #14331f;
+  }
+  body { font-family: -apple-system, "Segoe UI", "PingFang TC", "Microsoft JhengHei", sans-serif;
+    background: var(--bg); color: var(--ink); padding: 12px; min-height: 100vh; }
+  .header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
+  .badge { background: var(--accent); color: #fff; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; }
+  .phase { color: var(--muted); font-size: 13px; font-weight: 500; flex: 1; }
+
+  .paper { background: var(--paper); border: 1px solid var(--border); border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06); display: grid;
+    grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr;
+    position: relative; overflow: hidden; min-height: 520px; }
+  .paper::before, .paper::after { content: ""; position: absolute; background: var(--crease); opacity: 0.5; pointer-events: none; z-index: 1; }
+  .paper::before { left: 0; right: 0; top: 50%; height: 1px; }
+  .paper::after { top: 0; bottom: 0; left: 50%; width: 1px; }
+
+  .quadrant { padding: 10px 12px; display: flex; flex-direction: column; position: relative; }
+  .qLabel { font-size: 11px; font-weight: 700; color: var(--muted); letter-spacing: 1px; margin-bottom: 6px; }
+  .qLabel .num { color: var(--accent); }
+
+  .cover { flex: 1; border: 2px dashed var(--border); border-radius: 8px;
+    background: repeating-linear-gradient(45deg, var(--paper2), var(--paper2) 10px, var(--paper) 10px, var(--paper) 20px);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    cursor: pointer; color: var(--muted); font-size: 13px; gap: 6px; transition: all 0.2s ease; }
+  .cover:hover { border-color: var(--accent); color: var(--accent); transform: scale(1.02); }
+  .cover .lock { font-size: 22px; opacity: 0.6; }
+  .quadrant.locked .content { display: none; }
+  .quadrant.opened .cover { display: none; }
+  .content { flex: 1; display: flex; flex-direction: column; animation: pop 0.3s ease; }
+  @keyframes pop { from { opacity: 0; transform: scale(0.92); } to { opacity: 1; transform: scale(1); } }
+
+  /* Q1 */
+  .q1-question { flex: 1; display: flex; align-items: center; justify-content: center; text-align: center;
+    font-size: 14px; font-weight: 700; line-height: 1.5; padding: 4px; }
+  .q1-question .vs { display: inline-block; background: var(--accent); color: white; padding: 1px 8px;
+    border-radius: 10px; font-size: 12px; margin: 0 4px; }
+  .q1-question .small { font-size: 11px; color: var(--muted); font-weight: 500; display: block; margin-top: 6px; }
+
+  /* Q2 */
+  .q2-answer { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; padding: 4px; }
+  .q2-pick { font-size: 16px; font-weight: 800; color: var(--good); }
+  .q2-pick .check { background: var(--good); color: white; padding: 2px 8px; border-radius: 6px; margin-right: 4px; }
+  .q2-why { font-size: 11px; color: var(--ink); line-height: 1.5; text-align: center; }
+  .q2-trap { margin-top: 4px; padding: 6px 10px; background: var(--bad-soft); border-left: 3px solid var(--bad);
+    border-radius: 4px; font-size: 11px; color: var(--ink); line-height: 1.4; }
+  .q2-trap strong { color: var(--bad); }
+
+  /* Q3 — 對比口訣 */
+  .q3-text { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 6px; padding: 2px; }
+  .q3-pair { display: flex; gap: 6px; align-items: stretch; }
+  .q3-side { flex: 1; padding: 6px 8px; border-radius: 6px; font-size: 11px; line-height: 1.4; }
+  .q3-side.bad { background: var(--bad-soft); border-left: 3px solid var(--bad); }
+  .q3-side.good { background: var(--good-soft); border-left: 3px solid var(--good); }
+  .q3-side .tag { font-size: 11px; font-weight: 800; margin-bottom: 3px; }
+  .q3-side.bad .tag { color: var(--bad); }
+  .q3-side.good .tag { color: var(--good); }
+  .q3-vs { display: flex; align-items: center; font-size: 10px; font-weight: 800; color: var(--muted); }
+  .q3-formula { margin-top: 4px; padding: 6px; background: var(--paper2); border-radius: 6px;
+    text-align: center; font-size: 12px; font-weight: 700; color: var(--accent); border: 1px dashed var(--accent); }
+
+  /* Q4 — 兩格漫畫 */
+  .q4-image { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; padding: 2px; }
+  .comic { display: flex; gap: 8px; width: 100%; max-width: 320px; }
+  .panel { flex: 1; border-radius: 10px; padding: 8px 6px; display: flex; flex-direction: column;
+    align-items: center; justify-content: space-between; gap: 4px; position: relative; min-height: 160px; }
+  .panel.bad { background: var(--bad-soft); border: 2px solid var(--bad); }
+  .panel.good { background: var(--good-soft); border: 2px solid var(--good); }
+  .panel-title { font-size: 11px; font-weight: 800; }
+  .panel.bad .panel-title { color: var(--bad); }
+  .panel.good .panel-title { color: var(--good); }
+  .panel-scene { font-size: 42px; line-height: 1; position: relative; padding: 4px 0; }
+  .panel-scene .tiny {
+    font-size: 14px; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -45%);
+  }
+  .panel-scene .corner-tag {
+    position: absolute; top: -4px; right: -10px; font-size: 16px;
+  }
+  .panel-caption { font-size: 10px; color: var(--ink); text-align: center; line-height: 1.3; }
+  .panel-cost { font-size: 11px; font-weight: 700; padding: 2px 6px; border-radius: 4px; }
+  .panel.bad .panel-cost { color: var(--bad); background: rgba(239, 68, 68, 0.1); }
+  .panel.good .panel-cost { color: var(--good); background: rgba(22, 163, 74, 0.1); }
+  .comic-vs {
+    position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+    background: var(--accent); color: white; width: 22px; height: 22px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 800;
+    z-index: 5; box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  }
+  .q4-cap { font-size: 10px; color: var(--muted); font-style: italic; text-align: center; }
+
+  .controls { margin-top: 12px; display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+  .btn { background: var(--accent); color: white; border: none; border-radius: 8px; padding: 10px 18px;
+    font-size: 13px; font-weight: 700; cursor: pointer; font-family: inherit; transition: all 0.15s ease; }
+  .btn:hover { filter: brightness(1.1); transform: translateY(-1px); }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .btn.ghost { background: transparent; color: var(--accent); border: 1.5px solid var(--accent); }
+  .btn.success { background: var(--success); }
+  .btn.warn { background: var(--warn); }
+  .btn.danger { background: var(--danger); }
+
+  .tip { margin-top: 10px; padding: 10px 14px; background: var(--accent-soft); border-left: 3px solid var(--accent);
+    border-radius: 6px; font-size: 12px; line-height: 1.5; }
+  .tip strong { color: var(--accent); }
+  .result { margin-top: 12px; padding: 14px; background: var(--paper); border: 1px solid var(--border);
+    border-radius: 10px; text-align: center; }
+  .result .verdict { font-size: 18px; font-weight: 800; margin-bottom: 6px; }
+  .result .verdict.good { color: var(--success); }
+  .result .verdict.mid { color: var(--warn); }
+  .result .verdict.bad { color: var(--danger); }
+  .result .prescription { font-size: 12px; color: var(--muted); line-height: 1.5; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="badge">A4 一枚超記憶法 · 卡 2/2</div>
+  <div class="phase" id="phase">📖 學習階段 · 依序點開 Q1 → Q2 → Q3 → Q4</div>
+</div>
+
+<div class="paper" id="paper">
+  <!-- Q1 -->
+  <div class="quadrant locked" data-q="1" id="q1">
+    <div class="qLabel"><span class="num">Q1</span> · 問題</div>
+    <div class="cover" data-open="1">
+      <div class="lock">🔒</div><div>點擊揭曉問題</div>
+    </div>
+    <div class="content">
+      <div class="q1-question">
+        ASP.NET 整合 Claude 模型<br>
+        AWS 上要選<br>
+        <span class="vs">Bedrock</span> 還是 <span class="vs">SageMaker</span>？
+        <span class="small">（選錯會踩什麼坑？）</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Q2 -->
+  <div class="quadrant locked" data-q="2" id="q2">
+    <div class="qLabel"><span class="num">Q2</span> · 答案</div>
+    <div class="cover" data-open="2">
+      <div class="lock">🔒</div><div>點擊揭曉答案</div>
+    </div>
+    <div class="content">
+      <div class="q2-answer">
+        <div class="q2-pick"><span class="check">✓</span>Bedrock</div>
+        <div class="q2-why">Serverless API · 按用量付費 · 直接呼叫 Foundation Model</div>
+        <div class="q2-trap">
+          <strong>選錯 SageMaker 的坑：</strong>Endpoint 是常駐 EC2 instance，沒 request 也照算費；Claude 這種大模型需要 GPU instance，超貴。
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Q3 -->
+  <div class="quadrant locked" data-q="3" id="q3">
+    <div class="qLabel"><span class="num">Q3</span> · 文字 IP 化（對比口訣）</div>
+    <div class="cover" data-open="3">
+      <div class="lock">🔒</div><div>點擊揭曉口訣</div>
+    </div>
+    <div class="content">
+      <div class="q3-text">
+        <div class="q3-pair">
+          <div class="q3-side bad">
+            <div class="tag">❌ SageMaker</div>
+            包整棟辦公室<br>
+            <span style="color:var(--muted)">不管有沒人都付租金</span>
+          </div>
+          <div class="q3-side good">
+            <div class="tag">✓ Bedrock</div>
+            打一通電話<br>
+            <span style="color:var(--muted)">按通話時間付費</span>
+          </div>
+        </div>
+        <div class="q3-formula">用 SageMaker 整合現成模型 = 🚚 卡車送 📨 一封信</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Q4 — 兩格對比漫畫 -->
+  <div class="quadrant locked" data-q="4" id="q4">
+    <div class="qLabel"><span class="num">Q4</span> · 圖像 IP 化（對比漫畫）</div>
+    <div class="cover" data-open="4">
+      <div class="lock">🔒</div><div>點擊揭曉圖像</div>
+    </div>
+    <div class="content">
+      <div class="q4-image">
+        <div class="comic" style="position:relative">
+          <!-- 左 · SageMaker：卡車送一封信 -->
+          <div class="panel bad">
+            <div class="panel-title">SageMaker</div>
+            <div class="panel-scene">
+              🚚<span class="corner-tag">💸</span>
+            </div>
+            <div class="panel-caption">用卡車送一封信</div>
+            <div class="panel-cost">$$$ 常駐燒錢</div>
+          </div>
+
+          <!-- 中央 VS -->
+          <div class="comic-vs">VS</div>
+
+          <!-- 右 · Bedrock：打一通電話 -->
+          <div class="panel good">
+            <div class="panel-title">Bedrock</div>
+            <div class="panel-scene">
+              📞<span class="corner-tag">⚡</span>
+            </div>
+            <div class="panel-caption">打一通電話</div>
+            <div class="panel-cost">$ 按通話收費</div>
+          </div>
+        </div>
+        <div class="q4-cap">「殺雞用牛刀」vs「對症下藥」</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="tip" id="tipBar">
+  📖 <strong>學習階段</strong>：點 Q1 看問題 → 想一下 → 揭開 Q2、Q3、Q4。重點記 Q3 對比口訣 + Q4 卡車 vs 電話的畫面。
+</div>
+
+<div class="controls" id="controls">
+  <button class="btn ghost" id="revealAll">一次全部展開</button>
+  <button class="btn" id="enterReview" disabled>進入複習測驗 →</button>
+</div>
+
+<div id="resultBox"></div>
+
+<script>
+  window.addEventListener("message", (e) => {
+    if (e.data && e.data.type === "engram-quest-theme") {
+      document.body.classList.toggle("dark", !!e.data.dark);
+    }
+  });
+  function reportHeight() {
+    window.parent.postMessage({ type: "engram-quest-resize", height: document.documentElement.scrollHeight + 8 }, "*");
+  }
+  window.addEventListener("load", () => setTimeout(reportHeight, 80));
+
+  let phase = "learn"; let opened = new Set();
+  const $ = id => document.getElementById(id);
+
+  function openQ(n) {
+    const q = $("q" + n);
+    if (!q.classList.contains("locked")) return;
+    q.classList.remove("locked"); q.classList.add("opened");
+    if (phase === "learn") {
+      opened.add(n);
+      if (opened.size === 4) {
+        $("enterReview").disabled = false;
+        $("tipBar").innerHTML = "✅ 四格都看過了。閉眼回想一下整張紙，按 <strong>「進入複習測驗 →」</strong>";
+      }
+    }
+    reportHeight();
+  }
+  document.querySelectorAll(".cover").forEach(c => c.addEventListener("click", () => openQ(parseInt(c.dataset.open))));
+  $("revealAll").addEventListener("click", () => [1,2,3,4].forEach(openQ));
+
+  $("enterReview").addEventListener("click", () => {
+    phase = "review-thinking";
+    $("phase").textContent = "🧠 複習階段 · 只看 Q1，腦中想答案";
+    [2,3,4].forEach(n => {
+      const q = $("q" + n);
+      q.classList.remove("opened"); q.classList.add("locked");
+      const cover = q.querySelector(".cover");
+      cover.style.pointerEvents = "none";
+      cover.querySelector("div:last-child").textContent = "🚫 不可偷看";
+    });
+    $("tipBar").innerHTML = "🧠 <strong>複習測驗</strong>：只看 Q1，想出選哪個 + 為什麼 + 選錯的坑。想好按「揭曉」。";
+    $("controls").innerHTML = `<button class="btn" id="revealAns">揭曉答案 →</button>`;
+    $("revealAns").addEventListener("click", revealAnswers);
+    reportHeight();
+  });
+
+  function revealAnswers() {
+    phase = "review-revealed";
+    $("phase").textContent = "✍️ 自評階段";
+    [2,3,4].forEach(n => { const q = $("q" + n); q.classList.remove("locked"); q.classList.add("opened"); });
+    $("tipBar").innerHTML = "✍️ <strong>誠實自評</strong>：剛才想到「選 Bedrock + serverless + 卡車送信比喻」嗎？";
+    $("controls").innerHTML = `
+      <button class="btn success" data-g="correct">✅ 答對了</button>
+      <button class="btn warn" data-g="wrong">❌ 答錯了</button>
+      <button class="btn danger" data-g="blank">😵 完全想不起來</button>
+    `;
+    $("controls").querySelectorAll("[data-g]").forEach(b => b.addEventListener("click", () => submitGrade(b.dataset.g)));
+    reportHeight();
+  }
+
+  const RX = {
+    correct: { score: 100, cls: "good", title: "🎉 記住了！", body: "下次複習延後（隔週 → 隔兩週 → 隔四週）。" },
+    wrong:   { score: 60,  cls: "mid",  title: "🔁 印象有但不夠精準", body: "可能記得選 Bedrock 但忘了為什麼。Q3 的「辦公室 vs 電話」比喻可再加強。" },
+    blank:   { score: 25,  cls: "bad",  title: "📝 印象太淡", body: "回去重畫 Q3、Q4，把「卡車送一封信」這個荒謬畫面放大。" }
+  };
+  function submitGrade(g) {
+    phase = "done";
+    const p = RX[g];
+    $("phase").textContent = "🏁 完成 · " + p.title;
+    $("controls").innerHTML = ""; $("tipBar").style.display = "none";
+    $("resultBox").innerHTML = `<div class="result"><div class="verdict ${p.cls}">${p.title}</div><div class="prescription">${p.body}</div></div>`;
+    window.parent.postMessage({ type: "engram-quest-solved", score: p.score }, "*");
+    setTimeout(reportHeight, 80);
+  }
+</script>
+</body>
+</html>

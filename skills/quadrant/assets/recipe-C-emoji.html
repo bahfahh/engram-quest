@@ -1,0 +1,298 @@
+<!--
+  Recipe C demo: 單一大 emoji 譬喻物
+  內容用書中經典範例「tremendous = 目瞪口呆的小鳥」
+  關鍵示範：Q4 不畫任何幾何形狀，用一個大 emoji + 動畫
+-->
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>tremendous · 四象限記憶法（Recipe C demo）</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #f3f6fb; --paper: #ffffff; --paper2: #fafcff;
+    --ink: #1a2332; --muted: #5a6478; --accent: #0078d4;
+    --accent-soft: #e6f1fb; --border: #d6dde6; --crease: #c2cad6;
+    --success: #107c10; --warn: #d97706; --danger: #d13438;
+    --bird: #f59e0b; --bird-soft: #fffbeb;
+  }
+  body.dark {
+    --bg: #181c22; --paper: #242a32; --paper2: #2b323b;
+    --ink: #ecf0f5; --muted: #9aa3ad; --accent: #4cc2ff;
+    --accent-soft: #1d3a52; --border: #3a414b; --crease: #4a5260;
+    --bird: #fbbf24; --bird-soft: #3a2b0a;
+  }
+  body { font-family: -apple-system, "Segoe UI", "PingFang TC", sans-serif;
+    background: var(--bg); color: var(--ink); padding: 12px; min-height: 100vh; }
+  .header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
+  .badge { background: var(--accent); color: #fff; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; }
+  .phase { color: var(--muted); font-size: 13px; font-weight: 500; flex: 1; }
+
+  .paper { background: var(--paper); border: 1px solid var(--border); border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06); display: grid;
+    grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr;
+    position: relative; overflow: hidden; min-height: 460px; }
+  .paper::before, .paper::after { content: ""; position: absolute; background: var(--crease); opacity: 0.5; pointer-events: none; z-index: 1; }
+  .paper::before { left: 0; right: 0; top: 50%; height: 1px; }
+  .paper::after { top: 0; bottom: 0; left: 50%; width: 1px; }
+
+  .quadrant { padding: 10px 12px; display: flex; flex-direction: column; position: relative; }
+  .qLabel { font-size: 11px; font-weight: 700; color: var(--muted); letter-spacing: 1px; margin-bottom: 6px; }
+  .qLabel .num { color: var(--accent); }
+
+  .cover { flex: 1; border: 2px dashed var(--border); border-radius: 8px;
+    background: repeating-linear-gradient(45deg, var(--paper2), var(--paper2) 10px, var(--paper) 10px, var(--paper) 20px);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    cursor: pointer; color: var(--muted); font-size: 13px; gap: 6px; transition: all 0.2s ease; }
+  .cover:hover { border-color: var(--accent); color: var(--accent); transform: scale(1.02); }
+  .cover .lock { font-size: 22px; opacity: 0.6; }
+  .quadrant.locked .content { display: none; }
+  .quadrant.opened .cover { display: none; }
+  .content { flex: 1; display: flex; flex-direction: column; animation: pop 0.3s ease; }
+  @keyframes pop { from { opacity: 0; transform: scale(0.92); } to { opacity: 1; transform: scale(1); } }
+
+  /* Q1 */
+  .q1-question { flex: 1; display: flex; align-items: center; justify-content: center; text-align: center;
+    font-size: 22px; font-weight: 700; padding: 4px; }
+  .q1-question .word { color: var(--accent); font-style: italic; font-family: Georgia, serif; }
+  .q1-question .small { font-size: 11px; color: var(--muted); font-weight: 500; display: block; margin-top: 8px; }
+
+  /* Q2 */
+  .q2-answer { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; padding: 4px; text-align: center; }
+  .q2-main { font-size: 18px; font-weight: 800; color: var(--ink); line-height: 1.4; }
+  .q2-sub { font-size: 11px; color: var(--muted); font-style: italic; }
+
+  /* Q3 — 譬喻拆解（書中範例的諧音是 tre+men+dous → 鳥+目+出） */
+  .q3-text { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 10px; padding: 4px; }
+  .q3-row { display: flex; align-items: center; gap: 6px; justify-content: center; font-size: 14px; }
+  .q3-piece { background: var(--bird-soft); color: var(--bird); border: 1.5px solid var(--bird);
+    padding: 4px 10px; border-radius: 6px; font-weight: 700; font-family: Georgia, serif; font-style: italic; }
+  .q3-arrow { color: var(--muted); font-size: 16px; font-weight: 800; }
+  .q3-result { background: var(--accent); color: white; padding: 4px 10px; border-radius: 6px; font-weight: 700; }
+  .q3-final { margin-top: 4px; text-align: center; font-size: 13px; font-weight: 700;
+    color: var(--accent); padding: 8px; background: var(--accent-soft); border-radius: 6px; border: 1px dashed var(--accent); }
+
+  /* Q4 — Recipe C 核心：單一大 emoji + 標籤 + bob 動畫 */
+  .q4-image { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; padding: 4px; }
+  .metaphor-stage {
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+    padding: 12px; position: relative;
+  }
+  .metaphor-emoji {
+    font-size: 88px; line-height: 1;
+    animation: bob 3s ease-in-out infinite;
+    filter: drop-shadow(0 4px 8px rgba(245, 158, 11, 0.3));
+  }
+  @keyframes bob {
+    0%, 100% { transform: translateY(0) rotate(-2deg); }
+    50% { transform: translateY(-8px) rotate(2deg); }
+  }
+  .metaphor-label { font-size: 16px; font-weight: 800; color: var(--bird); text-align: center; }
+  .metaphor-sub { font-size: 11px; color: var(--muted); font-style: italic; text-align: center; }
+  /* 三朵驚訝符號圍繞 emoji，加強「目瞪口呆」感 */
+  .puff { position: absolute; font-size: 18px; opacity: 0.7; animation: puff 2s ease-in-out infinite; }
+  .puff.p1 { top: 6px; left: 18%; animation-delay: 0s; }
+  .puff.p2 { top: 14px; right: 18%; animation-delay: 0.6s; }
+  .puff.p3 { top: 40px; left: 8%;  animation-delay: 1.2s; }
+  @keyframes puff {
+    0%, 100% { transform: translateY(0) scale(1); opacity: 0.7; }
+    50% { transform: translateY(-4px) scale(1.15); opacity: 1; }
+  }
+
+  .controls { margin-top: 12px; display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+  .btn { background: var(--accent); color: white; border: none; border-radius: 8px; padding: 10px 18px;
+    font-size: 13px; font-weight: 700; cursor: pointer; font-family: inherit; transition: all 0.15s ease; }
+  .btn:hover { filter: brightness(1.1); transform: translateY(-1px); }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .btn.ghost { background: transparent; color: var(--accent); border: 1.5px solid var(--accent); }
+  .btn.success { background: var(--success); }
+  .btn.warn { background: var(--warn); }
+  .btn.danger { background: var(--danger); }
+
+  .tip { margin-top: 10px; padding: 10px 14px; background: var(--accent-soft); border-left: 3px solid var(--accent);
+    border-radius: 6px; font-size: 12px; line-height: 1.5; }
+  .tip strong { color: var(--accent); }
+  .result { margin-top: 12px; padding: 14px; background: var(--paper); border: 1px solid var(--border);
+    border-radius: 10px; text-align: center; }
+  .result .verdict { font-size: 18px; font-weight: 800; margin-bottom: 6px; }
+  .result .verdict.good { color: var(--success); }
+  .result .verdict.mid { color: var(--warn); }
+  .result .verdict.bad { color: var(--danger); }
+  .result .prescription { font-size: 12px; color: var(--muted); line-height: 1.5; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="badge">A4 一枚超記憶法 · Recipe C demo</div>
+  <div class="phase" id="phase">📖 學習階段 · 依序點開 Q1 → Q2 → Q3 → Q4</div>
+</div>
+
+<div class="paper" id="paper">
+  <!-- Q1 -->
+  <div class="quadrant locked" data-q="1" id="q1">
+    <div class="qLabel"><span class="num">Q1</span> · 問題</div>
+    <div class="cover" data-open="1">
+      <div class="lock">🔒</div><div>點擊揭曉問題</div>
+    </div>
+    <div class="content">
+      <div class="q1-question">
+        <span class="word">tremendous</span><br>的意思是？
+        <span class="small">（書中經典範例）</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Q2 -->
+  <div class="quadrant locked" data-q="2" id="q2">
+    <div class="qLabel"><span class="num">Q2</span> · 答案</div>
+    <div class="cover" data-open="2">
+      <div class="lock">🔒</div><div>點擊揭曉答案</div>
+    </div>
+    <div class="content">
+      <div class="q2-answer">
+        <div class="q2-main">極好的、<br>巨大的</div>
+        <div class="q2-sub">(形容詞 · 程度副詞)</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Q3 — 書中的諧音譬喻拆解 -->
+  <div class="quadrant locked" data-q="3" id="q3">
+    <div class="qLabel"><span class="num">Q3</span> · 文字 IP 化（譬喻 · 諧音拆解）</div>
+    <div class="cover" data-open="3">
+      <div class="lock">🔒</div><div>點擊揭曉譬喻</div>
+    </div>
+    <div class="content">
+      <div class="q3-text">
+        <div class="q3-row">
+          <span class="q3-piece">tre</span>
+          <span class="q3-arrow">≈</span>
+          <span class="q3-result">鳥 (tori)</span>
+        </div>
+        <div class="q3-row">
+          <span class="q3-piece">men</span>
+          <span class="q3-arrow">≈</span>
+          <span class="q3-result">目 (me)</span>
+        </div>
+        <div class="q3-row">
+          <span class="q3-piece">dous</span>
+          <span class="q3-arrow">≈</span>
+          <span class="q3-result">出 (dasu)</span>
+        </div>
+        <div class="q3-final">「讓小鳥都目瞪口呆」</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Q4 — Recipe C 核心展示：單一大 emoji + bob 動畫 + 周圍驚訝符號 -->
+  <div class="quadrant locked" data-q="4" id="q4">
+    <div class="qLabel"><span class="num">Q4</span> · 圖像 IP 化（單一大 emoji）</div>
+    <div class="cover" data-open="4">
+      <div class="lock">🔒</div><div>點擊揭曉圖像</div>
+    </div>
+    <div class="content">
+      <div class="q4-image">
+        <div class="metaphor-stage">
+          <span class="puff p1">💫</span>
+          <span class="puff p2">✨</span>
+          <span class="puff p3">❗</span>
+          <div class="metaphor-emoji">🐦</div>
+          <div class="metaphor-label">目瞪口呆的小鳥</div>
+          <div class="metaphor-sub">tre + men + dous · 鳥 + 目 + 出</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="tip" id="tipBar">
+  📖 <strong>Recipe C 重點</strong>：Q4 不畫幾何圖、不堆 emoji，只用<strong>一個大 emoji + bob 動畫 + 周圍 3 個驚訝符號</strong>。視覺主角是系統字型渲染的 emoji，AI 不需要美感判斷。
+</div>
+
+<div class="controls" id="controls">
+  <button class="btn ghost" id="revealAll">一次全部展開</button>
+  <button class="btn" id="enterReview" disabled>進入複習測驗 →</button>
+</div>
+
+<div id="resultBox"></div>
+
+<script>
+  window.addEventListener("message", (e) => {
+    if (e.data && e.data.type === "engram-quest-theme") {
+      document.body.classList.toggle("dark", !!e.data.dark);
+    }
+  });
+  function reportHeight() {
+    window.parent.postMessage({ type: "engram-quest-resize", height: document.documentElement.scrollHeight + 8 }, "*");
+  }
+  window.addEventListener("load", () => setTimeout(reportHeight, 80));
+
+  let phase = "learn"; let opened = new Set();
+  const $ = id => document.getElementById(id);
+
+  function openQ(n) {
+    const q = $("q" + n);
+    if (!q.classList.contains("locked")) return;
+    q.classList.remove("locked"); q.classList.add("opened");
+    if (phase === "learn") {
+      opened.add(n);
+      if (opened.size === 4) {
+        $("enterReview").disabled = false;
+        $("tipBar").innerHTML = "✅ 四格都看過了。閉眼回想：tremendous = ? 想出來再按 <strong>「進入複習測驗 →」</strong>";
+      }
+    }
+    reportHeight();
+  }
+  document.querySelectorAll(".cover").forEach(c => c.addEventListener("click", () => openQ(parseInt(c.dataset.open))));
+  $("revealAll").addEventListener("click", () => [1,2,3,4].forEach(openQ));
+
+  $("enterReview").addEventListener("click", () => {
+    phase = "review-thinking";
+    $("phase").textContent = "🧠 複習階段 · 只看 Q1，腦中想答案";
+    [2,3,4].forEach(n => {
+      const q = $("q" + n);
+      q.classList.remove("opened"); q.classList.add("locked");
+      const cover = q.querySelector(".cover");
+      cover.style.pointerEvents = "none";
+      cover.querySelector("div:last-child").textContent = "🚫 不可偷看";
+    });
+    $("tipBar").innerHTML = "🧠 <strong>複習測驗</strong>：只看 Q1，想到「目瞪口呆的小鳥」就推得回 tremendous = 極好的、巨大的。想好按「揭曉」。";
+    $("controls").innerHTML = `<button class="btn" id="revealAns">揭曉答案 →</button>`;
+    $("revealAns").addEventListener("click", revealAnswers);
+    reportHeight();
+  });
+
+  function revealAnswers() {
+    phase = "review-revealed";
+    $("phase").textContent = "✍️ 自評階段";
+    [2,3,4].forEach(n => { const q = $("q" + n); q.classList.remove("locked"); q.classList.add("opened"); });
+    $("tipBar").innerHTML = "✍️ <strong>誠實自評</strong>：剛才腦中浮現「小鳥」畫面了嗎？有畫面 = Recipe C 對你有效。";
+    $("controls").innerHTML = `
+      <button class="btn success" data-g="correct">✅ 答對了</button>
+      <button class="btn warn" data-g="wrong">❌ 答錯了</button>
+      <button class="btn danger" data-g="blank">😵 完全想不起來</button>
+    `;
+    $("controls").querySelectorAll("[data-g]").forEach(b => b.addEventListener("click", () => submitGrade(b.dataset.g)));
+    reportHeight();
+  }
+
+  const RX = {
+    correct: { score: 100, cls: "good", title: "🎉 記住了！", body: "下次複習延後（隔週 → 隔兩週 → 隔四週）。" },
+    wrong:   { score: 60,  cls: "mid",  title: "🔁 印象有但不夠精準", body: "隔一段時間再來，小鳥畫面可再加強。" },
+    blank:   { score: 25,  cls: "bad",  title: "📝 印象太淡", body: "回去把 Q4 的 emoji 換成更荒謬的（例如 🦤 渡渡鳥 + 更多驚訝符號）。" }
+  };
+  function submitGrade(g) {
+    phase = "done";
+    const p = RX[g];
+    $("phase").textContent = "🏁 完成 · " + p.title;
+    $("controls").innerHTML = ""; $("tipBar").style.display = "none";
+    $("resultBox").innerHTML = `<div class="result"><div class="verdict ${p.cls}">${p.title}</div><div class="prescription">${p.body}</div></div>`;
+    window.parent.postMessage({ type: "engram-quest-solved", score: p.score }, "*");
+    setTimeout(reportHeight, 80);
+  }
+</script>
+</body>
+</html>

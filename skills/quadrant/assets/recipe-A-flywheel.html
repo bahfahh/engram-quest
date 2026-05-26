@@ -1,0 +1,343 @@
+<!--
+  數據飛輪 × A4 四象限記憶法（測試 1 / 2）
+  原卡：「數據飛輪」如何讓 AI 原生平台產生競爭壁壘？
+  Q4 視覺策略：CSS 旋轉飛輪 + emoji 節點（動態 motion graphic）
+-->
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>數據飛輪 · 四象限記憶法</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #f3f6fb; --paper: #ffffff; --paper2: #fafcff;
+    --ink: #1a2332; --muted: #5a6478; --accent: #0078d4;
+    --accent-soft: #e6f1fb; --border: #d6dde6; --crease: #c2cad6;
+    --success: #107c10; --warn: #d97706; --danger: #d13438;
+    --flywheel: #6366f1; --flywheel-soft: #eef2ff;
+  }
+  body.dark {
+    --bg: #181c22; --paper: #242a32; --paper2: #2b323b;
+    --ink: #ecf0f5; --muted: #9aa3ad; --accent: #4cc2ff;
+    --accent-soft: #1d3a52; --border: #3a414b; --crease: #4a5260;
+    --flywheel: #818cf8; --flywheel-soft: #1e1b4b;
+  }
+  body {
+    font-family: -apple-system, "Segoe UI", "PingFang TC", "Microsoft JhengHei", sans-serif;
+    background: var(--bg); color: var(--ink); padding: 12px; min-height: 100vh;
+  }
+  .header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
+  .badge { background: var(--accent); color: #fff; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; }
+  .phase { color: var(--muted); font-size: 13px; font-weight: 500; flex: 1; }
+
+  .paper { background: var(--paper); border: 1px solid var(--border); border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06); display: grid;
+    grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr;
+    position: relative; overflow: hidden; min-height: 500px; }
+  .paper::before, .paper::after { content: ""; position: absolute; background: var(--crease); opacity: 0.5; pointer-events: none; z-index: 1; }
+  .paper::before { left: 0; right: 0; top: 50%; height: 1px; }
+  .paper::after { top: 0; bottom: 0; left: 50%; width: 1px; }
+
+  .quadrant { padding: 10px 12px; display: flex; flex-direction: column; position: relative; }
+  .qLabel { font-size: 11px; font-weight: 700; color: var(--muted); letter-spacing: 1px; margin-bottom: 6px; }
+  .qLabel .num { color: var(--accent); }
+
+  .cover {
+    flex: 1; border: 2px dashed var(--border); border-radius: 8px;
+    background: repeating-linear-gradient(45deg, var(--paper2), var(--paper2) 10px, var(--paper) 10px, var(--paper) 20px);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    cursor: pointer; color: var(--muted); font-size: 13px; gap: 6px; transition: all 0.2s ease;
+  }
+  .cover:hover { border-color: var(--accent); color: var(--accent); transform: scale(1.02); }
+  .cover .lock { font-size: 22px; opacity: 0.6; }
+  .quadrant.locked .content { display: none; }
+  .quadrant.opened .cover { display: none; }
+  .content { flex: 1; display: flex; flex-direction: column; animation: pop 0.3s ease; }
+  @keyframes pop { from { opacity: 0; transform: scale(0.92); } to { opacity: 1; transform: scale(1); } }
+
+  /* Q1 */
+  .q1-question { flex: 1; display: flex; align-items: center; justify-content: center; text-align: center;
+    font-size: 16px; font-weight: 700; line-height: 1.5; padding: 4px; }
+  .q1-question .small { font-size: 11px; color: var(--muted); font-weight: 500; display: block; margin-top: 6px; }
+
+  /* Q2 */
+  .q2-answer { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; }
+  .q2-flow { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; color: var(--ink); flex-wrap: wrap; justify-content: center; }
+  .q2-node { background: var(--flywheel-soft); color: var(--flywheel); padding: 4px 8px; border-radius: 6px; border: 1px solid var(--flywheel); font-size: 12px; }
+  .q2-arrow { color: var(--muted); font-size: 14px; }
+  .q2-note { margin-top: 6px; font-size: 11px; color: var(--muted); font-style: italic; text-align: center; }
+
+  /* Q3 */
+  .q3-text { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 8px; padding: 4px; }
+  .q3-quote { font-size: 14px; font-weight: 800; color: var(--flywheel); text-align: center; padding: 8px;
+    background: var(--flywheel-soft); border-left: 3px solid var(--flywheel); border-radius: 4px; line-height: 1.4; }
+  .q3-quote .em { color: var(--danger); }
+  .q3-rule { font-size: 11px; color: var(--muted); text-align: center; line-height: 1.5; }
+  .q3-rule code { background: var(--paper2); padding: 1px 5px; border-radius: 3px; font-size: 11px; color: var(--ink); border: 1px solid var(--border); }
+
+  /* Q4 — CSS 旋轉飛輪 */
+  .q4-image { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; padding: 4px; }
+  .flywheel-stage {
+    position: relative; width: 200px; height: 200px;
+  }
+  .flywheel-ring {
+    position: absolute; inset: 0;
+    animation: spin 14s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .flywheel-ring svg { width: 100%; height: 100%; display: block; }
+  .flywheel-node {
+    position: absolute;
+    width: 56px; height: 56px;
+    border-radius: 50%;
+    background: var(--paper);
+    border: 2.5px solid var(--flywheel);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 700; color: var(--flywheel);
+    box-shadow: 0 2px 6px rgba(99, 102, 241, 0.25);
+  }
+  .flywheel-node .em { font-size: 22px; line-height: 1; margin-bottom: 2px; }
+  /* 4 個方位 — 不旋轉，保持文字正向 */
+  .n-top    { top: -4px; left: 50%; transform: translateX(-50%); }
+  .n-right  { right: -4px; top: 50%; transform: translateY(-50%); }
+  .n-bottom { bottom: -4px; left: 50%; transform: translateX(-50%); }
+  .n-left   { left: -4px; top: 50%; transform: translateY(-50%); }
+  .flywheel-center {
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    width: 50px; height: 50px; border-radius: 50%;
+    background: var(--flywheel); color: white;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 24px; box-shadow: 0 0 18px rgba(99, 102, 241, 0.6);
+    animation: pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse { 0%, 100% { transform: translate(-50%, -50%) scale(1); } 50% { transform: translate(-50%, -50%) scale(1.08); } }
+  .q4-cap { font-size: 10px; color: var(--muted); font-style: italic; text-align: center; }
+
+  .controls { margin-top: 12px; display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+  .btn { background: var(--accent); color: white; border: none; border-radius: 8px; padding: 10px 18px;
+    font-size: 13px; font-weight: 700; cursor: pointer; font-family: inherit; transition: all 0.15s ease; }
+  .btn:hover { filter: brightness(1.1); transform: translateY(-1px); }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .btn.ghost { background: transparent; color: var(--accent); border: 1.5px solid var(--accent); }
+  .btn.success { background: var(--success); }
+  .btn.warn { background: var(--warn); }
+  .btn.danger { background: var(--danger); }
+
+  .tip { margin-top: 10px; padding: 10px 14px; background: var(--accent-soft); border-left: 3px solid var(--accent);
+    border-radius: 6px; font-size: 12px; line-height: 1.5; }
+  .tip strong { color: var(--accent); }
+
+  .result { margin-top: 12px; padding: 14px; background: var(--paper); border: 1px solid var(--border);
+    border-radius: 10px; text-align: center; }
+  .result .verdict { font-size: 18px; font-weight: 800; margin-bottom: 6px; }
+  .result .verdict.good { color: var(--success); }
+  .result .verdict.mid { color: var(--warn); }
+  .result .verdict.bad { color: var(--danger); }
+  .result .prescription { font-size: 12px; color: var(--muted); line-height: 1.5; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="badge">A4 一枚超記憶法 · 卡 1/2</div>
+  <div class="phase" id="phase">📖 學習階段 · 依序點開 Q1 → Q2 → Q3 → Q4</div>
+</div>
+
+<div class="paper" id="paper">
+  <!-- Q1 -->
+  <div class="quadrant locked" data-q="1" id="q1">
+    <div class="qLabel"><span class="num">Q1</span> · 問題</div>
+    <div class="cover" data-open="1">
+      <div class="lock">🔒</div><div>點擊揭曉問題</div>
+    </div>
+    <div class="content">
+      <div class="q1-question">
+        「數據飛輪」<br>如何形成 AI 平台的<br>競爭壁壘？
+        <span class="small">（4 個環節，自我強化）</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Q2 -->
+  <div class="quadrant locked" data-q="2" id="q2">
+    <div class="qLabel"><span class="num">Q2</span> · 答案</div>
+    <div class="cover" data-open="2">
+      <div class="lock">🔒</div><div>點擊揭曉答案</div>
+    </div>
+    <div class="content">
+      <div class="q2-answer">
+        <div class="q2-flow">
+          <span class="q2-node">用戶</span>
+          <span class="q2-arrow">→</span>
+          <span class="q2-node">數據</span>
+        </div>
+        <div class="q2-flow">
+          <span class="q2-arrow">↑</span>
+          <span style="width:60px;display:inline-block"></span>
+          <span class="q2-arrow">↓</span>
+        </div>
+        <div class="q2-flow">
+          <span class="q2-node">體驗</span>
+          <span class="q2-arrow">←</span>
+          <span class="q2-node">AI 模型</span>
+        </div>
+        <div class="q2-note">轉得越快、壁壘越深</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Q3 -->
+  <div class="quadrant locked" data-q="3" id="q3">
+    <div class="qLabel"><span class="num">Q3</span> · 文字 IP 化（口訣）</div>
+    <div class="cover" data-open="3">
+      <div class="lock">🔒</div><div>點擊揭曉口訣</div>
+    </div>
+    <div class="content">
+      <div class="q3-text">
+        <div class="q3-quote">
+          「<span class="em">人</span>給<span class="em">料</span>、<span class="em">料</span>養<span class="em">腦</span>、<span class="em">腦</span>還<span class="em">爽</span>、<span class="em">爽</span>引<span class="em">人</span>」
+        </div>
+        <div class="q3-rule">
+          <code>人</code> 用戶 · <code>料</code> 數據 · <code>腦</code> AI 模型 · <code>爽</code> 體驗<br>
+          <strong>四字一循環</strong>，記住「人→料→腦→爽→人」就停不下來
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Q4 — 旋轉飛輪 -->
+  <div class="quadrant locked" data-q="4" id="q4">
+    <div class="qLabel"><span class="num">Q4</span> · 圖像 IP 化（動態飛輪）</div>
+    <div class="cover" data-open="4">
+      <div class="lock">🔒</div><div>點擊揭曉圖像</div>
+    </div>
+    <div class="content">
+      <div class="q4-image">
+        <div class="flywheel-stage">
+          <!-- 旋轉的環（軌道箭頭） -->
+          <div class="flywheel-ring">
+            <svg viewBox="0 0 200 200">
+              <defs>
+                <marker id="arr" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+                  <path d="M 0 0 L 8 5 L 0 10 z" fill="#6366f1"/>
+                </marker>
+              </defs>
+              <!-- 順時針的弧線箭頭 (4 段) -->
+              <path d="M 100 14 A 86 86 0 0 1 186 100" stroke="#6366f1" stroke-width="3" fill="none" stroke-dasharray="5,3" marker-end="url(#arr)"/>
+              <path d="M 186 100 A 86 86 0 0 1 100 186" stroke="#6366f1" stroke-width="3" fill="none" stroke-dasharray="5,3" marker-end="url(#arr)"/>
+              <path d="M 100 186 A 86 86 0 0 1 14 100" stroke="#6366f1" stroke-width="3" fill="none" stroke-dasharray="5,3" marker-end="url(#arr)"/>
+              <path d="M 14 100 A 86 86 0 0 1 100 14" stroke="#6366f1" stroke-width="3" fill="none" stroke-dasharray="5,3" marker-end="url(#arr)"/>
+            </svg>
+          </div>
+          <!-- 固定的 4 節點 -->
+          <div class="flywheel-node n-top">
+            <div class="em">👤</div><div>人</div>
+          </div>
+          <div class="flywheel-node n-right">
+            <div class="em">📊</div><div>料</div>
+          </div>
+          <div class="flywheel-node n-bottom">
+            <div class="em">🤖</div><div>腦</div>
+          </div>
+          <div class="flywheel-node n-left">
+            <div class="em">✨</div><div>爽</div>
+          </div>
+          <!-- 中心 -->
+          <div class="flywheel-center">🌀</div>
+        </div>
+        <div class="q4-cap">飛輪會自己轉 — 越多人用，轉越快</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="tip" id="tipBar">
+  📖 <strong>學習階段</strong>：點 Q1 看問題 → 想一下 → 依序揭開 Q2、Q3、Q4。記住 Q3 的「人→料→腦→爽」口訣 + Q4 飛輪畫面。
+</div>
+
+<div class="controls" id="controls">
+  <button class="btn ghost" id="revealAll">一次全部展開</button>
+  <button class="btn" id="enterReview" disabled>進入複習測驗 →</button>
+</div>
+
+<div id="resultBox"></div>
+
+<script>
+  window.addEventListener("message", (e) => {
+    if (e.data && e.data.type === "engram-quest-theme") {
+      document.body.classList.toggle("dark", !!e.data.dark);
+    }
+  });
+  function reportHeight() {
+    window.parent.postMessage({ type: "engram-quest-resize", height: document.documentElement.scrollHeight + 8 }, "*");
+  }
+  window.addEventListener("load", () => setTimeout(reportHeight, 80));
+
+  let phase = "learn"; let opened = new Set();
+  const $ = id => document.getElementById(id);
+
+  function openQ(n) {
+    const q = $("q" + n);
+    if (!q.classList.contains("locked")) return;
+    q.classList.remove("locked"); q.classList.add("opened");
+    if (phase === "learn") {
+      opened.add(n);
+      if (opened.size === 4) {
+        $("enterReview").disabled = false;
+        $("tipBar").innerHTML = "✅ 四格都看過了。閉眼想一下整張紙，準備按 <strong>「進入複習測驗 →」</strong>";
+      }
+    }
+    reportHeight();
+  }
+  document.querySelectorAll(".cover").forEach(c => c.addEventListener("click", () => openQ(parseInt(c.dataset.open))));
+  $("revealAll").addEventListener("click", () => [1,2,3,4].forEach(openQ));
+
+  $("enterReview").addEventListener("click", () => {
+    phase = "review-thinking";
+    $("phase").textContent = "🧠 複習階段 · 只看 Q1，腦中想答案";
+    [2,3,4].forEach(n => {
+      const q = $("q" + n);
+      q.classList.remove("opened"); q.classList.add("locked");
+      const cover = q.querySelector(".cover");
+      cover.style.pointerEvents = "none";
+      cover.querySelector("div:last-child").textContent = "🚫 不可偷看";
+    });
+    $("tipBar").innerHTML = "🧠 <strong>複習測驗</strong>：只看 Q1，想出 4 個環節 + 順序。不可偷看 Q2/Q3/Q4！想好後按「揭曉」。";
+    $("controls").innerHTML = `<button class="btn" id="revealAns">揭曉答案 →</button>`;
+    $("revealAns").addEventListener("click", revealAnswers);
+    reportHeight();
+  });
+
+  function revealAnswers() {
+    phase = "review-revealed";
+    $("phase").textContent = "✍️ 自評階段";
+    [2,3,4].forEach(n => { const q = $("q" + n); q.classList.remove("locked"); q.classList.add("opened"); });
+    $("tipBar").innerHTML = "✍️ <strong>誠實自評</strong>：剛才腦中浮現的 4 個環節跟下面吻合嗎？口訣記得嗎？飛輪畫面浮現了嗎？";
+    $("controls").innerHTML = `
+      <button class="btn success" data-g="correct">✅ 答對了</button>
+      <button class="btn warn" data-g="wrong">❌ 答錯了</button>
+      <button class="btn danger" data-g="blank">😵 完全想不起來</button>
+    `;
+    $("controls").querySelectorAll("[data-g]").forEach(b => b.addEventListener("click", () => submitGrade(b.dataset.g)));
+    reportHeight();
+  }
+
+  const RX = {
+    correct: { score: 100, cls: "good", title: "🎉 記住了！", body: "下次複習延後（隔週 → 隔兩週 → 隔四週）。" },
+    wrong:   { score: 60,  cls: "mid",  title: "🔁 印象有但不夠精準", body: "隔一段時間再來，Q3 口訣可再加強。" },
+    blank:   { score: 25,  cls: "bad",  title: "📝 印象太淡", body: "回去重畫 Q3、Q4，讓口訣更荒謬、飛輪畫面更鮮明。" }
+  };
+  function submitGrade(g) {
+    phase = "done";
+    const p = RX[g];
+    $("phase").textContent = "🏁 完成 · " + p.title;
+    $("controls").innerHTML = ""; $("tipBar").style.display = "none";
+    $("resultBox").innerHTML = `<div class="result"><div class="verdict ${p.cls}">${p.title}</div><div class="prescription">${p.body}</div></div>`;
+    window.parent.postMessage({ type: "engram-quest-solved", score: p.score }, "*");
+    setTimeout(reportHeight, 80);
+  }
+</script>
+</body>
+</html>

@@ -54,6 +54,7 @@ var fe=class extends I.Modal{constructor(e,t){super(e),this.plugin=t}onClose(){v
         <span class="lh-help-chip" style="background:#dbeafe;color:#1d4ed8">🃏 Review Deck — 長期記憶，FSRS 排程</span>
         <span class="lh-help-chip" style="background:#d1fae5;color:#065f46">🗺️ Quest Map — 結構化學習地圖</span>
         <span class="lh-help-chip" style="background:#ede9fe;color:#5b21b6">🧠 Memory Map — 視覺化概念地圖</span>
+        <span class="lh-help-chip" style="background:#dbeafe;color:#0c4a6e">🎴 Quadrant Card — A4 超記憶卡（Pro）</span>
       </div>
     `:`
       <p><strong>EngramQuest</strong> lets you use AI to build learning content and study it directly in Obsidian.</p>
@@ -61,6 +62,7 @@ var fe=class extends I.Modal{constructor(e,t){super(e),this.plugin=t}onClose(){v
         <span class="lh-help-chip" style="background:#dbeafe;color:#1d4ed8">🃏 Review Deck — Long-term memory</span>
         <span class="lh-help-chip" style="background:#d1fae5;color:#065f46">🗺️ Quest Map — Structured learning</span>
         <span class="lh-help-chip" style="background:#ede9fe;color:#5b21b6">🧠 Memory Map — Visual concept map</span>
+        <span class="lh-help-chip" style="background:#dbeafe;color:#0c4a6e">🎴 Quadrant Card — A4 super-memory (Pro)</span>
       </div>
     `;let d='<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>',f=0,h=[];t==="zh-tw"&&(h=[{icon:"🃏",title:"建立第一個 Review Deck",tag:"手動開始",html:`
             <p><strong>Step 1：在筆記加上標籤（Deck 名稱）</strong></p>
@@ -92,6 +94,7 @@ A: 在快忘記時複習，可以用最少時間達到最高記憶保留率。
             <div class="lh-help-sub" style="border-color:#059669"><div class="lh-help-sub-icon">🗺️</div><div>「把微積分.md 做成 quest-map medium」<br>「把 tag:math 的筆記合成一個 quest-map hard」</div></div>
             <div class="lh-help-sub" style="border-color:#7c3aed"><div class="lh-help-sub-icon">🧠</div><div>「幫作業系統概論.md 建立 memory-map」<br>「把和網路協定相關的筆記做成 memory-map」</div></div>
             <div class="lh-help-sub" style="border-color:#d97706"><div class="lh-help-sub-icon">🎓</div><div>「跑 macro-review tag:azure」<br>「我有一堆沒看的 Azure 卡，幫我一次學完」</div></div>
+            <div class="lh-help-sub" style="border-color:#0078d4"><div class="lh-help-sub-icon">🎴</div><div>「升級」把標記的卡做成四象限卡<br>「把數據飛輪做成四象限卡」 <span style="background:#fde68a;color:#92400e;padding:1px 6px;border-radius:6px;font-size:11px;font-weight:700;">Pro</span></div></div>
             <p><strong>Step 3：開 Hub 開始學</strong></p>
             <p style="margin:4px 0">點側邊欄的 EngramQuest 圖示 → 切到對應分頁 → 開始學習。</p>
           `},{icon:"🃏",title:"Review Deck",tag:c(e,"HELP_REVIEW_TAG"),html:`
@@ -359,6 +362,7 @@ Pythagorean theorem :: a² + b² = c²</pre>
             <div class="lh-help-sub" style="border-color:#059669"><div class="lh-help-sub-icon">🗺️</div><div>"Turn calculus.md into a quest-map medium"<br>"Combine tag:math notes into a quest-map hard"</div></div>
             <div class="lh-help-sub" style="border-color:#7c3aed"><div class="lh-help-sub-icon">🧠</div><div>"Create a memory-map for OS-overview.md"<br>"Make a memory-map from notes about network protocols"</div></div>
             <div class="lh-help-sub" style="border-color:#d97706"><div class="lh-help-sub-icon">🎓</div><div>"Run macro-review tag:azure"<br>"I have a pile of unseen azure cards — teach me through them"</div></div>
+            <div class="lh-help-sub" style="border-color:#0078d4"><div class="lh-help-sub-icon">🎴</div><div>"upgrade" (turns flashcards you marked into quadrant cards)<br>"Make a quadrant card about the data flywheel" <span style="background:#fde68a;color:#92400e;padding:1px 6px;border-radius:6px;font-size:11px;font-weight:700;">Pro</span></div></div>
             <p><strong>Step 3: Open Hub and learn</strong></p>
             <p style="margin:4px 0">Click the EngramQuest ribbon icon → switch tabs → start learning.</p>
           `},{icon:"🃏",title:"Review Deck",tag:c(e,"HELP_REVIEW_TAG"),html:`

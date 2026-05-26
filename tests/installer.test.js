@@ -141,3 +141,57 @@ describe("installer quest-map reference assets", () => {
     expect(challengeFormats.content).toBe("iframe docs");
   });
 });
+
+describe("installer quadrant card (Pro)", () => {
+  function withQuadrant(overrides = {}) {
+    const base = "bundled-skills/quadrant";
+    const root = ".obsidian/plugins/engram-quest/" + base;
+    return makeAllBundledFiles({
+      [`${root}/skills.md`]: "quadrant skill",
+      [`${root}/references/recipes.md`]: "recipes",
+      [`${root}/references/q3-q4-quality.md`]: "quality",
+      [`${root}/references/layout-contract.md`]: "layout",
+      [`${root}/references/obsidian-cli.md`]: "cli",
+      [`${root}/assets/recipe-A-flywheel.html`]: "<html>A</html>",
+      [`${root}/assets/recipe-B-comic.html`]: "<html>B</html>",
+      [`${root}/assets/recipe-C-emoji.html`]: "<html>C</html>",
+      ...overrides,
+    });
+  }
+
+  it("is a Pro module — excluded when isPro is false", async () => {
+    const entries = await installer.getInstallEntries(
+      "claude",
+      makeAdapter(withQuadrant()),
+      ".obsidian",
+      { isPro: false },
+    );
+    expect(entries.some((e) => e.path.includes("engram-quest-quadrant"))).toBe(false);
+  });
+
+  it("installs the skill + recipe assets when isPro is true", async () => {
+    const entries = await installer.getInstallEntries(
+      "claude",
+      makeAdapter(withQuadrant()),
+      ".obsidian",
+      { isPro: true },
+    );
+
+    const skillMd = entries.find((e) => e.path === ".claude/skills/engram-quest-quadrant/SKILL.md");
+    expect(skillMd).toBeDefined();
+    expect(skillMd.content).toBe("quadrant skill");
+
+    const flywheel = entries.find(
+      (e) => e.path === ".claude/skills/engram-quest-quadrant/assets/recipe-A-flywheel.html",
+    );
+    expect(flywheel).toBeDefined();
+    expect(flywheel.content).toBe("<html>A</html>");
+
+    // all four references present
+    for (const ref of ["recipes.md", "q3-q4-quality.md", "layout-contract.md", "obsidian-cli.md"]) {
+      expect(
+        entries.some((e) => e.path === `.claude/skills/engram-quest-quadrant/references/${ref}`),
+      ).toBe(true);
+    }
+  });
+});

@@ -9,6 +9,7 @@ Each skill is installed as an independent module with its own `references/` and 
 | review-deck | `review-deck/skills.md` | Generate or update review-deck cards and hints |
 | memory-map | `memory-map/skills.md` | Generate `.canvas` memory maps |
 | macro-review | `macro-review/skills.md` | Batch-learn flashcard groups with FSRS scheduling |
+| quadrant | `quadrant/skills.md` | Upgrade a flashcard into an A4 four-quadrant super-memory card (Pro) |
 
 ---
 
