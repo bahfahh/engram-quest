@@ -126,13 +126,18 @@ depends on it. Full layout + phase + postMessage contract: `references/layout-co
   "cardId": "<slug>-<timestamp>",
   "title": "<short human title for the card list>",
   "source": "<source note path, or null>",
+  "deck": "<deck name>",         // group the card under this deck in the Hub tab (see below)
   "recipe": "A",                 // A | B | C | D
   "q1": "...", "q2": "...", "q3": "...", "q4": "...",   // plaintext, for list preview / search
   "created": "YYYY-MM-DD",
   "fsrs": null                   // leave null — the plugin initializes FSRS on first review
 }
 ```
-Leave `fsrs` as `null`. The plugin owns scheduling; it initializes the FSRS state when the card
+Set `deck` so the Hub tab can group cards by tag, exactly like Review Deck. Resolve it in this
+order: the source note's flashcard tag's deck segment (e.g. tag `flashcards/azure` → deck `azure`),
+else the source note's folder name, else a short topic label for an AI-created card. If you genuinely
+cannot determine one, omit `deck` — the plugin falls back to the source note's tag/folder at render
+time. Leave `fsrs` as `null`. The plugin owns scheduling; it initializes the FSRS state when the card
 is first reviewed and maps the card's self-assessment (correct / wrong / blank) to a rating.
 
 ### `cardId` rules

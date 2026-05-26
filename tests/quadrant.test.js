@@ -3,6 +3,8 @@ import {
   scoreToRating,
   isCardDue,
   isCardNew,
+  isCardMastered,
+  groupQuadrantDecks,
   scanQuadrantCards,
   applyQuadrantRating,
   addToUpgradeQueue,
@@ -96,6 +98,40 @@ describe("quadrant scanQuadrantCards", () => {
     const scan = await scanQuadrantCards(adapter, "2026-05-26");
     expect(scan.total).toBe(1);
     expect(scan.cards[0].cardId).toBe("ok");
+  });
+});
+
+describe("quadrant isCardMastered", () => {
+  it("only counts reviewed cards whose stability passed ~3 weeks", () => {
+    expect(isCardMastered({ cardId: "n" })).toBe(false); // new
+    expect(isCardMastered({ fsrs: { state: 2, stability: 30 } })).toBe(true);
+    expect(isCardMastered({ fsrs: { state: 2, stability: 10 } })).toBe(false); // not stable enough
+    expect(isCardMastered({ fsrs: { state: 3, stability: 30 } })).toBe(false); // relearning
+  });
+});
+
+describe("quadrant groupQuadrantDecks", () => {
+  it("groups by deckOf, computes due/new/total, sorts ready-first", () => {
+    const cards = [
+      { cardId: "a", deck: "azure" },                                                  // new
+      { cardId: "b", deck: "azure", fsrs: { due: "2026-05-01", state: 2 } },           // due
+      { cardId: "c", deck: "aws", fsrs: { due: "2026-06-01", state: 2 } },             // future (not ready)
+    ];
+    const decks = groupQuadrantDecks(cards, (card) => card.deck, "2026-05-26");
+    expect(decks.map((d) => d.name)).toEqual(["azure", "aws"]); // azure has 2 ready, sorts first
+    const azure = decks.find((d) => d.name === "azure");
+    expect(azure.total).toBe(2);
+    expect(azure.unseen).toBe(1); // a
+    expect(azure.due).toBe(1);    // b
+    const aws = decks.find((d) => d.name === "aws");
+    expect(aws.due).toBe(0);
+    expect(aws.unseen).toBe(0);
+  });
+
+  it("falls back to 'Quadrant' when deckOf yields nothing", () => {
+    const decks = groupQuadrantDecks([{ cardId: "x" }], () => null, "2026-05-26");
+    expect(decks).toHaveLength(1);
+    expect(decks[0].name).toBe("Quadrant");
   });
 });
 

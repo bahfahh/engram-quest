@@ -26,6 +26,37 @@ function isCardNew(card) {
   return !card || !card.fsrs;
 }
 
+/** Mastered = a reviewed card whose FSRS stability has grown past ~3 weeks (matches review-deck). */
+function isCardMastered(card) {
+  if (!card || !card.fsrs || card.fsrs.state !== 2) return false;
+  const stability = card.fsrs.stability ?? card.fsrs.interval ?? 0;
+  return stability >= 21;
+}
+
+/**
+ * Group flat scanned cards into decks for the Hub tab, mirroring review-deck's deck shape so the
+ * same list/grid/tree renderers and CSS apply. `deckOf(card)` returns the deck name (the caller
+ * resolves it from card.deck → source-note tag → folder). Returns an array of
+ * { name, cards, due, unseen, total } sorted by ready (due+new) desc, matching review-deck order.
+ */
+function groupQuadrantDecks(cards, deckOf, today = todayStr()) {
+  const map = {};
+  for (const card of cards) {
+    const name = (deckOf ? deckOf(card) : null) || "Quadrant";
+    if (!map[name]) map[name] = { name, cards: [], due: 0, unseen: 0, total: 0 };
+    const deck = map[name];
+    deck.cards.push(card);
+    deck.total++;
+    if (isCardNew(card)) deck.unseen++;
+    else if (isCardDue(card, today)) deck.due++;
+  }
+  return Object.values(map).sort((a, b) => {
+    const ar = a.due + a.unseen;
+    const br = b.due + b.unseen;
+    return br - ar || b.total - a.total || String(a.name).localeCompare(String(b.name));
+  });
+}
+
 /** Map a self-assessment score (the iframe posts 100 / 60 / 25) to an FSRS rating. */
 function scoreToRating(score) {
   const s = Number(score);
@@ -154,6 +185,8 @@ module.exports = {
   todayStr,
   isCardDue,
   isCardNew,
+  isCardMastered,
+  groupQuadrantDecks,
   scoreToRating,
   loadCardSr,
   saveCardSr,
