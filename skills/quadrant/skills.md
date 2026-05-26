@@ -1,5 +1,5 @@
 ---
-name: quadrant
+name: engram-quadrant
 description: >
   Generate "Quadrant Card" A4 super-memory cards for the EngramQuest plugin (Pro feature).
   A Quadrant Card turns a single Q/A flashcard into a four-quadrant A4 memory sheet

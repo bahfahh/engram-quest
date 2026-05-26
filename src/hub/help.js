@@ -93,7 +93,7 @@ A: 在快忘記時複習，可以用最少時間達到最高記憶保留率。
             <div class="lh-help-sub" style="border-color:#2563eb"><div class="lh-help-sub-icon">🃏</div><div>「把 tag:math 的筆記都做成 Review Deck」<br>「把和行銷相關的筆記做成 Review Deck」</div></div>
             <div class="lh-help-sub" style="border-color:#059669"><div class="lh-help-sub-icon">🗺️</div><div>「把微積分.md 做成 quest-map medium」<br>「把 tag:math 的筆記合成一個 quest-map hard」</div></div>
             <div class="lh-help-sub" style="border-color:#7c3aed"><div class="lh-help-sub-icon">🧠</div><div>「幫作業系統概論.md 建立 memory-map」<br>「把和網路協定相關的筆記做成 memory-map」</div></div>
-            <div class="lh-help-sub" style="border-color:#d97706"><div class="lh-help-sub-icon">🎓</div><div>「跑 macro-review tag:azure」<br>「我有一堆沒看的 Azure 卡，幫我一次學完」</div></div>
+            <div class="lh-help-sub" style="border-color:#d97706"><div class="lh-help-sub-icon">🎓</div><div>「跑 engram-macro-review tag:azure」<br>「我有一堆沒看的 Azure 卡，幫我一次學完」</div></div>
             <div class="lh-help-sub" style="border-color:#0078d4"><div class="lh-help-sub-icon">🎴</div><div>「升級」把標記的卡做成四象限卡<br>「把數據飛輪做成四象限卡」 <span style="background:#fde68a;color:#92400e;padding:1px 6px;border-radius:6px;font-size:11px;font-weight:700;">Pro</span></div></div>
             <p><strong>Step 3：開 Hub 開始學</strong></p>
             <p style="margin:4px 0">點側邊欄的 EngramQuest 圖示 → 切到對應分頁 → 開始學習。</p>
@@ -162,7 +162,7 @@ expect(result.completed).toBe(true)
             <p>累積一堆沒複習的卡時，AI 用「老師講解」的方式一次教完，自動寫回 FSRS 排程。</p>
             <p><strong>運作機制</strong></p>
             <ol>
-              <li>跟 AI 說：「跑 macro-review tag:azure」或「幫我把 azure 的卡都複習一遍」</li>
+              <li>跟 AI 說：「跑 engram-macro-review tag:azure」或「幫我把 azure 的卡都複習一遍」</li>
               <li>AI 找出該 tag 下所有 unseen / overdue 的卡，按來源筆記分組（5-15 張一組）</li>
               <li>每組用平實語言解說所有相關概念（5 分鐘像老師教學）</li>
               <li>看完每組後回答「Got it / Roughly / Unfamiliar」，AI 把對應 FSRS 排程寫進 <code>engram-review/sr/*.json</code></li>
@@ -173,7 +173,7 @@ expect(result.completed).toBe(true)
             <p>複習一張難記的卡時，自動連結到你已掌握的相關卡，作為「記憶錨點」。</p>
             <p><strong>運作機制</strong></p>
             <ol>
-              <li>跟 AI 說「跑 engram-quest-synapse」</li>
+              <li>跟 AI 說「跑 engram-synapse」</li>
               <li>AI 掃描所有 SR 紀錄找出 mastered pool（FSRS stability ≥ 7）</li>
               <li>對每張卡找出最多 3 張強連結錨點，存進 <code>engram-review/synapse/</code></li>
               <li>複習時，Review session 看答案前會多一個 ⚡ Synapse 按鈕</li>
@@ -361,7 +361,7 @@ Pythagorean theorem :: a² + b² = c²</pre>
             <div class="lh-help-sub" style="border-color:#2563eb"><div class="lh-help-sub-icon">🃏</div><div>"Turn notes tagged with math into a Review Deck"<br>"Make a Review Deck from all notes about marketing"</div></div>
             <div class="lh-help-sub" style="border-color:#059669"><div class="lh-help-sub-icon">🗺️</div><div>"Turn calculus.md into a quest-map medium"<br>"Combine tag:math notes into a quest-map hard"</div></div>
             <div class="lh-help-sub" style="border-color:#7c3aed"><div class="lh-help-sub-icon">🧠</div><div>"Create a memory-map for OS-overview.md"<br>"Make a memory-map from notes about network protocols"</div></div>
-            <div class="lh-help-sub" style="border-color:#d97706"><div class="lh-help-sub-icon">🎓</div><div>"Run macro-review tag:azure"<br>"I have a pile of unseen azure cards — teach me through them"</div></div>
+            <div class="lh-help-sub" style="border-color:#d97706"><div class="lh-help-sub-icon">🎓</div><div>"Run engram-macro-review tag:azure"<br>"I have a pile of unseen azure cards — teach me through them"</div></div>
             <div class="lh-help-sub" style="border-color:#0078d4"><div class="lh-help-sub-icon">🎴</div><div>"upgrade" (turns flashcards you marked into quadrant cards)<br>"Make a quadrant card about the data flywheel" <span style="background:#fde68a;color:#92400e;padding:1px 6px;border-radius:6px;font-size:11px;font-weight:700;">Pro</span></div></div>
             <p><strong>Step 3: Open Hub and learn</strong></p>
             <p style="margin:4px 0">Click the EngramQuest ribbon icon → switch tabs → start learning.</p>
@@ -430,7 +430,7 @@ expect(result.completed).toBe(true)
             <p>When unseen cards pile up, ask AI to teach you through them in one session — concept by concept — then it writes FSRS scheduling back automatically.</p>
             <p><strong>How it works</strong></p>
             <ol>
-              <li>Ask AI: "Run macro-review tag:azure" or "Help me batch-review all my azure cards"</li>
+              <li>Ask AI: "Run engram-macro-review tag:azure" or "Help me batch-review all my azure cards"</li>
               <li>AI finds every unseen / overdue card under that tag and groups them by source note (5–15 cards per group)</li>
               <li>Each group is taught in plain language (~5 minutes per group, like a real teacher)</li>
               <li>After each group, you answer "Got it / Roughly / Unfamiliar"; AI writes the matching FSRS schedule into <code>engram-review/sr/*.json</code></li>
@@ -441,7 +441,7 @@ expect(result.completed).toBe(true)
             <p>While reviewing a hard card, automatically surface 1–3 cards you have already mastered that link conceptually — memory anchors that make the new card easier to remember.</p>
             <p><strong>How it works</strong></p>
             <ol>
-              <li>Tell your AI assistant: "run engram-quest-synapse"</li>
+              <li>Tell your AI assistant: "run engram-synapse"</li>
               <li>The skill scans every SR file and builds a "mastered pool" (FSRS stability ≥ 7)</li>
               <li>For each card in the vault, the AI picks up to 3 strong anchors and writes them to <code>engram-review/synapse/</code></li>
               <li>During review, a ⚡ Synapse button appears before you reveal the answer</li>

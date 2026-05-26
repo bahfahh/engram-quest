@@ -1,5 +1,5 @@
 ---
-name: memory-map
+name: engram-memory-map
 description: 
   Generate or update memory-map Canvas files for the EngramQuest plugin.
   Trigger when the user asks to create, update, or explain a memory map, or asks how memory-map works.

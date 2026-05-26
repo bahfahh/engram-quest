@@ -1,5 +1,5 @@
 ---
-name: macro-review
+name: engram-macro-review
 description:
   Knowledge condensation review for the EngramQuest plugin (Pro feature).
   Trigger when the user invokes /macro-review, mentions having too many unseen or overdue cards,

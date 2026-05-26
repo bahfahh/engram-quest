@@ -1,5 +1,5 @@
 ---
-name: review-deck
+name: engram-review-deck
 description: 
   Manage review-deck data for the EngramQuest plugin.
   Trigger when the user asks to create, update, explain, edit, or delete a review deck,

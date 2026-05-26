@@ -1,5 +1,5 @@
 ---
-name: engram-quest-synapse
+name: engram-synapse
 description:
   Build memory anchor recommendations (Synapse) for EngramQuest review cards (Pro feature).
   Trigger when the user invokes /engram-quest-synapse, asks to "build synapse",

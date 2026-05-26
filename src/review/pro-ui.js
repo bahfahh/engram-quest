@@ -14,7 +14,7 @@ const {
 } = require("./synapse");
 const { collectAllCards, pickTopN, computeCardPriority } = require("./timebox");
 
-const SKILL_COMMAND = "engram-quest-synapse";
+const SKILL_COMMAND = "engram-synapse";
 
 async function renderSynapseProBanner(parent, plugin, app) {
   if (!plugin.settings.licenseValid) return;

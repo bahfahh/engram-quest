@@ -1,5 +1,5 @@
 ---
-name: quest-map
+name: engram-quest-map
 description: 
   Generate quest-map YAML for the EngramQuest plugin.
   Trigger when the user asks to create a quest map from a note or topic, or asks how quest-map works.
