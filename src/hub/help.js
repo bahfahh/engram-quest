@@ -193,6 +193,26 @@ expect(result.completed).toBe(true)
             </ol>
             <p>跟「全部複習」共用同一個 review session UI 與 SR 寫回流程，沒有額外風險。</p>
             <p><strong>需要 Pro license</strong>。</p>
+          `},{icon:"🎴",title:"四象限卡 (Pro)",tag:"Pro",html:`
+            <p>把一張 Q/A 卡升級成一張 A4「超記憶卡」，用四個象限從不同角度編碼同一個概念，專治最難記、最核心的觀念。</p>
+            <p><strong>四個象限</strong></p>
+            <ol>
+              <li><strong>Q1 問題</strong> — 要記住的提問</li>
+              <li><strong>Q2 答案</strong> — 精準的正解</li>
+              <li><strong>Q3 文字比喻</strong> — 用口訣／類比把抽象變好懂</li>
+              <li><strong>Q4 視覺圖像</strong> — 一張畫面或 emoji 場景，讓大腦用圖像記</li>
+            </ol>
+            <p><strong>有什麼用</strong></p>
+            <div class="lh-help-sub" style="border-color:#0078d4"><div class="lh-help-sub-icon">DC</div><div><strong>雙重編碼</strong> — 同時用文字與圖像記，比純文字更牢</div></div>
+            <div class="lh-help-sub" style="border-color:#0078d4"><div class="lh-help-sub-icon">EE</div><div><strong>精緻化編碼</strong> — 比喻 + 圖像把抽象概念掛上熟悉的鉤子</div></div>
+            <div class="lh-help-sub" style="border-color:#0078d4"><div class="lh-help-sub-icon">SR</div><div><strong>獨立排程</strong> — 每張四象限卡有自己的 FSRS 排程，與 Review Deck 分開</div></div>
+            <p><strong>怎麼用</strong></p>
+            <ol>
+              <li>跟 AI 說「四象限卡 / 四格卡 / 超記憶卡 / Quadrant Card」任一名稱，或在複習時把卡標記「升級」</li>
+              <li>到 Hub →「四象限卡」分頁複習，自評後自動更新排程</li>
+              <li>不要的卡可在牌組列或複習卡內按 🗑️ 刪除</li>
+            </ol>
+            <p><strong>需要 Pro license</strong>。適合用在最重要、最難記的核心概念，不必每張卡都升級。</p>
           `},{icon:"🔬",title:"Learning Science",tag:c(e,"HELP_SCIENCE_TAG"),html:`
             <div class="lh-help-sub"><div class="lh-help-sub-icon">SR</div><div><strong>Spaced Repetition</strong><br>在快忘記時複習，提升效率。Review Deck 使用 FSRS 自動安排下次複習。</div></div>
             <div class="lh-help-sub"><div class="lh-help-sub-icon">RP</div><div><strong>Retrieval Practice</strong><br>先回想，再看答案，比重讀更有效。Review Deck 與 Quest Map 都會強迫主動回想。</div></div>
@@ -461,6 +481,26 @@ expect(result.completed).toBe(true)
             </ol>
             <p>Reuses the regular review session UI and SR write-back path, so there is no risk to your scheduling data.</p>
             <p><strong>Requires a Pro license.</strong></p>
+          `},{icon:"🎴",title:"Quadrant Card (Pro)",tag:"Pro",html:`
+            <p>Upgrade a single Q/A card into an A4 "super memory" sheet that encodes one concept from four angles — built for your hardest, most important ideas.</p>
+            <p><strong>The four quadrants</strong></p>
+            <ol>
+              <li><strong>Q1 Question</strong> — what you need to recall</li>
+              <li><strong>Q2 Answer</strong> — the precise answer</li>
+              <li><strong>Q3 Verbal metaphor</strong> — a mnemonic or analogy that makes the abstract concrete</li>
+              <li><strong>Q4 Visual image</strong> — a scene or emoji that lets your brain remember by picture</li>
+            </ol>
+            <p><strong>Why it helps</strong></p>
+            <div class="lh-help-sub" style="border-color:#0078d4"><div class="lh-help-sub-icon">DC</div><div><strong>Dual coding</strong> — words + image together stick better than text alone</div></div>
+            <div class="lh-help-sub" style="border-color:#0078d4"><div class="lh-help-sub-icon">EE</div><div><strong>Elaborative encoding</strong> — metaphor + image hook the abstract onto something familiar</div></div>
+            <div class="lh-help-sub" style="border-color:#0078d4"><div class="lh-help-sub-icon">SR</div><div><strong>Own schedule</strong> — each quadrant card carries its own FSRS schedule, separate from your review decks</div></div>
+            <p><strong>How to use it</strong></p>
+            <ol>
+              <li>Tell the AI any alias — "Quadrant Card", "quadrant", "四象限卡", "四格卡", "超記憶卡" — or mark a card "upgrade" during review</li>
+              <li>Review them in Hub → Quadrant Card tab; your self-assessment updates the schedule</li>
+              <li>Delete unwanted cards with the 🗑️ button on a deck row or inside the review card</li>
+            </ol>
+            <p><strong>Requires a Pro license.</strong> Best for your most important, hardest-to-remember concepts — you don't need to upgrade every card.</p>
           `},{icon:"🔬",title:"Why It Works",tag:c(e,"HELP_SCIENCE_TAG"),html:`
             <div class="lh-help-sub"><div class="lh-help-sub-icon">SR</div><div><strong>Spaced Repetition</strong><br>Review at the point of near-forgetting. FSRS calculates the next interval automatically.</div></div>
             <div class="lh-help-sub"><div class="lh-help-sub-icon">RP</div><div><strong>Retrieval Practice</strong><br>Active recall is more effective than re-reading. Review Deck and Quest Map force retrieval before the answer appears.</div></div>
