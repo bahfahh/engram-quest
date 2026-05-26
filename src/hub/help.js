@@ -94,7 +94,7 @@ A: 在快忘記時複習，可以用最少時間達到最高記憶保留率。
             <div class="lh-help-sub" style="border-color:#059669"><div class="lh-help-sub-icon">🗺️</div><div>「把微積分.md 做成 quest-map medium」<br>「把 tag:math 的筆記合成一個 quest-map hard」</div></div>
             <div class="lh-help-sub" style="border-color:#7c3aed"><div class="lh-help-sub-icon">🧠</div><div>「幫作業系統概論.md 建立 memory-map」<br>「把和網路協定相關的筆記做成 memory-map」</div></div>
             <div class="lh-help-sub" style="border-color:#d97706"><div class="lh-help-sub-icon">🎓</div><div>「跑 engram-macro-review tag:azure」<br>「我有一堆沒看的 Azure 卡，幫我一次學完」</div></div>
-            <div class="lh-help-sub" style="border-color:#0078d4"><div class="lh-help-sub-icon">🎴</div><div>「升級」把標記的卡做成四象限卡<br>「把數據飛輪做成四象限卡」 <span style="background:#fde68a;color:#92400e;padding:1px 6px;border-radius:6px;font-size:11px;font-weight:700;">Pro</span></div></div>
+            <div class="lh-help-sub" style="border-color:#0078d4"><div class="lh-help-sub-icon">🎴</div><div>「升級」把標記的卡做成四象限卡<br>「把數據飛輪做成四象限卡」<br>不要的卡片可在「四象限卡」分頁的牌組列或複習卡內按 🗑️ 刪除。 <span style="background:#fde68a;color:#92400e;padding:1px 6px;border-radius:6px;font-size:11px;font-weight:700;">Pro</span></div></div>
             <p><strong>Step 3：開 Hub 開始學</strong></p>
             <p style="margin:4px 0">點側邊欄的 EngramQuest 圖示 → 切到對應分頁 → 開始學習。</p>
           `},{icon:"🃏",title:"Review Deck",tag:c(e,"HELP_REVIEW_TAG"),html:`
@@ -362,7 +362,7 @@ Pythagorean theorem :: a² + b² = c²</pre>
             <div class="lh-help-sub" style="border-color:#059669"><div class="lh-help-sub-icon">🗺️</div><div>"Turn calculus.md into a quest-map medium"<br>"Combine tag:math notes into a quest-map hard"</div></div>
             <div class="lh-help-sub" style="border-color:#7c3aed"><div class="lh-help-sub-icon">🧠</div><div>"Create a memory-map for OS-overview.md"<br>"Make a memory-map from notes about network protocols"</div></div>
             <div class="lh-help-sub" style="border-color:#d97706"><div class="lh-help-sub-icon">🎓</div><div>"Run engram-macro-review tag:azure"<br>"I have a pile of unseen azure cards — teach me through them"</div></div>
-            <div class="lh-help-sub" style="border-color:#0078d4"><div class="lh-help-sub-icon">🎴</div><div>"upgrade" (turns flashcards you marked into quadrant cards)<br>"Make a quadrant card about the data flywheel" <span style="background:#fde68a;color:#92400e;padding:1px 6px;border-radius:6px;font-size:11px;font-weight:700;">Pro</span></div></div>
+            <div class="lh-help-sub" style="border-color:#0078d4"><div class="lh-help-sub-icon">🎴</div><div>"upgrade" (turns flashcards you marked into quadrant cards)<br>"Make a quadrant card about the data flywheel"<br>Remove unwanted cards with the 🗑️ button on a deck row or inside the review card in the Quadrant Card tab. <span style="background:#fde68a;color:#92400e;padding:1px 6px;border-radius:6px;font-size:11px;font-weight:700;">Pro</span></div></div>
             <p><strong>Step 3: Open Hub and learn</strong></p>
             <p style="margin:4px 0">Click the EngramQuest ribbon icon → switch tabs → start learning.</p>
           `},{icon:"🃏",title:"Review Deck",tag:c(e,"HELP_REVIEW_TAG"),html:`

@@ -178,6 +178,57 @@ function isQueued(queue, source, q) {
   );
 }
 
+/**
+ * Move a single file to trash. Prefers the OS trash (trashSystem), falls back to the vault-local
+ * .trash (trashLocal), then to a permanent remove — mirroring how Obsidian's own trashFile picks a
+ * destination. Returns true when the file is gone (including the already-absent case) and false
+ * when every available method failed, so callers can surface a real failure. Kept adapter-pure so
+ * the data layer stays unit-testable without app.fileManager.
+ */
+async function trashPath(adapter, path) {
+  try {
+    if (adapter.exists && !(await adapter.exists(path))) return true; // nothing to remove
+  } catch { /* can't check existence — fall through and try to trash anyway */ }
+  try {
+    if (typeof adapter.trashSystem === "function") {
+      const ok = await adapter.trashSystem(path);
+      if (ok) return true;
+    }
+  } catch (e) { console.warn("EngramQuest: quadrant trashSystem failed", e); }
+  try {
+    if (typeof adapter.trashLocal === "function") { await adapter.trashLocal(path); return true; }
+  } catch (e) { console.warn("EngramQuest: quadrant trashLocal failed", e); }
+  try {
+    if (typeof adapter.remove === "function") { await adapter.remove(path); return true; }
+  } catch (e) { console.warn("EngramQuest: quadrant remove failed", e); }
+  return false;
+}
+
+/**
+ * Delete a quadrant card: trash its FSRS schedule (sr/{cardId}.json) and its rendered A4 page
+ * ({cardId}.html), then drop any upgrade-queue entry that produced this card. The card vanishes
+ * from the next scanQuadrantCards (which lists sr/*.json). Nothing is written back to any original
+ * review-deck flashcard.
+ *
+ * The sr file is the card's canonical record, so its removal gates the rest: if it can't be
+ * trashed we throw *before* touching the html or queue, leaving a consistent on-disk state and
+ * letting the UI keep its confirm/retry flow alive (rather than falsely reporting success). The
+ * html + queue cleanup that follows is best-effort — an orphaned html with no sr is invisible to
+ * the scan and harmless.
+ */
+async function deleteQuadrantCard(adapter, cardId) {
+  if (!cardId) return;
+  const srRemoved = await trashPath(adapter, `${SR_DIR}/${cardId}.json`);
+  if (!srRemoved) throw new Error(`EngramQuest: could not delete quadrant card "${cardId}"`);
+  await trashPath(adapter, `${QUADRANT_DIR}/${cardId}.html`);
+  try {
+    const queue = await readUpgradeQueue(adapter);
+    const before = queue.entries.length;
+    queue.entries = queue.entries.filter((e) => e.cardId !== cardId);
+    if (queue.entries.length !== before) await writeUpgradeQueue(adapter, queue);
+  } catch (e) { console.warn("EngramQuest: quadrant queue cleanup failed", e); }
+}
+
 module.exports = {
   QUADRANT_DIR,
   SR_DIR,
@@ -196,4 +247,6 @@ module.exports = {
   writeUpgradeQueue,
   addToUpgradeQueue,
   isQueued,
+  trashPath,
+  deleteQuadrantCard,
 };

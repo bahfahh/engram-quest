@@ -9,7 +9,7 @@
 const I = require("obsidian");
 const { t: c, interpolate: K } = require("../i18n");
 const { matchFlashcardTagPrefix } = require("../review/helpers");
-const { scanQuadrantCards, groupQuadrantDecks, isCardMastered } = require("./cards");
+const { scanQuadrantCards, groupQuadrantDecks, isCardMastered, deleteQuadrantCard } = require("./cards");
 const { QuadrantReviewModal } = require("./review-modal");
 
 const DECK_EMOJIS = ["🗂️", "📘", "🧠", "⭐", "⚡", "🔗", "🌿", "🧩", "📝", "🌊", "💡", "📚"];
@@ -72,6 +72,67 @@ function startDeckReview(hub, deck, refresh) {
     new QuadrantReviewModal(hub.app, hub.plugin, card, openNext).open();
   };
   openNext();
+}
+
+// ---------------------------------------------------------------------------------------------
+// Deck deletion (deck row 🗑️) — trashes every quadrant card grouped under the deck
+// ---------------------------------------------------------------------------------------------
+
+const TRASH_SVG = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>';
+
+// Confirm-then-delete modal for a whole deck. Mirrors the Review Deck _confirmDelete layout so the
+// two tabs feel identical. Loops the deck's cards through deleteQuadrantCard (a deck is just a
+// grouping — there is no deck file to remove) then re-renders.
+function confirmDeleteDeck(hub, t, deck, refresh) {
+  const adapter = hub.app.vault.adapter;
+  const modal = new I.Modal(hub.app);
+  modal.modalEl.style.cssText = "width:min(92vw,420px);padding:0;border-radius:16px;overflow:hidden;";
+  const wrap = modal.contentEl;
+  wrap.style.cssText = "padding:24px;display:flex;flex-direction:column;gap:14px;";
+  wrap.createEl("div", {
+    text: K(c(t, "DELETE_CONFIRM_TITLE"), { name: deck.name }),
+    attr: { style: "font-size:16px;font-weight:700;color:var(--text-normal);" },
+  });
+  wrap.createEl("div", {
+    text: K(c(t, "QUADRANT_DELETE_DECK_BODY"), { count: deck.cards.length }),
+    attr: { style: "font-size:13px;color:var(--text-muted);line-height:1.6;" },
+  });
+  const btnRow = wrap.createEl("div", { attr: { style: "display:flex;gap:8px;justify-content:flex-end;padding-top:4px;" } });
+  btnRow.createEl("button", {
+    text: c(t, "DELETE_CANCEL_BTN"),
+    attr: { style: "padding:7px 16px;border-radius:8px;border:1px solid var(--background-modifier-border);background:var(--background-secondary);color:var(--text-normal);cursor:pointer;font-size:13px;" },
+  }).addEventListener("click", () => modal.close());
+  const delBtn = btnRow.createEl("button", {
+    text: c(t, "DELETE_CONFIRM_BTN"),
+    attr: { style: "padding:7px 16px;border-radius:8px;border:none;background:#ef4444;color:#fff;cursor:pointer;font-size:13px;font-weight:600;" },
+  });
+  delBtn.addEventListener("click", async () => {
+    modal.close();
+    let deleted = 0;
+    try {
+      for (const card of deck.cards) { await deleteQuadrantCard(adapter, card.cardId); deleted++; }
+      new I.Notice(K(c(t, "QUADRANT_DELETE_DECK_DONE"), { count: deleted }));
+    } catch (err) {
+      // deleteQuadrantCard throws if a card's sr file can't be trashed: report it and let the
+      // refresh below show which cards remain (a partial batch leaves the rest intact to retry).
+      console.error("EngramQuest: quadrant deck delete failed", err);
+      new I.Notice(String(err && err.message || err));
+    }
+    refresh();
+  });
+  modal.open();
+}
+
+// Append a 🗑️ delete button to a deck row/card. stopPropagation keeps the row's own click (which
+// starts a review) from firing. Reuses Review Deck's lh-delete-btn class for visual + hover parity.
+function appendDeckDeleteBtn(parentEl, hub, t, deck, refresh) {
+  const btn = parentEl.createEl("button", { attr: { class: "lh-delete-btn", title: c(t, "DELETE") } });
+  btn.appendChild(I.sanitizeHTMLToDom(TRASH_SVG));
+  btn.addEventListener("click", (ev) => {
+    ev.stopPropagation();
+    confirmDeleteDeck(hub, t, deck, refresh);
+  });
+  return btn;
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -246,6 +307,7 @@ function renderListView(content, hub, t, decks, refresh) {
       attr: { class: "lh-deck-row-sub" },
     });
     appendMetrics(row, t, deck, ready);
+    appendDeckDeleteBtn(row, hub, t, deck, refresh);
     row.title = ready === 0 ? K(c(t, "NO_READY_IN_DECK"), { deck: deck.name, total: deck.total }) : "";
     row.addEventListener("click", () => startDeckReview(hub, deck, refresh));
   });
@@ -293,6 +355,7 @@ function renderGridView(content, hub, t, decks, refresh) {
       e.createEl("div", { text: c(t, m.key), attr: { class: "lh-deck-gc-metric-label" } });
       e.createEl("div", { text: String(m.value), attr: { class: "lh-deck-gc-metric-num" } });
     });
+    appendDeckDeleteBtn(gc, hub, t, deck, refresh);
     gc.title = ready === 0 ? K(c(t, "NO_READY_IN_DECK"), { deck: deck.name, total: deck.total }) : "";
     gc.addEventListener("click", () => startDeckReview(hub, deck, refresh));
   });
@@ -315,6 +378,7 @@ function renderTreeView(content, hub, t, decks, refresh) {
       attr: { class: "lh-deck-row-sub" },
     });
     appendMetrics(row, t, deck, ready);
+    appendDeckDeleteBtn(row, hub, t, deck, refresh);
     row.title = ready === 0 ? K(c(t, "NO_READY_IN_DECK"), { deck: deck.name, total: deck.total }) : "";
     row.addEventListener("click", () => startDeckReview(hub, deck, refresh));
     count++;

@@ -90,6 +90,7 @@ Turns a single flashcard into an A4 four-quadrant "super memory" sheet: **Q1 que
 - **Upgrade** existing flashcards: mark cards from the review session, then tell the Quadrant Card skill *"upgrade"* — it converts everything you queued in one pass
 - **Create** new cards directly: *"Make a quadrant card about the data flywheel"*
 - Review them in Hub → Quadrant Cards, with due/new counts and self-assessment driving the schedule
+- **Delete** cards you no longer need: a 🗑️ button on each deck row (removes the whole group) or inside the review card (removes one) moves them to trash
 
 ### 🌙 Dark Mode
 

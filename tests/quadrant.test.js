@@ -9,7 +9,9 @@ import {
   applyQuadrantRating,
   addToUpgradeQueue,
   readUpgradeQueue,
+  deleteQuadrantCard,
   SR_DIR,
+  QUADRANT_DIR,
   QUEUE_PATH,
 } from "../src/quadrant/cards.js";
 
@@ -25,6 +27,9 @@ function makeAdapter(initial = {}) {
     },
     async write(p, content) { files[p] = content; },
     async mkdir() {},
+    // Obsidian DataAdapter exposes remove() (permanent) plus trashSystem/trashLocal; the data layer
+    // prefers trash and falls back to remove. The mock provides remove only, exercising the fallback.
+    async remove(p) { delete files[p]; },
     async list(dir) {
       const prefix = dir.replace(/\/$/, "") + "/";
       return {
@@ -189,5 +194,96 @@ describe("quadrant upgrade queue", () => {
     const res = await addToUpgradeQueue(adapter, { source: "N.md", q: "fresh?", a: "" });
     expect(res.added).toBe(true);
     expect(res.pending).toBe(1);
+  });
+});
+
+describe("quadrant deleteQuadrantCard", () => {
+  it("removes the card's sr json and html, so the next scan drops it", async () => {
+    const adapter = makeAdapter({
+      ...Object.fromEntries([
+        srFile("keep", { cardId: "keep", title: "Keep" }),
+        srFile("gone", { cardId: "gone", title: "Gone" }),
+      ]),
+      [`${QUADRANT_DIR}/gone.html`]: "<html>gone</html>",
+      [`${QUADRANT_DIR}/keep.html`]: "<html>keep</html>",
+    });
+
+    await deleteQuadrantCard(adapter, "gone");
+
+    expect(adapter.files[`${SR_DIR}/gone.json`]).toBeUndefined();
+    expect(adapter.files[`${QUADRANT_DIR}/gone.html`]).toBeUndefined();
+    // the other card is untouched
+    expect(adapter.files[`${SR_DIR}/keep.json`]).toBeTruthy();
+    expect(adapter.files[`${QUADRANT_DIR}/keep.html`]).toBeTruthy();
+
+    const scan = await scanQuadrantCards(adapter, "2026-05-26");
+    expect(scan.total).toBe(1);
+    expect(scan.cards[0].cardId).toBe("keep");
+  });
+
+  it("drops upgrade-queue entries that produced the deleted card, keeping the rest", async () => {
+    const adapter = makeAdapter({
+      ...Object.fromEntries([srFile("gone", { cardId: "gone" })]),
+      [QUEUE_PATH]: JSON.stringify({
+        entries: [
+          { source: "A.md", q: "q1", a: "", status: "done", cardId: "gone" },
+          { source: "A.md", q: "q2", a: "", status: "done", cardId: "other" },
+          { source: "B.md", q: "q3", a: "", status: "pending", cardId: null },
+        ],
+      }),
+    });
+
+    await deleteQuadrantCard(adapter, "gone");
+
+    const queue = await readUpgradeQueue(adapter);
+    expect(queue.entries.map((e) => e.cardId)).toEqual(["other", null]);
+  });
+
+  it("is a no-op (never throws) when the card files are already absent", async () => {
+    const adapter = makeAdapter();
+    await expect(deleteQuadrantCard(adapter, "missing")).resolves.toBeUndefined();
+    // a falsy cardId is ignored too
+    await expect(deleteQuadrantCard(adapter, "")).resolves.toBeUndefined();
+  });
+
+  it("prefers trashSystem when the adapter supports it", async () => {
+    const trashed = [];
+    const adapter = makeAdapter(Object.fromEntries([srFile("t", { cardId: "t" })]));
+    adapter.trashSystem = async (p) => { trashed.push(p); delete adapter.files[p]; return true; };
+    // make remove throw so a fallback would be detectable
+    adapter.remove = async () => { throw new Error("should not reach remove"); };
+
+    await deleteQuadrantCard(adapter, "t");
+    expect(trashed).toContain(`${SR_DIR}/t.json`);
+    expect(adapter.files[`${SR_DIR}/t.json`]).toBeUndefined();
+  });
+
+  it("falls back to trashLocal when trashSystem declines (returns false)", async () => {
+    const local = [];
+    const adapter = makeAdapter(Object.fromEntries([srFile("t", { cardId: "t" })]));
+    adapter.trashSystem = async () => false; // OS trash unavailable
+    adapter.trashLocal = async (p) => { local.push(p); delete adapter.files[p]; };
+    adapter.remove = async () => { throw new Error("should not reach remove"); };
+
+    await deleteQuadrantCard(adapter, "t");
+    expect(local).toContain(`${SR_DIR}/t.json`);
+    expect(adapter.files[`${SR_DIR}/t.json`]).toBeUndefined();
+  });
+
+  it("throws (and leaves html/queue untouched) when the sr file cannot be trashed", async () => {
+    const adapter = makeAdapter({
+      ...Object.fromEntries([srFile("stuck", { cardId: "stuck" })]),
+      [`${QUADRANT_DIR}/stuck.html`]: "<html>stuck</html>",
+      [QUEUE_PATH]: JSON.stringify({ entries: [{ source: "A.md", q: "q", a: "", status: "done", cardId: "stuck" }] }),
+    });
+    // every removal method fails → trashPath returns false → deleteQuadrantCard throws
+    adapter.remove = async () => { throw new Error("disk error"); };
+
+    await expect(deleteQuadrantCard(adapter, "stuck")).rejects.toThrow(/could not delete/);
+    // the sr gate failed, so nothing downstream was mutated
+    expect(adapter.files[`${SR_DIR}/stuck.json`]).toBeTruthy();
+    expect(adapter.files[`${QUADRANT_DIR}/stuck.html`]).toBeTruthy();
+    const queue = JSON.parse(adapter.files[QUEUE_PATH]);
+    expect(queue.entries).toHaveLength(1);
   });
 });
