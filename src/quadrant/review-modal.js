@@ -29,8 +29,11 @@ class QuadrantReviewModal extends I.Modal {
     const zh = L(t) === "zh-tw";
     const { contentEl, modalEl } = this;
     this._isOpen = true;
-    modalEl.style.cssText = "width:min(96vw,620px);padding:0;border-radius:16px;overflow:hidden;";
-    contentEl.style.cssText = "padding:16px;display:flex;flex-direction:column;gap:10px;";
+    // Cap the modal at the viewport and let the content scroll: the A4 card iframe is a tall
+    // portrait page, so without this the bottom (phase controls / self-assessment buttons) gets
+    // clipped by overflow:hidden with no way to reach it.
+    modalEl.style.cssText = "width:min(96vw,620px);max-height:90vh;padding:0;border-radius:16px;overflow:hidden;display:flex;flex-direction:column;";
+    contentEl.style.cssText = "padding:16px;display:flex;flex-direction:column;gap:10px;overflow-y:auto;flex:1;min-height:0;";
 
     contentEl.createEl("div", {
       text: this.card.title || this.card.cardId,
@@ -62,7 +65,14 @@ class QuadrantReviewModal extends I.Modal {
       const data = event.data || {};
       if (!data || typeof data !== "object") return;
       if (data.type === "engram-quest-resize" && frame) {
-        const next = Math.max(180, Math.min(1200, Math.round(Number(data.height) || 520)));
+        // A full A4 quadrant card is taller than the window. Cap the iframe to a fraction of the
+        // viewport instead of growing it to the card's full height: a too-tall iframe gets clipped
+        // by the modal (and fighting the modal's flex/scroll is fragile). When capped, the card's
+        // own document scrolls (default iframe behaviour) so the bottom — tip bar, reveal/review
+        // buttons, self-assessment row — is always reachable. Short cards still fit exactly.
+        const win = (typeof activeWindow !== "undefined" && activeWindow) || window;
+        const cap = Math.max(360, Math.floor((win.innerHeight || 900) * 0.78));
+        const next = Math.max(180, Math.min(cap, Math.round(Number(data.height) || 520)));
         frame.style.height = next + "px";
       }
       if (data.type === "engram-quest-solved") {

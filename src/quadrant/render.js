@@ -149,16 +149,27 @@ async function renderQuadrantTab(el, hub) {
   }
 
   // ----- Card shell + toolbar + scrollable content (same DOM order as Review tab) -----
-  const card = el.createEl("div", { attr: { class: "lh-card" } });
-  const head = card.createEl("div", { attr: { class: "lh-card-header" } });
-  head.createEl("span", { text: c(t, "TAB_QUADRANT"), attr: { class: "lh-card-title" } });
-
-  const bar = card.createEl("div", { attr: { class: "lh-toolbar" } });    // toolbar before content
-  const content = card.createEl("div", { attr: { style: "flex:1;overflow-y:auto" } });
   // Guard: a deck review keeps the hub open behind the card modals, so by the time the run
   // finishes the user may have closed the hub — re-rendering a detached node wastes a full
   // re-scan and mutates a stale hub. Only refresh while the tab is still in the document.
   const refresh = () => { if (el.isConnected) renderQuadrantTab(el, hub); };
+
+  const card = el.createEl("div", { attr: { class: "lh-card" } });
+  const head = card.createEl("div", { attr: { class: "lh-card-header" } });
+  head.createEl("span", { text: c(t, "TAB_QUADRANT"), attr: { class: "lh-card-title" } });
+
+  // "▶ Review ready cards" — same entry point as the Review Deck tab: run every ready (due + new)
+  // card across all decks through the A4 review modal in sequence.
+  const allReady = decks.flatMap((d) => d.cards).filter((cd) => cd._due || cd._new);
+  const studyBtn = head.createEl("button", { attr: { class: "lh-study-all" } });
+  studyBtn.textContent = `▶ ${c(t, "STUDY_ALL")}`;
+  studyBtn.addEventListener("click", () => {
+    if (allReady.length === 0) { new I.Notice(c(t, "NOTHING_READY")); return; }
+    startDeckReview(hub, { cards: allReady }, refresh);
+  });
+
+  const bar = card.createEl("div", { attr: { class: "lh-toolbar" } });    // toolbar before content
+  const content = card.createEl("div", { attr: { style: "flex:1;overflow-y:auto" } });
   const rerender = () => renderContent(content, hub, t, decks, refresh);
   fillToolbar(bar, hub, t, rerender);
   rerender();

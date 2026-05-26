@@ -9,11 +9,13 @@ and how the card talks to the plugin.
 ```
 ┌──────────────────────────────────────────┐
 │ [badge card X]  [phase text]              │  Header
+├──────────────────────────────────────────┤
+│ [Reveal all] [Enter review →]             │  Controls (top — reachable without scrolling)
 ├────────────────────┬─────────────────────┤
 │ Q1 · Question      │ Q2 · Answer          │
-│ ┌──────────────┐  │ ┌──────────────┐    │
-│ │ 🔒 reveal     │  │ │ 🔒 reveal     │    │  Cover (locked)
-│ └──────────────┘  │ └──────────────┘    │
+│ (shown by default) │ ┌──────────────┐    │
+│                    │ │ 🔒 reveal     │    │  Q1 open; Q2/Q3/Q4 covered (locked)
+│                    │ └──────────────┘    │
 ├────────────────────┼─────────────────────┤
 │ Q3 · Verbal IP     │ Q4 · Visual IP       │
 │ ┌──────────────┐  │ ┌──────────────┐    │
@@ -21,18 +23,39 @@ and how the card talks to the plugin.
 │ └──────────────┘  │ └──────────────┘    │
 └────────────────────┴─────────────────────┘
 [💡 tip bar]
-[Reveal all] [Enter review →]
 ```
+
+Q1 (the question) is the entry point, so it starts **open** — like a flashcard's front. The two
+controls sit **above** the page so they're reachable without scrolling a tall A4 card, and
+"Enter review →" is enabled immediately (you can recall straight from Q1; opening Q2–Q4 first is
+optional study).
 
 The cross fold is two 1px lines via `.paper::before` / `.paper::after` (opacity 0.5). Each
 quadrant has a `.cover` (dashed, 45° striped, 🔒) hiding its `.content` until clicked.
+
+## Filling the quadrant text (especially Q1)
+
+Q1 should read as one natural question — the way you'd say it aloud. Two habits keep it clean:
+
+- **The `.vs` highlight pill is for the term the question hinges on, not an arbitrary phrase.** In
+  the two-panel recipe that is usually the compared options
+  (`<span class="vs">Bedrock</span> 還是 <span class="vs">SageMaker</span>？`) or the single
+  subject under scrutiny (`<span class="vs">Serverless</span> 為何…？`). Wrapping a stray verb
+  phrase like "白白燒錢" in a pill drops a coloured box into the middle of the sentence and reads
+  as noise — highlight the noun the learner is being asked about instead.
+- **Let the text wrap; use `<br>` only at a real clause boundary.** The Q1 cell is centered and
+  fairly narrow, so forcing a break every few words collapses it into a cramped vertical stack.
+  One deliberate break at a natural pause is plenty; the parenthetical hint goes in `.small`,
+  which already renders on its own line.
+
+Same spirit for Q2–Q4: highlight the one thing that matters and keep the rest as readable prose.
 
 ## Four phases (state machine)
 
 | Phase | Shows | Interaction |
 |---|---|---|
-| `learn` | All 4 locked, covers say "🔒 reveal" | Click a quadrant → its cover hides, content pops open |
-| `learn` (done) | All 4 opened | "Enter review →" button enables |
+| `learn` | Q1 open; Q2/Q3/Q4 covered "🔒 reveal" | Click a covered quadrant → it pops open. "Enter review →" is available from the start |
+| `learn` (study) | Optionally open Q2/Q3/Q4 to study before recalling | "Reveal all" opens the remaining three at once |
 | `review-thinking` | Q1 open; Q2/Q3/Q4 re-locked, covers become "🚫 no peeking" (`pointer-events:none`) | User recalls the answer mentally, clicks "Reveal answer →" |
 | `review-revealed` | All 4 open | Shows 3 self-assessment buttons (✅ correct / ❌ wrong / 😵 blank) |
 | `done` | Shows the matching prescription | Posts the score back to the parent |

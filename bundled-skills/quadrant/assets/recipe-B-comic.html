@@ -139,12 +139,17 @@
 
 <div class="header">
   <div class="badge">A4 一枚超記憶法 · 卡 2/2</div>
-  <div class="phase" id="phase">📖 學習階段 · 依序點開 Q1 → Q2 → Q3 → Q4</div>
+  <div class="phase" id="phase">📖 Q1 已顯示 · 想一想答案，或點開 Q2 → Q3 → Q4</div>
+</div>
+
+<div class="controls" id="controls">
+  <button class="btn ghost" id="revealAll">一次全部展開</button>
+  <button class="btn" id="enterReview">進入複習測驗 →</button>
 </div>
 
 <div class="paper" id="paper">
   <!-- Q1 -->
-  <div class="quadrant locked" data-q="1" id="q1">
+  <div class="quadrant opened" data-q="1" id="q1">
     <div class="qLabel"><span class="num">Q1</span> · 問題</div>
     <div class="cover" data-open="1">
       <div class="lock">🔒</div><div>點擊揭曉問題</div>
@@ -243,11 +248,6 @@
   📖 <strong>學習階段</strong>：點 Q1 看問題 → 想一下 → 揭開 Q2、Q3、Q4。重點記 Q3 對比口訣 + Q4 卡車 vs 電話的畫面。
 </div>
 
-<div class="controls" id="controls">
-  <button class="btn ghost" id="revealAll">一次全部展開</button>
-  <button class="btn" id="enterReview" disabled>進入複習測驗 →</button>
-</div>
-
 <div id="resultBox"></div>
 
 <script>
@@ -261,7 +261,7 @@
   }
   window.addEventListener("load", () => setTimeout(reportHeight, 80));
 
-  let phase = "learn"; let opened = new Set();
+  let phase = "learn"; let opened = new Set([1]);
   const $ = id => document.getElementById(id);
 
   function openQ(n) {
