@@ -87,6 +87,7 @@ async function scanReviewDecks(app, settings, reviewHelpers) {
   }
   let files = app.vault.getMarkdownFiles();
   let deckMap = {};
+  const srScan = settings.enableSRScan ?? false;
 
   for (let file of files) {
     let cache = app.metadataCache.getFileCache(file);
@@ -108,15 +109,34 @@ async function scanReviewDecks(app, settings, reviewHelpers) {
     tags = [...new Set(tags.filter(Boolean))];
     let matchedDeck = reviewHelpers.matchFlashcardTagPrefix(tags, settings.flashcardTags);
 
+    // Perf: once metadataCache has parsed a note, cache.tags includes its inline (#tag)
+    // and frontmatter tags, so the match above is authoritative. For indexed non-deck
+    // notes we skip HERE — before reading the file — so a large vault doesn't pay a
+    // full-content disk read per note on every hub load.
+    //
+    // Exception: a freshly written file (e.g. a just-created manual card, written via
+    // adapter.write which bypasses the vault event that triggers indexing) may be in
+    // getMarkdownFiles() before metadataCache has parsed it. Such a cache entry has no
+    // structural info yet; in that case we still read content and use the inline-tag
+    // fallback below, so new decks appear immediately instead of on the next reindex.
+    const cacheUnindexed = !cache || (
+      (!cache.tags || cache.tags.length === 0) &&
+      !cache.frontmatter &&
+      (!cache.sections || cache.sections.length === 0) &&
+      (!cache.headings || cache.headings.length === 0)
+    );
+    if (!srScan && !matchedDeck && !cacheUnindexed) continue;
+
     let content = await app.vault.read(file);
 
-    // If cache didn't yield a match, extract inline tags directly from content as fallback
+    // Inline-tag fallback: SR-scan mode parses unmatched notes too, and not-yet-indexed
+    // files need their tag recovered from content. Gives the deck a tag-derived name
+    // instead of its parent folder.
     if (!matchedDeck) {
       const inlineTags = [...content.matchAll(/(^|\s)#([\w][\w/-]*)/gm)].map(m => m[2]);
       const contentTags = [...new Set(inlineTags.filter(Boolean))];
       matchedDeck = reviewHelpers.matchFlashcardTagPrefix(contentTags, settings.flashcardTags);
     }
-    if (!(settings.enableSRScan ?? false) && !matchedDeck) continue;
 
     let cards = reviewHelpers.parseFlashcards(content);
     if (cards.length === 0) continue;

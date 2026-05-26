@@ -51,6 +51,45 @@ describe("scanReviewDecks", () => {
     expect(decks[0].total).toBe(1);
   });
 
+  it("does NOT read indexed non-deck notes from disk (perf: trust metadataCache)", async () => {
+    // A normal prose note: metadataCache has parsed it (has sections), and it carries
+    // no flashcard tag. scanReviewDecks must skip it WITHOUT a full-content read so a
+    // large vault doesn't pay one disk read per note on every hub load.
+    const deckFile = { path: "Study/deck.md", name: "deck.md", parent: { path: "Study" } };
+    const proseFile = { path: "Notes/diary.md", name: "diary.md", parent: { path: "Notes" } };
+    const reviewHelpers = {
+      matchFlashcardTagPrefix: (tags) =>
+        tags.some((t) => String(t).replace(/^#/, "") === "flashcards") ? "flashcards" : null,
+      parseFlashcards: vi.fn(() => [{ front: "Q", back: "A" }]),
+      loadSrData: vi.fn(async () => ({})),
+      mergeSrIntoCards: vi.fn(),
+      mergeReviewHints: vi.fn(),
+      getReviewStatus: vi.fn(() => "unseen"),
+    };
+    const read = vi.fn(async () => "#flashcards\n\nQ :: A\n");
+    const app = {
+      vault: {
+        getMarkdownFiles: () => [deckFile, proseFile],
+        read,
+        adapter: { exists: vi.fn(async () => false) },
+      },
+      metadataCache: {
+        getFileCache: (f) =>
+          f === deckFile
+            ? { tags: [{ tag: "#flashcards" }], sections: [{ type: "code" }] }
+            : { sections: [{ type: "paragraph" }] }, // indexed prose note, no tags
+      },
+    };
+
+    const decks = await scanReviewDecks(app, { enableSRScan: false, flashcardTags: "flashcards" }, reviewHelpers);
+
+    expect(read).toHaveBeenCalledTimes(1);
+    expect(read).toHaveBeenCalledWith(deckFile);
+    expect(read).not.toHaveBeenCalledWith(proseFile);
+    expect(decks).toHaveLength(1);
+    expect(decks[0].name).toBe("flashcards");
+  });
+
   it("normalizes aggregated AI hint sources into related note paths", async () => {
     const file = {
       path: "engram-review/ai-cards/dotnet-mastery.md",
