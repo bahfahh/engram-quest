@@ -37,8 +37,11 @@ class QuadrantReviewModal extends I.Modal {
     modalEl.style.cssText = "width:min(96vw,620px);max-height:90vh;padding:0;border-radius:16px;overflow:hidden;display:flex;flex-direction:column;";
     contentEl.style.cssText = "padding:16px;display:flex;flex-direction:column;gap:10px;overflow-y:auto;flex:1;min-height:0;";
 
+    // Reserve right-side space for Obsidian's built-in modal close (X) button, which is absolutely
+    // positioned at the modal's top-right. Without this, the trash button (pinned right by the
+    // title's flex:1) sits crammed directly under the X.
     const titleRow = contentEl.createEl("div", {
-      attr: { style: "display:flex;align-items:center;gap:8px;" },
+      attr: { style: "display:flex;align-items:center;gap:8px;padding-right:36px;" },
     });
     titleRow.createEl("div", {
       text: this.card.title || this.card.cardId,
