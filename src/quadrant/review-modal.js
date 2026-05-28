@@ -60,7 +60,7 @@ class QuadrantReviewModal extends I.Modal {
     if (this.card.source) {
       const name = String(this.card.source).split("/").pop().replace(/\.md$/i, "");
       const srcBtn = titleRow.createEl("button", {
-        attr: { style: headerBtnStyle + "max-width:130px;overflow:hidden;text-overflow:ellipsis;color:#6366f1;", title: this.card.source },
+        attr: { style: headerBtnStyle + "max-width:110px;overflow:hidden;text-overflow:ellipsis;color:#6366f1;", title: this.card.source },
       });
       srcBtn.textContent = "📄 " + name;
       srcBtn.addEventListener("click", () => {
@@ -79,28 +79,36 @@ class QuadrantReviewModal extends I.Modal {
       });
     }
 
-    // Copy — puts the question + answer on the clipboard (Q1 = question, Q2 = answer).
+    // Copy — puts the question + answer on the clipboard (Q1 = question, Q2 = answer). Icon-only
+    // to keep the title row compact; full label is in the tooltip. Transient feedback also stays
+    // icon-only so the button width doesn't jitter mid-click.
     const copyBtn = titleRow.createEl("button", {
-      attr: { style: headerBtnStyle, title: c(t, "QUADRANT_COPY") },
+      attr: { style: headerBtnStyle, title: c(t, "QUADRANT_COPY"), "aria-label": c(t, "QUADRANT_COPY") },
     });
-    copyBtn.textContent = "📋 " + c(t, "QUADRANT_COPY");
+    copyBtn.textContent = "📋";
     copyBtn.addEventListener("click", () => {
       const text = (this.card.q1 || "") + "\nA: " + (this.card.q2 || "");
+      const setLabel = (txt, label) => {
+        copyBtn.textContent = txt;
+        copyBtn.title = label;
+        copyBtn.setAttribute("aria-label", label);
+      };
       navigator.clipboard.writeText(text).then(() => {
-        copyBtn.textContent = "✅ " + c(t, "QUADRANT_COPIED");
-        window.setTimeout(() => { copyBtn.textContent = "📋 " + c(t, "QUADRANT_COPY"); }, 1500);
+        setLabel("✅", c(t, "QUADRANT_COPIED"));
+        window.setTimeout(() => setLabel("📋", c(t, "QUADRANT_COPY")), 1500);
       }).catch((err) => {
         console.warn("EngramQuest: quadrant copy failed", err);
-        copyBtn.textContent = "❌ " + c(t, "QUADRANT_COPY_FAILED");
-        window.setTimeout(() => { copyBtn.textContent = "📋 " + c(t, "QUADRANT_COPY"); }, 1500);
+        setLabel("❌", c(t, "QUADRANT_COPY_FAILED"));
+        window.setTimeout(() => setLabel("📋", c(t, "QUADRANT_COPY")), 1500);
       });
     });
 
     // Edit — opens the edit form (title + Q1-Q4); content edits queue an html regeneration.
+    // Icon-only to match copyBtn; label lives in the tooltip.
     const editBtn = titleRow.createEl("button", {
-      attr: { style: headerBtnStyle, title: c(t, "QUADRANT_EDIT") },
+      attr: { style: headerBtnStyle, title: c(t, "QUADRANT_EDIT"), "aria-label": c(t, "QUADRANT_EDIT") },
     });
-    editBtn.textContent = "✏️ " + c(t, "QUADRANT_EDIT");
+    editBtn.textContent = "✏️";
     editBtn.addEventListener("click", () => {
       new QuadrantEditModal(this.app, this.plugin, this.card, (updated) => {
         titleEl.textContent = updated.title || updated.cardId;
@@ -108,7 +116,7 @@ class QuadrantReviewModal extends I.Modal {
     });
 
     const delBtn = titleRow.createEl("button", {
-      attr: { class: "lh-delete-btn", title: c(t, "DELETE"), style: "opacity:1;flex-shrink:0;" },
+      attr: { class: "lh-delete-btn", title: c(t, "DELETE"), "aria-label": c(t, "DELETE"), style: "opacity:1;flex-shrink:0;" },
     });
     delBtn.appendChild(I.sanitizeHTMLToDom(TRASH_SVG));
     delBtn.addEventListener("click", () => this._confirmDelete(zh));
@@ -116,20 +124,26 @@ class QuadrantReviewModal extends I.Modal {
     const box = contentEl.createEl("div", {
       attr: { style: "border:1px solid var(--background-modifier-border);border-radius:14px;overflow:hidden;background:var(--background-secondary)" },
     });
-    const status = contentEl.createEl("div", {
-      attr: { style: "font-size:12px;color:var(--text-muted);line-height:1.5" },
-    });
 
-    // Deck-run progress badge — mirrors the review session's footer (lh-review-progress block) so
-    // a multi-card deck run shows "2 / 3" the same way Review Deck does. The fill shows how many
-    // cards have been completed before this one (position-1 of total).
-    const prog = contentEl.createEl("div", { attr: { class: "lh-review-progress" } });
-    const progWrap = prog.createEl("div", { attr: { class: "lh-review-prog-wrap" } });
+    // Single compact footer row: status text on the left, deck-run progress + "X / Y" badge on
+    // the right. Inlined to stay one line (~26px tall) — the previous stacked layout used the
+    // shared .lh-review-progress column block which ate ~80px and forced the iframe to overflow
+    // the modal's 90vh cap. The status span is still the `status` handle used by the handler
+    // below for rating-failure / rating-success copy.
+    const footer = contentEl.createEl("div", {
+      attr: { style: "display:flex;align-items:center;gap:12px;padding:0 2px;" },
+    });
+    const status = footer.createEl("span", {
+      attr: { style: "flex:1;min-width:0;font-size:11px;color:var(--text-muted);line-height:1.4;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" },
+    });
+    const progWrap = footer.createEl("div", {
+      attr: { class: "lh-review-prog-wrap", style: "width:90px;flex-shrink:0;" },
+    });
     const pct = this.total > 0 ? Math.round((this.position - 1) / this.total * 100) : 0;
     progWrap.createEl("div", { attr: { class: "lh-review-prog-bar", style: `width:${pct}%` } });
-    prog.createEl("span", {
+    footer.createEl("span", {
       text: `${this.position} / ${this.total}`,
-      attr: { class: "lh-review-badge" },
+      attr: { class: "lh-review-badge", style: "flex-shrink:0;" },
     });
 
     const showError = (message) => {
@@ -236,7 +250,11 @@ class QuadrantReviewModal extends I.Modal {
       text: c(t, "DELETE_CONFIRM_BTN"),
       attr: { style: "padding:7px 16px;border-radius:8px;border:none;background:#ef4444;color:#fff;cursor:pointer;font-size:13px;font-weight:600;" },
     });
+    // Single-flight: a rapid second click would call deleteQuadrantCard a second time on already-
+    // trashed files, surfacing a misleading "delete failed" Notice right after a successful delete.
     confirmBtn.addEventListener("click", async () => {
+      if (confirmBtn.disabled) return;
+      confirmBtn.disabled = true;
       modal.close();
       try {
         await deleteQuadrantCard(this.app.vault.adapter, this.card.cardId);
