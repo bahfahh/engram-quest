@@ -39,9 +39,11 @@ class QuadrantReviewModal extends I.Modal {
     this._isOpen = true;
     // Cap the modal at the viewport and let the content scroll: the A4 card iframe is a tall
     // portrait page, so without this the bottom (phase controls / self-assessment buttons) gets
-    // clipped by overflow:hidden with no way to reach it.
-    modalEl.style.cssText = "width:min(96vw,620px);max-height:90vh;padding:0;border-radius:16px;overflow:hidden;display:flex;flex-direction:column;";
-    contentEl.style.cssText = "padding:16px;display:flex;flex-direction:column;gap:10px;overflow-y:auto;flex:1;min-height:0;";
+    // clipped by overflow:hidden with no way to reach it. Chrome (padding + gaps) is kept tight
+    // so the iframe gets ~85% of viewport height — enough that the tip bar / reveal buttons /
+    // self-assessment row sit *inside* the visible region instead of behind an internal scroll.
+    modalEl.style.cssText = "width:min(96vw,620px);max-height:95vh;padding:0;border-radius:16px;overflow:hidden;display:flex;flex-direction:column;";
+    contentEl.style.cssText = "padding:12px;display:flex;flex-direction:column;gap:6px;overflow-y:auto;flex:1;min-height:0;";
 
     // Reserve right-side space for Obsidian's built-in modal close (X) button, which is absolutely
     // positioned at the modal's top-right. Without this, the trash button (pinned right by the
@@ -49,9 +51,10 @@ class QuadrantReviewModal extends I.Modal {
     const titleRow = contentEl.createEl("div", {
       attr: { style: "display:flex;align-items:center;flex-wrap:wrap;gap:8px;padding-right:36px;" },
     });
+    const titleText = this.card.title || this.card.cardId;
     const titleEl = titleRow.createEl("div", {
-      text: this.card.title || this.card.cardId,
-      attr: { style: "flex:1;min-width:0;font-size:15px;font-weight:700;color:var(--text-normal);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" },
+      text: titleText,
+      attr: { style: "flex:1;min-width:0;font-size:15px;font-weight:700;color:var(--text-normal);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;", title: titleText },
     });
 
     const headerBtnStyle = "flex-shrink:0;font-size:12px;padding:3px 8px;border-radius:8px;border:1px solid var(--background-modifier-border);background:var(--background-secondary);color:var(--text-muted);cursor:pointer;white-space:nowrap;";
@@ -111,7 +114,9 @@ class QuadrantReviewModal extends I.Modal {
     editBtn.textContent = "✏️";
     editBtn.addEventListener("click", () => {
       new QuadrantEditModal(this.app, this.plugin, this.card, (updated) => {
-        titleEl.textContent = updated.title || updated.cardId;
+        const next = updated.title || updated.cardId;
+        titleEl.textContent = next;
+        titleEl.title = next;
       }).open();
     });
 
@@ -136,11 +141,16 @@ class QuadrantReviewModal extends I.Modal {
     const status = footer.createEl("span", {
       attr: { style: "flex:1;min-width:0;font-size:11px;color:var(--text-muted);line-height:1.4;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" },
     });
-    const progWrap = footer.createEl("div", {
-      attr: { class: "lh-review-prog-wrap", style: "width:90px;flex-shrink:0;" },
-    });
-    const pct = this.total > 0 ? Math.round((this.position - 1) / this.total * 100) : 0;
-    progWrap.createEl("div", { attr: { class: "lh-review-prog-bar", style: `width:${pct}%` } });
+    // Skip the progress bar when there's only one card — at 0% width it's invisible against the
+    // modal background and the "1 / 1" badge alone already conveys the state. Keep both elements
+    // visible for any multi-card deck run.
+    if (this.total > 1) {
+      const progWrap = footer.createEl("div", {
+        attr: { class: "lh-review-prog-wrap", style: "width:90px;flex-shrink:0;" },
+      });
+      const pct = Math.round((this.position - 1) / this.total * 100);
+      progWrap.createEl("div", { attr: { class: "lh-review-prog-bar", style: `width:${pct}%` } });
+    }
     footer.createEl("span", {
       text: `${this.position} / ${this.total}`,
       attr: { class: "lh-review-badge", style: "flex-shrink:0;" },
@@ -168,9 +178,11 @@ class QuadrantReviewModal extends I.Modal {
         // viewport instead of growing it to the card's full height: a too-tall iframe gets clipped
         // by the modal (and fighting the modal's flex/scroll is fragile). When capped, the card's
         // own document scrolls (default iframe behaviour) so the bottom — tip bar, reveal/review
-        // buttons, self-assessment row — is always reachable. Short cards still fit exactly.
+        // buttons, self-assessment row — is always reachable. The 0.86 factor matches the
+        // tightened modal chrome (95vh outer, ~9vh padding/title/footer) so we don't introduce a
+        // second outer scrollbar on top of the iframe's own.
         const win = (typeof activeWindow !== "undefined" && activeWindow) || window;
-        const cap = Math.max(360, Math.floor((win.innerHeight || 900) * 0.78));
+        const cap = Math.max(360, Math.floor((win.innerHeight || 900) * 0.86));
         const next = Math.max(180, Math.min(cap, Math.round(Number(data.height) || 520)));
         frame.style.height = next + "px";
       }
