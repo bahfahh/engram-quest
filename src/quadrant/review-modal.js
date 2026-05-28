@@ -7,6 +7,7 @@
 const I = require("obsidian");
 const { t: c, interpolate: K, getLocale: _getLocale } = require("../i18n");
 const { applyQuadrantRating, deleteQuadrantCard, QUADRANT_DIR } = require("./cards");
+const { QuadrantEditModal } = require("./edit-modal");
 
 const TRASH_SVG = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>';
 
@@ -41,12 +42,66 @@ class QuadrantReviewModal extends I.Modal {
     // positioned at the modal's top-right. Without this, the trash button (pinned right by the
     // title's flex:1) sits crammed directly under the X.
     const titleRow = contentEl.createEl("div", {
-      attr: { style: "display:flex;align-items:center;gap:8px;padding-right:36px;" },
+      attr: { style: "display:flex;align-items:center;flex-wrap:wrap;gap:8px;padding-right:36px;" },
     });
-    titleRow.createEl("div", {
+    const titleEl = titleRow.createEl("div", {
       text: this.card.title || this.card.cardId,
       attr: { style: "flex:1;min-width:0;font-size:15px;font-weight:700;color:var(--text-normal);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" },
     });
+
+    const headerBtnStyle = "flex-shrink:0;font-size:12px;padding:3px 8px;border-radius:8px;border:1px solid var(--background-modifier-border);background:var(--background-secondary);color:var(--text-muted);cursor:pointer;white-space:nowrap;";
+
+    // Source-note link — opens the originating note (the flashcard this card was upgraded from).
+    if (this.card.source) {
+      const name = String(this.card.source).split("/").pop().replace(/\.md$/i, "");
+      const srcBtn = titleRow.createEl("button", {
+        attr: { style: headerBtnStyle + "max-width:130px;overflow:hidden;text-overflow:ellipsis;color:#6366f1;", title: this.card.source },
+      });
+      srcBtn.textContent = "📄 " + name;
+      srcBtn.addEventListener("click", () => {
+        const path = this.card.source;
+        const file = this.app.vault.getAbstractFileByPath(path);
+        if (file) {
+          this.app.workspace.openLinkText(file.path, "", false);
+        } else {
+          const fb = this.app.metadataCache.getFirstLinkpathDest(name, "");
+          if (fb) this.app.workspace.openLinkText(fb.path, "", false);
+          else { new I.Notice(K(c(t, "QUADRANT_SOURCE_NOT_FOUND"), { name })); return; }
+        }
+        const orig = srcBtn.textContent;
+        srcBtn.textContent = "✓ " + c(t, "QUADRANT_SOURCE_OPENED");
+        window.setTimeout(() => { srcBtn.textContent = orig; }, 1200);
+      });
+    }
+
+    // Copy — puts the question + answer on the clipboard (Q1 = question, Q2 = answer).
+    const copyBtn = titleRow.createEl("button", {
+      attr: { style: headerBtnStyle, title: c(t, "QUADRANT_COPY") },
+    });
+    copyBtn.textContent = "📋 " + c(t, "QUADRANT_COPY");
+    copyBtn.addEventListener("click", () => {
+      const text = (this.card.q1 || "") + "\nA: " + (this.card.q2 || "");
+      navigator.clipboard.writeText(text).then(() => {
+        copyBtn.textContent = "✅ " + c(t, "QUADRANT_COPIED");
+        window.setTimeout(() => { copyBtn.textContent = "📋 " + c(t, "QUADRANT_COPY"); }, 1500);
+      }).catch((err) => {
+        console.warn("EngramQuest: quadrant copy failed", err);
+        copyBtn.textContent = "❌ " + c(t, "QUADRANT_COPY_FAILED");
+        window.setTimeout(() => { copyBtn.textContent = "📋 " + c(t, "QUADRANT_COPY"); }, 1500);
+      });
+    });
+
+    // Edit — opens the edit form (title + Q1-Q4); content edits queue an html regeneration.
+    const editBtn = titleRow.createEl("button", {
+      attr: { style: headerBtnStyle, title: c(t, "QUADRANT_EDIT") },
+    });
+    editBtn.textContent = "✏️ " + c(t, "QUADRANT_EDIT");
+    editBtn.addEventListener("click", () => {
+      new QuadrantEditModal(this.app, this.plugin, this.card, (updated) => {
+        titleEl.textContent = updated.title || updated.cardId;
+      }).open();
+    });
+
     const delBtn = titleRow.createEl("button", {
       attr: { class: "lh-delete-btn", title: c(t, "DELETE"), style: "opacity:1;flex-shrink:0;" },
     });

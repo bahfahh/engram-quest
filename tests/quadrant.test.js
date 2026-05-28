@@ -10,6 +10,8 @@ import {
   addToUpgradeQueue,
   readUpgradeQueue,
   deleteQuadrantCard,
+  updateCardContent,
+  enqueueRegenerate,
   SR_DIR,
   QUADRANT_DIR,
   QUEUE_PATH,
@@ -194,6 +196,82 @@ describe("quadrant upgrade queue", () => {
     const res = await addToUpgradeQueue(adapter, { source: "N.md", q: "fresh?", a: "" });
     expect(res.added).toBe(true);
     expect(res.pending).toBe(1);
+  });
+});
+
+describe("quadrant updateCardContent", () => {
+  it("merges only the given fields and preserves fsrs / source / created", async () => {
+    const adapter = makeAdapter(Object.fromEntries([
+      srFile("e1", {
+        cardId: "e1", title: "Old", source: "Notes/A.md", deck: "azure", recipe: "A",
+        q1: "Q1 old", q2: "Q2 old", q3: "Q3 old", q4: "Q4 old",
+        created: "2026-05-01", fsrs: { due: "2026-06-01", state: 2, stability: 30 },
+      }),
+    ]));
+    const updated = await updateCardContent(adapter, "e1", { title: "New", q1: "Q1 new" });
+    expect(updated.title).toBe("New");
+    expect(updated.q1).toBe("Q1 new");
+    // untouched fields stay as they were
+    expect(updated.q2).toBe("Q2 old");
+    expect(updated.source).toBe("Notes/A.md");
+    expect(updated.created).toBe("2026-05-01");
+    expect(updated.fsrs.stability).toBe(30);
+    // persisted to the same sr file
+    const saved = JSON.parse(adapter.files[`${SR_DIR}/e1.json`]);
+    expect(saved.title).toBe("New");
+    expect(saved.fsrs.due).toBe("2026-06-01");
+  });
+
+  it("returns null when the card no longer exists", async () => {
+    const updated = await updateCardContent(makeAdapter(), "ghost", { title: "X" });
+    expect(updated).toBeNull();
+  });
+});
+
+describe("quadrant enqueueRegenerate", () => {
+  it("creates a regenerate:true pending entry keyed by cardId", async () => {
+    const adapter = makeAdapter();
+    const res = await enqueueRegenerate(adapter, {
+      cardId: "card-1", source: "Notes/A.md", title: "T",
+      q1: "q1", q2: "q2", q3: "q3", q4: "q4",
+    });
+    expect(res.added).toBe(true);
+    expect(res.pending).toBe(1);
+    const queue = await readUpgradeQueue(adapter);
+    expect(queue.entries).toHaveLength(1);
+    const entry = queue.entries[0];
+    expect(entry.regenerate).toBe(true);
+    expect(entry.status).toBe("pending");
+    expect(entry.cardId).toBe("card-1");
+    expect(entry.q1).toBe("q1");
+    // q/a mirror q1/q2 so the existing skill plumbing still reads them
+    expect(entry.q).toBe("q1");
+    expect(entry.a).toBe("q2");
+  });
+
+  it("overwrites an existing pending regenerate entry for the same cardId (latest edit wins)", async () => {
+    const adapter = makeAdapter();
+    await enqueueRegenerate(adapter, { cardId: "card-1", q1: "first" });
+    const second = await enqueueRegenerate(adapter, { cardId: "card-1", q1: "second", title: "T2" });
+    expect(second.added).toBe(false);   // not stacked
+    expect(second.pending).toBe(1);
+    const queue = await readUpgradeQueue(adapter);
+    expect(queue.entries).toHaveLength(1);
+    expect(queue.entries[0].q1).toBe("second");
+    expect(queue.entries[0].title).toBe("T2");
+  });
+
+  it("does not collide with a different card's pending entry", async () => {
+    const adapter = makeAdapter();
+    await enqueueRegenerate(adapter, { cardId: "card-1", q1: "a" });
+    await enqueueRegenerate(adapter, { cardId: "card-2", q1: "b" });
+    const queue = await readUpgradeQueue(adapter);
+    expect(queue.entries.map((e) => e.cardId)).toEqual(["card-1", "card-2"]);
+  });
+
+  it("ignores a falsy cardId", async () => {
+    const res = await enqueueRegenerate(makeAdapter(), { cardId: "", q1: "x" });
+    expect(res.added).toBe(false);
   });
 });
 

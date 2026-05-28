@@ -210,6 +210,7 @@ expect(result.completed).toBe(true)
             <ol>
               <li>跟 AI 說「四象限卡 / 四格卡 / 超記憶卡 / Quadrant Card」任一名稱，或在複習時把卡標記「升級」</li>
               <li>到 Hub →「四象限卡」分頁複習，自評後自動更新排程</li>
+              <li>複習卡上可按 📄 開啟來源筆記、📋 複製問答、✏️ 編輯（標題即時生效；改 Q1–Q4 內容後重跑 skill 說「升級」才會重建卡片視覺）</li>
               <li>不要的卡可在牌組列或複習卡內按 🗑️ 刪除</li>
             </ol>
             <p><strong>需要 Pro license</strong>。適合用在最重要、最難記的核心概念，不必每張卡都升級。</p>
@@ -498,6 +499,7 @@ expect(result.completed).toBe(true)
             <ol>
               <li>Tell the AI any alias — "Quadrant Card", "quadrant", "四象限卡", "四格卡", "超記憶卡" — or mark a card "upgrade" during review</li>
               <li>Review them in Hub → Quadrant Card tab; your self-assessment updates the schedule</li>
+              <li>On a review card: 📄 opens the source note, 📋 copies the Q&amp;A, ✏️ edits it (title applies instantly; Q1–Q4 content edits rebuild the card visuals after you re-run the skill and say "upgrade")</li>
               <li>Delete unwanted cards with the 🗑️ button on a deck row or inside the review card</li>
             </ol>
             <p><strong>Requires a Pro license.</strong> Best for your most important, hardest-to-remember concepts — you don't need to upgrade every card.</p>

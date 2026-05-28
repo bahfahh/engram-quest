@@ -68,12 +68,19 @@ The plugin lets the user mark flashcards for upgrade from its UI. Each mark appe
    file directly). If it is missing or has no `pending` entries, tell the user there is nothing
    to upgrade and offer Mode A instead.
 2. For **each** entry whose `status` is `"pending"`:
-   - Use the entry's `source`, `q`, and `a`. Read the `source` note when you need more context
-     to write a good Q3 metaphor / Q4 visual.
-   - Decompose into Q1–Q4, pick a recipe, run the quality gate.
-   - Write the card artifacts. Set `source` to the entry's `source`.
-   - Update that queue entry in place: set `status` to `"done"` and fill `cardId`.
-3. Write the updated queue back. Report how many cards were upgraded.
+   - **If the entry has `regenerate: true`** (a card the user edited in the plugin), it already
+     carries a `cardId` plus edited `q1`–`q4` and `title`. Treat the edited `q1`–`q4` as the
+     authoritative content (the user changed the text on purpose): rebuild Q3/Q4 visuals to match
+     them and keep the **same `cardId`**. **First read the existing `sr/{cardId}.json`**, then write
+     it back with only `title`/`q1`–`q4` (and `recipe`, if you changed the visual) updated — never
+     start from a blank object. The `fsrs`, `created`, and `source` fields **must** survive
+     untouched, or the user loses their review schedule. Overwrite `{cardId}.html` to match. Then
+     set the entry's `status` to `"done"`.
+   - **Otherwise** (a fresh upgrade): use the entry's `source`, `q`, and `a`. Read the `source`
+     note when you need more context to write a good Q3 metaphor / Q4 visual. Decompose into
+     Q1–Q4, pick a recipe, run the quality gate. Write the card artifacts and set `source` to the
+     entry's `source`. Update the entry in place: set `status` to `"done"` and fill `cardId`.
+3. Write the updated queue back. Report how many cards were upgraded (and how many regenerated).
 
 A user may also upgrade a single specific flashcard directly ("upgrade this card") without the
 queue — handle it like one Mode B entry, then there is no queue to update.

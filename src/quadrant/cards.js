@@ -229,6 +229,62 @@ async function deleteQuadrantCard(adapter, cardId) {
   } catch (e) { console.warn("EngramQuest: quadrant queue cleanup failed", e); }
 }
 
+/**
+ * Edit a card's content metadata in place: merge the provided title / q1-q4 into the card's
+ * sr/{cardId}.json and persist. Only the fields actually passed are touched — fsrs (the review
+ * schedule), source, created and everything else are preserved. This updates the plaintext the Hub
+ * list/search and the Copy button read; the *rendered* A4 html is rebuilt separately by the skill
+ * via enqueueRegenerate (the plugin never hand-edits the html). Returns the merged card, or null if
+ * the card no longer exists.
+ */
+async function updateCardContent(adapter, cardId, fields = {}) {
+  if (!cardId) return null;
+  const card = await loadCardSr(adapter, cardId);
+  if (!card) return null;
+  for (const key of ["title", "q1", "q2", "q3", "q4"]) {
+    if (fields[key] !== undefined) card[key] = fields[key];
+  }
+  await saveCardSr(adapter, cardId, card);
+  return card;
+}
+
+/**
+ * Queue an existing card for content regeneration. Unlike addToUpgradeQueue (which decomposes a
+ * fresh flashcard), this targets an existing cardId so the skill rebuilds *that* card's html from
+ * its edited q1-q4 while reusing the same cardId — the FSRS schedule and source therefore carry
+ * over. De-duplicated by cardId: a pending regenerate entry for the same card is overwritten with
+ * the latest edit rather than stacked. Returns { added: boolean, pending: number }.
+ */
+async function enqueueRegenerate(adapter, { cardId, source, title, q1, q2, q3, q4 }) {
+  if (!cardId) return { added: false, pending: 0 };
+  const queue = await readUpgradeQueue(adapter);
+  const existing = queue.entries.find(
+    (e) => e.cardId === cardId && e.status === "pending"
+  );
+  const fields = {
+    source: source || null,
+    title: title || "",
+    q: q1 || "",
+    a: q2 || "",
+    q1: q1 || "",
+    q2: q2 || "",
+    q3: q3 || "",
+    q4: q4 || "",
+    regenerate: true,
+    status: "pending",
+    cardId,
+    markedAt: new Date().toISOString(),
+  };
+  if (existing) {
+    Object.assign(existing, fields);
+  } else {
+    queue.entries.push(fields);
+  }
+  await writeUpgradeQueue(adapter, queue);
+  const pending = queue.entries.filter((e) => e.status === "pending").length;
+  return { added: !existing, pending };
+}
+
 module.exports = {
   QUADRANT_DIR,
   SR_DIR,
@@ -249,4 +305,6 @@ module.exports = {
   isQueued,
   trashPath,
   deleteQuadrantCard,
+  updateCardContent,
+  enqueueRegenerate,
 };
