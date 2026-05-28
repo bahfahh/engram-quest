@@ -295,9 +295,7 @@
   </div>
 </div>
 
-<div class="tip" id="tipBar">
-  📖 <strong>學習階段</strong>：點 Q1 看問題 → 想一下 → 依序揭開 Q2、Q3、Q4。記住 Q3 的「人→料→腦→爽」口訣 + Q4 飛輪畫面。
-</div>
+<div class="tip" id="tipBar" style="display:none"></div>
 
 <div id="resultBox"></div>
 
@@ -355,7 +353,7 @@
     [1,2,3,4].forEach(n => { const q = $("q" + n); q.classList.remove("locked"); q.classList.add("opened"); });
     phase = "review-revealed";
     $("phase").textContent = "✍️ 自評階段";
-    $("tipBar").innerHTML = "✍️ <strong>誠實自評</strong>：剛才腦中浮現的 4 個環節跟下面吻合嗎？口訣記得嗎？飛輪畫面浮現了嗎？";
+    const _tip = $("tipBar"); _tip.innerHTML = "✍️ <strong>誠實自評</strong>：剛才腦中浮現的 4 個環節跟下面吻合嗎？口訣記得嗎？飛輪畫面浮現了嗎？"; _tip.style.display = "";
     $("controls").innerHTML = `
       <button class="btn success" data-g="correct">✅ 答對了</button>
       <button class="btn warn" data-g="wrong">❌ 答錯了</button>

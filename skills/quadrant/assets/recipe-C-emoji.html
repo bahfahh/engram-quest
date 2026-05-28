@@ -250,9 +250,7 @@
   </div>
 </div>
 
-<div class="tip" id="tipBar">
-  📖 <strong>Recipe C 重點</strong>：Q4 不畫幾何圖、不堆 emoji，只用<strong>一個大 emoji + bob 動畫 + 周圍 3 個驚訝符號</strong>。視覺主角是系統字型渲染的 emoji，AI 不需要美感判斷。
-</div>
+<div class="tip" id="tipBar" style="display:none"></div>
 
 <div id="resultBox"></div>
 
@@ -310,7 +308,7 @@
     [1,2,3,4].forEach(n => { const q = $("q" + n); q.classList.remove("locked"); q.classList.add("opened"); });
     phase = "review-revealed";
     $("phase").textContent = "✍️ 自評階段";
-    $("tipBar").innerHTML = "✍️ <strong>誠實自評</strong>：剛才腦中浮現「小鳥」畫面了嗎？有畫面 = Recipe C 對你有效。";
+    const _tip = $("tipBar"); _tip.innerHTML = "✍️ <strong>誠實自評</strong>：剛才腦中浮現「小鳥」畫面了嗎？有畫面 = Recipe C 對你有效。"; _tip.style.display = "";
     $("controls").innerHTML = `
       <button class="btn success" data-g="correct">✅ 答對了</button>
       <button class="btn warn" data-g="wrong">❌ 答錯了</button>

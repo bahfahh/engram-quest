@@ -277,9 +277,7 @@
   </div>
 </div>
 
-<div class="tip" id="tipBar">
-  📖 <strong>學習階段</strong>：點 Q1 看問題 → 想一下 → 揭開 Q2、Q3、Q4。重點記 Q3 對比口訣 + Q4 卡車 vs 電話的畫面。
-</div>
+<div class="tip" id="tipBar" style="display:none"></div>
 
 <div id="resultBox"></div>
 
@@ -337,7 +335,7 @@
     [1,2,3,4].forEach(n => { const q = $("q" + n); q.classList.remove("locked"); q.classList.add("opened"); });
     phase = "review-revealed";
     $("phase").textContent = "✍️ 自評階段";
-    $("tipBar").innerHTML = "✍️ <strong>誠實自評</strong>：剛才腦中是否浮現「選 Bedrock + serverless + 卡車送信比喻」？";
+    const _tip = $("tipBar"); _tip.innerHTML = "✍️ <strong>誠實自評</strong>：剛才腦中是否浮現「選 Bedrock + serverless + 卡車送信比喻」？"; _tip.style.display = "";
     $("controls").innerHTML = `
       <button class="btn success" data-g="correct">✅ 答對了</button>
       <button class="btn warn" data-g="wrong">❌ 答錯了</button>
