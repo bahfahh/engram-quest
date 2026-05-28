@@ -65,11 +65,13 @@ function makeDeckResolver(hub) {
 function startDeckReview(hub, deck, refresh) {
   let queue = deck.cards.filter((card) => card._due || card._new);
   if (queue.length === 0) queue = deck.cards.slice(); // nothing ready → browse all as preview
+  const total = queue.length;
   let idx = 0;
   const openNext = () => {
-    if (idx >= queue.length) { refresh(); return; }
+    if (idx >= total) { refresh(); return; }
     const card = queue[idx++];
-    new QuadrantReviewModal(hub.app, hub.plugin, card, openNext).open();
+    // idx already advanced → 1-based position of the card we're about to show
+    new QuadrantReviewModal(hub.app, hub.plugin, card, openNext, { position: idx, total }).open();
   };
   openNext();
 }

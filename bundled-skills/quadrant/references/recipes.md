@@ -5,6 +5,11 @@ subject** — system emoji are professionally drawn, render consistently, and ar
 AI's weak geometry instincts. Recipes A/B/C ship as ready templates in `assets/`; copy the match
 and change only the listed content fields. Recipe D is a last resort with strict guardrails.
 
+**Color rule for any colored box inside Q2/Q3/Q4** (warnings, contrast halves, pitfall boxes,
+correct-answer boxes): only the three semantic pairs `bad` / `good` / `warn` defined in each
+recipe's `<style>` are safe in both light and dark mode. Never inline `background:#xxx` on a
+colored box — see `layout-contract.md` § "Three color pairs only".
+
 ## Recipe selection (recap)
 
 | Q3 metaphor shape | Recipe | Template |

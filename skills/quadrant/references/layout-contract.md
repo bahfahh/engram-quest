@@ -10,7 +10,7 @@ and how the card talks to the plugin.
 ┌──────────────────────────────────────────┐
 │ [badge card X]  [phase text]              │  Header
 ├──────────────────────────────────────────┤
-│ [Reveal all] [Enter review →]             │  Controls (top — reachable without scrolling)
+│ [Reveal all → 自評]                       │  Single control (top — reachable without scrolling)
 ├────────────────────┬─────────────────────┤
 │ Q1 · Question   ⤢ │ Q2 · Answer       ⤢ │
 │ (shown by default) │ ┌──────────────┐    │
@@ -29,10 +29,11 @@ The `⤢` in each opened quadrant's top-right is the **focus / zoom** button (se
 below). It surfaces only after a quadrant is opened, so it never lets the learner peek at a
 covered answer.
 
-Q1 (the question) is the entry point, so it starts **open** — like a flashcard's front. The two
-controls sit **above** the page so they're reachable without scrolling a tall A4 card, and
-"Enter review →" is enabled immediately (you can recall straight from Q1; opening Q2–Q4 first is
-optional study).
+Q1 (the question) is the entry point, so it starts **open** — like a flashcard's front. The
+single "Reveal all → 自評" control sits **above** the page so it's reachable without scrolling a
+tall A4 card. You can recall straight from Q1 then hit it to grade yourself; opening Q2–Q4 covers
+one at a time first is an optional study peek that **does not** trigger self-rating — only the
+"Reveal all" button does.
 
 The cross fold is two 1px lines via `.paper::before` / `.paper::after` (opacity 0.5). Each
 quadrant has a `.cover` (dashed, 45° striped, 🔒) hiding its `.content` until clicked.
@@ -85,13 +86,16 @@ is **not** to stuff one card and lean on zoom. Either split it into 2–3 quadra
 clean sub-question), or let the quadrant hold the hook and keep the full detail in the source
 note. A card that only makes sense zoomed in is a card that lost the method.
 
-## Four phases (state machine)
+## Three phases (state machine)
+
+The card has one review entry — clicking **"Reveal all → 自評"** jumps straight from `learn` into
+`review-revealed`. There is no intermediate "re-lock to force recall" phase: recall happens in
+the learner's head while looking at Q1, then they click the button and grade themselves. Removing
+that middle phase keeps the flow short — the user complained the prior re-lock step felt cumbersome.
 
 | Phase | Shows | Interaction |
 |---|---|---|
-| `learn` | Q1 open; Q2/Q3/Q4 covered "🔒 reveal" | Click a covered quadrant → it pops open. "Enter review →" is available from the start |
-| `learn` (study) | Optionally open Q2/Q3/Q4 to study before recalling | "Reveal all" opens the remaining three at once |
-| `review-thinking` | Q1 open; Q2/Q3/Q4 re-locked, covers become "🚫 no peeking" (`pointer-events:none`) | User recalls the answer mentally, clicks "Reveal answer →" |
+| `learn` | Q1 open; Q2/Q3/Q4 covered "🔒 reveal" | Click a covered quadrant for an optional peek (stays in `learn`, no self-rating). When ready to grade yourself, click **"Reveal all → 自評"** |
 | `review-revealed` | All 4 open | Shows 3 self-assessment buttons (✅ correct / ❌ wrong / 😵 blank) |
 | `done` | Shows the matching prescription | Posts the score back to the parent |
 
@@ -141,3 +145,30 @@ rating. The book's base cadence is next-day → 1 week → 2 weeks → 4 weeks; 
 Every recipe defines a `body.dark { --var: ... }` palette and toggles it on the
 `engram-quest-theme` message. When you add new colored elements, define both light and dark
 values as CSS variables — never hardcode a single color that only works in one theme.
+
+### Three color pairs only
+
+Each recipe ships **three** semantic color pairs, all with `:root` and `body.dark` values defined:
+
+| Semantic | Background | Border / accent | Text on background |
+|---|---|---|---|
+| `bad` (error / wrong answer / pitfall) | `var(--bad-soft)` | `var(--bad)` | `var(--ink)` |
+| `good` (correct / permanent fix) | `var(--good-soft)` | `var(--good)` | `var(--ink)` |
+| `warn` (temporary fix / caveat / amber notice) | `var(--warn-soft)` | `var(--warn)` | `var(--warn-text)` |
+
+`--warn` uses a dedicated `--warn-text` (deep brown in light, pale amber in dark) instead of
+`--ink`, because `--warn-soft` is light amber in light mode and dark amber in dark — `--ink`
+flips the wrong way against it.
+
+**Hard rule for any colored box:**
+
+- Use one of these three pairs. Don't write `background:#fef3c7` or any other hardcoded hex on a
+  `.q*-trap` / `.q*-side` / similar element — hardcoded hex does **not** flip with `body.dark`,
+  so the text inside (which uses a `var(--…)` that *does* flip) ends up invisible in one theme.
+  This is the most common dark-mode bug in AI-generated quadrant cards.
+- Don't put `color: var(--muted)` inside a colored-pair box. `--muted` is tuned for the *paper*
+  background, not for `--*-soft`. Use the pair's matching text color (or `var(--ink)` for
+  bad/good, `var(--warn-text)` for warn).
+- If a recipe genuinely needs a fourth accent (e.g. Recipe C's `--bird` for the bird metaphor),
+  define **both** `:root` and `body.dark` values for it in that recipe's `<style>`. Never write
+  the accent inline on an element.

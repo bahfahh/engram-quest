@@ -18,6 +18,7 @@
     --success: #107c10; --warn: #d97706; --danger: #d13438;
     --bad: #ef4444; --bad-soft: #fef2f2;
     --good: #16a34a; --good-soft: #f0fdf4;
+    --warn-soft: #fef3c7; --warn-text: #78350f;
   }
   body.dark {
     --bg: #181c22; --paper: #242a32; --paper2: #2b323b;
@@ -25,6 +26,7 @@
     --accent-soft: #1d3a52; --border: #3a414b; --crease: #4a5260;
     --bad: #f87171; --bad-soft: #3a1717;
     --good: #4ade80; --good-soft: #14331f;
+    --warn: #fbbf24; --warn-soft: #3a2b0a; --warn-text: #fde68a;
   }
   body { font-family: -apple-system, "Segoe UI", "PingFang TC", "Microsoft JhengHei", sans-serif;
     background: var(--bg); color: var(--ink); padding: 12px; min-height: 100vh; }
@@ -171,8 +173,7 @@
 </div>
 
 <div class="controls" id="controls">
-  <button class="btn ghost" id="revealAll">一次全部展開</button>
-  <button class="btn" id="enterReview">進入複習測驗 →</button>
+  <button class="btn" id="revealAll">一次全部展開 → 自評</button>
 </div>
 
 <div class="paper" id="paper">
@@ -300,13 +301,7 @@
     const q = $("q" + n);
     if (!q.classList.contains("locked")) return;
     q.classList.remove("locked"); q.classList.add("opened");
-    if (phase === "learn") {
-      opened.add(n);
-      if (opened.size === 4) {
-        $("enterReview").disabled = false;
-        $("tipBar").innerHTML = "✅ 四格都看過了。閉眼回想一下整張紙，按 <strong>「進入複習測驗 →」</strong>";
-      }
-    }
+    if (phase === "learn") opened.add(n);
     reportHeight();
   }
   document.querySelectorAll(".cover").forEach(c => c.addEventListener("click", () => openQ(parseInt(c.dataset.open))));
@@ -330,34 +325,19 @@
   }
   document.querySelectorAll(".zoomBtn").forEach(b => b.addEventListener("click", (e) => { e.stopPropagation(); toggleFocus(parseInt(b.dataset.zoom)); }));
   document.addEventListener("keydown", (e) => { if (e.key === "Escape" && focusedQ != null) toggleFocus(focusedQ); });
-  $("revealAll").addEventListener("click", () => [1,2,3,4].forEach(openQ));
 
-  $("enterReview").addEventListener("click", () => {
+  // Single review entry: "Reveal all → self-rating". Individual cover clicks remain a learning peek
+  // and never trigger self-rating (so users can study one quadrant at a time without committing).
+  $("revealAll").addEventListener("click", () => {
     if (focusedQ != null) {
       const fq = $("q" + focusedQ); fq.classList.remove("focused");
       const fb = fq.querySelector(".zoomBtn"); if (fb) fb.textContent = "⤢";
       document.body.classList.remove("focusing"); focusedQ = null;
     }
-    phase = "review-thinking";
-    $("phase").textContent = "🧠 複習階段 · 只看 Q1，腦中想答案";
-    [2,3,4].forEach(n => {
-      const q = $("q" + n);
-      q.classList.remove("opened"); q.classList.add("locked");
-      const cover = q.querySelector(".cover");
-      cover.style.pointerEvents = "none";
-      cover.querySelector("div:last-child").textContent = "🚫 不可偷看";
-    });
-    $("tipBar").innerHTML = "🧠 <strong>複習測驗</strong>：只看 Q1，想出選哪個 + 為什麼 + 選錯的坑。想好按「揭曉」。";
-    $("controls").innerHTML = `<button class="btn" id="revealAns">揭曉答案 →</button>`;
-    $("revealAns").addEventListener("click", revealAnswers);
-    reportHeight();
-  });
-
-  function revealAnswers() {
+    [1,2,3,4].forEach(n => { const q = $("q" + n); q.classList.remove("locked"); q.classList.add("opened"); });
     phase = "review-revealed";
     $("phase").textContent = "✍️ 自評階段";
-    [2,3,4].forEach(n => { const q = $("q" + n); q.classList.remove("locked"); q.classList.add("opened"); });
-    $("tipBar").innerHTML = "✍️ <strong>誠實自評</strong>：剛才想到「選 Bedrock + serverless + 卡車送信比喻」嗎？";
+    $("tipBar").innerHTML = "✍️ <strong>誠實自評</strong>：剛才腦中是否浮現「選 Bedrock + serverless + 卡車送信比喻」？";
     $("controls").innerHTML = `
       <button class="btn success" data-g="correct">✅ 答對了</button>
       <button class="btn warn" data-g="wrong">❌ 答錯了</button>
@@ -365,7 +345,7 @@
     `;
     $("controls").querySelectorAll("[data-g]").forEach(b => b.addEventListener("click", () => submitGrade(b.dataset.g)));
     reportHeight();
-  }
+  });
 
   const RX = {
     correct: { score: 100, cls: "good", title: "🎉 記住了！", body: "下次複習延後（隔週 → 隔兩週 → 隔四週）。" },

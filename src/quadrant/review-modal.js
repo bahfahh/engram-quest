@@ -17,11 +17,16 @@ function L(s) { return _getLocale(s, W && W.locale && W.locale()); }
 const CLOSE_DELAY_MS = 600;
 
 class QuadrantReviewModal extends I.Modal {
-  constructor(app, plugin, card, onDone) {
+  constructor(app, plugin, card, onDone, progress) {
     super(app);
     this.plugin = plugin;
     this.card = card;
     this.onDone = onDone;
+    // Optional deck-run position so the modal can show "X / Y" like the review session does.
+    // Single-card opens (no deck) pass nothing → fall back to 1/1 (badge still draws but reads as
+    // a neutral indicator rather than missing entirely).
+    this.position = (progress && Number(progress.position)) || 1;
+    this.total = (progress && Number(progress.total)) || 1;
     this._handler = null;
     this._isOpen = false;
     this._iframe = null;
@@ -113,6 +118,18 @@ class QuadrantReviewModal extends I.Modal {
     });
     const status = contentEl.createEl("div", {
       attr: { style: "font-size:12px;color:var(--text-muted);line-height:1.5" },
+    });
+
+    // Deck-run progress badge — mirrors the review session's footer (lh-review-progress block) so
+    // a multi-card deck run shows "2 / 3" the same way Review Deck does. The fill shows how many
+    // cards have been completed before this one (position-1 of total).
+    const prog = contentEl.createEl("div", { attr: { class: "lh-review-progress" } });
+    const progWrap = prog.createEl("div", { attr: { class: "lh-review-prog-wrap" } });
+    const pct = this.total > 0 ? Math.round((this.position - 1) / this.total * 100) : 0;
+    progWrap.createEl("div", { attr: { class: "lh-review-prog-bar", style: `width:${pct}%` } });
+    prog.createEl("span", {
+      text: `${this.position} / ${this.total}`,
+      attr: { class: "lh-review-badge" },
     });
 
     const showError = (message) => {
