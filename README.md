@@ -87,7 +87,7 @@ Visualizes abstract concepts using Obsidian Canvas.
 
 Tell the AI what you want to learn — it builds a course of interactive HTML lessons you study right inside Obsidian.
 
-- Ask the **Teach skill**: *"Teach me SEO"* or *"I want to learn .NET — build me a course"*. It asks about your goal and level, designs an outline, then generates self-contained HTML lessons with built-in quizzes
+- Ask the **Lesson Academy skill**: *"Teach me SEO"* or *"I want to learn .NET — build me a course"*. It asks about your goal and level, designs an outline, then generates self-contained HTML lessons with built-in quizzes
 - Open Hub → **Learn → Lessons**: courses appear as color-themed cards with progress bars; click a lesson to read it, mark it done, star the important ones
 - **Plan first, generate later**: create a course and outline directly in the plugin (or let the AI draft one) — planned lessons show as "pending" until you ask the skill to generate their content
 - **Import HTML** lessons made anywhere else (e.g. by Gemini) straight into a course

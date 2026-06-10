@@ -19,8 +19,8 @@ function createInstaller() {
       summary: "Generate memory-map canvas files for the EngramQuest plugin."
     },
     {
-      id: "teach",
-      title: "Teach",
+      id: "lesson-academy",
+      title: "Lesson Academy",
       summary: "Build interactive HTML lesson courses tailored to what the user wants to learn."
     },
     {
@@ -95,11 +95,11 @@ function createInstaller() {
       { source: "memory-map/references/obsidian-cli.md", target: "references/obsidian-cli.md" },
       { source: "memory-map/scripts/search_vault.sh", target: "scripts/search_vault.sh" }
     ],
-    "teach": [
-      { source: "teach/skills.md", target: "SKILL.md" },
-      { source: "teach/references/html-recipe.md", target: "references/html-recipe.md" },
-      { source: "teach/references/lesson-format.md", target: "references/lesson-format.md" },
-      { source: "teach/references/obsidian-cli.md", target: "references/obsidian-cli.md" }
+    "lesson-academy": [
+      { source: "lesson-academy/skills.md", target: "SKILL.md" },
+      { source: "lesson-academy/references/html-recipe.md", target: "references/html-recipe.md" },
+      { source: "lesson-academy/references/lesson-format.md", target: "references/lesson-format.md" },
+      { source: "lesson-academy/references/obsidian-cli.md", target: "references/obsidian-cli.md" }
     ],
     "synapse": [
       { source: "synapse/skills.md", target: "SKILL.md" },

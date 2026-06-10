@@ -1,7 +1,7 @@
 "use strict";
 // Lesson Academy data layer. Reads/writes courses under engram-quest/lessons/: each course is a
 // folder holding a meta.json (title, tags, lesson list, completion map) plus one self-contained
-// HTML file per lesson. Lessons come from two sources — the teach AI skill ("skill") and user
+// HTML file per lesson. Lessons come from two sources — the lesson-academy AI skill ("skill") and user
 // imports of external HTML ("import") — and the lessons array's order IS the display order, so
 // inserting/reordering is plain array surgery. Pure of Obsidian UI: every function takes a vault
 // adapter so the logic is unit-testable.
@@ -33,7 +33,7 @@ function normalizeMeta(meta) {
       ? meta.lessons.filter((l) => l && l.id).map((l) => ({
           id: String(l.id),
           title: String(l.title || l.file || ""),
-          // No file = a planned outline entry (user- or AI-authored) whose HTML the teach
+          // No file = a planned outline entry (user- or AI-authored) whose HTML the lesson-academy
           // skill hasn't generated yet. It still renders in the list as "pending".
           file: l.file ? String(l.file) : null,
           source: l.source === "import" ? "import" : "skill",
@@ -131,7 +131,7 @@ async function markLesson(adapter, slug, lessonId, patch = {}) {
 
 /**
  * Create a new course shell from the plugin UI: course info + an outline of planned lessons
- * (titles only, no HTML — the teach skill generates content for them later). Slug is derived
+ * (titles only, no HTML — the lesson-academy skill generates content for them later). Slug is derived
  * from the title when ASCII, else falls back to a timestamp slug. Returns { slug, meta }.
  */
 async function createCourse(adapter, { title, description = "", icon = "📘", outline = [] }) {

@@ -584,7 +584,7 @@ function renderLessonList(main, hub, t, tk, course, state, refresh) {
     row.createEl("span", { text: "›", attr: { style: `flex-shrink:0;font-size:15px;color:${tk.faint};` } });
   });
 
-  // "+ add outline item" — appends a planned lesson (title only) the Teach skill fills in later.
+  // "+ add outline item" — appends a planned lesson (title only) the Lesson Academy skill fills in later.
   const addRow = list.createEl("div", {
     attr: { style: `display:flex;align-items:center;gap:8px;padding:9px 14px;cursor:pointer;color:${tk.muted};font-size:12px;border-top:1px solid ${tk.border};` },
   });

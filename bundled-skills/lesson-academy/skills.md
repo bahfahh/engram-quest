@@ -1,5 +1,5 @@
 ---
-name: engram-teach
+name: engram-lesson-academy
 description: >
   Build interactive HTML lesson courses for the EngramQuest plugin's Lesson Academy
   (the "Lessons" / "教材" tab). Given any topic — programming, marketing, medicine, yoga,
@@ -12,7 +12,7 @@ description: >
   their own vault notes.
 ---
 
-# Teach Skill
+# Lesson Academy Skill
 
 Create **courses** of interactive HTML **lessons** for the EngramQuest plugin. A course is a
 folder under `engram-quest/lessons/{courseSlug}/` holding a `meta.json` (course info + lesson

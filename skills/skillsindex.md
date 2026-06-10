@@ -8,7 +8,7 @@ Each skill is installed as an independent module with its own `references/` and 
 | quest-map | `quest-map/skills.md` | Generate `quest-map` markdown files |
 | review-deck | `review-deck/skills.md` | Generate or update review-deck cards and hints |
 | memory-map | `memory-map/skills.md` | Generate `.canvas` memory maps |
-| teach | `teach/skills.md` | Build interactive HTML lesson courses for the Lesson Academy tab |
+| lesson-academy | `lesson-academy/skills.md` | Build interactive HTML lesson courses for the Lesson Academy tab |
 | quadrant | `quadrant/skills.md` | Upgrade a flashcard into an A4 four-quadrant super-memory card (Pro) |
 
 ---

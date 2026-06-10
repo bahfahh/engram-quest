@@ -162,7 +162,7 @@ expect(result.completed).toBe(true)
             <p>告訴 AI 你想學什麼，它會建立一套專屬課程：互動式 HTML 教材，直接在 plugin 裡學習、追蹤進度。</p>
             <p><strong>運作機制</strong></p>
             <ol>
-              <li>跟 AI 說：「教我 SEO」或「我想學 .NET，幫我建課程」（Teach skill）</li>
+              <li>跟 AI 說：「教我 SEO」或「我想學 .NET，幫我建課程」（Lesson Academy skill）</li>
               <li>AI 詢問你的目標和程度，設計課程大綱，逐課生成 HTML 教材到 <code>engram-quest/lessons/</code></li>
               <li>打開 plugin → 學習 → 教材，點任一課時即可閱讀，附互動測驗</li>
               <li>看完按「標記完成」，課程卡會顯示進度；可加星標記重點課時</li>
@@ -451,7 +451,7 @@ expect(result.completed).toBe(true)
             <p>Tell the AI what you want to learn and it builds you a course: interactive HTML lessons you study right inside the plugin, with progress tracking.</p>
             <p><strong>How it works</strong></p>
             <ol>
-              <li>Ask AI: "Teach me SEO" or "I want to learn .NET — build me a course" (Teach skill)</li>
+              <li>Ask AI: "Teach me SEO" or "I want to learn .NET — build me a course" (Lesson Academy skill)</li>
               <li>AI asks about your goal and level, designs an outline, then generates HTML lessons into <code>engram-quest/lessons/</code></li>
               <li>Open the plugin → Learn → Lessons; click any lesson to read it, with built-in quizzes</li>
               <li>Press "Mark done" when finished — the course card shows your progress; star key lessons</li>
