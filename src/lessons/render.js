@@ -90,9 +90,10 @@ async function renderLessonTab(content, hub) {
   const courses = await listCourses(adapter);
 
   // Tab-level UI state survives refreshes within the session (selected course + lesson filter +
-  // course search query).
-  hub._lessonState = hub._lessonState || { slug: null, filter: "all", courseQuery: "" };
+  // course search query + expanded card grid).
+  hub._lessonState = hub._lessonState || { slug: null, filter: "all", courseQuery: "", expanded: false, courseTag: "all" };
   const state = hub._lessonState;
+  if (!state.courseTag) state.courseTag = "all"; // state objects predating the tag filter
   if (!courses.some((cs) => cs.slug === state.slug)) {
     state.slug = courses.length ? courses[0].slug : null;
   }
@@ -102,12 +103,18 @@ async function renderLessonTab(content, hub) {
   const dark = isDarkMode();
   const tk = themeTokens(dark);
 
+  // The hub tab container is overflow:hidden (modal.js) — every tab provides its own scroller.
+  // Without this, lesson lists longer than the modal get clipped with no way to reach them.
+  const scroll = content.createEl("div", {
+    attr: { style: "flex:1;min-height:0;overflow-y:auto;" },
+  });
+
   if (courses.length === 0) {
-    renderEmptyState(content, t, tk);
+    renderEmptyState(scroll, t, tk);
     return;
   }
 
-  const layout = content.createEl("div", {
+  const layout = scroll.createEl("div", {
     attr: { style: "display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap;" },
   });
   const main = layout.createEl("div", { attr: { style: "flex:1;min-width:320px;" } });
@@ -115,13 +122,17 @@ async function renderLessonTab(content, hub) {
     attr: { style: `width:210px;flex-shrink:0;background:${tk.panel};border:1px solid ${tk.border};border-radius:14px;padding:16px;` },
   });
 
-  renderHeader(main, t, tk, courses, state, refresh);
+  renderHeader(main, hub, t, tk, courses, state, refresh);
   renderCourseCards(main, hub, t, tk, dark, courses, state, refresh);
-  // Only show the lesson list for a course whose card is actually visible under the current search.
+  // Only show the lesson list for a course whose card is actually visible under the current
+  // search + tag filter. Expanded mode is a pure course picker — the grid gets the full height
+  // and the lesson list stays hidden until a card is clicked (which auto-collapses).
   const selected = courses.find(
-    (cs) => cs.slug === state.slug && matchesCourseQuery(cs.meta, state.courseQuery)
+    (cs) => cs.slug === state.slug &&
+      matchesCourseQuery(cs.meta, state.courseQuery) &&
+      matchesCourseTag(cs.meta, state.courseTag)
   );
-  if (selected) renderLessonList(main, hub, t, tk, selected, state, refresh);
+  if (selected && !state.expanded) renderLessonList(main, hub, t, tk, selected, state, refresh);
   renderSidebar(sidebar, hub, t, tk, courses, refresh);
 }
 
@@ -144,9 +155,9 @@ function renderEmptyState(content, t, tk) {
   });
 }
 
-function renderHeader(main, t, tk, courses, state, refresh) {
+function renderHeader(main, hub, t, tk, courses, state, refresh) {
   const head = main.createEl("div", { attr: { style: "margin-bottom:14px;" } });
-  const row = head.createEl("div", { attr: { style: "display:flex;align-items:center;gap:10px;" } });
+  const row = head.createEl("div", { attr: { style: "display:flex;align-items:center;gap:10px;flex-wrap:wrap;" } });
   row.createEl("span", { text: "🎓", attr: { style: "font-size:22px;" } });
   row.createEl("span", {
     text: c(t, "LESSON_ACADEMY_TITLE"),
@@ -178,6 +189,38 @@ function renderHeader(main, t, tk, courses, state, refresh) {
     }
   }
 
+  // "+ new course" lives here (not at the end of the card strip) so it stays visible no matter
+  // how many courses exist.
+  const addBtn = row.createEl("button", {
+    text: "＋ " + c(t, "LESSON_NEW_COURSE"),
+    attr: {
+      style: `flex-shrink:0;font-size:12px;padding:6px 14px;border-radius:99px;border:1px dashed ${tk.border};background:transparent;color:${tk.muted};cursor:pointer;`,
+      title: c(t, "LESSON_NEW_COURSE_HINT"),
+    },
+  });
+  addBtn.addEventListener("click", () => openCreateCourseModal(hub, t, state, refresh));
+
+  // Expand toggle — switches the card strip between one scrolling row (default) and a wrapped
+  // grid with a tag-filter row. Collapsing clears the tag filter so cards are never silently
+  // filtered while the filter row is hidden.
+  if (courses.length >= 2) {
+    const expandBtn = row.createEl("button", {
+      text: state.expanded ? "▔ " + c(t, "LESSON_COLLAPSE") : "⊞ " + c(t, "LESSON_EXPAND_ALL"),
+      attr: {
+        style:
+          `flex-shrink:0;font-size:12px;padding:6px 12px;border-radius:99px;cursor:pointer;` +
+          (state.expanded
+            ? "border:1px solid #6366f1;background:#6366f1;color:#fff;"
+            : `border:1px solid ${tk.border};background:transparent;color:${tk.muted};`),
+      },
+    });
+    expandBtn.addEventListener("click", () => {
+      state.expanded = !state.expanded;
+      if (!state.expanded) state.courseTag = "all";
+      refresh();
+    });
+  }
+
   head.createEl("div", {
     text: c(t, "LESSON_ACADEMY_SUBTITLE"),
     attr: { style: `font-size:12px;color:${tk.muted};margin-top:2px;` },
@@ -199,19 +242,83 @@ function matchesCourseQuery(meta, query) {
 // Course cards (horizontal strip)
 // ---------------------------------------------------------------------------------------------
 
+/** Latest lastViewed across a course's lessons ("" when never opened) — used to sort cards. */
+function courseRecency(meta) {
+  let max = "";
+  for (const id of Object.keys(meta.completion || {})) {
+    const lv = meta.completion[id] && meta.completion[id].lastViewed;
+    if (lv && lv > max) max = lv;
+  }
+  return max;
+}
+
+/** True when the course passes the expanded-mode tag filter ("all" | "starred" | a tag). */
+function matchesCourseTag(meta, courseTag) {
+  if (!courseTag || courseTag === "all") return true;
+  if (courseTag === "starred") return !!meta.starred;
+  return meta.tags.includes(courseTag);
+}
+
+// Tag-filter pills shown above the expanded grid: 全部 | ⭐ | every tag (by frequency).
+function renderCourseFilterRow(main, t, tk, courses, state, refresh) {
+  const counts = new Map();
+  for (const { meta } of courses) {
+    for (const tag of meta.tags) counts.set(tag, (counts.get(tag) || 0) + 1);
+  }
+  const tags = [...counts.keys()].sort((a, b) => counts.get(b) - counts.get(a));
+  const items = [
+    { id: "all", label: c(t, "LESSON_FILTER_ALL") },
+    { id: "starred", label: "★" },
+    ...tags.map((tag) => ({ id: tag, label: tag })),
+  ];
+
+  const bar = main.createEl("div", {
+    attr: { style: "display:flex;gap:4px;flex-wrap:wrap;align-items:center;padding:0 2px 8px;" },
+  });
+  for (const it of items) {
+    const on = state.courseTag === it.id;
+    const pill = bar.createEl("button", {
+      text: it.label,
+      attr: {
+        style:
+          "font-size:11px;padding:4px 12px;border-radius:14px;border:none;cursor:pointer;" +
+          (on ? "background:#6366f1;color:#fff;font-weight:600;" : `background:${tk.pillIdleBg};color:${tk.pillIdleText};`),
+      },
+    });
+    pill.addEventListener("click", () => {
+      state.courseTag = on ? "all" : it.id;
+      refresh();
+    });
+  }
+}
+
 function renderCourseCards(main, hub, t, tk, dark, courses, state, refresh) {
+  if (state.expanded) renderCourseFilterRow(main, t, tk, courses, state, refresh);
+
   const strip = main.createEl("div", {
-    attr: { style: "display:flex;gap:12px;overflow-x:auto;padding:4px 2px 12px;" },
+    attr: {
+      style:
+        "display:flex;gap:12px;padding:4px 2px 12px;" +
+        (state.expanded ? "flex-wrap:wrap;" : "overflow-x:auto;"),
+    },
   });
 
-  const visibleCourses = courses.filter(({ meta }) => matchesCourseQuery(meta, state.courseQuery));
+  // Starred courses first, then most recently studied — the course you need is leftmost.
+  const recency = new Map(courses.map(({ slug, meta }) => [slug, courseRecency(meta)]));
+  const visibleCourses = courses
+    .filter(({ meta }) =>
+      matchesCourseQuery(meta, state.courseQuery) && matchesCourseTag(meta, state.courseTag))
+    .sort((a, b) =>
+      (Number(!!b.meta.starred) - Number(!!a.meta.starred)) ||
+      recency.get(b.slug).localeCompare(recency.get(a.slug))
+    );
   // If the search hides the selected course, follow the first match so the lesson list below
   // always corresponds to a visible card.
   if (visibleCourses.length && !visibleCourses.some((cs) => cs.slug === state.slug)) {
     state.slug = visibleCourses[0].slug;
   }
 
-  if (state.courseQuery && visibleCourses.length === 0) {
+  if (visibleCourses.length === 0 && (state.courseQuery || state.courseTag !== "all")) {
     strip.createEl("div", {
       text: "—",
       attr: { style: `padding:24px;color:${tk.faint};font-size:13px;` },
@@ -231,7 +338,13 @@ function renderCourseCards(main, hub, t, tk, dark, courses, state, refresh) {
           "display:flex;flex-direction:column;gap:8px;transition:box-shadow .15s;",
       },
     });
-    card.addEventListener("click", () => { state.slug = slug; refresh(); });
+    card.addEventListener("click", () => {
+      state.slug = slug;
+      // Picking a course from the expanded grid collapses back to the focused single-row view
+      // so its lesson list shows immediately.
+      if (state.expanded) { state.expanded = false; state.courseTag = "all"; }
+      refresh();
+    });
 
     const top = card.createEl("div", { attr: { style: "display:flex;align-items:center;gap:8px;" } });
     top.createEl("div", {
@@ -282,17 +395,6 @@ function renderCourseCards(main, hub, t, tk, dark, courses, state, refresh) {
     barRow.createEl("span", { text: prog.pct + "%", attr: { style: `font-size:10px;color:${tk.muted};` } });
   }
 
-  // "+ new course" — opens the create-course form (title + optional outline). The course shell
-  // and its planned lessons are written immediately; the Teach skill fills in content later.
-  const add = strip.createEl("div", {
-    attr: {
-      style: `flex-shrink:0;width:140px;border-radius:14px;border:1px dashed ${tk.border};display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;cursor:pointer;color:${tk.muted};padding:14px;`,
-      title: c(t, "LESSON_NEW_COURSE_HINT"),
-    },
-  });
-  add.createEl("div", { text: "＋", attr: { style: "font-size:22px;" } });
-  add.createEl("div", { text: c(t, "LESSON_NEW_COURSE"), attr: { style: "font-size:11px;" } });
-  add.addEventListener("click", () => openCreateCourseModal(hub, t, state, refresh));
 }
 
 // Create-course form: name (required) + description + outline textarea (one lesson per line).
