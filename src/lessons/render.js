@@ -87,8 +87,9 @@ async function renderLessonTab(content, hub) {
   const adapter = hub.app.vault.adapter;
   const courses = await listCourses(adapter);
 
-  // Tab-level UI state survives refreshes within the session (selected course + lesson filter).
-  hub._lessonState = hub._lessonState || { slug: null, filter: "all" };
+  // Tab-level UI state survives refreshes within the session (selected course + lesson filter +
+  // course search query).
+  hub._lessonState = hub._lessonState || { slug: null, filter: "all", courseQuery: "" };
   const state = hub._lessonState;
   if (!courses.some((cs) => cs.slug === state.slug)) {
     state.slug = courses.length ? courses[0].slug : null;
@@ -112,9 +113,12 @@ async function renderLessonTab(content, hub) {
     attr: { style: `width:210px;flex-shrink:0;background:${tk.panel};border:1px solid ${tk.border};border-radius:14px;padding:16px;` },
   });
 
-  renderHeader(main, t, tk);
+  renderHeader(main, t, tk, courses, state, refresh);
   renderCourseCards(main, hub, t, tk, dark, courses, state, refresh);
-  const selected = courses.find((cs) => cs.slug === state.slug);
+  // Only show the lesson list for a course whose card is actually visible under the current search.
+  const selected = courses.find(
+    (cs) => cs.slug === state.slug && matchesCourseQuery(cs.meta, state.courseQuery)
+  );
   if (selected) renderLessonList(main, hub, t, tk, selected, state, refresh);
   renderSidebar(sidebar, hub, t, tk, courses, refresh);
 }
@@ -138,18 +142,55 @@ function renderEmptyState(content, t, tk) {
   });
 }
 
-function renderHeader(main, t, tk) {
+function renderHeader(main, t, tk, courses, state, refresh) {
   const head = main.createEl("div", { attr: { style: "margin-bottom:14px;" } });
   const row = head.createEl("div", { attr: { style: "display:flex;align-items:center;gap:10px;" } });
   row.createEl("span", { text: "🎓", attr: { style: "font-size:22px;" } });
   row.createEl("span", {
     text: c(t, "LESSON_ACADEMY_TITLE"),
-    attr: { style: `font-size:19px;font-weight:800;color:${tk.text};letter-spacing:0.5px;` },
+    attr: { style: `flex:1;min-width:0;font-size:19px;font-weight:800;color:${tk.text};letter-spacing:0.5px;` },
   });
+
+  // Course search — only worth the chrome once the card strip stops fitting on screen.
+  // Filters the cards (and the auto-selected course) by title / topic / tags.
+  if (courses.length >= 6 || state.courseQuery) {
+    const search = row.createEl("input", {
+      attr: {
+        type: "search",
+        placeholder: c(t, "LESSON_SEARCH_PH"),
+        value: state.courseQuery || "",
+        style: `flex-shrink:0;width:180px;padding:6px 12px;border-radius:99px;border:1px solid ${tk.border};background:${tk.panel};color:${tk.text};font-size:12px;`,
+      },
+    });
+    search.addEventListener("input", () => {
+      state.courseQuery = search.value;
+      state._searchFocus = true; // typing re-renders the tab — tell the next render to re-focus
+      refresh();
+    });
+    if (state._searchFocus) {
+      state._searchFocus = false;
+      window.setTimeout(() => {
+        search.focus();
+        search.setSelectionRange(search.value.length, search.value.length);
+      }, 0);
+    }
+  }
+
   head.createEl("div", {
     text: c(t, "LESSON_ACADEMY_SUBTITLE"),
     attr: { style: `font-size:12px;color:${tk.muted};margin-top:2px;` },
   });
+}
+
+/** Case-insensitive course match on title / topic / tags. */
+function matchesCourseQuery(meta, query) {
+  if (!query) return true;
+  const q = query.toLowerCase();
+  return (
+    meta.title.toLowerCase().includes(q) ||
+    meta.topic.toLowerCase().includes(q) ||
+    meta.tags.some((tag) => tag.toLowerCase().includes(q))
+  );
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -161,7 +202,21 @@ function renderCourseCards(main, hub, t, tk, dark, courses, state, refresh) {
     attr: { style: "display:flex;gap:12px;overflow-x:auto;padding:4px 2px 12px;" },
   });
 
-  for (const { slug, meta } of courses) {
+  const visibleCourses = courses.filter(({ meta }) => matchesCourseQuery(meta, state.courseQuery));
+  // If the search hides the selected course, follow the first match so the lesson list below
+  // always corresponds to a visible card.
+  if (visibleCourses.length && !visibleCourses.some((cs) => cs.slug === state.slug)) {
+    state.slug = visibleCourses[0].slug;
+  }
+
+  if (state.courseQuery && visibleCourses.length === 0) {
+    strip.createEl("div", {
+      text: "—",
+      attr: { style: `padding:24px;color:${tk.faint};font-size:13px;` },
+    });
+  }
+
+  for (const { slug, meta } of visibleCourses) {
     const sc = schemeFor(slug, meta, dark);
     const isActive = slug === state.slug;
     const prog = courseProgress(meta);
