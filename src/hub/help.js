@@ -93,7 +93,7 @@ A: 在快忘記時複習，可以用最少時間達到最高記憶保留率。
             <div class="lh-help-sub" style="border-color:#2563eb"><div class="lh-help-sub-icon">🃏</div><div>「把 tag:math 的筆記都做成 Review Deck」<br>「把和行銷相關的筆記做成 Review Deck」</div></div>
             <div class="lh-help-sub" style="border-color:#059669"><div class="lh-help-sub-icon">🗺️</div><div>「把微積分.md 做成 quest-map medium」<br>「把 tag:math 的筆記合成一個 quest-map hard」</div></div>
             <div class="lh-help-sub" style="border-color:#7c3aed"><div class="lh-help-sub-icon">🧠</div><div>「幫作業系統概論.md 建立 memory-map」<br>「把和網路協定相關的筆記做成 memory-map」</div></div>
-            <div class="lh-help-sub" style="border-color:#d97706"><div class="lh-help-sub-icon">🎓</div><div>「跑 engram-macro-review tag:azure」<br>「我有一堆沒看的 Azure 卡，幫我一次學完」</div></div>
+            <div class="lh-help-sub" style="border-color:#d97706"><div class="lh-help-sub-icon">🎓</div><div>「教我 SEO，建一套課程」<br>「我想學 .NET，做成教材」</div></div>
             <div class="lh-help-sub" style="border-color:#0078d4"><div class="lh-help-sub-icon">🎴</div><div>「升級」把標記的卡做成四象限卡<br>「把數據飛輪做成四象限卡」<br>跟 AI 說「四象限卡 / 四格卡 / 超記憶卡 / Quadrant Card」任一名稱都能建立。<br>不要的卡片可在「四象限卡」分頁的牌組列或複習卡內按 🗑️ 刪除。 <span style="background:#fde68a;color:#92400e;padding:1px 6px;border-radius:6px;font-size:11px;font-weight:700;">Pro</span></div></div>
             <p><strong>Step 3：開 Hub 開始學</strong></p>
             <p style="margin:4px 0">點側邊欄的 EngramQuest 圖示 → 切到對應分頁 → 開始學習。</p>
@@ -158,17 +158,17 @@ expect(result.completed).toBe(true)
               <li>找不到時，會掃描所有 memory canvas 的內容，如果 canvas 裡有指向該筆記的 file node，就會自動關聯</li>
             </ol>
             <div class="lh-help-sub" style="border-color:#7c3aed"><div class="lh-help-sub-icon">💡</div><div>建議讓 canvas 裡包含一個指向來源筆記的 file node（AI 生成時會自動加入），這樣即使檔案移動或改名，Obsidian 也會自動更新路徑，關聯不會斷掉。</div></div>
-          `},{icon:"🎓",title:"Macro Review",tag:"批量學習",html:`
-            <p>累積一堆沒複習的卡時，AI 用「老師講解」的方式一次教完，自動寫回 FSRS 排程。</p>
+          `},{icon:"🎓",title:"課程學院（教材）",tag:"AI 教學",html:`
+            <p>告訴 AI 你想學什麼，它會建立一套專屬課程：互動式 HTML 教材，直接在 plugin 裡學習、追蹤進度。</p>
             <p><strong>運作機制</strong></p>
             <ol>
-              <li>跟 AI 說：「跑 engram-macro-review tag:azure」或「幫我把 azure 的卡都複習一遍」</li>
-              <li>AI 找出該 tag 下所有 unseen / overdue 的卡，按來源筆記分組（5-15 張一組）</li>
-              <li>每組用平實語言解說所有相關概念（5 分鐘像老師教學）</li>
-              <li>看完每組後回答「Got it / Roughly / Unfamiliar」，AI 把對應 FSRS 排程寫進 <code>engram-review/sr/*.json</code></li>
-              <li>結束後打開 plugin，原本灰色（unseen）的卡都變藍色（learning）</li>
+              <li>跟 AI 說：「教我 SEO」或「我想學 .NET，幫我建課程」（Teach skill）</li>
+              <li>AI 詢問你的目標和程度，設計課程大綱，逐課生成 HTML 教材到 <code>engram-quest/lessons/</code></li>
+              <li>打開 plugin → 學習 → 教材，點任一課時即可閱讀，附互動測驗</li>
+              <li>看完按「標記完成」，課程卡會顯示進度；可加星標記重點課時</li>
+              <li>也可以用「匯入 HTML」把其他 AI（如 Gemini）生成的教材加進課程</li>
             </ol>
-            <div class="lh-help-sub"><div class="lh-help-sub-icon">💡</div><div>適用情境：堆積 30+ 張 unseen 卡覺得壓力大、想一次清完某個主題、長時間沒複習想重新熱身。AI 不會修改原始筆記，只更新 SR 排程。</div></div>
+            <div class="lh-help-sub"><div class="lh-help-sub-icon">💡</div><div>任何主題都可以：程式、行銷、醫學、瑜珈。學完一套課程後，可以請 AI 把教材轉成 Review Deck 卡片或 Quest Map 繼續鞏固。</div></div>
           `},{icon:"⚡",title:"Synapse (Pro)",tag:"Pro",html:`
             <p>複習一張難記的卡時，自動連結到你已掌握的相關卡，作為「記憶錨點」。</p>
             <p><strong>運作機制</strong></p>
@@ -447,17 +447,17 @@ expect(result.completed).toBe(true)
               <li>If not found, it scans all memory canvases — if a canvas contains a file node pointing to that note, it links automatically</li>
             </ol>
             <div class="lh-help-sub" style="border-color:#7c3aed"><div class="lh-help-sub-icon">💡</div><div>Tip: include a file node in your canvas that points back to the source note (AI does this automatically). This way, even if files are moved or renamed, Obsidian updates the path and the link stays intact.</div></div>
-          `},{icon:"🎓",title:"Macro Review",tag:"Batch teach",html:`
-            <p>When unseen cards pile up, ask AI to teach you through them in one session — concept by concept — then it writes FSRS scheduling back automatically.</p>
+          `},{icon:"🎓",title:"Lesson Academy",tag:"AI teaching",html:`
+            <p>Tell the AI what you want to learn and it builds you a course: interactive HTML lessons you study right inside the plugin, with progress tracking.</p>
             <p><strong>How it works</strong></p>
             <ol>
-              <li>Ask AI: "Run engram-macro-review tag:azure" or "Help me batch-review all my azure cards"</li>
-              <li>AI finds every unseen / overdue card under that tag and groups them by source note (5–15 cards per group)</li>
-              <li>Each group is taught in plain language (~5 minutes per group, like a real teacher)</li>
-              <li>After each group, you answer "Got it / Roughly / Unfamiliar"; AI writes the matching FSRS schedule into <code>engram-review/sr/*.json</code></li>
-              <li>Reopen the plugin afterward — every previously grey (unseen) card is now blue (learning)</li>
+              <li>Ask AI: "Teach me SEO" or "I want to learn .NET — build me a course" (Teach skill)</li>
+              <li>AI asks about your goal and level, designs an outline, then generates HTML lessons into <code>engram-quest/lessons/</code></li>
+              <li>Open the plugin → Learn → Lessons; click any lesson to read it, with built-in quizzes</li>
+              <li>Press "Mark done" when finished — the course card shows your progress; star key lessons</li>
+              <li>You can also "Import HTML" to add lessons generated elsewhere (e.g. by Gemini)</li>
             </ol>
-            <div class="lh-help-sub"><div class="lh-help-sub-icon">💡</div><div>Use it when: 30+ unseen cards have stacked up, you want to clear a topic in one sitting, or you're returning after a break. AI never edits your source notes — only SR scheduling.</div></div>
+            <div class="lh-help-sub"><div class="lh-help-sub-icon">💡</div><div>Any topic works: programming, marketing, medicine, yoga. After finishing a course, ask the AI to turn the lessons into Review Deck cards or a Quest Map to consolidate.</div></div>
           `},{icon:"⚡",title:"Synapse (Pro)",tag:"Pro",html:`
             <p>While reviewing a hard card, automatically surface 1–3 cards you have already mastered that link conceptually — memory anchors that make the new card easier to remember.</p>
             <p><strong>How it works</strong></p>

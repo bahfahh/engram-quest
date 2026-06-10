@@ -83,6 +83,16 @@ Visualizes abstract concepts using Obsidian Canvas.
 - Any file named `{note-name}-memory.canvas` is auto-detected in Hub → Memory Map
 - During review, the Memory Map button finds and opens the matching canvas automatically
 
+### 🎓 Lesson Academy — AI-Built Courses
+
+Tell the AI what you want to learn — it builds a course of interactive HTML lessons you study right inside Obsidian.
+
+- Ask the **Teach skill**: *"Teach me SEO"* or *"I want to learn .NET — build me a course"*. It asks about your goal and level, designs an outline, then generates self-contained HTML lessons with built-in quizzes
+- Open Hub → **Learn → Lessons**: courses appear as color-themed cards with progress bars; click a lesson to read it, mark it done, star the important ones
+- **Plan first, generate later**: create a course and outline directly in the plugin (or let the AI draft one) — planned lessons show as "pending" until you ask the skill to generate their content
+- **Import HTML** lessons made anywhere else (e.g. by Gemini) straight into a course
+- Works for any topic — programming, marketing, medicine, yoga. Finished a course? Ask the AI to turn it into Review Deck cards or a Quest Map
+
 ### 🎴 Quadrant Card — A4 Super-Memory (Pro)
 
 Turns a single flashcard into an A4 four-quadrant "super memory" sheet: **Q1 question, Q2 answer, Q3 verbal metaphor, Q4 visual image**. Each card renders as an interactive sheet and carries its **own FSRS schedule** — separate from your review decks.

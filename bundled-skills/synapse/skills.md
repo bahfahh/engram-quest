@@ -353,7 +353,7 @@ mode === "error"           → Tell user, exit
 The skill is invoked by:
 - User saying `/engram-quest-synapse` (auto mode-detect)
 - User saying `/engram-quest-synapse --full` (force full)
-- The `engram-quest-macro-review` skill at the end of its run (incremental — see that skill's Step 6)
+- Another skill chaining into Synapse after bulk SR updates (incremental)
 
 ## Stale logic detail
 

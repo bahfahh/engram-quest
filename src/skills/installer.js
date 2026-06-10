@@ -1,7 +1,7 @@
 "use strict";
 
 function createInstaller() {
-  const INSTALLER_VERSION = "2026-04-07";
+  const INSTALLER_VERSION = "2026-06-10";
   const MODULES = [
     {
       id: "quest-map",
@@ -19,9 +19,9 @@ function createInstaller() {
       summary: "Generate memory-map canvas files for the EngramQuest plugin."
     },
     {
-      id: "macro-review",
-      title: "Macro Review",
-      summary: "Batch-teach a tag's worth of cards in one session, then write FSRS scheduling back."
+      id: "teach",
+      title: "Teach",
+      summary: "Build interactive HTML lesson courses tailored to what the user wants to learn."
     },
     {
       id: "synapse",
@@ -95,10 +95,11 @@ function createInstaller() {
       { source: "memory-map/references/obsidian-cli.md", target: "references/obsidian-cli.md" },
       { source: "memory-map/scripts/search_vault.sh", target: "scripts/search_vault.sh" }
     ],
-    "macro-review": [
-      { source: "macro-review/skills.md", target: "SKILL.md" },
-      { source: "macro-review/references/obsidian-cli.md", target: "references/obsidian-cli.md" },
-      { source: "macro-review/scripts/search_vault.sh", target: "scripts/search_vault.sh" }
+    "teach": [
+      { source: "teach/skills.md", target: "SKILL.md" },
+      { source: "teach/references/html-recipe.md", target: "references/html-recipe.md" },
+      { source: "teach/references/lesson-format.md", target: "references/lesson-format.md" },
+      { source: "teach/references/obsidian-cli.md", target: "references/obsidian-cli.md" }
     ],
     "synapse": [
       { source: "synapse/skills.md", target: "SKILL.md" },
