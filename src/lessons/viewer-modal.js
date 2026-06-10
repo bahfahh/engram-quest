@@ -23,6 +23,17 @@ class LessonViewerModal extends I.Modal {
     this._isOpen = false;
     this._iframe = null;
     this._changed = false;
+    // Serializes meta.json writes: markLesson is read-modify-write, so two quick clicks
+    // (e.g. star then done) racing each other would drop the first patch.
+    this._saving = Promise.resolve();
+  }
+
+  _mark(patch) {
+    this._changed = true;
+    this._saving = this._saving.then(
+      () => markLesson(this.app.vault.adapter, this.slug, this.lesson.id, patch)
+    ).catch((e) => console.error("EngramQuest: lesson mark failed", e));
+    return this._saving;
   }
 
   onOpen() {
@@ -71,13 +82,10 @@ class LessonViewerModal extends I.Modal {
     };
     paintStar(completion.starred);
     let starred = completion.starred;
-    starBtn.addEventListener("click", async () => {
+    starBtn.addEventListener("click", () => {
       starred = !starred;
       paintStar(starred);
-      this._changed = true;
-      try {
-        await markLesson(this.app.vault.adapter, this.slug, this.lesson.id, { starred });
-      } catch (e) { console.error("EngramQuest: lesson star failed", e); }
+      this._mark({ starred });
     });
 
     const doneBtn = footer.createEl("button", { attr: { style: btnStyle } });
@@ -89,13 +97,10 @@ class LessonViewerModal extends I.Modal {
     };
     paintDone(completion.completed);
     let completed = completion.completed;
-    doneBtn.addEventListener("click", async () => {
+    doneBtn.addEventListener("click", () => {
       completed = !completed;
       paintDone(completed);
-      this._changed = true;
-      try {
-        await markLesson(this.app.vault.adapter, this.slug, this.lesson.id, { completed });
-      } catch (e) { console.error("EngramQuest: lesson mark-done failed", e); }
+      this._mark({ completed });
     });
 
     const showError = (message) => {
@@ -120,7 +125,10 @@ class LessonViewerModal extends I.Modal {
         frame.style.height = next + "px";
       }
     };
-    window.addEventListener("message", this._handler);
+    // Register on the popout-aware window: in an Obsidian pop-out the iframe posts to that
+    // window, not the main one — a main-`window` listener would never see the resize events.
+    this._win = (typeof activeWindow !== "undefined" && activeWindow) || window;
+    this._win.addEventListener("message", this._handler);
 
     const htmlPath = `${LESSONS_DIR}/${this.slug}/${this.lesson.file}`;
     const adapter = this.app.vault.adapter;
@@ -152,10 +160,7 @@ class LessonViewerModal extends I.Modal {
           }, "*");
         });
         // Auto-mark viewed once the lesson actually renders (also stamps lastViewed).
-        try {
-          await markLesson(adapter, this.slug, this.lesson.id, { viewed: true });
-          this._changed = true;
-        } catch (e) { console.warn("EngramQuest: lesson viewed mark failed", e); }
+        this._mark({ viewed: true });
       } catch (error) {
         showError((zh ? "課時載入失敗：" : "Failed to load lesson: ") + String(error && error.message || error));
       }
@@ -165,8 +170,9 @@ class LessonViewerModal extends I.Modal {
   onClose() {
     this._isOpen = false;
     if (this._handler) {
-      window.removeEventListener("message", this._handler);
+      (this._win || window).removeEventListener("message", this._handler);
       this._handler = null;
+      this._win = null;
     }
     this._iframe = null;
     this.contentEl.empty();

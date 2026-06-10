@@ -29,9 +29,11 @@ const SCHEME_KEYS = Object.keys(SCHEMES);
 function schemeFor(slug, meta, dark) {
   let key = meta.colorScheme;
   if (!SCHEMES[key]) {
+    // Same hash formula as data.js createCourse so a missing colorScheme resolves to the same
+    // scheme everywhere.
     let h = 0;
-    for (let i = 0; i < slug.length; i++) h = (h * 31 + slug.charCodeAt(i)) >>> 0;
-    key = SCHEME_KEYS[h % SCHEME_KEYS.length];
+    for (let i = 0; i < slug.length; i++) h = (h * 31 + slug.charCodeAt(i)) | 0;
+    key = SCHEME_KEYS[Math.abs(h) % SCHEME_KEYS.length];
   }
   return SCHEMES[key][dark ? "dark" : "light"];
 }
@@ -339,6 +341,7 @@ function openCreateCourseModal(hub, t, state, refresh) {
       refresh();
     } catch (e) {
       console.error("EngramQuest: course create failed", e);
+      new I.Notice(c(t, "LESSON_CREATE_FAILED"));
       saveBtn.disabled = false;
     }
   });
@@ -494,7 +497,11 @@ function renderLessonList(main, hub, t, tk, course, state, refresh) {
       attr: { type: "text", placeholder: c(t, "LESSON_ADD_OUTLINE_PH"), style: "flex:1;padding:5px 8px;border-radius:6px;border:1px solid var(--background-modifier-border);background:var(--background-primary);color:var(--text-normal);font-size:12px;" },
     });
     input.focus();
+    // Enter triggers keydown AND the subsequent blur — guard so the title is only committed once.
+    let committed = false;
     const commit = async () => {
+      if (committed) return;
+      committed = true;
       const title = input.value.trim();
       if (!title) { refresh(); return; }
       try { await addPlannedLesson(adapter, slug, title); }
@@ -503,7 +510,7 @@ function renderLessonList(main, hub, t, tk, course, state, refresh) {
     };
     input.addEventListener("keydown", (ev) => {
       if (ev.key === "Enter") commit();
-      if (ev.key === "Escape") refresh();
+      if (ev.key === "Escape") { committed = true; refresh(); } // cancel — block the trailing blur-commit
     });
     input.addEventListener("blur", commit);
   });
