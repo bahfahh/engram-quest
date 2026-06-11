@@ -90,10 +90,18 @@ async function renderLessonTab(content, hub) {
   const courses = await listCourses(adapter);
 
   // Tab-level UI state survives refreshes within the session (selected course + lesson filter +
-  // course search query + expanded card grid).
-  hub._lessonState = hub._lessonState || { slug: null, filter: "all", courseQuery: "", expanded: false, courseTag: "all" };
+  // course search query + expanded card grid). The course filter/sort choices additionally
+  // persist across sessions via settings._lessonCourseView (same mechanism as _viewModes).
+  if (!hub._lessonState) {
+    const saved = hub.plugin.settings._lessonCourseView || {};
+    hub._lessonState = {
+      slug: null, filter: "all", courseQuery: "", expanded: false,
+      courseTag: saved.tag || "all",
+      courseProg: saved.prog || "all",
+      courseSort: saved.sort || "recent",
+    };
+  }
   const state = hub._lessonState;
-  if (!state.courseTag) state.courseTag = "all"; // state objects predating the tag filter
   if (!courses.some((cs) => cs.slug === state.slug)) {
     state.slug = courses.length ? courses[0].slug : null;
   }
@@ -130,7 +138,8 @@ async function renderLessonTab(content, hub) {
   const selected = courses.find(
     (cs) => cs.slug === state.slug &&
       matchesCourseQuery(cs.meta, state.courseQuery) &&
-      matchesCourseTag(cs.meta, state.courseTag)
+      matchesCourseTag(cs.meta, state.courseTag) &&
+      matchesCourseProg(cs.meta, state.courseProg)
   );
   if (selected && !state.expanded) renderLessonList(main, hub, t, tk, selected, state, refresh);
   renderSidebar(sidebar, hub, t, tk, courses, refresh);
@@ -201,8 +210,8 @@ function renderHeader(main, hub, t, tk, courses, state, refresh) {
   addBtn.addEventListener("click", () => openCreateCourseModal(hub, t, state, refresh));
 
   // Expand toggle — switches the card strip between one scrolling row (default) and a wrapped
-  // grid with a tag-filter row. Collapsing clears the tag filter so cards are never silently
-  // filtered while the filter row is hidden.
+  // grid. Filtering/sorting lives in the always-visible filter row above the cards, so no
+  // filter is ever silently active while its control is hidden.
   if (courses.length >= 2) {
     const expandBtn = row.createEl("button", {
       text: state.expanded ? "▔ " + c(t, "LESSON_COLLAPSE") : "⊞ " + c(t, "LESSON_EXPAND_ALL"),
@@ -216,7 +225,6 @@ function renderHeader(main, hub, t, tk, courses, state, refresh) {
     });
     expandBtn.addEventListener("click", () => {
       state.expanded = !state.expanded;
-      if (!state.expanded) state.courseTag = "all";
       refresh();
     });
   }
@@ -252,48 +260,109 @@ function courseRecency(meta) {
   return max;
 }
 
-/** True when the course passes the expanded-mode tag filter ("all" | "starred" | a tag). */
+/** True when the course passes the tag filter ("all" | "starred" | a tag). */
 function matchesCourseTag(meta, courseTag) {
   if (!courseTag || courseTag === "all") return true;
   if (courseTag === "starred") return !!meta.starred;
   return meta.tags.includes(courseTag);
 }
 
-// Tag-filter pills shown above the expanded grid: 全部 | ⭐ | every tag (by frequency).
-function renderCourseFilterRow(main, t, tk, courses, state, refresh) {
+/** Coarse course progress bucket for the 進度 filter. */
+function courseProgBucket(meta) {
+  const prog = courseProgress(meta);
+  if (prog.total > 0 && prog.completed === prog.total) return "done";
+  if (prog.completed > 0 || courseRecency(meta)) return "doing";
+  return "new";
+}
+
+function matchesCourseProg(meta, courseProg) {
+  if (!courseProg || courseProg === "all") return true;
+  return courseProgBucket(meta) === courseProg;
+}
+
+/** Persist the course filter/sort picks (settings._lessonCourseView) so they survive reopen. */
+async function saveCourseView(hub, state) {
+  hub.plugin.settings._lessonCourseView = {
+    tag: state.courseTag, prog: state.courseProg, sort: state.courseSort,
+  };
+  try { await hub.plugin.saveData(hub.plugin.settings); }
+  catch (e) { console.warn("EngramQuest: save course view failed", e); }
+}
+
+// Always-visible filter/sort row above the course cards: 類別 | 進度 | 排序 dropdowns.
+function renderCourseFilterRow(main, hub, t, tk, courses, state, refresh) {
   const counts = new Map();
   for (const { meta } of courses) {
     for (const tag of meta.tags) counts.set(tag, (counts.get(tag) || 0) + 1);
   }
   const tags = [...counts.keys()].sort((a, b) => counts.get(b) - counts.get(a));
-  const items = [
-    { id: "all", label: c(t, "LESSON_FILTER_ALL") },
-    { id: "starred", label: "★" },
-    ...tags.map((tag) => ({ id: tag, label: tag })),
-  ];
+  // A persisted tag may no longer exist (course deleted / retagged) — fall back to "all"
+  // instead of silently filtering every card out, and heal the persisted value.
+  if (state.courseTag !== "all" && state.courseTag !== "starred" && !counts.has(state.courseTag)) {
+    state.courseTag = "all";
+    saveCourseView(hub, state);
+  }
 
   const bar = main.createEl("div", {
-    attr: { style: "display:flex;gap:4px;flex-wrap:wrap;align-items:center;padding:0 2px 8px;" },
+    attr: { style: "display:flex;gap:6px;flex-wrap:wrap;align-items:center;padding:0 2px 8px;" },
   });
-  for (const it of items) {
-    const on = state.courseTag === it.id;
-    const pill = bar.createEl("button", {
-      text: it.label,
+  const mkSelect = (options, current, isDefault, onPick) => {
+    const sel = bar.createEl("select", {
       attr: {
         style:
-          "font-size:11px;padding:4px 12px;border-radius:14px;border:none;cursor:pointer;" +
-          (on ? "background:#6366f1;color:#fff;font-weight:600;" : `background:${tk.pillIdleBg};color:${tk.pillIdleText};`),
+          "font-size:11px;padding:4px 8px;border-radius:14px;cursor:pointer;max-width:140px;" +
+          `background:${tk.panel};` +
+          (isDefault ? `border:1px solid ${tk.border};color:${tk.muted};`
+                     : "border:1px solid #6366f1;color:#6366f1;font-weight:600;"),
       },
     });
-    pill.addEventListener("click", () => {
-      state.courseTag = on ? "all" : it.id;
+    for (const o of options) {
+      sel.createEl("option", { text: o.label, attr: { value: o.id } });
+    }
+    sel.value = current;
+    sel.addEventListener("change", async () => {
+      onPick(sel.value);
+      await saveCourseView(hub, state);
       refresh();
     });
-  }
+  };
+
+  mkSelect(
+    [
+      { id: "all", label: c(t, "LESSON_CFILTER_TAG_ALL") },
+      { id: "starred", label: c(t, "LESSON_CFILTER_STARRED") },
+      ...tags.map((tag) => ({ id: tag, label: tag })),
+    ],
+    state.courseTag, state.courseTag === "all",
+    (v) => { state.courseTag = v; }
+  );
+  mkSelect(
+    [
+      { id: "all", label: c(t, "LESSON_CFILTER_PROG_ALL") },
+      { id: "new", label: c(t, "LESSON_CFILTER_PROG_NEW") },
+      { id: "doing", label: c(t, "LESSON_CFILTER_PROG_DOING") },
+      { id: "done", label: c(t, "LESSON_CFILTER_PROG_DONE") },
+    ],
+    state.courseProg, state.courseProg === "all",
+    (v) => { state.courseProg = v; }
+  );
+  mkSelect(
+    [
+      { id: "recent", label: c(t, "LESSON_CSORT_RECENT") },
+      { id: "created", label: c(t, "LESSON_CSORT_CREATED") },
+      { id: "progress", label: c(t, "LESSON_CSORT_PROGRESS") },
+    ],
+    state.courseSort, state.courseSort === "recent",
+    (v) => { state.courseSort = v; }
+  );
 }
 
 function renderCourseCards(main, hub, t, tk, dark, courses, state, refresh) {
-  if (state.expanded) renderCourseFilterRow(main, t, tk, courses, state, refresh);
+  // Also shown below 2 courses whenever a filter is active — a persisted filter must never be
+  // in effect while its only escape control is hidden.
+  if (courses.length >= 2 || state.courseTag !== "all" || state.courseProg !== "all") {
+    renderCourseFilterRow(main, hub, t, tk, courses, state, refresh);
+  }
 
   const strip = main.createEl("div", {
     attr: {
@@ -303,14 +372,21 @@ function renderCourseCards(main, hub, t, tk, dark, courses, state, refresh) {
     },
   });
 
-  // Starred courses first, then most recently studied — the course you need is leftmost.
+  // Starred courses always lead; within that, the persisted sort pick decides the order.
   const recency = new Map(courses.map(({ slug, meta }) => [slug, courseRecency(meta)]));
+  const sortFns = {
+    recent: (a, b) => recency.get(b.slug).localeCompare(recency.get(a.slug)),
+    created: (a, b) => String(b.meta.createdAt || "").localeCompare(String(a.meta.createdAt || "")),
+    progress: (a, b) => courseProgress(b.meta).pct - courseProgress(a.meta).pct,
+  };
+  const sortFn = sortFns[state.courseSort] || sortFns.recent;
   const visibleCourses = courses
     .filter(({ meta }) =>
-      matchesCourseQuery(meta, state.courseQuery) && matchesCourseTag(meta, state.courseTag))
+      matchesCourseQuery(meta, state.courseQuery) &&
+      matchesCourseTag(meta, state.courseTag) &&
+      matchesCourseProg(meta, state.courseProg))
     .sort((a, b) =>
-      (Number(!!b.meta.starred) - Number(!!a.meta.starred)) ||
-      recency.get(b.slug).localeCompare(recency.get(a.slug))
+      (Number(!!b.meta.starred) - Number(!!a.meta.starred)) || sortFn(a, b)
     );
   // If the search hides the selected course, follow the first match so the lesson list below
   // always corresponds to a visible card.
@@ -318,7 +394,7 @@ function renderCourseCards(main, hub, t, tk, dark, courses, state, refresh) {
     state.slug = visibleCourses[0].slug;
   }
 
-  if (visibleCourses.length === 0 && (state.courseQuery || state.courseTag !== "all")) {
+  if (visibleCourses.length === 0 && (state.courseQuery || state.courseTag !== "all" || state.courseProg !== "all")) {
     strip.createEl("div", {
       text: "—",
       attr: { style: `padding:24px;color:${tk.faint};font-size:13px;` },
@@ -342,7 +418,7 @@ function renderCourseCards(main, hub, t, tk, dark, courses, state, refresh) {
       state.slug = slug;
       // Picking a course from the expanded grid collapses back to the focused single-row view
       // so its lesson list shows immediately.
-      if (state.expanded) { state.expanded = false; state.courseTag = "all"; }
+      if (state.expanded) state.expanded = false;
       refresh();
     });
 
@@ -392,7 +468,10 @@ function renderCourseCards(main, hub, t, tk, dark, courses, state, refresh) {
       attr: { style: `flex:1;height:5px;border-radius:3px;background:${tk.track};overflow:hidden;` },
     });
     track.createEl("div", { attr: { style: `height:100%;width:${prog.pct}%;border-radius:3px;background:${sc.bar};` } });
-    barRow.createEl("span", { text: prog.pct + "%", attr: { style: `font-size:10px;color:${tk.muted};` } });
+    barRow.createEl("span", {
+      text: prog.pct === 100 && prog.total > 0 ? "✓ 100%" : prog.pct + "%",
+      attr: { style: prog.pct === 100 && prog.total > 0 ? "font-size:10px;color:#22c55e;font-weight:700;" : `font-size:10px;color:${tk.muted};` },
+    });
   }
 
 }
@@ -463,9 +542,14 @@ function renderLessonList(main, hub, t, tk, course, state, refresh) {
     attr: { style: "display:flex;align-items:center;gap:8px;margin:6px 0 10px;flex-wrap:wrap;" },
   });
   head.createEl("span", { text: "📖", attr: { style: "font-size:15px;" } });
+  // nowrap+ellipsis: on narrow (mobile) widths the shrink-proof pills/buttons in this row would
+  // otherwise squeeze the title into one-character-per-line vertical CJK text.
   head.createEl("span", {
     text: K(c(t, "LESSON_CONTENT_OF"), { course: meta.title }),
-    attr: { style: `flex:1;min-width:0;font-size:14px;font-weight:700;color:${tk.text};` },
+    attr: {
+      style: `flex:1;min-width:0;font-size:14px;font-weight:700;color:${tk.text};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;`,
+      title: meta.title,
+    },
   });
 
   // Status filter pills
@@ -530,15 +614,20 @@ function renderLessonList(main, hub, t, tk, course, state, refresh) {
     const comp = lessonCompletion(meta, lesson.id);
     const sv = statusVisual(t, status, comp.starred);
 
+    // Completed rows get a celebratory treatment (green edge + tint + badge) — a bare ✓ was
+    // too easy to miss to feel like an accomplishment.
+    const done = status === "completed";
+    const baseBg = done ? "rgba(34,197,94,.07)" : "transparent";
     const row = list.createEl("div", {
       attr: {
         style:
           "display:flex;align-items:center;gap:12px;padding:11px 14px;cursor:pointer;" +
+          `border-left:3px solid ${done ? "#22c55e" : "transparent"};background:${baseBg};` +
           (vi > 0 ? `border-top:1px solid ${tk.border};` : ""),
       },
     });
     row.addEventListener("mouseenter", () => { row.style.background = tk.rowHover; });
-    row.addEventListener("mouseleave", () => { row.style.background = "transparent"; });
+    row.addEventListener("mouseleave", () => { row.style.background = baseBg; });
     row.addEventListener("click", () => {
       // Planned (outline-only) lessons have no HTML yet — explain instead of opening a viewer.
       if (!lesson.file) { new I.Notice(c(t, "LESSON_PLANNED_HINT")); return; }
@@ -546,8 +635,12 @@ function renderLessonList(main, hub, t, tk, course, state, refresh) {
     });
 
     row.createEl("span", {
-      text: String(idx + 1).padStart(2, "0"),
-      attr: { style: `flex-shrink:0;width:30px;height:30px;border-radius:8px;background:${tk.badgeBg};color:${tk.badgeText};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;` },
+      text: done ? "✓" : String(idx + 1).padStart(2, "0"),
+      attr: {
+        style:
+          "flex-shrink:0;width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:700;" +
+          (done ? "background:#22c55e;color:#fff;font-size:14px;" : `background:${tk.badgeBg};color:${tk.badgeText};font-size:11px;`),
+      },
     });
 
     const mid = row.createEl("div", { attr: { style: "flex:1;min-width:0;" } });
@@ -569,8 +662,15 @@ function renderLessonList(main, hub, t, tk, course, state, refresh) {
       });
     }
 
-    row.createEl("span", { text: sv.icon, attr: { style: `flex-shrink:0;font-size:15px;color:${sv.color};` } });
-    row.createEl("span", { text: sv.label, attr: { style: `flex-shrink:0;font-size:11px;color:${tk.muted};width:52px;` } });
+    if (done) {
+      row.createEl("span", {
+        text: (comp.starred ? "★ " : "✓ ") + sv.label,
+        attr: { style: "flex-shrink:0;font-size:11px;font-weight:700;color:#22c55e;background:rgba(34,197,94,.14);border:1px solid rgba(34,197,94,.45);border-radius:99px;padding:3px 10px;" },
+      });
+    } else {
+      row.createEl("span", { text: sv.icon, attr: { style: `flex-shrink:0;font-size:15px;color:${sv.color};` } });
+      row.createEl("span", { text: sv.label, attr: { style: `flex-shrink:0;font-size:11px;color:${tk.muted};width:52px;` } });
+    }
 
     const del = row.createEl("button", {
       text: "🗑",

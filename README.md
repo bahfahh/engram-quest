@@ -89,6 +89,7 @@ Tell the AI what you want to learn — it builds a course of interactive HTML le
 
 - Ask the **Lesson Academy skill**: *"Teach me SEO"* or *"I want to learn .NET — build me a course"*. It asks about your goal and level, designs an outline, then generates self-contained HTML lessons with built-in quizzes
 - Open Hub → **Learn → Lessons**: courses appear as color-themed cards with progress bars; click a lesson to read it, mark it done, star the important ones
+- With many courses, filter and sort the cards by **tag / progress / newest** using the dropdowns above the card strip — your picks are remembered across sessions
 - **Plan first, generate later**: create a course and outline directly in the plugin (or let the AI draft one) — planned lessons show as "pending" until you ask the skill to generate their content
 - **Import HTML** lessons made anywhere else (e.g. by Gemini) straight into a course
 - Works for any topic — programming, marketing, medicine, yoga. Finished a course? Ask the AI to turn it into Review Deck cards or a Quest Map

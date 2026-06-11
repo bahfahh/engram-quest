@@ -167,6 +167,7 @@ expect(result.completed).toBe(true)
               <li>打開 plugin → 學習 → 教材，點任一課時即可閱讀，附互動測驗</li>
               <li>看完按「標記完成」，課程卡會顯示進度；可加星標記重點課時</li>
               <li>也可以用「匯入 HTML」把其他 AI（如 Gemini）生成的教材加進課程</li>
+              <li>課程多時用卡片上方的「類別／進度／排序」下拉篩選排序，選擇會自動記住</li>
             </ol>
             <div class="lh-help-sub"><div class="lh-help-sub-icon">💡</div><div>任何主題都可以：程式、行銷、醫學、瑜珈。學完一套課程後，可以請 AI 把教材轉成 Review Deck 卡片或 Quest Map 繼續鞏固。</div></div>
           `},{icon:"⚡",title:"Synapse (Pro)",tag:"Pro",html:`
@@ -456,6 +457,7 @@ expect(result.completed).toBe(true)
               <li>Open the plugin → Learn → Lessons; click any lesson to read it, with built-in quizzes</li>
               <li>Press "Mark done" when finished — the course card shows your progress; star key lessons</li>
               <li>You can also "Import HTML" to add lessons generated elsewhere (e.g. by Gemini)</li>
+              <li>With many courses, use the tag / progress / sort dropdowns above the cards — your picks are remembered</li>
             </ol>
             <div class="lh-help-sub"><div class="lh-help-sub-icon">💡</div><div>Any topic works: programming, marketing, medicine, yoga. After finishing a course, ask the AI to turn the lessons into Review Deck cards or a Quest Map to consolidate.</div></div>
           `},{icon:"⚡",title:"Synapse (Pro)",tag:"Pro",html:`

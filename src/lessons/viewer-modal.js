@@ -11,6 +11,38 @@ const { LESSONS_DIR, markLesson, lessonCompletion } = require("./data");
 const W = I.moment;
 function L(s) { return _getLocale(s, W && W.locale && W.locale()); }
 
+// Render-time mobile rescue appended to the lesson srcdoc: most generated/imported lessons use
+// fixed multi-column grids with no @media query, so on narrow viewports CJK text wraps one
+// character per line. When the viewport is ≤600px, any grid whose columns would be thinner than
+// 180px is collapsed to a single column (and restored when widened). Display-only — the lesson
+// file on disk is never modified, and natively responsive lessons (already 1 column) are untouched.
+const MOBILE_GRID_FIX = `
+<script>
+(function () {
+  var NARROW = 600, MIN_COL = 180, touched = [];
+  function fix() {
+    if ((window.innerWidth || 0) > NARROW) {
+      touched.forEach(function (el) { el.style.gridTemplateColumns = ""; });
+      touched = [];
+      return;
+    }
+    var all = document.querySelectorAll("*");
+    for (var i = 0; i < all.length; i++) {
+      var el = all[i], s = getComputedStyle(el);
+      if (s.display !== "grid") continue;
+      var cols = (s.gridTemplateColumns || "").split(" ").filter(Boolean).length;
+      if (cols > 1 && el.clientWidth / cols < MIN_COL) {
+        el.style.gridTemplateColumns = "1fr";
+        if (touched.indexOf(el) < 0) touched.push(el);
+      }
+    }
+  }
+  window.addEventListener("resize", fix);
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", fix);
+  else fix();
+})();
+<\/script>`;
+
 class LessonViewerModal extends I.Modal {
   constructor(app, plugin, slug, meta, lesson, onDone) {
     super(app);
@@ -148,7 +180,7 @@ class LessonViewerModal extends I.Modal {
         const iframe = box.createEl("iframe", {
           attr: {
             sandbox: "allow-scripts",
-            srcdoc: html,
+            srcdoc: html + MOBILE_GRID_FIX,
             style: `display:block;width:100%;height:${h}px;border:0;background:white;`,
           },
         });

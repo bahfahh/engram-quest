@@ -57,7 +57,30 @@ body { max-width: 860px; margin: 0 auto; padding: 48px 24px 80px;
        background: var(--bg); color: var(--text); line-height: 1.7; font-size: 16px; }
 ```
 
-## Structural components (use what fits, in this spirit)
+## Responsive / mobile (hard rules)
+
+Lessons are read on phones inside a ~380–500px-wide iframe as often as on desktop. A fixed
+multi-column layout at that width squeezes each column to ~120px, and CJK text then wraps
+**one character per line** — unreadable. Every layout must survive a 400px viewport:
+
+1. **Every multi-column grid collapses on narrow screens.** Either add a media query:
+   ```css
+   .concept-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+   @media (max-width: 600px) { .concept-cards { grid-template-columns: 1fr; } }
+   ```
+   or make it intrinsically responsive (no media query needed):
+   ```css
+   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+   ```
+2. **Fixed-width label columns** (e.g. timeline `grid-template-columns: 100px 1fr`) — stack
+   them on mobile (`@media (max-width:600px){ grid-template-columns: 1fr; }` puts the label
+   above the content).
+3. **Horizontal flow diagrams** (pipelines, step arrows built from flex divs): give the
+   container `overflow-x: auto` and each stage a `min-width` — on phones it scrolls
+   horizontally instead of crushing the stages.
+4. **Wide tables**: wrap in `<div style="overflow-x:auto">` so the page never overflows.
+5. Sanity check before finishing: imagine the lesson at 400px wide — no column should force
+   text below ~8 characters per line, and nothing should overflow the viewport.
 
 - **Header**: lesson number tag pill → `<h1>` title → one-line subtitle in `--muted`.
 - **Callout boxes** for key points / warnings / pitfalls: left-border colored box with an

@@ -159,6 +159,8 @@ A lesson is a **beautiful, readable document** the user will revisit. Follow the
 structural guidance in `references/html-recipe.md`, and:
 
 - Open with what the lesson teaches and why it matters for the user's mission.
+- Readable on a phone: multi-column layouts must collapse at narrow widths — see the
+  responsive hard rules in `references/html-recipe.md`.
 - Use concrete examples over abstract definitions. Code topics get runnable-looking snippets;
   physical skills get step sequences; concept topics get diagrams built from styled divs.
 - Litter factual claims with citations (`<a href>` links to sources) when the topic is
