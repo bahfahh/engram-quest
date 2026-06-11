@@ -334,16 +334,38 @@ function srFileName(notePath) {
 }
 
 async function loadSrData(adapter, notePath) {
+  // read+catch instead of exists+read: halves the adapter round-trips, which matters on
+  // mobile where every FS call is a native-bridge hop and this runs once per deck note.
   const newPath = `engram-review/sr/${srFileName(notePath)}.json`;
-  if (await adapter.exists(newPath)) {
-    try { return JSON.parse(await adapter.read(newPath)); } catch { return {}; }
+  let raw = null;
+  try { raw = await adapter.read(newPath); } catch {}
+  if (raw != null) {
+    // New-path file exists: a parse failure means corrupt data, NOT "missing" — return {}
+    // rather than falling through to the legacy file, which could belong to a same-named
+    // note in another folder.
+    try { return JSON.parse(raw); } catch { return {}; }
   }
   // Legacy fallback: old files were named by noteName only (before path-based fix)
   const legacyPath = `engram-review/sr/${notePath.split("/").pop().replace(/\.md$/i, "")}.json`;
-  if (await adapter.exists(legacyPath)) {
-    try { return JSON.parse(await adapter.read(legacyPath)); } catch { return {}; }
-  }
+  try { return JSON.parse(await adapter.read(legacyPath)); } catch {}
   return {};
+}
+
+// Run fn over items with at most `limit` in flight. Used by the hub-open scans so per-file
+// I/O overlaps instead of paying one sequential round-trip per file on mobile.
+// NOTE: a rejection from fn rejects the whole mapLimit call — wrap fn in try/catch if one
+// bad item must not abort the scan (all current callers do).
+async function mapLimit(items, limit, fn) {
+  const results = new Array(items.length);
+  let next = 0;
+  const workers = Array.from({ length: Math.min(limit, items.length) }, async () => {
+    while (next < items.length) {
+      const i = next++;
+      results[i] = await fn(items[i], i);
+    }
+  });
+  await Promise.all(workers);
+  return results;
 }
 
 async function saveSrData(adapter, notePath, srData) {
@@ -484,5 +506,6 @@ module.exports = {
   srFileName,
   loadSrData,
   saveSrData,
-  mergeSrIntoCards
+  mergeSrIntoCards,
+  mapLimit
 };

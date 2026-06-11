@@ -66,8 +66,9 @@ function scoreToRating(score) {
 }
 
 async function readJson(adapter, path) {
+  // No exists() pre-check: read throws on a missing file and we return null either way,
+  // so skipping it halves the adapter round-trips on mobile.
   try {
-    if (adapter.exists && !(await adapter.exists(path))) return null;
     return JSON.parse(await adapter.read(path));
   } catch {
     return null;
@@ -98,9 +99,10 @@ async function scanQuadrantCards(adapter, today = todayStr()) {
   }
   if (!listing || !Array.isArray(listing.files)) return result;
 
-  for (const filePath of listing.files) {
-    if (!filePath.endsWith(".json")) continue;
-    const card = await readJson(adapter, filePath);
+  // All card JSONs read in parallel; the sort below makes the order deterministic anyway.
+  const jsonFiles = listing.files.filter((f) => f.endsWith(".json"));
+  const loaded = await Promise.all(jsonFiles.map((f) => readJson(adapter, f)));
+  for (const card of loaded) {
     if (!card || !card.cardId) continue;
     const due = isCardDue(card, today);
     const isNew = isCardNew(card);

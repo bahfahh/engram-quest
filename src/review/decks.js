@@ -1,6 +1,6 @@
 "use strict";
 
-const { anySrPattern, parseSrComment, saveSrData } = require("./helpers");
+const { anySrPattern, parseSrComment, saveSrData, mapLimit } = require("./helpers");
 
 async function migrateReviewDeckFolder(adapter) {
   if (await adapter.exists("engram-review/hints")) return;
@@ -88,8 +88,13 @@ async function scanReviewDecks(app, settings, reviewHelpers) {
   let files = app.vault.getMarkdownFiles();
   let deckMap = {};
   const srScan = settings.enableSRScan ?? false;
+  // cachedRead serves from Obsidian's in-memory cache when available instead of hitting disk
+  // (big win on mobile); fall back to read() for adapters/mocks that lack it.
+  const readNote = (f) => (app.vault.cachedRead ? app.vault.cachedRead(f) : app.vault.read(f));
 
-  for (let file of files) {
+  // Per-file scan. Returns { deckName, cards } or null. Runs with bounded concurrency below
+  // so the 3-5 FS round-trips per deck note overlap instead of serializing on mobile.
+  const scanFile = async (file) => {
     let cache = app.metadataCache.getFileCache(file);
     let tags = [];
     if (cache != null && cache.tags) {
@@ -125,9 +130,9 @@ async function scanReviewDecks(app, settings, reviewHelpers) {
       (!cache.sections || cache.sections.length === 0) &&
       (!cache.headings || cache.headings.length === 0)
     );
-    if (!srScan && !matchedDeck && !cacheUnindexed) continue;
+    if (!srScan && !matchedDeck && !cacheUnindexed) return null;
 
-    let content = await app.vault.read(file);
+    let content = await readNote(file);
 
     // Inline-tag fallback: SR-scan mode parses unmatched notes too, and not-yet-indexed
     // files need their tag recovered from content. Gives the deck a tag-derived name
@@ -139,11 +144,10 @@ async function scanReviewDecks(app, settings, reviewHelpers) {
     }
 
     let cards = reviewHelpers.parseFlashcards(content);
-    if (cards.length === 0) continue;
+    if (cards.length === 0) return null;
 
     let deckName = matchedDeck || file.parent?.path || "/";
     if (!deckName) deckName = "/";
-    if (!deckMap[deckName]) deckMap[deckName] = { name: deckName, cards: [] };
 
     cards.forEach((card) => {
       card.notePath = file.path;
@@ -156,11 +160,11 @@ async function scanReviewDecks(app, settings, reviewHelpers) {
     } catch {}
 
     try {
+      // read+catch instead of exists+read — one round-trip per note instead of two.
       let hintPath = `engram-review/hints/${noteName}.json`;
-      if (await app.vault.adapter.exists(hintPath)) {
-        const hintsPayload = JSON.parse(await app.vault.adapter.read(hintPath));
-        reviewHelpers.mergeReviewHints(cards, hintsPayload);
-        if (file.path.startsWith("engram-review/ai-cards/")) {
+      const hintsPayload = JSON.parse(await app.vault.adapter.read(hintPath));
+      reviewHelpers.mergeReviewHints(cards, hintsPayload);
+      if (file.path.startsWith("engram-review/ai-cards/")) {
           const fileNotes = hintsPayload.note
             ? (Array.isArray(hintsPayload.note) ? hintsPayload.note : [hintsPayload.note])
             : [];
@@ -185,11 +189,20 @@ async function scanReviewDecks(app, settings, reviewHelpers) {
             card.relatedNotePaths = relatedNotePaths;
             card.primarySourceNotePath = relatedNotePaths[0] || null;
           });
-        }
       }
     } catch {}
 
-    deckMap[deckName].cards.push(...cards);
+    return { deckName, cards };
+  };
+
+  // Bounded parallelism (results merged in file order so deck/card ordering stays deterministic).
+  const scanned = await mapLimit(files, 8, (file) =>
+    scanFile(file).catch((e) => { console.warn("engram-review: scan failed for", file.path, e); return null; })
+  );
+  for (const entry of scanned) {
+    if (!entry) continue;
+    if (!deckMap[entry.deckName]) deckMap[entry.deckName] = { name: entry.deckName, cards: [] };
+    deckMap[entry.deckName].cards.push(...entry.cards);
   }
 
   return Object.values(deckMap)

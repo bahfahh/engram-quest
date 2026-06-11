@@ -9,8 +9,9 @@
 const LESSONS_DIR = "engram-quest/lessons";
 
 async function readJson(adapter, path) {
+  // No exists() pre-check: read throws on a missing file and we return null either way,
+  // so skipping it halves the adapter round-trips (one per course on every lessons render).
   try {
-    if (adapter.exists && !(await adapter.exists(path))) return null;
     return JSON.parse(await adapter.read(path));
   } catch {
     return null;
@@ -88,13 +89,16 @@ async function listCourses(adapter) {
   }
   if (!listing || !Array.isArray(listing.folders)) return [];
 
-  const courses = [];
-  for (const folderPath of listing.folders) {
-    const slug = String(folderPath).split("/").pop();
-    if (!slug) continue;
-    const meta = normalizeMeta(await readJson(adapter, `${LESSONS_DIR}/${slug}/meta.json`));
-    if (meta) courses.push({ slug, meta });
-  }
+  // All meta.json reads in parallel — course folders are independent.
+  const loaded = await Promise.all(
+    listing.folders.map(async (folderPath) => {
+      const slug = String(folderPath).split("/").pop();
+      if (!slug) return null;
+      const meta = normalizeMeta(await readJson(adapter, `${LESSONS_DIR}/${slug}/meta.json`));
+      return meta ? { slug, meta } : null;
+    })
+  );
+  const courses = loaded.filter(Boolean);
   courses.sort((a, b) => {
     if (a.meta.starred !== b.meta.starred) return a.meta.starred ? -1 : 1;
     return String(b.meta.createdAt || "").localeCompare(String(a.meta.createdAt || ""));

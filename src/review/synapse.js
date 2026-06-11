@@ -4,7 +4,7 @@
 
 "use strict";
 
-const { srFileName } = require("./helpers");
+const { srFileName, mapLimit } = require("./helpers");
 
 const SYNAPSE_DIR = "engram-review/synapse";
 const STATUS_FILE = `${SYNAPSE_DIR}/_status.json`;
@@ -73,20 +73,23 @@ async function countMasteredFromSr(adapter) {
   if (!(await adapter.exists(dir))) return 0;
   let listing;
   try { listing = await adapter.list(dir); } catch { return 0; }
-  let count = 0;
-  for (const file of listing.files || []) {
-    if (!file.endsWith(".json")) continue;
+  // Parallel reads (bounded) — this runs on every Review tab render for Pro users, and the
+  // sr/ folder holds one JSON per note, so sequential reads got slow on mobile as decks grew.
+  const jsonFiles = (listing.files || []).filter((f) => f.endsWith(".json"));
+  const counts = await mapLimit(jsonFiles, 8, async (file) => {
     try {
       const data = JSON.parse(await adapter.read(file));
+      let n = 0;
       for (const front of Object.keys(data)) {
         const meta = data[front];
         if (meta && typeof meta.stability === "number" && meta.stability >= MASTERED_STABILITY_THRESHOLD) {
-          count++;
+          n++;
         }
       }
-    } catch {}
-  }
-  return count;
+      return n;
+    } catch { return 0; }
+  });
+  return counts.reduce((a, b) => a + b, 0);
 }
 
 // Returns { show, reason } so the UI can decide which banner copy to render.
