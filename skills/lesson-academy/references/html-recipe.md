@@ -89,6 +89,21 @@ multi-column layout at that width squeezes each column to ~120px, and CJK text t
   built from flex divs — never external images).
 - **Code blocks**: `<pre><code>` with `--code-bg`, syntax-color important tokens manually
   with spans (`.keyword`, `.string`, `.fn`).
+- **Folder trees & indented text blocks**: always use `<pre>`, never `<div>`.
+  HTML collapses all whitespace inside `<div>` — the entire tree becomes one line.
+  `<pre>` preserves newlines and indentation by default; add `overflow-x: auto` for long lines.
+  ```html
+  <!-- ✅ correct -->
+  <pre class="folder-tree">src/
+  ├── Domain/
+  │   └── Order.cs
+  └── App/</pre>
+
+  <!-- ❌ wrong — collapses to one line in Obsidian iframe -->
+  <div class="folder-tree">src/
+  ├── Domain/
+  │   └── Order.cs</div>
+  ```
 - **Footer**: citation links + "ask your AI teacher follow-up questions" reminder.
 
 ## Interactive quiz (end of every lesson)
