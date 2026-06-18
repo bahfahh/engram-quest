@@ -110,6 +110,9 @@ multi-column layout at that width squeezes each column to ~120px, and CJK text t
 
 3–5 questions, vanilla JS, immediate visual feedback. Minimal working pattern:
 
+**CRITICAL UX rule**: wrong answers must allow retry — only lock the question after a correct answer.
+Do NOT add `pointer-events: none` or `cursor: default` to `.wrong` — users must be able to click again.
+
 ```html
 <div class="quiz">
   <h3>✅ 自我檢測</h3>
@@ -120,23 +123,44 @@ multi-column layout at that width squeezes each column to ~120px, and CJK text t
   </div>
   <div class="quiz-feedback"></div>
 </div>
+<style>
+/* IMPORTANT: .wrong must NOT have pointer-events:none — retry must stay available */
+.quiz-opt { cursor: pointer; border: 1px solid var(--border); border-radius: 8px;
+            padding: 10px 14px; margin: 6px 0; transition: background .15s; }
+.quiz-opt:hover { background: var(--surface2); }
+.quiz-opt.correct { background: rgba(52,211,153,.15); border-color: var(--green); pointer-events: none; cursor: default; }
+.quiz-opt.wrong   { background: rgba(248,113,113,.12); border-color: var(--red); /* no pointer-events:none */ }
+.quiz-feedback { min-height: 1.4em; margin-top: 6px; font-size: .9em; }
+.quiz-feedback.correct { color: var(--green); }
+.quiz-feedback.wrong   { color: var(--red); }
+</style>
 <script>
 document.querySelectorAll(".quiz-options").forEach(group => {
   const fb = group.parentElement.querySelector(".quiz-feedback");
-  group.querySelectorAll(".quiz-opt").forEach((opt, i) => {
+  const opts = group.querySelectorAll(".quiz-opt");
+  let solved = false;
+  opts.forEach((opt, i) => {
     opt.addEventListener("click", () => {
+      if (solved) return;                          // locked only after correct
       const ok = i === Number(group.dataset.answer);
-      opt.classList.add(ok ? "correct" : "wrong");
-      fb.textContent = ok ? "✓ 正確！<short why>" : "✗ 再想想 — <hint>";
-      fb.className = "quiz-feedback show " + (ok ? "correct" : "wrong");
+      opts.forEach(o => o.classList.remove("wrong")); // clear previous wrong marks
+      if (ok) {
+        solved = true;
+        opt.classList.add("correct");
+        fb.textContent = "✓ 正確！<short why>";
+        fb.className = "quiz-feedback show correct";
+      } else {
+        opt.classList.add("wrong");
+        fb.textContent = "✗ 再想想 — <hint>";
+        fb.className = "quiz-feedback show wrong";
+      }
     });
   });
 });
 </script>
 ```
 
-Give correct/wrong states distinct colors (green/red backgrounds at low opacity) and always
-explain *why* in the feedback text — the explanation is where the learning happens.
+Always explain *why* in the feedback text — the explanation is where the learning happens.
 
 ## Length & density
 

@@ -179,7 +179,7 @@ class LessonViewerModal extends I.Modal {
         const h = Math.max(360, Math.floor((win.innerHeight || 900) * 0.82));
         const iframe = box.createEl("iframe", {
           attr: {
-            sandbox: "allow-scripts",
+            sandbox: "allow-scripts allow-same-origin allow-popups",
             srcdoc: html + MOBILE_GRID_FIX,
             style: `display:block;width:100%;height:${h}px;border:0;background:white;`,
           },
