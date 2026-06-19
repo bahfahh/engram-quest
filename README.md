@@ -30,7 +30,7 @@ Anki solves *when* to review. EngramQuest solves *how* to actually remember — 
 - **🃏 Remember it** — Review Deck: a three-stage recall system (L1/L2/L3) on top of the FSRS-5 algorithm — newer and more accurate than Anki's SM-2.
 - **🧠 Connect it** — Memory Map: AI lays abstract concepts onto an Obsidian Canvas so you see how everything links together.
 
-Every module works on its own, or chains into the next. **AI is optional** — and it runs on the AI tools you already use (Claude Code, Codex, Gemini CLI, Cursor), not another subscription.
+Every module works on its own, or chains into the next. **AI is optional** — and it runs on the AI tools you already use (Claude Code, Codex, Antigravity, Gemini CLI, Cursor), not another subscription.
 
 ---
 
@@ -103,7 +103,7 @@ Turns a single flashcard into an A4 four-quadrant "super memory" sheet (**Q1 que
 ## ⚡ Quick Start (AI Path)
 
 1. **Install the plugin** — [open in Obsidian](obsidian://show-plugin?id=engram-quest), search **EngramQuest** in Community Plugins, or grab it from [GitHub Releases](https://github.com/bahfahh/engram-quest/releases).
-2. **Install the Skills** — go to `Settings → EngramQuest → AI Skills` and click **Install** for your tool (Claude Code, Gemini CLI, Cursor, or Codex).
+2. **Install the Skills** — go to `Settings → EngramQuest → AI Skills` and click **Install** for your tool (Claude Code, Codex / Antigravity, Gemini CLI, or Cursor).
    ![Install Skills](assets/install-skills.png)
 3. **Ask your AI** — *"Turn `Note.md` into a quest-map medium"* or *"Build a review deck from notes tagged math."*
 4. **Open the Hub** — click the 🗺️ ribbon icon, switch to the relevant tab, and start learning.
@@ -230,7 +230,7 @@ Anki 解決「何時複習」。EngramQuest 解決「如何真正記住」 — �
 - **🃏 記住它** — Review Deck：建立在 FSRS-5 演算法上的三階回想系統（L1/L2/L3），比 Anki 的 SM-2 更新、更準。
 - **🧠 連結它** — Memory Map：AI 把抽象概念鋪在 Obsidian Canvas 上，讓你看見一切如何串連。
 
-每個模組都能單獨使用，也能串接到下一個。**AI 完全可選** — 而且它跑在你已經在用的 AI 工具上（Claude Code、Codex、Gemini CLI、Cursor），不是另一個訂閱服務。
+每個模組都能單獨使用，也能串接到下一個。**AI 完全可選** — 而且它跑在你已經在用的 AI 工具上（Claude Code、Codex、Antigravity、Gemini CLI、Cursor），不是另一個訂閱服務。
 
 ---
 
@@ -303,7 +303,7 @@ Anki 解決「何時複習」。EngramQuest 解決「如何真正記住」 — �
 ## ⚡ 快速開始（AI 路徑）
 
 1. **安裝插件** — [在 Obsidian 中開啟](obsidian://show-plugin?id=engram-quest)、在 Community Plugins 搜尋 **EngramQuest**，或從 [GitHub Releases](https://github.com/bahfahh/engram-quest/releases) 下載。
-2. **安裝 Skills** — 到 `設定 → EngramQuest → AI Skills`，為你的工具（Claude Code、Gemini CLI、Cursor 或 Codex）點 **安裝**。
+2. **安裝 Skills** — 到 `設定 → EngramQuest → AI Skills`，為你的工具（Claude Code、Codex / Antigravity、Gemini CLI 或 Cursor）點 **安裝**。
    ![安裝 Skills](assets/install-skills.png)
 3. **問你的 AI** — *「把 `Note.md` 變成 quest-map medium」* 或 *「用標 math 的筆記建一副 review deck。」*
 4. **打開 Hub** — 點 🗺️ ribbon 圖示，切到對應分頁，開始學習。

@@ -46,10 +46,10 @@ function createInstaller() {
     },
     codex: {
       id: "codex",
-      label: "Codex",
+      label: "Codex / Antigravity",
       kind: "skills",
       baseDir: ".agents/skills",
-      summary: "Project-local Codex skills."
+      summary: "Project-local skills for Codex and Antigravity (shared .agents/skills)."
     },
     gemini: {
       id: "gemini",

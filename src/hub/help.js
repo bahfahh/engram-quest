@@ -49,21 +49,21 @@ var fe=class extends I.Modal{constructor(e,t){super(e),this.plugin=t}onClose(){v
       .lh-help.lh-dark .lh-help-intro { background:linear-gradient(135deg,rgba(59,130,246,0.16),rgba(124,58,237,0.14)); }
       .lh-help.lh-dark .lh-help-intro p { color:var(--text-normal); }
     `,a.id="lh-help-styles",activeDocument.head.appendChild(a);let o=r.createEl("div",{attr:{style:"flex:1;overflow-y:auto;padding:20px;font-size:14px;line-height:1.6"}}),i=o.createEl("div",{attr:{class:"lh-help-intro"}});i.innerHTML=t==="zh-tw"?`
-      <p><strong>EngramQuest</strong> 讓你用 AI 快速建立學習內容，直接在 Obsidian 裡學習。</p>
+      <p><strong>EngramQuest</strong> 把你的筆記變成完整學習閉環：<strong>學 → 練 → 記 → 連</strong>。每個模組可單獨用，也能串接。</p>
       <div class="lh-help-chips">
-        <span class="lh-help-chip" style="background:#dbeafe;color:#1d4ed8">🃏 Review Deck — 長期記憶，FSRS 排程</span>
-        <span class="lh-help-chip" style="background:#d1fae5;color:#065f46">🗺️ Quest Map — 結構化學習地圖</span>
-        <span class="lh-help-chip" style="background:#ede9fe;color:#5b21b6">🧠 Memory Map — 視覺化概念地圖</span>
-        <span class="lh-help-chip" style="background:#dbeafe;color:#0c4a6e">🎴 Quadrant Card — A4 超記憶卡（Pro）</span>
+        <span class="lh-help-chip" style="background:#dbeafe;color:#1d4ed8">📚 記憶 — Review Deck · Memory Map</span>
+        <span class="lh-help-chip" style="background:#d1fae5;color:#065f46">🎓 學習 — 教材 · Quest Map</span>
+        <span class="lh-help-chip" style="background:#fef3c7;color:#92400e">🏆 成就 — 里程碑追蹤</span>
       </div>
+      <p style="margin-top:10px;font-size:12.5px;line-height:1.6">👉 <strong>第一步</strong>：免 AI 就打 <code>#flashcards/主題</code> + 一張 <code>Q:/A:</code> 卡；用 AI 就到「設定 → AI Skills」安裝後對 AI 說話。每個功能分頁第一次開啟都會跳出圖解說明。</p>
     `:`
-      <p><strong>EngramQuest</strong> lets you use AI to build learning content and study it directly in Obsidian.</p>
+      <p><strong>EngramQuest</strong> turns your notes into a complete learning loop: <strong>Learn → Practice → Remember → Connect</strong>. Each module works alone or chains into the next.</p>
       <div class="lh-help-chips">
-        <span class="lh-help-chip" style="background:#dbeafe;color:#1d4ed8">🃏 Review Deck — Long-term memory</span>
-        <span class="lh-help-chip" style="background:#d1fae5;color:#065f46">🗺️ Quest Map — Structured learning</span>
-        <span class="lh-help-chip" style="background:#ede9fe;color:#5b21b6">🧠 Memory Map — Visual concept map</span>
-        <span class="lh-help-chip" style="background:#dbeafe;color:#0c4a6e">🎴 Quadrant Card — A4 super-memory (Pro)</span>
+        <span class="lh-help-chip" style="background:#dbeafe;color:#1d4ed8">📚 Memory — Review Deck · Memory Map</span>
+        <span class="lh-help-chip" style="background:#d1fae5;color:#065f46">🎓 Learn — Lessons · Quest Map</span>
+        <span class="lh-help-chip" style="background:#fef3c7;color:#92400e">🏆 Achieve — milestone tracking</span>
       </div>
+      <p style="margin-top:10px;font-size:12.5px;line-height:1.6">👉 <strong>First step</strong>: No AI? Tag a note <code>#flashcards/topic</code> + one <code>Q:/A:</code> card. With AI? Install Skills in Settings → AI Skills, then talk to your AI. Each feature tab pops a visual guide the first time you open it.</p>
     `;let d='<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>',f=0,h=[];t==="zh-tw"&&(h=[{icon:"🃏",title:"建立第一個 Review Deck",tag:"手動開始",html:`
             <p><strong>Step 1：在筆記加上標籤（Deck 名稱）</strong></p>
             <p>在你的筆記任意位置加上 <code>#flashcards/主題</code>。例如 <code>#flashcards/英文</code> 就會建立一個名為「英文」的 Deck。</p>
@@ -85,7 +85,7 @@ A: 在快忘記時複習，可以用最少時間達到最高記憶保留率。
             <p><strong>Step 1：安裝 AI Skills</strong></p>
             <ol>
               <li>Obsidian 設定 → <strong>EngramQuest → AI Skills</strong></li>
-              <li>選你用的工具：Claude Code / Codex / Gemini CLI / Cursor</li>
+              <li>選你用的工具：Claude Code / Codex / Antigravity / Gemini CLI / Cursor</li>
               <li>安裝後 AI 就知道怎麼幫你建立三個模組的內容</li>
             </ol>
             <img src="${imgInstallSkills}" alt="Install Skills 示意圖" style="width:100%;border-radius:8px;margin:10px 0;border:1px solid #e5e7eb;" />
@@ -375,7 +375,7 @@ Pythagorean theorem :: a² + b² = c²</pre>
             <p><strong>Step 1: Install AI Skills</strong></p>
             <ol>
               <li>Open Obsidian Settings → <strong>EngramQuest → AI Skills</strong></li>
-              <li>Choose your tool: Claude Code / Codex / Gemini CLI / Cursor</li>
+              <li>Choose your tool: Claude Code / Codex / Antigravity / Gemini CLI / Cursor</li>
               <li>After install, AI knows how to build content for all three modules</li>
             </ol>
             <img src="${imgInstallSkills}" alt="Install Skills screenshot" style="width:100%;border-radius:8px;margin:10px 0;border:1px solid #e5e7eb;" />
@@ -655,15 +655,36 @@ Write all card questions in formal academic English.</pre>
 Store all Memory Maps in the Maps/Memory/ directory.</pre>
             <p><strong>Q15. What other assistance can AI provide?</strong></p>
             <p>Beyond content creation, AI can interact with your Review Decks to provide personalized tutoring and guided review sessions. It can also help organize and categorize existing decks, or generate more challenging new questions based on your current knowledge.</p>
-          `}]),h.splice(Math.max(h.length-1,0),0,{icon:"🤖",title:t==="zh-tw"?"AI 設定":"AI Setup",tag:c(e,"HELP_AI_SETUP_TAG"),html:`
-        <p>${c(e,"SKILLS_AI_SETUP_COPY")}</p>
+          `}]),h.splice(Math.max(h.length-1,0),0,{icon:"🤖",title:t==="zh-tw"?"AI 設定":"AI Setup",tag:c(e,"HELP_AI_SETUP_TAG"),html:t==="zh-tw"?`
+        <p><strong>AI 完全可選。</strong>Skills 是「執行邏輯」，安裝一次後，你用<strong>自己已在用的 AI 工具</strong>對它說話即可 — 不需要訂閱另一個服務。</p>
+        <ol>
+          <li><strong>安裝 Skills</strong> — 設定 → EngramQuest → AI Skills，選你的工具按「安裝」。</li>
+          <li><strong>用 AI 工具跑對應 skill</strong> — 從<strong>這個 vault 資料夾</strong>開啟 Claude Code / Codex / Antigravity / Gemini CLI / Cursor，直接用自然語言說，例如「把 math 筆記做成 review deck」「把 微積分.md 做成 quest-map medium」。</li>
+          <li><strong>回 Hub 學習</strong> — 生成的內容會出現在對應分頁。</li>
+        </ol>
         <table>
-          <tr><th>Tool</th><th>Path</th></tr>
+          <tr><th>工具</th><th>Skills 路徑</th></tr>
           <tr><td>Claude Code</td><td><code>.claude/skills</code></td></tr>
-          <tr><td>Codex</td><td><code>.agents/skills</code></td></tr>
+          <tr><td>Codex / Antigravity</td><td><code>.agents/skills</code></td></tr>
           <tr><td>Gemini CLI</td><td><code>.gemini/skills</code></td></tr>
-          <tr><td>Cursor</td><td><code>.cursor/rules</code></td></tr>
+          <tr><td>Cursor</td><td><code>.cursor/skills</code></td></tr>
         </table>
+        <div class="lh-help-sub"><div class="lh-help-sub-icon">💡</div><div><strong>Codex 與 Antigravity 共用 <code>.agents/skills</code></strong>：安裝 Codex 目標，Antigravity 從同一 vault 開啟時就會自動讀到，不需另外安裝。</div></div>
+      `:`
+        <p><strong>AI is fully optional.</strong> Skills are the execution logic — install once, then talk to them using the <strong>AI tool you already have</strong>. No extra subscription.</p>
+        <ol>
+          <li><strong>Install Skills</strong> — Settings → EngramQuest → AI Skills, pick your tool and click Install.</li>
+          <li><strong>Run the skill from your AI tool</strong> — open Claude Code / Codex / Antigravity / Gemini CLI / Cursor <strong>from this vault folder</strong> and just say it in plain language, e.g. "Build a review deck from my math notes" or "Turn calculus.md into a quest-map medium".</li>
+          <li><strong>Back to the Hub</strong> — generated content shows up in the matching tab.</li>
+        </ol>
+        <table>
+          <tr><th>Tool</th><th>Skills path</th></tr>
+          <tr><td>Claude Code</td><td><code>.claude/skills</code></td></tr>
+          <tr><td>Codex / Antigravity</td><td><code>.agents/skills</code></td></tr>
+          <tr><td>Gemini CLI</td><td><code>.gemini/skills</code></td></tr>
+          <tr><td>Cursor</td><td><code>.cursor/skills</code></td></tr>
+        </table>
+        <div class="lh-help-sub"><div class="lh-help-sub-icon">💡</div><div><strong>Codex and Antigravity share <code>.agents/skills</code></strong>: install the Codex target and Antigravity picks it up automatically when opened from the same vault — no separate install.</div></div>
       `}),h.forEach((u,v)=>{let p=o.createEl("div",{attr:{class:"lh-help-acc"}}),g=p.createEl("div",{attr:{class:"lh-help-acc-hdr"+(v===f?" open":"")}});g.createEl("span",{text:u.icon,attr:{class:"lh-help-acc-icon"}}),g.createEl("span",{text:u.title,attr:{class:"lh-help-acc-title"}}),g.createEl("span",{text:u.tag,attr:{class:"lh-help-acc-tag"}});let E=g.createEl("span",{attr:{class:"lh-help-acc-arrow"}});E.innerHTML=d;let m=p.createEl("div",{attr:{class:"lh-help-acc-body"+(v===f?" open":"")}});m.innerHTML=u.html,g.addEventListener("click",()=>{let x=m.classList.contains("open");o.querySelectorAll(".lh-help-acc-body").forEach(S=>S.classList.remove("open")),o.querySelectorAll(".lh-help-acc-hdr").forEach(S=>S.classList.remove("open")),x||(m.classList.add("open"),g.classList.add("open"))})});let _coffeeFoot=o.createEl("div",{attr:{style:"margin-top:28px;padding:20px 16px 8px;border-top:1px solid var(--background-modifier-border);text-align:center;"}});_coffeeFoot.createEl("div",{text:t==="zh-tw"?"覺得 EngramQuest 對你有幫助？":"Find EngramQuest helpful?",attr:{style:"font-size:13px;color:var(--text-muted);margin-bottom:10px;"}});let _coffeeBtn=_coffeeFoot.createEl("a",{attr:{href:"https://ko-fi.com/wen_aidev",target:"_blank",rel:"noopener",style:"display:inline-flex;align-items:center;gap:8px;padding:10px 20px;border-radius:8px;background:#fcd34d;color:#1f2937;text-decoration:none;font-size:14px;font-weight:600;"}});_coffeeBtn.createEl("span",{text:"☕"});_coffeeBtn.createEl("span",{text:"Buy me a coffee"});}};
 
 module.exports = { HelpModal: fe };
