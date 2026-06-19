@@ -15,6 +15,7 @@ const {
   recentLessons, overallStats,
 } = require("./data");
 const { LessonViewerModal } = require("./viewer-modal");
+const { attachInfoButton: _attachGuideInfo } = require("../hub/feature-guide");
 
 // Per-course color schemes (picked by meta.colorScheme, else hashed from the slug).
 const SCHEMES = {
@@ -170,8 +171,10 @@ function renderHeader(main, hub, t, tk, courses, state, refresh) {
   row.createEl("span", { text: "🎓", attr: { style: "font-size:22px;" } });
   row.createEl("span", {
     text: c(t, "LESSON_ACADEMY_TITLE"),
-    attr: { style: `flex:1;min-width:0;font-size:19px;font-weight:800;color:${tk.text};letter-spacing:0.5px;` },
+    attr: { style: `min-width:0;font-size:19px;font-weight:800;color:${tk.text};letter-spacing:0.5px;` },
   });
+  if (hub && hub.app && hub.plugin) _attachGuideInfo(row, hub.app, hub.plugin, "lesson");
+  row.createEl("span", { attr: { style: "flex:1;min-width:0;" } });
 
   // Course search — only worth the chrome once the card strip stops fitting on screen.
   // Filters the cards (and the auto-selected course) by title / topic / tags.
