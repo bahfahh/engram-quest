@@ -10,7 +10,7 @@
 
 Your Obsidian vault is full of notes you wrote once and never looked at again. **EngramQuest turns those notes into a complete learning loop** — AI builds courses, game-like quests, and flashcards straight from what you already wrote, and FSRS spaced repetition makes the knowledge actually stick. One plugin takes you from **learning → practicing → remembering → connecting**.
 
-![What is EngramQuest](assets/guide/整體概念_英文.png)
+![What is EngramQuest](assets/guide/整體概念_英文.webp)
 
 > ### 🚀 Your first 60 seconds
 > 1. **Install the plugin** — search **EngramQuest** in Community Plugins (or [open it in Obsidian](obsidian://show-plugin?id=engram-quest)).
@@ -38,7 +38,7 @@ Every module works on its own, or chains into the next. **AI is optional** — a
 
 ### 🃏 Review Deck — Remember More, Study Less
 
-![Review Deck](assets/guide/reviewdeck_english.png)
+![Review Deck](assets/guide/reviewdeck_english.webp)
 
 A three-stage recall system that builds real memory, not just familiarity:
 
@@ -56,7 +56,7 @@ A three-stage recall system that builds real memory, not just familiarity:
 
 ### 🗺️ Quest Map — Turn Notes into Challenges
 
-![Quest Map](assets/guide/questmap_english.png)
+![Quest Map](assets/guide/questmap_english.webp)
 
 Transforms any note into a game-like island map, embedded in your vault as a `.md` file.
 
@@ -68,7 +68,7 @@ Transforms any note into a game-like island map, embedded in your vault as a `.m
 
 ### 🎓 Lesson Academy — AI-Built Courses
 
-![Lesson Academy](assets/guide/lesson_academy_english.png)
+![Lesson Academy](assets/guide/lesson_academy_english.webp)
 
 Tell the AI what you want to learn — it builds a course of interactive HTML lessons you study right inside Obsidian.
 
@@ -80,7 +80,7 @@ Tell the AI what you want to learn — it builds a course of interactive HTML le
 
 ### 🧠 Memory Map — See the Big Picture
 
-![Memory Map](assets/guide/memory_map_english.png)
+![Memory Map](assets/guide/memory_map_english.webp)
 
 Visualizes abstract concepts using Obsidian Canvas.
 
@@ -210,7 +210,7 @@ If EngramQuest is useful to you, consider supporting its development:
 
 你的 Obsidian vault 塞滿了寫過一次、再也沒看的筆記。**EngramQuest 把這些筆記變成一個完整的學習閉環** — AI 直接從你寫過的內容生成課程、遊戲化關卡和閃卡，再用 FSRS 間隔複習讓知識真正留下來。一個插件帶你走完 **學 → 練 → 記 → 連**。
 
-![EngramQuest 能做什麼](assets/guide/整體概念_中文.png)
+![EngramQuest 能做什麼](assets/guide/整體概念_中文.webp)
 
 > ### 🚀 安裝後的第一分鐘
 > 1. **安裝插件** — 在 Community Plugins 搜尋 **EngramQuest**（或[在 Obsidian 中開啟](obsidian://show-plugin?id=engram-quest)）。
@@ -238,7 +238,7 @@ Anki 解決「何時複習」。EngramQuest 解決「如何真正記住」 — �
 
 ### 🃏 Review Deck — 記得更多，學得更少
 
-![Review Deck](assets/guide/reviewdeck_中文.png)
+![Review Deck](assets/guide/reviewdeck_中文.webp)
 
 一套建立真實記憶（而非單純「眼熟」）的三階回想系統：
 
@@ -256,7 +256,7 @@ Anki 解決「何時複習」。EngramQuest 解決「如何真正記住」 — �
 
 ### 🗺️ Quest Map — 把筆記變成關卡
 
-![Quest Map](assets/guide/questmap_中文.png)
+![Quest Map](assets/guide/questmap_中文.webp)
 
 把任何筆記變成遊戲化島嶼地圖，以 `.md` 檔嵌在你的 vault 裡。
 
@@ -268,7 +268,7 @@ Anki 解決「何時複習」。EngramQuest 解決「如何真正記住」 — �
 
 ### 🎓 Lesson Academy — AI 打造的課程
 
-![Lesson Academy](assets/guide/lesson_academy_中文.png)
+![Lesson Academy](assets/guide/lesson_academy_中文.webp)
 
 告訴 AI 你想學什麼 — 它建立一整套可在 Obsidian 內研讀的互動式 HTML 課程。
 
@@ -280,7 +280,7 @@ Anki 解決「何時複習」。EngramQuest 解決「如何真正記住」 — �
 
 ### 🧠 Memory Map — 看見全局
 
-![Memory Map](assets/guide/memory_map_中文.png)
+![Memory Map](assets/guide/memory_map_中文.webp)
 
 用 Obsidian Canvas 視覺化抽象概念。
 
