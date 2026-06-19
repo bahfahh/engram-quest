@@ -14,6 +14,9 @@ exist because violations look fine in a normal browser but break inside Obsidian
    - ❌ `<script src="https://…">` (no CDN libraries — write vanilla JS)
    - ❌ `@import`, `url(https://…)` in CSS
    - ❌ `<img src="https://…">` (use emoji, styled divs, or inline SVG instead)
+   - ✅ Raster images are allowed only when self-contained (for example a
+     `data:image/...;base64` URI) or when the plugin explicitly resolves local vault resources.
+     Do not point lesson HTML at Codex temp files or generated-image cache paths.
 3. **Citations are fine** — `<a href="https://…" target="_blank">` only *navigates* on click,
    it doesn't load anything. Cite sources freely.
 4. **System font stack only**:
@@ -23,6 +26,26 @@ exist because violations look fine in a normal browser but break inside Obsidian
 6. **`<title>` is required** — set it to the lesson title (the plugin's import flow and tab
    tooling read it).
 7. Start with `<!DOCTYPE html>` and `<meta charset="UTF-8">`.
+
+## Raster image assets
+
+Use raster images sparingly and only when they teach better than text or SVG. See
+`visual-teaching.md` for when to use AI image generation capability versus SVG/HTML diagrams.
+
+When using a generated image:
+
+1. Copy the selected asset into `engram-quest/lessons/{courseSlug}/assets/`.
+2. Embed it into the lesson as a self-contained data URI unless the plugin has a confirmed local
+   resource resolver for lesson iframes.
+3. Add meaningful `alt` text and a caption that states the learning job of the image.
+4. Make it responsive:
+   ```css
+   .lesson-image img { display:block; width:100%; height:auto; object-fit:contain; }
+   ```
+5. Check file size. If a lesson becomes heavy, reduce image dimensions or split the content.
+
+If exact labels, arrows, or technical flow text must be correct, prefer inline SVG/HTML or place
+those exact labels outside/on top of the generated image as a hybrid visual.
 
 ## Theme
 

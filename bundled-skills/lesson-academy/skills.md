@@ -39,6 +39,34 @@ prompt and source notes. If the user writes in Traditional Chinese, teach in Tra
    frameworks/tools/APIs, verify key claims with web search and cite sources in the lesson.
 5. **Knowledge first, then practice.** Teach the concept, then end the lesson with an
    interactive quiz or exercise so the user gets an immediate feedback loop.
+6. **Use visuals only when they materially improve understanding.** Lessons do not need visuals
+   by default. Add a visual when the topic is spatial, procedural, comparative, abstract, or
+   easier to understand through a realistic scene. Prefer one primary visual; use two only when
+   one sets context and the other explains the mechanism.
+
+### Visual teaching decision
+
+Before writing lesson HTML, decide whether a visual would clarify the one thing this lesson
+teaches. If yes, choose the medium by the learning job:
+
+- **First classify the knowledge shape** (see `references/visual-teaching.md`). Complex concepts
+  — multi-actor flows, layered architectures, abstract mechanisms — are strong candidates for a
+  teaching image. A well-crafted visual compresses what would take three paragraphs into one
+  memorable picture.
+- Use **AI image generation capability** for polished educational infographics and teaching
+  images that make a complex concept click — e.g. a step-by-step flow diagram with numbered
+  actors and arrows, a layered architecture overview, a before/after comparison. Prompt for a
+  *clean technical teaching image*, not a generic decorative scene. A good teaching image is
+  immediately informative on its own; a bad one is atmospheric but explains nothing.
+- Use **SVG/HTML diagrams** for exact labels, arrows, comparisons, flows, decision trees,
+  overlays, or interactive controls where precision matters, or when an AI-generated image fails
+  the quality gate.
+- Use a **hybrid** when a generated image teaches the big picture but needs exact explanatory
+  labels: generated image for the teaching visual, HTML/SVG for labels, arrows, captions, checks,
+  or interactive overlays.
+
+If the lesson needs visual strategy, read `references/visual-teaching.md` before generating the
+HTML. Do not add decorative images.
 
 ---
 
@@ -111,6 +139,10 @@ For each lesson, write a single self-contained HTML file following the hard rule
 `references/html-recipe.md` (read it before generating the first lesson — Obsidian's CSP
 silently breaks externally-loaded resources, so violations look fine to you but broken to
 the user).
+
+When a visual would materially improve learning, also read `references/visual-teaching.md` and
+choose the visual type and production method before writing the lesson. Keep the visual count
+tight: usually one, rarely two.
 
 Lesson ID and filename:
 - `id` = `lsn-<current unix ms timestamp>` (e.g. `lsn-1717977600000`); when generating several

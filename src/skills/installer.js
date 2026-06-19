@@ -99,7 +99,8 @@ function createInstaller() {
       { source: "lesson-academy/skills.md", target: "SKILL.md" },
       { source: "lesson-academy/references/html-recipe.md", target: "references/html-recipe.md" },
       { source: "lesson-academy/references/lesson-format.md", target: "references/lesson-format.md" },
-      { source: "lesson-academy/references/obsidian-cli.md", target: "references/obsidian-cli.md" }
+      { source: "lesson-academy/references/obsidian-cli.md", target: "references/obsidian-cli.md" },
+      { source: "lesson-academy/references/visual-teaching.md", target: "references/visual-teaching.md" }
     ],
     "synapse": [
       { source: "synapse/skills.md", target: "SKILL.md" },
