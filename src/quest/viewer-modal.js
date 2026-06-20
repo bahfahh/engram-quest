@@ -282,6 +282,13 @@ class QuestViewerModal extends I.Modal {
 
     const isDark = isDarkTheme();
     const assetRoot = this.app.vault.configDir + "/plugins/engram-quest/assets/quest-map/";
+    const generatedRoot = assetRoot + "generated/";
+    const mapAssets = {
+      crown: this.app.vault.adapter.getResourcePath(generatedRoot + "crown-current-node.webp"),
+      nodeFrame: this.app.vault.adapter.getResourcePath(generatedRoot + "node-number-frame.webp"),
+      bossGate: this.app.vault.adapter.getResourcePath(generatedRoot + "boss-gate.webp"),
+      bossLock: this.app.vault.adapter.getResourcePath(generatedRoot + "boss-lock-badge.webp"),
+    };
     const difficulty = this.quest.difficulty || "medium";
     const bgUrl = this.app.vault.adapter.getResourcePath(assetRoot + "quest-map_backgroud_" + difficulty + ".png");
 
@@ -325,7 +332,7 @@ class QuestViewerModal extends I.Modal {
         const done = Boolean(progress.state.nodes[nodes[index]?.id]?.completed);
         addConnector(stage, pos, next, done);
       });
-      nodes.forEach((node, index) => this.renderNode(stage, node, index, positions[index], progress, assetRoot, isDark));
+      nodes.forEach((node, index) => this.renderNode(stage, node, index, positions[index], progress, assetRoot, isDark, mapAssets));
     };
 
     // Mobile: side panel first (immediate access to node list + start button), map below
@@ -339,25 +346,11 @@ class QuestViewerModal extends I.Modal {
     }
   }
 
-  renderNode(stage, node, index, pos, progress, assetRoot, isDark) {
+  renderNode(stage, node, index, pos, progress, assetRoot, isDark, mapAssets = {}) {
     const completed = Boolean(progress.state.nodes[node.id]?.completed);
     const active = index === progress.activeIndex && !completed;
     const locked = index > progress.activeIndex && !completed;
     const boss = Boolean(node.boss || node.type === "boss");
-
-    const platformFile = isDark ? "platform_dark.png" : "platform_light.png";
-    const platformSrc = this.app.vault.adapter.getResourcePath(assetRoot + platformFile);
-
-    // Color tint overlay on platform: completed=green, active=purple, locked=grey, boss=gold, default=blue
-    const tint = completed
-      ? "rgba(34,197,94,.55)"
-      : active
-        ? "rgba(99,102,241,.6)"
-        : locked
-          ? "rgba(100,116,139,.55)"
-          : boss
-            ? "rgba(245,158,11,.6)"
-            : "rgba(59,130,246,.45)";
 
     const glow = active
       ? "0 0 0 4px rgba(99,102,241,.4),0 0 20px 8px rgba(99,102,241,.45)"
@@ -365,9 +358,12 @@ class QuestViewerModal extends I.Modal {
         ? "0 0 0 3px rgba(245,158,11,.5),0 0 16px 6px rgba(239,68,68,.4)"
         : "";
 
-    const stateIcon = completed ? "✅" : locked ? "🔒" : boss ? "⚔️" : (node.emoji || String(index + 1));
-    const size = boss ? 90 : 72;
-    const fontSize = boss ? 26 : (node.emoji ? 22 : 18);
+    const size = boss ? 110 : 94;
+    const assetFilter = locked
+      ? "grayscale(70%) brightness(.7) saturate(.55)"
+      : completed
+        ? "brightness(1.08) saturate(1.08)"
+        : "none";
 
     const nodeEl = stage.createEl("button", {
       attr: {
@@ -390,7 +386,6 @@ class QuestViewerModal extends I.Modal {
       },
     });
 
-    // Platform image + tint overlay wrapper
     const wrap = nodeEl.createEl("div", {
       attr: {
         style: [
@@ -403,46 +398,113 @@ class QuestViewerModal extends I.Modal {
       },
     });
 
-    // Platform disc image
+    if (active && mapAssets.crown) {
+      wrap.createEl("img", {
+        attr: {
+          src: mapAssets.crown,
+          alt: "",
+          style: [
+            "position:absolute",
+            "left:50%",
+            "top:-36px",
+            "width:48px",
+            "height:48px",
+            "object-fit:contain",
+            "transform:translateX(-50%)",
+            "z-index:5",
+            "filter:drop-shadow(0 8px 10px rgba(0,0,0,.32))",
+            "pointer-events:none",
+          ].join(";"),
+        },
+      });
+    }
+
     wrap.createEl("img", {
       attr: {
-        src: platformSrc,
-        style: `width:${size}px;height:${size}px;object-fit:contain;display:block;border-radius:50%;`,
-      },
-    });
-
-    // Color tint overlay
-    wrap.createEl("div", {
-      attr: {
+        src: boss ? mapAssets.bossGate : mapAssets.nodeFrame,
+        alt: "",
         style: [
-          "position:absolute",
-          "inset:0",
-          "border-radius:50%",
-          `background:${tint}`,
-          "mix-blend-mode:multiply",
-        ].join(";"),
-      },
-    });
-
-    // State icon centered
-    wrap.createEl("div", {
-      text: stateIcon,
-      attr: {
-        style: [
-          "position:absolute",
-          "inset:0",
-          "display:flex",
-          "align-items:center",
-          "justify-content:center",
-          `font-size:${fontSize}px`,
-          "line-height:1",
-          "font-weight:900",
-          "color:#fff",
-          "text-shadow:0 1px 4px rgba(0,0,0,.7),0 0 8px rgba(0,0,0,.5)",
+          `width:${size}px`,
+          `height:${size}px`,
+          "object-fit:contain",
+          "display:block",
+          `filter:${assetFilter} drop-shadow(0 12px 16px rgba(0,0,0,.25))`,
           "pointer-events:none",
         ].join(";"),
       },
     });
+
+    if (boss && locked && mapAssets.bossLock) {
+      wrap.createEl("img", {
+        attr: {
+          src: mapAssets.bossLock,
+          alt: "",
+          style: [
+            "position:absolute",
+            "right:5px",
+            "top:8px",
+            "width:42px",
+            "height:42px",
+            "object-fit:contain",
+            "filter:drop-shadow(0 8px 10px rgba(0,0,0,.32))",
+            "pointer-events:none",
+          ].join(";"),
+        },
+      });
+    } else if (completed && mapAssets.crown) {
+      wrap.createEl("img", {
+        attr: {
+          src: mapAssets.crown,
+          alt: "",
+          style: [
+            "position:absolute",
+            "left:50%",
+            "top:50%",
+            "width:52px",
+            "height:52px",
+            "object-fit:contain",
+            "transform:translate(-50%,-50%)",
+            "filter:drop-shadow(0 4px 8px rgba(255,210,80,.45))",
+            "pointer-events:none",
+            "z-index:6",
+          ].join(";"),
+        },
+      });
+    } else if (locked) {
+      wrap.createEl("div", {
+        text: "🔒",
+        attr: {
+          style: [
+            "position:absolute",
+            "left:50%",
+            "top:50%",
+            "transform:translate(-50%,-50%)",
+            "font-size:24px",
+            "line-height:1",
+            "filter:drop-shadow(0 3px 6px rgba(0,0,0,.35))",
+            "pointer-events:none",
+          ].join(";"),
+        },
+      });
+    } else if (!boss) {
+      wrap.createEl("div", {
+        text: String(index + 1),
+        attr: {
+          style: [
+            "position:absolute",
+            "left:50%",
+            "top:50%",
+            "transform:translate(-50%,-50%)",
+            "font-size:30px",
+            "line-height:1",
+            "font-weight:950",
+            "color:#fff",
+            "text-shadow:0 2px 6px rgba(0,0,0,.65)",
+            "pointer-events:none",
+          ].join(";"),
+        },
+      });
+    }
 
     // Title label
     nodeEl.createEl("div", {
