@@ -4,31 +4,25 @@
 
 # 🗺️ EngramQuest
 
-**Carve your notes into memory — not just records, but traces in your mind.**
+**You take notes you never open again. EngramQuest turns your Obsidian vault from a note graveyard into memory you can actually use.**
 
 </div>
 
-Your Obsidian vault is full of notes you wrote once and never looked at again. **EngramQuest turns those notes into a complete learning loop** — AI builds courses, game-like quests, and flashcards straight from what you already wrote, and FSRS spaced repetition makes the knowledge actually stick. One plugin takes you from **learning → practicing → remembering → connecting**.
-
 ![What is EngramQuest](assets/guide/整體概念_英文.webp)
 
-> ### 🚀 Your first 60 seconds
-> 1. **Install the plugin** — search **EngramQuest** in Community Plugins (or [open it in Obsidian](obsidian://show-plugin?id=engram-quest)).
-> 2. **Open the Hub** — click the 🗺️ ribbon icon on the left.
-> 3. **Pick a path:**
->    - **No AI?** Tag any note `#flashcards/topic`, write a `Q:/A:` card, and it appears in your Review Deck instantly. → [Write cards yourself](#-write-cards-yourself-no-ai-required)
->    - **Have an AI tool?** Install the Skills once (`Settings → EngramQuest → AI Skills`), then just say *"Build a review deck from my math notes."* → [The AI path](#-quick-start-ai-path)
+## What is EngramQuest?
+
+EngramQuest is an AI-powered learning layer on top of your Obsidian notes. Most notes get written once and never touched again — EngramQuest closes that loop and turns them into knowledge you actually keep.
+
+You can write flashcards by hand, or just point your AI tool at a note and let it build the study material for you — no copy-pasting, no rebuilding cards from scratch. From the same notes, EngramQuest can spin up an **interactive course** that teaches the topic, a game-like **quest** that drills you, a **memory map** that shows how the ideas connect, or a **review deck** that uses FSRS spaced repetition to make it stick.
+
+The point isn't to collect more notes. It's to **learn them, practice them, and remember them** — all inside Obsidian, on the AI tools you already use.
 
 ---
 
 ## 💡 Why EngramQuest?
 
-Anki solves *when* to review. EngramQuest solves *how* to actually remember — and what to do **before** the flashcard stage.
-
-- **🎓 Learn it** — Lesson Academy: tell the AI a topic, it asks your goal and level, then builds an interactive HTML course you study inside Obsidian.
-- **🗺️ Practice it** — Quest Map: dense notes become game-like island challenges with 15 interaction types, so you *engage* instead of re-reading.
-- **🃏 Remember it** — Review Deck: a three-stage recall system (L1/L2/L3) on top of the FSRS-5 algorithm — newer and more accurate than Anki's SM-2.
-- **🧠 Connect it** — Memory Map: AI lays abstract concepts onto an Obsidian Canvas so you see how everything links together.
+Anki solves *when* to review. EngramQuest solves *how* to actually remember — and what to do **before** the flashcard stage: learning it, practicing it, and connecting it, not just drilling cards.
 
 Every module works on its own, or chains into the next. **AI is optional** — and it runs on the AI tools you already use (Claude Code, Codex, Antigravity, Gemini CLI, Cursor), not another subscription.
 
@@ -54,16 +48,16 @@ A three-stage recall system that builds real memory, not just familiarity:
 - **Edit writes back** — fix a card mid-review and the change saves to your source note
 - **Auto-detection** — any note tagged `#flashcards/topic` is picked up automatically
 
-### 🗺️ Quest Map — Turn Notes into Challenges
+### 🗺️ Quest Map — Practice Missions
 
 ![Quest Map](assets/guide/questmap_english.webp)
 
-Transforms any note into a game-like island map, embedded in your vault as a `.md` file.
+Transforms any note into a game-like practice map: briefings, scenario missions, decisions under constraints, and Boss Battles embedded in your vault as a `.md` file.
 
 - **15 challenge types** — quiz, true/false, cloze, input, ordering, matching, countdown, snapshot, **auction (bet coins on your confidence)**, timeline, chain, **memory palace**, image quiz, image occlusion, and interactive iframe HTML simulations
 - **Difficulty tiers** — Easy / Medium / Hard, ask your AI for the level you need
 - **5 visual themes** — Sky Island, Sci-Fi, RPG, Ocean, Minimal
-- **Boss Battle** — a chapter-mastery test at the end of each stage
+- **Boss Battle** — a final applied case that tests judgment, sequencing, tradeoffs, or diagnosis
 - **Progress is safe** — scores and completion live apart from the quest YAML, so AI can update a quest without wiping your progress
 
 ### 🎓 Lesson Academy — AI-Built Courses
@@ -97,6 +91,16 @@ Track your learning milestones with 3D-rendered icons and rarity tiers — from 
 ### 🎴 Quadrant Card — A4 Super-Memory (Pro)
 
 Turns a single flashcard into an A4 four-quadrant "super memory" sheet (**Q1 question · Q2 answer · Q3 verbal metaphor · Q4 visual image**), each carrying its **own FSRS schedule** separate from your review decks. Upgrade existing cards in a batch, or create new ones directly — *"Make a quadrant card about the data flywheel."*
+
+---
+
+## 🚀 Decided to try it? Your first 60 seconds
+
+1. **Install the plugin** — search **EngramQuest** in Community Plugins (or [open it in Obsidian](obsidian://show-plugin?id=engram-quest)).
+2. **Open the Hub** — click the 🗺️ ribbon icon on the left.
+3. **Pick a path:**
+   - **No AI?** Tag any note `#flashcards/topic`, write a `Q:/A:` card, and it appears in your Review Deck instantly. → [Write cards yourself](#-write-cards-yourself-no-ai-required)
+   - **Have an AI tool?** Install the Skills once (`Settings → EngramQuest → AI Skills`), then just say *"Build a review deck from my math notes."* → [The AI path](#-quick-start-ai-path)
 
 ---
 
@@ -204,31 +208,25 @@ If EngramQuest is useful to you, consider supporting its development:
 
 [English ↑](#-engramquest)
 
-**把筆記刻進記憶 — 不只是紀錄，而是腦中真實的痕跡。**
+**你的筆記寫完就再也沒打開過。EngramQuest 把你的 Obsidian vault 從筆記墳場，變成你真的用得到的記憶。**
 
 </div>
 
-你的 Obsidian vault 塞滿了寫過一次、再也沒看的筆記。**EngramQuest 把這些筆記變成一個完整的學習閉環** — AI 直接從你寫過的內容生成課程、遊戲化關卡和閃卡，再用 FSRS 間隔複習讓知識真正留下來。一個插件帶你走完 **學 → 練 → 記 → 連**。
-
 ![EngramQuest 能做什麼](assets/guide/整體概念_中文.webp)
 
-> ### 🚀 安裝後的第一分鐘
-> 1. **安裝插件** — 在 Community Plugins 搜尋 **EngramQuest**（或[在 Obsidian 中開啟](obsidian://show-plugin?id=engram-quest)）。
-> 2. **打開 Hub** — 點左側的 🗺️ ribbon 圖示。
-> 3. **選一條路：**
->    - **不用 AI？** 任何筆記打上 `#flashcards/主題` tag，寫一張 `Q:/A:` 卡片，它就立刻出現在你的 Review Deck。→ [自己寫卡片](#-自己寫卡片不需要-ai)
->    - **有 AI 工具？** 安裝一次 Skills（`設定 → EngramQuest → AI Skills`），然後直接說：*「用我的數學筆記建一副 review deck。」* → [AI 路徑](#-快速開始ai-路徑)
+## EngramQuest 是什麼？
+
+EngramQuest 是架在你 Obsidian 筆記之上的一層 AI 學習系統。大多數筆記都是寫完就再也沒碰 — EngramQuest 把這個迴圈補起來，讓筆記變成你真正留得住的知識。
+
+你可以自己手寫複習卡，也可以直接把一篇筆記丟給你的 AI 工具，讓它幫你把學習材料生出來 — 不用複製貼上、不用一張張重做卡片。同一篇筆記，EngramQuest 能變成一門教你這個主題的**互動教材**、一張操練你的**闖關地圖**、一張看出概念怎麼連結的**記憶地圖**，或一套用 FSRS 間隔複習、讓你真的記住的**複習卡組**。
+
+重點不是再囤更多筆記，而是**真的學會它、練熟它、記住它** — 全部在 Obsidian 裡，用你本來就在用的 AI。
 
 ---
 
 ## 💡 為什麼選 EngramQuest？
 
-Anki 解決「何時複習」。EngramQuest 解決「如何真正記住」 — 以及閃卡階段**之前**該做什麼。
-
-- **🎓 學會它** — Lesson Academy：告訴 AI 一個主題，它先問你的目標和程度，然後生成可在 Obsidian 內研讀的互動式 HTML 課程。
-- **🗺️ 練習它** — Quest Map：密集的長筆記變成遊戲化島嶼關卡，15 種互動題型，讓你*動手投入*而不是重讀。
-- **🃏 記住它** — Review Deck：建立在 FSRS-5 演算法上的三階回想系統（L1/L2/L3），比 Anki 的 SM-2 更新、更準。
-- **🧠 連結它** — Memory Map：AI 把抽象概念鋪在 Obsidian Canvas 上，讓你看見一切如何串連。
+Anki 解決「何時複習」。EngramQuest 解決「如何真正記住」 — 以及閃卡階段**之前**該做什麼：學會它、練熟它、把它連起來，而不只是反覆刷卡。
 
 每個模組都能單獨使用，也能串接到下一個。**AI 完全可選** — 而且它跑在你已經在用的 AI 工具上（Claude Code、Codex、Antigravity、Gemini CLI、Cursor），不是另一個訂閱服務。
 
@@ -254,16 +252,16 @@ Anki 解決「何時複習」。EngramQuest 解決「如何真正記住」 — �
 - **編輯寫回** — 複習中改卡片，修改直接存回來源筆記
 - **自動偵測** — 任何打上 `#flashcards/主題` 的筆記都會自動收錄
 
-### 🗺️ Quest Map — 把筆記變成關卡
+### 🗺️ Quest Map — 應用任務地圖
 
 ![Quest Map](assets/guide/questmap_中文.webp)
 
-把任何筆記變成遊戲化島嶼地圖，以 `.md` 檔嵌在你的 vault 裡。
+把任何筆記轉成遊戲化應用地圖：任務簡報、情境案例、限制下的決策，以及嵌入 `.md` 的 Boss Battle。
 
 - **15 種挑戰類型** — 選擇題、是非、克漏字、輸入、排序、配對、倒數計時、快照記憶、**競標（用籌碼押注你的信心）**、時間軸、序列接龍、**記憶宮殿**、圖片題、圖片遮罩，以及互動式 iframe HTML 模擬
 - **難度分級** — Easy / Medium / Hard，跟 AI 要你需要的程度
 - **5 種視覺主題** — 天空島、科幻、RPG、海洋、極簡
-- **Boss Battle** — 每章結尾的綜合精熟測驗
+- **Boss Battle** — 章末的整合案例，測判斷、排序、取捨或診斷能力
 - **進度安全** — 分數和完成度與 quest YAML 分開儲存，AI 更新關卡時不會洗掉你的進度
 
 ### 🎓 Lesson Academy — AI 打造的課程
@@ -297,6 +295,16 @@ Anki 解決「何時複習」。EngramQuest 解決「如何真正記住」 — �
 ### 🎴 四象限卡 — A4 超記憶（Pro）
 
 把單張閃卡升級成一張 A4 四象限「超記憶」卡（**Q1 問題 · Q2 答案 · Q3 語言比喻 · Q4 視覺圖像**），每張卡有自己**獨立的 FSRS 排程**，與你的 review deck 分開。可批次升級既有卡片，也能直接建立新卡 — *「幫我做一張關於資料飛輪的四象限卡。」*
+
+---
+
+## 🚀 決定要用了？安裝後的第一分鐘
+
+1. **安裝插件** — 在 Community Plugins 搜尋 **EngramQuest**（或[在 Obsidian 中開啟](obsidian://show-plugin?id=engram-quest)）。
+2. **打開 Hub** — 點左側的 🗺️ ribbon 圖示。
+3. **選一條路：**
+   - **不用 AI？** 任何筆記打上 `#flashcards/主題` tag，寫一張 `Q:/A:` 卡片，它就立刻出現在你的 Review Deck。→ [自己寫卡片](#-自己寫卡片不需要-ai)
+   - **有 AI 工具？** 安裝一次 Skills（`設定 → EngramQuest → AI Skills`），然後直接說：*「用我的數學筆記建一副 review deck。」* → [AI 路徑](#-快速開始ai-路徑)
 
 ---
 

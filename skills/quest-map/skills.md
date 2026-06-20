@@ -1,7 +1,7 @@
 ---
 name: engram-quest-map
 description: 
-  Generate quest-map YAML for the EngramQuest plugin.
+  Generate application-focused quest-map YAML for the EngramQuest plugin.
   Trigger when the user asks to create a quest map from a note or topic, or asks how quest-map works.
   Use this skill whenever the user wants to gamify notes into interactive challenges, create a quest from study material, or turn any topic into an easy/medium/hard quest — even if they do not say "quest-map" explicitly.
 ---
@@ -17,22 +17,41 @@ Important: generate user-facing output in the language that best matches the use
 - Keep parser keys and structural fields in English.
 
 This rule applies to:
-`title`, `summary`, `points.body`, `insight`, `challenge.question`, `challenge.prompt`, `challenge.sentence`, `options`, `items`, `pairs`, `keywords`, `answers`, `hint`.
+`title`, `summary`, `scenario`, `mission_goal`, `stakes`, `points.body`, `insight`, `challenge.question`, `challenge.prompt`, `challenge.sentence`, `options`, `items`, `pairs`, `keywords`, `answers`, `hint`.
+
+## Application Mission Rule
+
+Quest Map belongs to the Practice stage of EngramQuest.
+
+- Generate missions where learners apply knowledge in realistic situations, not another memory deck.
+- Prefer scenarios, cases, incidents, design reviews, debugging tasks, operating decisions, tradeoff calls, and "what should you do next?" questions.
+- Use memory recall only as support for action. The learner should need to use the concept inside context.
+- Each mission should expose a constraint, risk, or consequence: cost, time, security, reliability, user impact, correctness, or maintainability.
+- Write mission titles like playable objectives, not textbook section names.
+
+Optional fields supported as lightweight metadata:
+
+```yaml
+scenario: Production traffic suddenly spikes and cached responses become inconsistent.
+mission_goal: Pick the safest mitigation before the outage spreads.
+stakes: A wrong move increases latency and hides the real bottleneck.
+```
 
 ## Core Memory Rule
 
-Quest Map challenges must serve active recall.
+Quest Map challenges must serve applied recall.
 
 - Do not create cloze just because a sentence can be blanked.
 - Only blank high-value memory targets: core terms, critical differences, required steps, easy-to-confuse concepts, and architecture nodes.
 - For image occlusion, only mask meaningful labeled targets or meaningful visual regions. Do not mask decorative areas, whitespace, or low-value text.
+- Do not let basic recall dominate the quest. A good quest should feel like using knowledge under constraints.
 
 ## Learning Experience Rule
 
-Quest Map is a playable learning map, not a fixed quiz template.
+Quest Map is a playable practice map, not a fixed quiz template.
 
 - Pick mechanics because they help the learner remember, distinguish, sequence, diagnose, or apply an idea.
-- Preserve novelty and rhythm: short lesson -> focused challenge -> short lesson -> transformed challenge -> recap -> boss.
+- Preserve novelty and rhythm: briefing -> mission -> briefing -> transformed mission -> synthesis briefing -> boss incident.
 - Use deterministic interactions for grading. Do not ask open essay questions unless the runtime has AI grading or explicit self-check mode.
 - Every question that could reveal an answer should include `explanation` or `explain` so wrong answers become learning feedback.
 - Fun is valid only when it improves recall or understanding. Do not add game mechanics as decoration.
@@ -46,11 +65,12 @@ Quest Map is a playable learning map, not a fixed quiz template.
 - PROHIBITED: questions lacking a clear subject ("What are the four stages in order?" → which framework's four stages?)
 - Good example: "In the FSRS algorithm, what does the stability parameter represent?"
 
-**Test understanding, not trivia**:
+**Test application, not trivia**:
 - PROHIBITED: asking for a count ("How many?"), list order, or bare names.
 - Cloze: do not blank numbers or names — only blank substantive concepts.
 - Bad example: `sentence: FSRS has {{c1::17}} parameters`
 - Good example: `sentence: FSRS's stability parameter represents {{c1::how long a memory can be retained before forgetting}}`
+- Better Quest Map example: "A learner keeps failing cards after long intervals. Which FSRS variable best explains why the next review should be sooner?"
 
 ## User Prompt Priority
 
@@ -80,22 +100,22 @@ Default behavior is AI-guided selection.
 
 ### Two node types
 
-- **Lesson node**: has `summary` + `points` + optional `insight`. No challenge. User reads and clicks Next.
-- **Challenge node**: has `challenge`. It can be a multi-question round with `questions_json`, or one inherently multi-step mechanic such as `order`, `match`, `chain`, `timeline`, `image-quiz`, or `image-occlusion`. No points. User plays the challenge, sees feedback, then proceeds.
+- **Briefing node**: has `summary` + `points` + optional `scenario`, `mission_goal`, `stakes`, and `insight`. No challenge. User reads the situation and clicks Next.
+- **Mission node**: has `challenge` + optional `scenario`, `mission_goal`, and `stakes`. It can be a multi-question round with `questions_json`, or one inherently multi-step mechanic such as `order`, `match`, `chain`, `timeline`, `image-quiz`, or `image-occlusion`. No points. User plays the mission, sees feedback, then proceeds.
 
 ### CRITICAL rules
 
 1. **Basic recall challenge rounds MUST use `questions_json` with at least 3 questions.** This applies to `quiz`, `truefalse`, `cloze`, `input`, `countdown`, and `auction`.
 2. **Inherently multi-step mechanics do NOT use `questions_json`.** Use `order`, `match`, `chain`, `timeline`, `image-quiz`, and `image-occlusion` as standalone challenge nodes when they are the best learning mechanic.
-3. **Boss must test integrated judgment with deterministic grading.** It may be one rich mechanic or a multi-question round, but each answer must be plugin-gradable.
-4. **Boss must not be all cloze or all input.** If the boss uses a single outer `challenge.type`, choose a mechanic that tests synthesis (for example `match`, `chain`, `auction`, or scenario-based `quiz`) and include at most one free-recall item elsewhere in the final section.
-5. The quest must feel like a game, not a reading exercise. Aim for at least 60% challenge nodes vs lesson nodes when the source material is large enough.
-6. **Learning loop rule**: Every challenge node MUST be immediately preceded by its own dedicated lesson node. That lesson must contain the content being tested in the challenge. One lesson -> one challenge. Do NOT reuse a single lesson to support multiple challenge nodes.
-7. **Boss recap rule**: The node immediately before the boss challenge MUST be a recap/synthesis lesson that summarizes the key concepts from the entire quest. Do not place the boss directly after a regular challenge.
+3. **Boss must test integrated judgment through a final scenario with deterministic grading.** It may be one rich mechanic or a multi-question round, but each answer must be plugin-gradable.
+4. **Boss must feel like a final mission, not a harder flashcard.** Include `boss: true`, a high-stakes `scenario`, `mission_goal`, and `stakes`. Prefer `chain`, `match`, `auction`, `countdown`, `image-quiz`, or `iframe`. Avoid plain cloze/input bosses.
+5. The quest must feel like a game, not a reading exercise. Aim for at least 60% mission nodes vs briefing nodes when the source material is large enough.
+6. **Learning loop rule**: Every mission node MUST be immediately preceded by its own dedicated briefing node. That briefing must contain the concepts needed for the mission. One briefing -> one mission. Do NOT reuse a single briefing to support multiple mission nodes.
+7. **Boss briefing rule**: The node immediately before the boss challenge MUST be a synthesis briefing that summarizes the key concepts from the entire quest and frames the final case. Do not place the boss directly after a regular mission.
 
 CORRECT structure for a medium quest (5 nodes):
 ```
-lesson -> round (3q) -> lesson -> match/order/auction challenge -> recap lesson -> boss challenge
+briefing -> mission round (3q) -> briefing -> match/order/auction mission -> synthesis briefing -> boss incident
 ```
 
 WRONG — forbidden:

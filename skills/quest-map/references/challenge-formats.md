@@ -131,11 +131,16 @@ challenge:
 
 ## Boss Design
 
-Boss challenges should test integrated judgment through deterministic interactions.
+Boss challenges should test integrated judgment through deterministic interactions inside a case.
 
-- Good boss tasks: diagnose a failure, pick the safest tradeoff, pair symptoms with causes, order a repair sequence, or recall one precise decision rule.
+- Good boss tasks: diagnose a failure, pick the safest tradeoff, pair symptoms with causes, order a repair sequence, operate a simulation, or recall one precise decision rule in context.
 - Bad boss tasks: five cloze blanks in a row, open essay questions, or generic "what would you do and why?" prompts that the runtime cannot grade.
 - A boss can use one rich mechanic (`match`, `chain`, `auction`, scenario `quiz`) or one multi-question round. Within `questions_json`, items may declare an individual `type` to override the outer `challenge.type` — combining e.g. `auction` recognition with `cloze` / `input` recall in the same round. Do NOT mix in inherently single-question mechanics (`match`, `chain`, `order`, `timeline`, `image-quiz`, `image-occlusion`, `memory-palace`, `snapshot`, `iframe`) — they own their whole node.
+- Include boss metadata when possible:
+  - `scenario`: the final incident, case, or operating situation
+  - `mission_goal`: what the learner must accomplish
+  - `stakes`: what goes wrong if they choose poorly
+- Prefer `chain`, `match`, `auction`, `countdown`, `image-quiz`, or `iframe` for bosses. Use `quiz` only when the question is scenario-based and the distractors are plausible applied decisions.
 - Include `explanation` / `explain` for every boss question.
 
 Example deterministic boss question:

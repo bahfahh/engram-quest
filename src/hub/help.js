@@ -134,7 +134,7 @@ expect(result.completed).toBe(true)
               <li>AI 建立學習地圖</li>
               <li>進度會另外儲存，AI 更新 quest 時不會清掉已完成節點</li>
               <li>進階 quest 可以使用本機 iframe HTML 模擬互動系統</li>
-              <li>開 Hub → Quest Map → 依序點開節點和挑戰</li>
+              <li>開 Hub → Quest Map → 依序完成任務、案例與 Boss Battle</li>
             </ol>
             <table>
               <tr><th>難度</th><th>適合</th></tr>
@@ -217,7 +217,7 @@ expect(result.completed).toBe(true)
             <p><strong>需要 Pro license</strong>。適合用在最重要、最難記的核心概念，不必每張卡都升級。</p>
           `},{icon:"🔬",title:"Learning Science",tag:c(e,"HELP_SCIENCE_TAG"),html:`
             <div class="lh-help-sub"><div class="lh-help-sub-icon">SR</div><div><strong>Spaced Repetition</strong><br>在快忘記時複習，提升效率。Review Deck 使用 FSRS 自動安排下次複習。</div></div>
-            <div class="lh-help-sub"><div class="lh-help-sub-icon">RP</div><div><strong>Retrieval Practice</strong><br>先回想，再看答案，比重讀更有效。Review Deck 與 Quest Map 都會強迫主動回想。</div></div>
+            <div class="lh-help-sub"><div class="lh-help-sub-icon">RP</div><div><strong>Retrieval Practice</strong><br>先回想，再看答案，比重讀更有效。Review Deck 訓練記憶；Quest Map 把記憶放進情境中練習應用。</div></div>
             <div class="lh-help-sub"><div class="lh-help-sub-icon">EE</div><div><strong>Elaborative Encoding</strong><br>把抽象文字變成具體結構，更容易記住。Memory Map 就是在做這件事。</div></div>
           `},{icon:"⚙️",title:"設定",tag:c(e,"HELP_SETTINGS_TAG"),html:`
             <p>到 Obsidian 設定中的 <strong>EngramQuest</strong> 調整。</p>
@@ -424,7 +424,7 @@ expect(result.completed).toBe(true)
               <li>AI builds the learning map</li>
               <li>Progress is saved separately, so AI can update a quest without clearing completed nodes</li>
               <li>Advanced quests may include local iframe HTML simulations for interactive systems</li>
-              <li>Open Hub → Quest Map → click nodes to progress</li>
+              <li>Open Hub → Quest Map → complete missions, cases, and Boss Battles</li>
             </ol>
             <table>
               <tr><th>Difficulty</th><th>Best for</th></tr>
@@ -507,7 +507,7 @@ expect(result.completed).toBe(true)
             <p><strong>Requires a Pro license.</strong> Best for your most important, hardest-to-remember concepts — you don't need to upgrade every card.</p>
           `},{icon:"🔬",title:"Why It Works",tag:c(e,"HELP_SCIENCE_TAG"),html:`
             <div class="lh-help-sub"><div class="lh-help-sub-icon">SR</div><div><strong>Spaced Repetition</strong><br>Review at the point of near-forgetting. FSRS calculates the next interval automatically.</div></div>
-            <div class="lh-help-sub"><div class="lh-help-sub-icon">RP</div><div><strong>Retrieval Practice</strong><br>Active recall is more effective than re-reading. Review Deck and Quest Map force retrieval before the answer appears.</div></div>
+            <div class="lh-help-sub"><div class="lh-help-sub-icon">RP</div><div><strong>Retrieval Practice</strong><br>Active recall is more effective than re-reading. Review Deck trains memory; Quest Map puts that memory into applied scenarios.</div></div>
             <div class="lh-help-sub"><div class="lh-help-sub-icon">EE</div><div><strong>Elaborative Encoding</strong><br>Concrete images and structures are easier to remember than abstract text. Memory Map turns concepts into visual structure.</div></div>
           `},{icon:"⚙️",title:"Settings",tag:c(e,"HELP_SETTINGS_TAG"),html:`
             <p>Open Obsidian Settings → <strong>EngramQuest</strong> to configure.</p>

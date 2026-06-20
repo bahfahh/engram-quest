@@ -1,6 +1,29 @@
 import { describe, it, expect } from "vitest";
 import { parseQuestMap } from "../src/quest/helpers.js";
 
+describe("parseQuestMap mission metadata", () => {
+  it("parses scenario, mission_goal, and stakes on quest nodes", () => {
+    const cfg = parseQuestMap([
+      "version: 1",
+      "nodes:",
+      "  - id: mission-1",
+      "    title: Incident Triage",
+      "    scenario: Production latency spiked after a cache rollout.",
+      "    mission_goal: Pick the safest rollback and verification plan.",
+      "    stakes: Wrong ordering can extend downtime.",
+      "    challenge:",
+      "      type: quiz",
+      "      question: What should happen first?",
+      "      options: [Rollback, Ignore, Delete logs]",
+      "      answer: 0",
+    ].join("\n"));
+    const node = cfg.nodes[0];
+    expect(node.scenario).toBe("Production latency spiked after a cache rollout.");
+    expect(node.mission_goal).toBe("Pick the safest rollback and verification plan.");
+    expect(node.stakes).toBe("Wrong ordering can extend downtime.");
+  });
+});
+
 describe("parseQuestMap countdown fields", () => {
   it("parses timer field", () => {
     const cfg = parseQuestMap([

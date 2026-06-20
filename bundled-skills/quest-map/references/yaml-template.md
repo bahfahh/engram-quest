@@ -15,9 +15,12 @@ style: cyber
 difficulty: medium
 nodes:
   - id: ch1
-    title: Triggers & Bindings
-    emoji: ⚡
-    summary: Core insight about triggers and bindings.
+    title: Incident Briefing
+    emoji: Q
+    scenario: A small team must pick an Azure Functions hosting path for unpredictable traffic before launch.
+    mission_goal: Identify which constraints matter before the first technical decision.
+    stakes: A poor choice creates either runaway cost or cold-start risk.
+    summary: Core insight about triggers, bindings, and hosting constraints.
     points:
       - title: Point one
         body: Why it matters.
@@ -36,8 +39,11 @@ nodes:
         body: Fixed cost, always on, no time limit.
 
   - id: round1
-    title: Knowledge Auction
-    emoji: 🪙
+    title: Hosting Decision Auction
+    emoji: Q
+    scenario: The product owner asks for the cheapest safe plan before a traffic spike.
+    mission_goal: Bet only when the plan matches the operating constraint.
+    stakes: Wrong confidence spends budget and hides the real deployment risk.
     challenge:
       type: auction
       coins: 100
@@ -55,8 +61,11 @@ nodes:
 
   - id: boss
     boss: true
-    title: Chain Reaction Boss
-    emoji: 💥
+    title: Outage Chain Boss
+    emoji: B
+    scenario: A production request fails after a deployment and the team needs the request lifecycle restored quickly.
+    mission_goal: Rebuild the execution chain in the safest order.
+    stakes: A wrong sequence delays recovery and sends the team debugging the wrong layer.
     challenge:
       type: chain
       timer: 25

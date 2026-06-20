@@ -44,7 +44,7 @@ const CONTENT = {
       title: "Quest Map — Turn Notes into Challenges",
       lines: [
         "One note → an island map you clear through <strong>15 interaction types</strong>.",
-        "Easy / Medium / Hard difficulty, with a <strong>Boss Battle</strong> at the end of each chapter.",
+        "Easy / Medium / Hard difficulty, with a final applied <strong>Boss Battle</strong>.",
       ],
       first: "① Install Skills in <strong>Settings → AI Skills</strong> → ② in Claude Code / Codex / Antigravity, say: \"Turn calculus.md into a quest-map medium\" → ③ the map appears in this tab.",
     },
@@ -130,9 +130,12 @@ class FeatureGuideModal extends I.Modal {
 
     // Image header — capped to a fraction of viewport; object-fit:contain keeps the
     // whole infographic legible instead of cropping it.
-    const imgWrap = contentEl.createEl("div", { attr: { style: `flex-shrink:0;width:100%;background:${isDark ? "#12121f" : "#f8faff"};border-bottom:1px solid ${border}` } });
+    const imgWrap = contentEl.createEl("div", { attr: { style: `position:relative;flex-shrink:0;width:100%;background:${isDark ? "#12121f" : "#f8faff"};border-bottom:1px solid ${border};cursor:zoom-in` } });
     const imgEl = imgWrap.createEl("img", { attr: { src: imgSrc, alt: copy.title, style: "width:100%;display:block;max-height:36vh;object-fit:contain" } });
     imgEl.addEventListener("error", () => { imgWrap.style.display = "none"; });
+    // The infographic text is tiny at modal size — let the user click to view it full-screen.
+    imgWrap.createEl("div", { text: locale === "zh-tw" ? "🔍 點擊放大" : "🔍 Click to enlarge", attr: { style: "position:absolute;right:8px;bottom:8px;padding:3px 9px;border-radius:99px;background:rgba(0,0,0,0.62);color:#fff;font-size:11px;font-weight:600;pointer-events:none" } });
+    imgWrap.addEventListener("click", () => openLightbox(imgSrc, copy.title));
 
     // Scrollable text region.
     const scroll = contentEl.createEl("div", { attr: { style: "flex:1;min-height:0;overflow-y:auto;padding:16px 22px 6px" } });
@@ -163,12 +166,30 @@ class FeatureGuideModal extends I.Modal {
   }
 }
 
-// Adds a small ⓘ button to a feature card header that reopens this feature's guide.
+// Full-screen image viewer — the modal thumbnail is too small to read the infographic.
+function openLightbox(src, alt) {
+  const ov = activeDocument.createElement("div");
+  ov.style.cssText = "position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,0.88);display:flex;align-items:center;justify-content:center;cursor:zoom-out;padding:24px;-webkit-tap-highlight-color:transparent";
+  const im = activeDocument.createElement("img");
+  im.src = src;
+  im.alt = alt || "";
+  im.style.cssText = "max-width:96vw;max-height:96vh;object-fit:contain;border-radius:8px;box-shadow:0 8px 40px rgba(0,0,0,0.55)";
+  ov.appendChild(im);
+  ov.addEventListener("click", () => ov.remove());
+  activeDocument.body.appendChild(ov);
+}
+
+// Adds a clear "?" button to a feature card header that reopens this feature's guide.
 function attachInfoButton(headerEl, app, plugin, tab) {
   if (!hasGuide(tab)) return;
+  const isDark = activeDocument.body.classList.contains("theme-dark");
+  const baseBg = isDark ? "rgba(99,102,241,0.18)" : "#eef2ff";
+  const hoverBg = isDark ? "rgba(99,102,241,0.34)" : "#e0e7ff";
   const btn = headerEl.createEl("button", { attr: { class: "lh-feature-info", title: L(plugin.settings) === "zh-tw" ? "使用說明" : "How it works", "aria-label": "guide" } });
-  btn.style.cssText = "width:22px;height:22px;border-radius:50%;border:none;background:transparent;cursor:pointer;color:#6366f1;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;padding:0;font-size:14px;line-height:1";
-  btn.textContent = "ⓘ";
+  btn.style.cssText = `width:26px;height:26px;border-radius:50%;border:1px solid ${isDark ? "rgba(129,140,248,0.55)" : "#c7d2fe"};background:${baseBg};cursor:pointer;color:${isDark ? "#c7d2fe" : "#4f46e5"};display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;padding:0`;
+  btn.appendChild(I.sanitizeHTMLToDom('<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>'));
+  btn.addEventListener("mouseenter", () => { btn.style.background = hoverBg; });
+  btn.addEventListener("mouseleave", () => { btn.style.background = baseBg; });
   btn.addEventListener("click", (ev) => {
     ev.stopPropagation();
     new FeatureGuideModal(app, plugin, tab).open();

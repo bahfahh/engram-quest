@@ -157,6 +157,9 @@ function parseQuestMap(markdown) {
       else if (trimmed.startsWith("emoji:")) node.emoji = trimmed.slice(6).trim();
       else if (trimmed.startsWith("icon:")) node.icon = trimmed.slice(5).trim();
       else if (trimmed.startsWith("summary:")) node.summary = trimmed.slice(8).trim();
+      else if (trimmed.startsWith("scenario:")) node.scenario = trimmed.slice(9).trim();
+      else if (trimmed.startsWith("mission_goal:")) node.mission_goal = trimmed.slice(13).trim();
+      else if (trimmed.startsWith("stakes:")) node.stakes = trimmed.slice(7).trim();
       else if (trimmed.startsWith("insight:")) node.insight = trimmed.slice(8).trim();
       else if (trimmed.startsWith("boss:")) node.boss = trimmed.includes("true");
       else if (trimmed.startsWith("completed:")) node.completed = trimmed.includes("true");
