@@ -16,7 +16,9 @@ EngramQuest is an AI-powered learning layer on top of your Obsidian notes. Most 
 
 You can write flashcards by hand, or just point your AI tool at a note and let it build the study material for you — no copy-pasting, no rebuilding cards from scratch. From the same notes, EngramQuest can spin up an **interactive course** that teaches the topic, a game-like **quest** that drills you, a **memory map** that shows how the ideas connect, or a **review deck** that uses FSRS spaced repetition to make it stick.
 
-The point isn't to collect more notes. It's to **learn them, practice them, and remember them** — all inside Obsidian, on the AI tools you already use.
+The AI runs through tools you already have — **Claude Desktop, Claude Code, Codex, Antigravity, Gemini CLI, Cursor**, and more. They do the generating, so there's **no extra subscription and no per-token API fees** — your existing plan is enough, and AI is fully optional.
+
+The point isn't to collect more notes. It's to **learn them, practice them, and remember them** — all inside Obsidian.
 
 ---
 
@@ -220,7 +222,9 @@ EngramQuest 是架在你 Obsidian 筆記之上的一層 AI 學習系統。大多
 
 你可以自己手寫複習卡，也可以直接把一篇筆記丟給你的 AI 工具，讓它幫你把學習材料生出來 — 不用複製貼上、不用一張張重做卡片。同一篇筆記，EngramQuest 能變成一門教你這個主題的**互動教材**、一張操練你的**闖關地圖**、一張看出概念怎麼連結的**記憶地圖**，或一套用 FSRS 間隔複習、讓你真的記住的**複習卡組**。
 
-重點不是再囤更多筆記，而是**真的學會它、練熟它、記住它** — 全部在 Obsidian 裡，用你本來就在用的 AI。
+AI 跑在你本來就在用的工具上 — **Claude Desktop、Claude Code、Codex app、Antigravity、Gemini CLI、Cursor** 等等。生成都由它們完成，所以**不用另外訂閱、也不用額外付 API token 費用** — 你現有的方案就夠了，而且 AI 完全可選。
+
+重點不是再囤更多筆記，而是**真的學會它、練熟它、記住它** — 全部在 Obsidian 裡。
 
 ---
 
