@@ -16,12 +16,62 @@ function parseNumericField(text, prefix) {
   return Number.isFinite(value) ? value : null;
 }
 
+function stripWrappingQuotes(value) {
+  let text = String(value ?? "").trim();
+  if ((text.startsWith('"') && text.endsWith('"')) || (text.startsWith("'") && text.endsWith("'"))) {
+    return text.slice(1, -1);
+  }
+  return text;
+}
+
 function hasFiniteNumber(value) {
   return typeof value === "number" && Number.isFinite(value);
 }
 
 function clampNumber(value, min, max) {
   return Math.min(Math.max(value, min), max);
+}
+
+function getQuestMeta(nodes) {
+  return nodes && typeof nodes === "object" ? nodes._questMeta || null : null;
+}
+
+function isQuestVersion2(nodes) {
+  return Number(getQuestMeta(nodes)?.version) === 2;
+}
+
+function getQuestHtmlBase(sourcePath) {
+  let path = String(sourcePath || "inline-quest.md").replace(/\\/g, "/");
+  let basename = path.split("/").pop() || "inline-quest.md";
+  return basename.replace(/\.md$/i, "").replace(/-quest$/i, "") || "quest";
+}
+
+function resolveQuestHtmlPath(htmlPath, sourcePath) {
+  let path = stripWrappingQuotes(htmlPath).replace(/\\/g, "/").replace(/^\/+/, "");
+  if (!path) return "";
+  if (path.startsWith("engram-quest/html/")) return path;
+  if (path.includes("/")) return path;
+  return `engram-quest/html/${getQuestHtmlBase(sourcePath)}/${path}`;
+}
+
+function isHtmlQuestNode(node) {
+  return Boolean(node && typeof node.html === "string" && node.html.trim());
+}
+
+function attachQuestMeta(quest) {
+  let meta = {
+    version: quest.version || 1,
+    style: quest.style || "ocean",
+    difficulty: quest.difficulty || "medium",
+    title: quest.title || "",
+    description: quest.description || "",
+  };
+  Object.defineProperty(quest.nodes, "_questMeta", {
+    value: meta,
+    enumerable: false,
+    configurable: true,
+  });
+  return quest;
 }
 
 function parseQuestMap(markdown) {
@@ -41,6 +91,8 @@ function parseQuestMap(markdown) {
 
     if (!inNodes) {
       if (trimmed.startsWith("version:")) quest.version = parseInt(trimmed.split(":")[1]) || 1;
+      else if (trimmed.startsWith("title:")) quest.title = stripWrappingQuotes(trimmed.slice(6));
+      else if (trimmed.startsWith("description:")) quest.description = stripWrappingQuotes(trimmed.slice(12));
       else if (trimmed.startsWith("style:")) quest.style = trimmed.slice(6).trim();
       else if (trimmed.startsWith("difficulty:")) quest.difficulty = trimmed.slice(11).trim();
       else if (trimmed === "nodes:") inNodes = true;
@@ -161,6 +213,12 @@ function parseQuestMap(markdown) {
       else if (trimmed.startsWith("mission_goal:")) node.mission_goal = trimmed.slice(13).trim();
       else if (trimmed.startsWith("stakes:")) node.stakes = trimmed.slice(7).trim();
       else if (trimmed.startsWith("insight:")) node.insight = trimmed.slice(8).trim();
+      else if (trimmed.startsWith("type:")) {
+        node.type = stripWrappingQuotes(trimmed.slice(5));
+        if (node.type === "boss") node.boss = true;
+      }
+      else if (trimmed.startsWith("html:")) node.html = stripWrappingQuotes(trimmed.slice(5));
+      else if (trimmed.startsWith("height:")) node.height = parseNumericField(trimmed, "height:");
       else if (trimmed.startsWith("boss:")) node.boss = trimmed.includes("true");
       else if (trimmed.startsWith("completed:")) node.completed = trimmed.includes("true");
     }
@@ -168,7 +226,16 @@ function parseQuestMap(markdown) {
 
   if (point && node) node.points.push(point);
   if (node) quest.nodes.push(node);
-  return quest;
+  quest.nodes.forEach((questNode) => {
+    if (!isHtmlQuestNode(questNode) || questNode.challenge) return;
+    questNode.challenge = {
+      type: "iframe",
+      html: questNode.html,
+      height: questNode.height,
+      __htmlFirst: true,
+    };
+  });
+  return attachQuestMeta(quest);
 }
 
 function resolveImageOcclusionRect(challenge, naturalWidth, naturalHeight) {
@@ -340,11 +407,16 @@ module.exports = {
   retriggerShake,
   normalizeAnswer,
   collectExpectedAnswers,
+  getQuestHtmlBase,
+  getQuestMeta,
   matchesExpectedAnswer,
   resolveQuestPath,
+  resolveQuestHtmlPath,
   openQuestLink,
   renderClozeSentence,
   getQuestImageResource,
   getQuestTheme,
-  getQuestNodePositions
+  getQuestNodePositions,
+  isHtmlQuestNode,
+  isQuestVersion2
 };

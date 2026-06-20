@@ -1,6 +1,15 @@
-# Parser Constraints
+﻿# Parser Constraints
 
-The plugin uses a lightweight line-oriented YAML parser. These rules are non-negotiable — violating them produces silent rendering failures.
+The plugin still supports a lightweight line-oriented YAML parser for legacy markdown quest-map blocks. These rules apply only to legacy content. New Quest Maps should use the package contract in `html-first-contract.md`, not parser YAML.
+
+Plugin-native quest files live under:
+
+```text
+engram-quest/quests/{questSlug}/meta.json
+engram-quest/quests/{questSlug}/nodes/{nodeId}.html
+```
+
+The constraints below apply to legacy `challenge:` YAML.
 
 ## Arrays must be inline
 

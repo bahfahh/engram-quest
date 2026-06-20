@@ -18,8 +18,18 @@ function makeAllBundledFiles(overrides = {}) {
     ".obsidian/plugins/engram-quest/bundled-skills/quest-map/skills.md": "",
     ".obsidian/plugins/engram-quest/bundled-skills/quest-map/references/user-guide.md": "",
     ".obsidian/plugins/engram-quest/bundled-skills/quest-map/references/obsidian-cli.md": "",
+    ".obsidian/plugins/engram-quest/bundled-skills/quest-map/references/engram-data-layout.md": "",
+    ".obsidian/plugins/engram-quest/bundled-skills/quest-map/references/html-first-contract.md": "html first docs",
+    ".obsidian/plugins/engram-quest/bundled-skills/quest-map/references/html-quality.md": "html quality docs",
+    ".obsidian/plugins/engram-quest/bundled-skills/quest-map/references/boss-design.md": "boss docs",
+    ".obsidian/plugins/engram-quest/bundled-skills/quest-map/references/domain-patterns.md": "domain docs",
     ".obsidian/plugins/engram-quest/bundled-skills/quest-map/references/challenge-formats.md": "iframe docs",
+    ".obsidian/plugins/engram-quest/bundled-skills/quest-map/references/visual-challenges.md": "",
+    ".obsidian/plugins/engram-quest/bundled-skills/quest-map/references/parser-constraints.md": "",
+    ".obsidian/plugins/engram-quest/bundled-skills/quest-map/references/yaml-template.md": "",
     ".obsidian/plugins/engram-quest/bundled-skills/quest-map/scripts/list_quest_icons.sh": "",
+    ".obsidian/plugins/engram-quest/bundled-skills/quest-map/assets/examples/mission-basic.html": "<html>mission</html>",
+    ".obsidian/plugins/engram-quest/bundled-skills/quest-map/assets/examples/boss-cascade.html": "<html>boss</html>",
     ".obsidian/plugins/engram-quest/bundled-skills/memory-map/skills.md": "",
     ".obsidian/plugins/engram-quest/bundled-skills/memory-map/references/create.md": "",
     ".obsidian/plugins/engram-quest/bundled-skills/memory-map/references/update.md": "",
@@ -139,6 +149,29 @@ describe("installer quest-map reference assets", () => {
 
     expect(challengeFormats).toBeDefined();
     expect(challengeFormats.content).toBe("iframe docs");
+  });
+
+  it("installs HTML-first references and example assets with the quest-map skill", async () => {
+    const entries = await installer.getInstallEntries(
+      "claude",
+      makeAdapter(makeAllBundledFiles()),
+      ".obsidian",
+    );
+
+    const expected = [
+      ["references/html-first-contract.md", "html first docs"],
+      ["references/html-quality.md", "html quality docs"],
+      ["references/boss-design.md", "boss docs"],
+      ["references/domain-patterns.md", "domain docs"],
+      ["assets/examples/mission-basic.html", "<html>mission</html>"],
+      ["assets/examples/boss-cascade.html", "<html>boss</html>"],
+    ];
+
+    for (const [relativePath, content] of expected) {
+      const entry = entries.find((item) => item.path === `.claude/skills/engram-quest-quest-map/${relativePath}`);
+      expect(entry).toBeDefined();
+      expect(entry.content).toBe(content);
+    }
   });
 });
 

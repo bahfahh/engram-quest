@@ -13,9 +13,46 @@ const {
   openQuestLink,
 } = questHelpers;
 const {
+  renderQuestHtmlIframe,
   renderQuestChallenge,
   openQuestChapterModal,
 } = questModal;
+
+class FakeEl {
+  constructor(tag = "div") {
+    this.tag = tag;
+    this.children = [];
+    this.style = {};
+    this.attrs = {};
+    this.eventHandlers = {};
+    this.contentWindow = {};
+  }
+
+  createEl(tag, opts = {}) {
+    const el = new FakeEl(tag);
+    el.textContent = opts.text || "";
+    el.attrs = opts.attr || {};
+    this.children.push(el);
+    return el;
+  }
+
+  empty() {
+    this.children = [];
+  }
+
+  addEventListener(type, handler) {
+    this.eventHandlers[type] = handler;
+  }
+}
+
+function findChildByTag(el, tag) {
+  if (el.tag === tag) return el;
+  for (const child of el.children || []) {
+    const found = findChildByTag(child, tag);
+    if (found) return found;
+  }
+  return null;
+}
 
 function makeApp({ exactFile = null, linkedFile = null } = {}) {
   return {
@@ -45,6 +82,7 @@ function makeApp({ exactFile = null, linkedFile = null } = {}) {
 afterEach(() => {
   vi.restoreAllMocks();
   delete global.window;
+  delete global.activeDocument;
 });
 
 describe("quest path resolution", () => {
@@ -237,5 +275,62 @@ describe("quest source path propagation", () => {
 
     expect(app.vault.modify).not.toHaveBeenCalled();
     expect(onComplete).toHaveBeenCalledWith("round1", 0, expect.objectContaining({ completed: true, scorePct: 80 }));
+  });
+});
+
+describe("HTML-first quest iframe flow", () => {
+  it("loads short html paths and handles resize / solved postMessage", async () => {
+    const container = new FakeEl();
+    const onSolved = vi.fn();
+    let messageHandler = null;
+    global.window = {
+      addEventListener: vi.fn((type, handler) => {
+        if (type === "message") messageHandler = handler;
+      }),
+      removeEventListener: vi.fn(),
+      setTimeout: (fn) => fn(),
+    };
+    global.activeDocument = {
+      body: {
+        classList: {
+          contains: () => false,
+        },
+      },
+    };
+    const app = {
+      vault: {
+        adapter: {
+          exists: vi.fn(async (path) => path === "engram-quest/html/Azure/ch1.html"),
+          read: vi.fn(async () => "<!DOCTYPE html><title>Mission</title>"),
+        },
+      },
+    };
+    const deps = {
+      getLanguage: vi.fn(() => "en"),
+      registerCleanup: vi.fn(),
+    };
+
+    renderQuestHtmlIframe(
+      container,
+      { html: "ch1.html", height: 640 },
+      onSolved,
+      {},
+      app,
+      "Study/Azure-quest.md",
+      deps,
+    );
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(app.vault.adapter.read).toHaveBeenCalledWith("engram-quest/html/Azure/ch1.html");
+    const iframe = findChildByTag(container, "iframe");
+    expect(iframe).toBeTruthy();
+    expect(iframe.attrs.srcdoc).toContain("<title>Mission</title>");
+
+    messageHandler({ source: iframe.contentWindow, data: { type: "engram-quest-resize", height: 900 } });
+    expect(iframe.style.height).toBe("900px");
+
+    messageHandler({ source: iframe.contentWindow, data: { type: "engram-quest-solved", score: 83 } });
+    expect(onSolved).toHaveBeenCalledWith(true, { scorePct: 83 });
   });
 });

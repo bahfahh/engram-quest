@@ -1,7 +1,9 @@
 # Challenge Formats Reference
 
-This document defines every challenge type supported by the quest-map parser and renderer.
-Read this before generating any challenge YAML.
+This document defines every legacy v1 challenge type supported by the quest-map parser and renderer.
+Read this only when updating an existing v1 quest or when the user explicitly requests lightweight YAML challenges.
+
+For new quests, create plugin-native packages under `engram-quest/quests/{questSlug}/`. See `html-first-contract.md`.
 
 ---
 

@@ -1,5 +1,12 @@
 import { describe, it, expect } from "vitest";
-import { parseQuestMap } from "../src/quest/helpers.js";
+import {
+  getQuestHtmlBase,
+  getQuestMeta,
+  isHtmlQuestNode,
+  isQuestVersion2,
+  parseQuestMap,
+  resolveQuestHtmlPath,
+} from "../src/quest/helpers.js";
 
 describe("parseQuestMap mission metadata", () => {
   it("parses scenario, mission_goal, and stakes on quest nodes", () => {
@@ -334,6 +341,92 @@ describe("parseQuestMap iframe fields", () => {
       html: "engram-quest/html/token-bucket/sim1.html",
       height: 520,
     });
+  });
+});
+
+describe("parseQuestMap HTML-first v2 fields", () => {
+  it("parses quest metadata and node-level html contract", () => {
+    const cfg = parseQuestMap([
+      "version: 2",
+      "title: Azure Functions Mission",
+      "description: Practice trigger and deployment decisions.",
+      "difficulty: hard",
+      "nodes:",
+      "  - id: ch1",
+      "    title: Trigger Triage",
+      "    emoji: ⚡",
+      "    type: mission",
+      "    html: ch1-trigger.html",
+      "    height: 760",
+      "  - id: boss",
+      "    title: Incident Boss",
+      "    type: boss",
+      "    html: boss-incident.html",
+    ].join("\n"));
+
+    expect(isQuestVersion2(cfg.nodes)).toBe(true);
+    expect(getQuestMeta(cfg.nodes)).toMatchObject({
+      version: 2,
+      title: "Azure Functions Mission",
+      description: "Practice trigger and deployment decisions.",
+      difficulty: "hard",
+    });
+    expect(cfg.nodes[0]).toMatchObject({
+      id: "ch1",
+      type: "mission",
+      html: "ch1-trigger.html",
+      height: 760,
+      challenge: {
+        type: "iframe",
+        html: "ch1-trigger.html",
+        height: 760,
+        __htmlFirst: true,
+      },
+    });
+    expect(cfg.nodes[1].boss).toBe(true);
+    expect(isHtmlQuestNode(cfg.nodes[0])).toBe(true);
+  });
+
+  it("keeps v1 challenge parsing unchanged", () => {
+    const cfg = parseQuestMap([
+      "version: 1",
+      "nodes:",
+      "  - id: round1",
+      "    title: Quiz",
+      "    challenge:",
+      "      type: quiz",
+      "      html: legacy-sim.html",
+      "      options: [A, B]",
+      "      answer: 0",
+    ].join("\n"));
+
+    expect(isQuestVersion2(cfg.nodes)).toBe(false);
+    expect(cfg.nodes[0].html).toBeUndefined();
+    expect(cfg.nodes[0].challenge).toMatchObject({
+      type: "quiz",
+      html: "legacy-sim.html",
+      options: ["A", "B"],
+      answer: 0,
+    });
+  });
+});
+
+describe("resolveQuestHtmlPath", () => {
+  it("resolves short html filenames under the quest html folder", () => {
+    expect(resolveQuestHtmlPath("ch1.html", "Study/Azure Functions-quest.md"))
+      .toBe("engram-quest/html/Azure Functions/ch1.html");
+  });
+
+  it("preserves explicit vault-relative html paths", () => {
+    expect(resolveQuestHtmlPath("engram-quest/html/custom/ch1.html", "Study/Azure-quest.md"))
+      .toBe("engram-quest/html/custom/ch1.html");
+    expect(resolveQuestHtmlPath("Shared/quest-html/ch1.html", "Study/Azure-quest.md"))
+      .toBe("Shared/quest-html/ch1.html");
+  });
+
+  it("derives quest html base from standalone or embedded quest notes", () => {
+    expect(getQuestHtmlBase("Study/Azure Functions-quest.md")).toBe("Azure Functions");
+    expect(getQuestHtmlBase("Study/Azure Functions.md")).toBe("Azure Functions");
   });
 });
 

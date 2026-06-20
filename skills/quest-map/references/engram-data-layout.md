@@ -49,11 +49,19 @@ This is the common case (a user asks to build a quest/deck/map from a course the
    cat engram-quest/lessons/*/meta.json
    ```
 3. **Read the lesson content.** `meta.json`'s `lessons[]` array lists each lesson's `title`
-   and `file`. The teaching content is in those HTML files — read them for the concepts to
-   build from:
-   ```bash
-   cat "engram-quest/lessons/{courseSlug}/{file}.html"
+   and `file`. The teaching content is in those HTML files — use the **Read tool** (not `cat`)
+   to open them. `cat` has Windows encoding failures on CJK content; Read handles UTF-8 natively.
+
    ```
+   Read: engram-quest/lessons/{courseSlug}/{file}
+   ```
+
+   **Sampling strategy for large courses (5+ lessons):**
+   - Read the first 3–4 core concept lessons in full.
+   - For remaining lessons, use their titles only. Lessons whose title contains「實戰」「案例」
+     「Case」「Practice」repeat earlier concepts — use the title as context, not the HTML.
+   - Stop reading when you can list 6+ concrete practice opportunities. You have enough.
+
    A lesson with `"file": null` is a planned outline entry with no content yet — use its title
    only, and tell the user that lesson hasn't been generated.
 

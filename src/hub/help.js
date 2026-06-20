@@ -1,4 +1,4 @@
-"use strict";
+﻿"use strict";
 const I = require("obsidian");
 const { t: c, getLocale: L } = require("../i18n");
 const { registerSelectionCopy } = require("../ui/selection-copy");
@@ -131,10 +131,11 @@ expect(result.completed).toBe(true)
           `},{icon:"🗺️",title:"Quest Map",tag:c(e,"HELP_QUEST_TAG"),html:`
             <ol>
               <li>跟 AI 說：「把微積分.md 做成 quest-map medium」</li>
-              <li>AI 建立學習地圖</li>
-              <li>進度會另外儲存，AI 更新 quest 時不會清掉已完成節點</li>
-              <li>進階 quest 可以使用本機 iframe HTML 模擬互動系統</li>
-              <li>開 Hub → Quest Map → 依序完成任務、案例與 Boss Battle</li>
+              <li>AI 在 <code>engram-quest/quests/</code> 建立 plugin 內開啟的任務套件與本機 HTML 關卡</li>
+              <li>每個任務 / Boss 可用 self-contained HTML 呈現儀表板、計算、診斷、cascade 決策或互動模擬</li>
+              <li>進度會另外儲存在 <code>engram-quest/state/</code>，AI 更新 quest 時不會清掉已完成節點</li>
+              <li>舊版 YAML 題型 quest 仍可正常開啟</li>
+              <li>開 Hub → Quest Map → 點任務卡，在 plugin viewer 裡依序完成任務、案例與 Boss Battle</li>
             </ol>
             <table>
               <tr><th>難度</th><th>適合</th></tr>
@@ -350,7 +351,7 @@ A: 一連串的本地交易。
             <p><code>Q:/A:</code> 格式是 EngramQuest 專屬，<strong>不會</strong>同步到 Anki — 它是為多行答案、圖片、表格設計的，這些內容無法直接對應到 Anki 的卡片模型。如果你需要同時在兩邊使用，請改用 <code>::</code> 或 <code>{{c1::}}</code>。</p>
             <p><strong>Q14：AI 產生的 Map 我想放在特定資料夾，怎麼做？</strong></p>
             <p>同樣在 AI 設定檔中加入路徑規則，AI 建立檔案時就會遵守。</p>
-            <pre>建立 Quest Map 時，檔案必須存放在 Quest_Map/ 資料夾底下。
+            <pre>建立 Quest Map 時，請建立在 engram-quest/quests/{questSlug}/，並使用 meta.json + HTML nodes。
 所有 Memory Map 請存到 Maps/Memory/ 目錄。</pre>
             <p><strong>Q15：除了建立內容，AI 還能提供什麼幫助？</strong></p>
             <p>AI 不只能幫你「產出」卡片。它還能讀取你的 Review Deck，進行互動式複習或針對錯誤點進行教學解說。此外，它也能幫你整理、分類既有的牌組，或根據現有內容延伸出更有挑戰性的新題目。</p>
@@ -421,10 +422,11 @@ expect(result.completed).toBe(true)
           `},{icon:"🗺️",title:"Quest Map",tag:c(e,"HELP_QUEST_TAG"),html:`
             <ol>
               <li>Ask AI: "Turn calculus.md into a quest-map medium"</li>
-              <li>AI builds the learning map</li>
-              <li>Progress is saved separately, so AI can update a quest without clearing completed nodes</li>
-              <li>Advanced quests may include local iframe HTML simulations for interactive systems</li>
-              <li>Open Hub → Quest Map → complete missions, cases, and Boss Battles</li>
+              <li>AI builds a plugin-native quest package under <code>engram-quest/quests/</code> plus local HTML mission files</li>
+              <li>Each mission / boss can use self-contained HTML for dashboards, calculations, diagnosis, cascade decisions, or simulations</li>
+              <li>Progress is saved separately in <code>engram-quest/state/</code>, so AI can update a quest without clearing completed nodes</li>
+              <li>Legacy YAML challenge quests still open normally</li>
+              <li>Open Hub → Quest Map → click a quest card and complete missions, cases, and Boss Battles inside the plugin viewer</li>
             </ol>
             <table>
               <tr><th>Difficulty</th><th>Best for</th></tr>
@@ -651,7 +653,7 @@ Write all card questions in formal academic English.</pre>
             <p>The <code>Q:/A:</code> format is EngramQuest-native and does <strong>not</strong> sync to Anki — it's designed for rich multi-line answers, images, and tables that don't map cleanly to Anki's card model. Use <code>::</code> or <code>{{c1::}}</code> for cards you want in both places.</p>
             <p><strong>Q14. I want AI-generated maps saved to a specific folder. How?</strong></p>
             <p>Add a path rule to your AI config files and AI will respect it when creating files.</p>
-            <pre>All Quest Maps must be saved under the Quest_Map/ folder.
+            <pre>All Quest Maps must be saved under engram-quest/quests/{questSlug}/ with meta.json + HTML nodes.
 Store all Memory Maps in the Maps/Memory/ directory.</pre>
             <p><strong>Q15. What other assistance can AI provide?</strong></p>
             <p>Beyond content creation, AI can interact with your Review Decks to provide personalized tutoring and guided review sessions. It can also help organize and categorize existing decks, or generate more challenging new questions based on your current knowledge.</p>

@@ -1,7 +1,7 @@
 "use strict";
 
 const obsidian = require("obsidian");
-const { resolveImageOcclusionRect } = require("./helpers");
+const { isHtmlQuestNode, resolveImageOcclusionRect, resolveQuestHtmlPath } = require("./helpers");
 
 function attachImgZoom(el){
   el.querySelectorAll("img").forEach(img=>{
@@ -1172,6 +1172,80 @@ function renderQuestChallenge(container, challenge, difficulty, onSolved, settin
   }
 }
 
+function renderQuestHtmlIframe(container, node, onSolved, settings, app, sourcePath, deps) {
+  let zh = isZh(deps, settings);
+  let resolved = resolveQuestHtmlPath(node.html, sourcePath);
+  let frameHeight = Number.isFinite(Number(node.height)) ? Math.max(220, Math.min(1200, Math.round(Number(node.height)))) : 760;
+  let box = container.createEl("div", {
+    attr: {
+      style: "border:1px solid var(--background-modifier-border);border-radius:16px;overflow:hidden;background:var(--background-secondary);min-height:220px",
+    },
+  });
+  let status = container.createEl("div", {
+    attr: {
+      style: "margin-top:10px;font-size:12px;color:var(--text-muted);line-height:1.5",
+    },
+  });
+  let iframe = null;
+
+  function showIframeError(message) {
+    box.empty();
+    box.createEl("div", {
+      text: message,
+      attr: {
+        style: "padding:14px 16px;color:#dc2626;background:#fef2f2;border:1px solid #fca5a5;font-size:13px;line-height:1.5",
+      },
+    });
+  }
+
+  (async () => {
+    try {
+      if (!resolved) {
+        showIframeError(zh ? "這個 HTML-first 關卡缺少 html 欄位。" : "This HTML-first node is missing an html field.");
+        return;
+      }
+      if (app.vault.adapter.exists && !(await app.vault.adapter.exists(resolved))) {
+        showIframeError(zh ? `找不到 HTML 檔案：${resolved}` : `HTML file not found: ${resolved}`);
+        return;
+      }
+      let html = await app.vault.adapter.read(resolved);
+      iframe = box.createEl("iframe", {
+        attr: {
+          sandbox: "allow-scripts",
+          srcdoc: html,
+          style: `display:block;width:100%;height:${frameHeight}px;border:0;background:white;`,
+        },
+      });
+      status.textContent = zh ? "完成互動後會自動前進。" : "Complete the interaction to continue.";
+      let handler = (event) => {
+        if (iframe && event.source && event.source !== iframe.contentWindow) return;
+        let data = event.data || {};
+        if (!data || typeof data !== "object") return;
+        if (data.type === "engram-quest-resize") {
+          let nextHeight = Math.max(220, Math.min(1200, Math.round(Number(data.height) || frameHeight)));
+          iframe.style.height = nextHeight + "px";
+        }
+        if (data.type === "engram-quest-solved") {
+          let rawScore = Number(data.score);
+          let scorePct = Number.isFinite(rawScore) ? Math.max(0, Math.min(100, Math.round(rawScore))) : 100;
+          status.textContent = zh ? `已完成：${scorePct}%` : `Completed: ${scorePct}%`;
+          window.setTimeout(() => onSolved(true, { scorePct }), 250);
+        }
+      };
+      window.addEventListener("message", handler);
+      if (deps.registerCleanup) deps.registerCleanup(() => window.removeEventListener("message", handler));
+      iframe.addEventListener("load", () => {
+        iframe.contentWindow?.postMessage({
+          type: "engram-quest-theme",
+          dark: activeDocument.body.classList.contains("theme-dark"),
+        }, "*");
+      });
+    } catch (error) {
+      showIframeError((zh ? "HTML 關卡載入失敗：" : "Failed to load HTML quest node: ") + String(error && error.message || error));
+    }
+  })();
+}
+
 function openQuestChapterModal(app, nodes, activeIndex, styleName, difficulty, settings, sourcePath, deps, onComplete) {
   let modal = new obsidian.Modal(app);
   modal.modalEl.addClass("qm-modal");
@@ -1258,7 +1332,23 @@ function openQuestChapterModal(app, nodes, activeIndex, styleName, difficulty, s
       });
     }
 
-    if (node.challenge) {
+    let isHtmlNode = isHtmlQuestNode(node);
+    if (isHtmlNode) {
+      renderQuestHtmlIframe(content, node, (correct, result = {}) => {
+        const completion = markNodeCompleted(node.id, {
+          ...result,
+          scorePct: result.scorePct ?? (correct ? 100 : 0),
+        });
+        scorePcts.push(completion.scorePct);
+        if (onComplete) onComplete(node.id, currentIndex, completion);
+        if (currentIndex < nodes.length - 1) {
+          currentIndex += 1;
+          render();
+        } else {
+          showComplete();
+        }
+      }, settings, app, sourcePath, { ...deps, registerCleanup });
+    } else if (node.challenge) {
       deps.renderQuestChallenge(content, node.challenge, difficulty, (correct, result = {}) => {
         const completion = markNodeCompleted(node.id, {
           ...result,
@@ -1282,6 +1372,12 @@ function openQuestChapterModal(app, nodes, activeIndex, styleName, difficulty, s
     let footer = content.createEl("div", { attr: { style: "display:flex;align-items:center;justify-content:space-between;border-top:1px solid var(--background-modifier-border);padding-top:20px;margin-top:28px" } });
     let prev = footer.createEl("button", { text: zh ? "上一章" : "Previous", attr: { style: `border-radius:9999px;padding:8px 16px;font-size:14px;font-weight:600;color:var(--text-muted);background:transparent;border:none;cursor:pointer;visibility:${currentIndex === 0 ? "hidden" : "visible"}` } });
     let next = footer.createEl("button", { text: currentIndex === nodes.length - 1 ? (zh ? "完成" : "Done") : (zh ? "下一章" : "Next"), attr: { style: `border-radius:9999px;padding:8px 16px;font-size:14px;font-weight:700;color:white;border:none;cursor:pointer;background:linear-gradient(135deg,${theme.g1},${theme.g2})` } });
+    if (isHtmlNode) {
+      next.disabled = true;
+      next.style.opacity = "0.35";
+      next.style.cursor = "not-allowed";
+      next.textContent = zh ? "完成互動後前進" : "Complete to continue";
+    }
     prev.addEventListener("click", () => {
       if (currentIndex > 0) {
         currentIndex -= 1;
@@ -1289,6 +1385,7 @@ function openQuestChapterModal(app, nodes, activeIndex, styleName, difficulty, s
       }
     });
     next.addEventListener("click", () => {
+      if (isHtmlQuestNode(nodes[currentIndex])) return;
       if (currentIndex < nodes.length - 1) {
         if (!nodes[currentIndex].challenge) {
           let completion = markNodeCompleted(nodes[currentIndex].id);
@@ -1313,6 +1410,7 @@ function openQuestChapterModal(app, nodes, activeIndex, styleName, difficulty, s
 }
 
 module.exports = {
+  renderQuestHtmlIframe,
   renderQuestChallenge,
   openQuestChapterModal
 };

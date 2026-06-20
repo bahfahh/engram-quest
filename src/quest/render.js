@@ -1,5 +1,6 @@
-"use strict";
+﻿"use strict";
 const I = require("obsidian");
+
 
 // Remove near-grey background from island images using canvas
 function removeIslandBg(imgEl) {
@@ -26,6 +27,7 @@ function removeIslandBg(imgEl) {
 }
 
 function renderQuestMap(nodes, styleName, activeIndex, visitedSet, app, getNodePositions, questProgress) {
+
   let configDir = app.vault.configDir;
   let assetRoot = configDir + "/plugins/engram-quest/assets/quest-map/";
   let isDark = activeDocument.body.classList.contains("theme-dark");

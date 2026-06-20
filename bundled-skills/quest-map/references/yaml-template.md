@@ -1,92 +1,67 @@
-# YAML Template & Style
+# Quest Package Template
 
-## Output skeleton
+Use this package template for new Quest Maps. Legacy markdown examples live in `challenge-formats.md`.
 
-````markdown
----
-tags: [topic-tag]
----
+## Folder
 
-# Title
-
-```quest-map
-version: 1
-style: cyber
-difficulty: medium
-nodes:
-  - id: ch1
-    title: Incident Briefing
-    emoji: Q
-    scenario: A small team must pick an Azure Functions hosting path for unpredictable traffic before launch.
-    mission_goal: Identify which constraints matter before the first technical decision.
-    stakes: A poor choice creates either runaway cost or cold-start risk.
-    summary: Core insight about triggers, bindings, and hosting constraints.
-    points:
-      - title: Point one
-        body: Why it matters.
-      - title: Point two
-        body: Key detail.
-    insight: Real-world implication.
-
-  - id: ch2
-    title: Hosting Plans
-    emoji: 💰
-    summary: Three hosting options and when to choose each.
-    points:
-      - title: Consumption Plan
-        body: Pay per execution, cold start, 10 min limit.
-      - title: App Service Plan
-        body: Fixed cost, always on, no time limit.
-
-  - id: round1
-    title: Hosting Decision Auction
-    emoji: Q
-    scenario: The product owner asks for the cheapest safe plan before a traffic spike.
-    mission_goal: Bet only when the plan matches the operating constraint.
-    stakes: Wrong confidence spends budget and hides the real deployment risk.
-    challenge:
-      type: auction
-      coins: 100
-      questions_json: [{"q":"Which plan for unpredictable traffic + budget priority?","opts":["Consumption","App Service","Premium"],"ans":0,"explanation":"Consumption fits bursty traffic because cost follows execution volume."},{"q":"Which plan eliminates cold start?","opts":["Consumption","App Service","Premium"],"ans":2,"explanation":"Premium keeps instances warm and removes cold-start delay."},{"q":"Which plan charges even when idle?","opts":["Consumption","App Service","Premium"],"ans":1,"explanation":"App Service reserves capacity, so cost continues even without requests."}]
-
-  - id: ch3
-    title: Durable Functions
-    emoji: 🔄
-    summary: How Durable Functions solve long-running workflows.
-    points:
-      - title: Three roles
-        body: Starter → Orchestrator → Activity.
-      - title: Deterministic rule
-        body: No DateTime.Now in Orchestrator.
-
-  - id: boss
-    boss: true
-    title: Outage Chain Boss
-    emoji: B
-    scenario: A production request fails after a deployment and the team needs the request lifecycle restored quickly.
-    mission_goal: Rebuild the execution chain in the safest order.
-    stakes: A wrong sequence delays recovery and sends the team debugging the wrong layer.
-    challenge:
-      type: chain
-      timer: 25
-      question: Azure Functions request lifecycle in order
-      chain_items: [HTTP Trigger fires, Function host routes, Bindings resolve inputs, Your code executes, Output bindings write]
-      answer: [0, 1, 2, 3, 4]
+```text
+engram-quest/quests/{questSlug}/
+├── meta.json
+└── nodes/
+    ├── ch1-domain.html
+    ├── ch2-calculation.html
+    └── boss-cascade.html
 ```
-````
 
-## Style guide
+## meta.json
 
-Pick the style that matches the topic's mood. When in doubt, `cyber` is a safe default for technical content.
+```json
+{
+  "version": 2,
+  "title": "Procurement System Dev Quest",
+  "description": "Practice procurement workflow modeling through applied missions.",
+  "difficulty": "medium",
+  "tags": ["procurement", "software-engineering"],
+  "createdAt": "2026-06-20",
+  "layout": {
+    "mode": "dynamic"
+  },
+  "nodes": [
+    {
+      "id": "briefing-domain",
+      "title": "Domain Briefing",
+      "type": "briefing",
+      "summary": "Understand purchase requests, inventory units, suppliers, and monthly procurement constraints."
+    },
+    {
+      "id": "ch1-domain-model",
+      "title": "Domain Model",
+      "type": "mission",
+      "html": "nodes/ch1-domain-model.html",
+      "height": 760
+    },
+    {
+      "id": "ch2-monthly-calculation",
+      "title": "Monthly Calculation",
+      "type": "mission",
+      "html": "nodes/ch2-monthly-calculation.html",
+      "height": 760
+    },
+    {
+      "id": "boss-procurement-cascade",
+      "title": "Procurement Cascade Boss",
+      "type": "boss",
+      "html": "nodes/boss-procurement-cascade.html",
+      "height": 900
+    }
+  ]
+}
+```
 
-| Style | Best fit |
-|---|---|
-| `sky-island` | airy, philosophical, or conceptual topics |
-| `ocean` | flow-based, layered, or biological systems |
-| `forest` | organic, ecological, or living systems |
-| `galaxy` | abstract, large-scale, or cosmological ideas |
-| `dungeon` | gamified, challenge-heavy, or narrative content |
-| `space` | technology, science, or futurism |
-| `cyber` | programming, AI, architecture, or data systems |
+## Notes
 
-Write `style` inside the quest-map code block — not only in frontmatter.
+- Keep user-facing text in the source/request language.
+- Keep keys in English.
+- Keep node IDs stable across updates.
+- Do not include completion state in `meta.json`.
+- Do not use decorative map background coordinates unless every node has tested `x` and `y` percentages.
