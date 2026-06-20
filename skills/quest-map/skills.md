@@ -77,6 +77,7 @@ Example assets:
    - Large source: 6-8 nodes including boss.
    - Prefer fewer rich missions over many thin nodes.
    - Use `difficulty: easy | medium | hard`; runtime maps this to the correct background.
+   - Every briefing node MUST have a `points` array (3–5 entries, each `{ title, body }`). Without `points`, the runtime shows only one line of text. See `references/html-first-contract.md` for the format.
 4. Write the quest package.
    - Create `engram-quest/quests/{questSlug}/meta.json`.
    - Use node `type: briefing | mission | boss`.

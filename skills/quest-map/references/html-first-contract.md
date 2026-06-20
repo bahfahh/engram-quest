@@ -37,7 +37,12 @@ The Hub scans `engram-quest/quests/`, reads `meta.json`, and opens the quest ins
       "id": "briefing-domain",
       "title": "Domain Briefing",
       "type": "briefing",
-      "summary": "Read the procurement scenario and identify the core entities before modeling."
+      "summary": "Read the procurement scenario and identify the core entities before modeling.",
+      "points": [
+        { "title": "Core Entity: Purchase Order", "body": "A PO links a vendor, a set of line items, and a delivery schedule. It is the unit of record for procurement tracking." },
+        { "title": "Monthly Budget Cycle", "body": "Each department submits a budget ceiling by the 25th. Procurement compares against rolling 3-month actuals before approving." },
+        { "title": "Inventory vs. Direct Purchase", "body": "Inventory items are stocked and consumed over time; direct purchases go straight to cost centers without entering stock." }
+      ]
     },
     {
       "id": "ch1-inventory",
@@ -62,6 +67,7 @@ Rules:
 - `difficulty` is `easy`, `medium`, or `hard`.
 - `type` is `briefing`, `mission`, or `boss`.
 - `mission` and `boss` nodes need `html` or `file`.
+- **`briefing` nodes MUST include a `points` array with 3–5 entries. Each entry: `{ "title": "...", "body": "..." }`. A briefing with only `summary` and no `points` is unacceptable — the plugin renders it as a single line of text.**
 - HTML paths are relative to the quest package folder unless they start with `engram-quest/`.
 - Optional `x` and `y` fields are percentages from 0 to 100. Use them only when you intentionally design a fixed map route.
 - Prefer `layout.mode: "dynamic"` unless you have a tested coordinate plan. Do not place nodes on top of a painted background path unless coordinates are known.
