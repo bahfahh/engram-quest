@@ -71,6 +71,7 @@ function createInstaller() {
       { source: "quest-map/skills.md", target: "SKILL.md" },
       { source: "quest-map/references/user-guide.md", target: "references/user-guide.md" },
       { source: "quest-map/references/obsidian-cli.md", target: "references/obsidian-cli.md" },
+      { source: "quest-map/references/engram-data-layout.md", target: "references/engram-data-layout.md" },
       { source: "quest-map/references/challenge-formats.md", target: "references/challenge-formats.md" },
       { source: "quest-map/references/visual-challenges.md", target: "references/visual-challenges.md" },
       { source: "quest-map/references/parser-constraints.md", target: "references/parser-constraints.md" },
@@ -82,6 +83,7 @@ function createInstaller() {
       { source: "review-deck/references/user-guide.md", target: "references/user-guide.md" },
       { source: "review-deck/references/plugin-architecture.md", target: "references/plugin-architecture.md" },
       { source: "review-deck/references/obsidian-cli.md", target: "references/obsidian-cli.md" },
+      { source: "review-deck/references/engram-data-layout.md", target: "references/engram-data-layout.md" },
       { source: "review-deck/references/image-cards.md", target: "references/image-cards.md" },
       { source: "review-deck/scripts/search_vault.sh", target: "scripts/search_vault.sh" },
       { source: "review-deck/scripts/get_mtime.sh", target: "scripts/get_mtime.sh" }
@@ -93,6 +95,7 @@ function createInstaller() {
       { source: "memory-map/references/explain.md", target: "references/explain.md" },
       { source: "memory-map/references/user-guide.md", target: "references/user-guide.md" },
       { source: "memory-map/references/obsidian-cli.md", target: "references/obsidian-cli.md" },
+      { source: "memory-map/references/engram-data-layout.md", target: "references/engram-data-layout.md" },
       { source: "memory-map/scripts/search_vault.sh", target: "scripts/search_vault.sh" }
     ],
     "lesson-academy": [

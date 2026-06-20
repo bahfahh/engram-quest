@@ -192,8 +192,13 @@ When a matching `<source-note-name>-quest.md` already exists, update the quest i
 ## Generation Flow
 
 0. Check for a pre-existing knowledge index or graph in the vault (e.g. `graphify-out/GRAPH_REPORT.md`, `graph.json`). If found, read it first — use its key concepts as boss-challenge candidates, community groupings to inform chapter splits, and relationship edges to shape challenge content. Skip raw-file discovery for anything the index already covers.
-1. Read the source note or user-provided topic.
-2. Use the cheapest discovery path first:
+1. Read the source note or user-provided topic. **First decide what kind of source the user named.**
+   If they refer to "a course", "課程", "教材", "a lesson", "the deck", or any content they made
+   *inside EngramQuest* — that content lives in the plugin's own data folders, not as a vault note.
+   Read it directly from there before doing any vault search. See `references/engram-data-layout.md`
+   for the vocabulary→location map and how to read a Lesson Academy course (`engram-quest/lessons/`).
+   Searching the vault notes for a course title will find nothing and falsely look like it does not exist.
+2. If the source is a vault note (not an EngramQuest artifact), use the cheapest discovery path first:
    - obvious topic folders
    - frontmatter tags
    - note links

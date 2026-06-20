@@ -117,6 +117,7 @@ CRITICAL: Follow these steps in order. Do not skip any step.
 3. Check for a pre-existing knowledge index or graph in the vault (e.g. `graphify-out/GRAPH_REPORT.md`, `graph.json`). If found, use its key concepts and community structure to prioritize which notes to process first and to identify high-value card candidates. This supplements — not replaces — the tag-based note discovery below.
 4. Determine scope and choose the appropriate discovery path:
    IMPORTANT: When vault search is needed, use Obsidian CLI (`obsidian search`). For full syntax, query operators, and fallback rules, see `references/obsidian-cli.md`.
+   - If the user points at EngramQuest's own content — "make cards from my X course / 課程 / lesson" — the source is in the plugin's data folders, not a vault note. Read it directly from `engram-quest/lessons/` (see `references/engram-data-layout.md`) and treat the lesson content as the source. A vault search for a course title finds nothing.
    - If the user specifies a single note → read it directly. Skip discovery entirely.
    - Otherwise:
      a. Check for a graph index (`graphify-out/GRAPH_REPORT.md` or `graph.json`). If found, read it — use its note paths and key concepts directly. No further search needed.
