@@ -62,12 +62,24 @@ const DISC_PRESETS = {
   ],
 };
 
-// Sample N evenly-spaced positions along the preset disc path.
+// Select N positions from the preset disc rings.
+// When count <= preset.length: pick a subset of actual disc ring positions (never interpolate
+// between rings — intermediate points would miss the stone platforms).
+// When count > preset.length: interpolate along the path to fill extra slots.
 function _interpPreset(preset, count) {
   if (count <= 0) return [];
   if (count === 1) return [{ ...preset[Math.floor(preset.length / 2)] }];
   if (count === preset.length) return preset.map((p) => ({ ...p }));
-  // Build cumulative arc-length table
+
+  // Fewer nodes than rings: evenly pick a subset of disc positions (all on actual rings)
+  if (count < preset.length) {
+    return Array.from({ length: count }, (_, n) => {
+      const idx = Math.round(n * (preset.length - 1) / (count - 1));
+      return { ...preset[idx] };
+    });
+  }
+
+  // More nodes than rings: arc-length interpolation to create extra intermediate positions
   const segs = [];
   let total = 0;
   for (let i = 0; i < preset.length - 1; i++) {
@@ -77,26 +89,21 @@ function _interpPreset(preset, count) {
     segs.push(len);
     total += len;
   }
-  const result = [];
-  for (let n = 0; n < count; n++) {
+  return Array.from({ length: count }, (_, n) => {
     const target = (n / (count - 1)) * total;
     let acc = 0;
-    let placed = false;
     for (let i = 0; i < segs.length; i++) {
       if (acc + segs[i] >= target - 1e-9) {
         const t = segs[i] > 0 ? (target - acc) / segs[i] : 0;
-        result.push({
+        return {
           x: preset[i].x + t * (preset[i + 1].x - preset[i].x),
           y: preset[i].y + t * (preset[i + 1].y - preset[i].y),
-        });
-        placed = true;
-        break;
+        };
       }
       acc += segs[i];
     }
-    if (!placed) result.push({ ...preset[preset.length - 1] });
-  }
-  return result;
+    return { ...preset[preset.length - 1] };
+  });
 }
 
 function nodePositions(nodes, layout = {}, difficulty = "medium") {
