@@ -2,6 +2,9 @@ node_modules/
 main.js
 data.json
 *.map
+
+# Large demo videos — hosted on YouTube, not shipped in the repo
+assets/video/
 !src/
 !src/main.js
 
