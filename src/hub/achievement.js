@@ -2,6 +2,7 @@
 const I = require("obsidian");
 const { t: c } = require("../i18n");
 const { getReviewStatus } = require("../review/helpers");
+const { listCourses, courseProgress } = require("../lessons/data");
 
 const ACHIEVEMENTS = [
   // --- Original 12 ---
@@ -37,6 +38,11 @@ const ACHIEVEMENTS = [
   { id: "multiple_decks",   icon: "assets/icons/multiple_decks.webp",   rarity: "R",   threshold: 3,     field: "deckCount",          nameKey: "ACH_MULTIPLE_DECKS_NAME",   descKey: "ACH_MULTIPLE_DECKS_DESC"   },
   { id: "perfect_session",  icon: "assets/icons/perfect_session.webp",  rarity: "LEG", threshold: 1,     field: "perfectSessions",    nameKey: "ACH_PERFECT_SESSION_NAME",  descKey: "ACH_PERFECT_SESSION_DESC"  },
   { id: "hundred_again",    icon: "assets/icons/hundred_again.webp",    rarity: "R",   threshold: 100,   field: "totalAgainCount",    nameKey: "ACH_HUNDRED_AGAIN_NAME",    descKey: "ACH_HUNDRED_AGAIN_DESC"    },
+  { id: "first_lesson",     icon: "assets/icons/first_lesson.webp",     rarity: "UC",  threshold: 1,     field: "completedLessons",   nameKey: "ACH_FIRST_LESSON_NAME",     descKey: "ACH_FIRST_LESSON_DESC"     },
+  { id: "course_finisher",  icon: "assets/icons/course_finisher.webp",  rarity: "R",   threshold: 1,     field: "completedCourses",   nameKey: "ACH_COURSE_FINISHER_NAME",  descKey: "ACH_COURSE_FINISHER_DESC"  },
+  { id: "lesson_marathon",  icon: "assets/icons/lesson_marathon.webp",  rarity: "R",   threshold: 10,    field: "completedLessons",   nameKey: "ACH_LESSON_MARATHON_NAME",  descKey: "ACH_LESSON_MARATHON_DESC"  },
+  { id: "first_quest_step", icon: "assets/icons/first_quest_step.webp", rarity: "UC",  threshold: 1,     field: "completedQuestNodes", nameKey: "ACH_FIRST_QUEST_STEP_NAME", descKey: "ACH_FIRST_QUEST_STEP_DESC" },
+  { id: "quest_veteran",    icon: "assets/icons/quest_veteran.webp",    rarity: "R",   threshold: 10,    field: "completedQuestNodes", nameKey: "ACH_QUEST_VETERAN_NAME",    descKey: "ACH_QUEST_VETERAN_DESC"    },
 ];
 
 const RARITY_DARK = {
@@ -237,7 +243,72 @@ function openAchievementDetail(app, plugin, ach, val, settings, decks, quests, m
   modal.open();
 }
 
-function renderAchievementTab(containerEl, plugin, decks, quests=[], memories=[]) {
+function buildAchievementEvalCtx(st = {}, decks = [], quests = [], memories = [], courses = []) {
+  let masteredTotal = 0;
+  const counts = { mastered: 0, learning: 0, due: 0, unseen: 0, total: 0 };
+  for (const deck of decks) {
+    for (const card of deck.cards || []) {
+      const cst = getReviewStatus(card.srMeta);
+      counts[cst] = (counts[cst] || 0) + 1;
+      counts.total++;
+    }
+    masteredTotal += (deck.cards || []).filter(cd => cd.srMeta && (cd.srMeta.stability ?? 0) >= 21).length;
+  }
+
+  let maxDaily = 0;
+  const dailyLog = st.dailyReviewLog || {};
+  const logVals = Object.values(dailyLog);
+  if (logVals.length > 0) maxDaily = Math.max(...logVals);
+
+  let completedLessons = 0;
+  let completedCourses = 0;
+  for (const course of courses || []) {
+    const meta = course && course.meta;
+    if (!meta) continue;
+    const progress = courseProgress(meta);
+    completedLessons += progress.completed || 0;
+    if (progress.total > 0 && progress.completed >= progress.total) completedCourses++;
+  }
+
+  const completedQuestNodes = (quests || []).reduce((sum, q) => {
+    if (Number.isFinite(q && q.completedCount)) return sum + q.completedCount;
+    if (Array.isArray(q && q.nodes)) return sum + q.nodes.filter(node => node && node.completed).length;
+    return sum;
+  }, 0);
+
+  return {
+    evalCtx: {
+      totalCardsReviewed: st.totalCardsReviewed || 0,
+      longestStreak: st.longestStreak || 0,
+      maxDaily,
+      masteredCards: masteredTotal,
+      memoryMapCount: memories.length,
+      questMapCount: quests.length,
+      clearedQuestCount: quests.filter(q => q.completed).length,
+      deckCount: decks.length,
+      perfectSessions: st.perfectSessions || 0,
+      totalAgainCount: st.totalAgainCount || 0,
+      completedLessons,
+      completedCourses,
+      completedQuestNodes,
+    },
+    counts,
+    dailyLog,
+    maxDaily,
+    totalReviewed: st.totalCardsReviewed || 0,
+    currentStreak: st.currentStreak || 0,
+  };
+}
+
+async function renderAchievementTab(containerEl, plugin, decks, quests=[], memories=[], courses=null) {
+  if (!courses) {
+    try {
+      courses = await listCourses(plugin.app.vault.adapter);
+    } catch (e) {
+      console.warn("EngramQuest: lesson achievements scan failed", e);
+      courses = [];
+    }
+  }
   const t = plugin.settings;
   const st = t._stats || {};
   const isDark = activeDocument.body.classList.contains("theme-dark");
@@ -248,37 +319,8 @@ function renderAchievementTab(containerEl, plugin, decks, quests=[], memories=[]
 
   const textMuted= isDark ? "#94a3b8"  : "#9ca3af";
 
-  let masteredTotal = 0;
-  const counts = { mastered: 0, learning: 0, due: 0, unseen: 0, total: 0 };
-  for (const deck of decks) {
-    for (const card of deck.cards) {
-      const cst = getReviewStatus(card.srMeta);
-      counts[cst] = (counts[cst] || 0) + 1;
-      counts.total++;
-    }
-    masteredTotal += deck.cards.filter(cd => cd.srMeta && (cd.srMeta.stability ?? 0) >= 21).length;
-  }
-  let maxDaily = 0;
-  const dailyLog = st.dailyReviewLog || {};
-  const logVals = Object.values(dailyLog);
-  if(logVals.length > 0) {
-    maxDaily = Math.max(...logVals);
-  }
-  const totalReviewed = st.totalCardsReviewed || 0;
-  const currentStreak = st.currentStreak || 0;
-
-  let evalCtx = {
-    totalCardsReviewed: totalReviewed,
-    longestStreak: st.longestStreak || 0,
-    maxDaily: maxDaily,
-    masteredCards: masteredTotal,
-    memoryMapCount: memories.length,
-    questMapCount: quests.length,
-    clearedQuestCount: quests.filter(q => q.completed).length,
-    deckCount: decks.length,
-    perfectSessions: st.perfectSessions || 0,
-    totalAgainCount: st.totalAgainCount || 0
-  };
+  const { evalCtx, counts, dailyLog, totalReviewed, currentStreak } =
+    buildAchievementEvalCtx(st, decks, quests, memories, courses);
 
   const wrap = containerEl.createEl("div", { attr: { class: "lh-card", style: "margin-top:0;border-radius:0;flex:1;display:flex;flex-direction:column;overflow-y:auto;" } });
 
@@ -392,4 +434,4 @@ function renderAchievementTab(containerEl, plugin, decks, quests=[], memories=[]
   }
 }
 
-module.exports = { renderAchievementTab, openAchievementDetail, ACHIEVEMENTS, RARITY_DARK, RARITY_LIGHT };
+module.exports = { renderAchievementTab, openAchievementDetail, buildAchievementEvalCtx, ACHIEVEMENTS, RARITY_DARK, RARITY_LIGHT };

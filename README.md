@@ -88,7 +88,7 @@ Visualizes abstract concepts using Obsidian Canvas.
 
 ![Achievements](assets/achievements.png)
 
-Track your learning milestones with 3D-rendered icons and rarity tiers — from your first card to 2,000 reviews, 30-day streaks, and 50 mastered cards. Click any achievement for your activity calendar and progress data.
+Track your learning milestones with 3D-rendered icons and rarity tiers — from reviews and streaks to mastered cards, Lesson Academy completion, and Quest Map progress. Click any achievement for your activity calendar and progress data.
 
 ### 🎴 Quadrant Card — A4 Super-Memory (Pro)
 
@@ -294,7 +294,7 @@ Anki 解決「何時複習」。EngramQuest 解決「如何真正記住」 — �
 
 ![成就](assets/achievements.png)
 
-用 3D 渲染圖示與稀有度分級追蹤你的學習里程碑 — 從第一張卡片到 2,000 次複習、30 天連續、50 張精熟卡。點任一成就查看你的活動日曆與進度數據。
+用 3D 渲染圖示與稀有度分級追蹤你的學習里程碑 — 從複習次數、連續天數、精熟卡片，到 Lesson Academy 完課與 Quest Map 進度。點任一成就查看你的活動日曆與進度數據。
 
 ### 🎴 四象限卡 — A4 超記憶（Pro）
 

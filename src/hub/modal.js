@@ -22,6 +22,7 @@ function lt(n, e) { return scanReviewDecks(n, e, reviewHelpers); }
 const { renderAchievementTab: _renderAchTabFn } = require("./achievement");
 const { renderQuadrantTab: _renderQuadrantTabFn } = require("../quadrant/render");
 const { renderLessonTab: _renderLessonTabFn } = require("../lessons/render");
+const { listCourses: _listLessonCourses } = require("../lessons/data");
 
 const HUB_MOBILE_PATCH_ID = "engram-quest-hub-mobile-patch";
 function ensureHubMobilePatch() {
@@ -97,12 +98,13 @@ body.is-phone .lh-deck-gc-metric {
   activeDocument.head.appendChild(styleEl);
 }
 
-var ne=class n extends I.Modal{constructor(e,t){super(e),this.plugin=t,this.decks=[],this.quests=[],this.memories=[],this.activeTab="review",this.viewModes=t.settings._viewModes||{review:"list",memory:"list",quest:"list"},this.viewMode=this.viewModes.review,this.treeExpanded=t.settings._treeExpanded||{},this.filterStatus="all",this.searchQuery="",this.sortQuest="newest",this.sortMemory="newest",this.filterQuestStatus="all"}loadDecks(){return this._decksReady=(async()=>{this.decks=await lt(this.app,this.plugin.settings);})();}
+var ne=class n extends I.Modal{constructor(e,t){super(e),this.plugin=t,this.decks=[],this.quests=[],this.memories=[],this.courses=[],this.activeTab="review",this.viewModes=t.settings._viewModes||{review:"list",memory:"list",quest:"list"},this.viewMode=this.viewModes.review,this.treeExpanded=t.settings._treeExpanded||{},this.filterStatus="all",this.searchQuery="",this.sortQuest="newest",this.sortMemory="newest",this.filterQuestStatus="all"}loadDecks(){return this._decksReady=(async()=>{this.decks=await lt(this.app,this.plugin.settings);})();}
+loadLessons(){return this._lessonsReady=(async()=>{this.courses=await _listLessonCourses(this.app.vault.adapter);})();}
 loadLibrary(){return this._libraryReady=this._loadLibrary();}
 async loadData(){await Promise.all([this.loadDecks(),this.loadLibrary()]);}
 // Which load promises a tab needs before it can render. Quadrant/lesson tabs do their own
 // scoped loads; achievement (and anything unknown) needs everything.
-_needsFor(h){return h==="review"?[this._decksReady]:h==="memory"||h==="quest"?[this._libraryReady]:h==="quadrant"||h==="lesson"?[]:[this._decksReady,this._libraryReady].filter(Boolean)}
+_needsFor(h){return h==="review"?[this._decksReady]:h==="memory"||h==="quest"?[this._libraryReady]:h==="quadrant"||h==="lesson"?[]:h==="achievement"?[this._decksReady,this._libraryReady,this.loadLessons()].filter(Boolean):[this._decksReady,this._libraryReady].filter(Boolean)}
 async _loadLibrary(){this.quests=[];
 // Quest scan: filter candidates via metadataCache (sync), then read them with bounded
 // parallelism. cachedRead serves from Obsidian's in-memory cache when available.
@@ -165,7 +167,7 @@ const renderCard=(parent,q)=>{let th=themeOf(q),card=parent.createEl("div",{attr
 const renderList=()=>{content.empty();let query=searchInput.value.toLowerCase(),difficulty=diffSel.value,tag=tagSel.value,items=this.quests.filter(q=>{let hay=[titleOf(q),q.file&&q.file.parent&&q.file.parent.path,q.slug,q.description,q.scenario,q.missionGoal,q.stakes,(q.tags||[]).join(" ")].join(" ").toLowerCase(),statusOk=this.filterQuestStatus==="all"||(this.filterQuestStatus==="completed"?q.completed:this.filterQuestStatus==="boss"?q.bossReady:!q.completed);return(difficulty==="all"||q.difficulty===difficulty)&&(tag==="all"||q.tags&&q.tags.includes(tag))&&statusOk&&hay.includes(query)});this._sortItems(items,this.sortQuest,true);if(items.length===0){content.createEl("div",{text:c(t,"EMPTY_FILTERED_QUESTS"),attr:{class:"lh-empty"}});return}if(this.viewMode==="tree"){let treeWrap=content.createEl("div",{attr:{class:"lh-tree-container lh-quest-tree"}}),tree=this._buildTree(items,item=>item.file&&item.file.parent?item.file.parent.path:(item.sourceType==="package"?"engram-quest/quests/"+item.slug:"/"));this._renderQuestTree(treeWrap,tree,t,diff,themes);return}if(this.viewMode==="grid"){let grid=content.createEl("div",{attr:{class:"lh-quest-grid"}});items.forEach(q=>renderCard(grid,q));return}let list=content.createEl("div",{attr:{class:"lh-quest-list"}});items.forEach(q=>renderRow(list,q));};
 searchInput.addEventListener("input",()=>{this.searchQuery=searchInput.value;renderList()});sortSel.addEventListener("change",()=>{this.sortQuest=sortSel.value;renderList()});diffSel.addEventListener("change",renderList);statusSel.addEventListener("change",()=>{this.filterQuestStatus=statusSel.value;renderList()});
 listBtn.addEventListener("click",async()=>{this.viewMode="list";this.viewModes[this.activeTab]="list";this.plugin.settings._viewModes=this.viewModes;await this.plugin.saveData(this.plugin.settings);listBtn.classList.add("active");gridBtn.classList.remove("active");treeBtn.classList.remove("active");renderList()});gridBtn.addEventListener("click",async()=>{this.viewMode="grid";this.viewModes[this.activeTab]="grid";this.plugin.settings._viewModes=this.viewModes;await this.plugin.saveData(this.plugin.settings);gridBtn.classList.add("active");listBtn.classList.remove("active");treeBtn.classList.remove("active");renderList()});treeBtn.addEventListener("click",async()=>{this.viewMode="tree";this.viewModes[this.activeTab]="tree";this.plugin.settings._viewModes=this.viewModes;await this.plugin.saveData(this.plugin.settings);treeBtn.classList.add("active");listBtn.classList.remove("active");gridBtn.classList.remove("active");renderList()});renderList();
-}_renderQuadrantTab(e){_renderQuadrantTabFn(e,this);}_renderLessonTab(e){_renderLessonTabFn(e,this);}_renderAchievementTab(e){_renderAchTabFn(e,this.plugin,this.decks,this.quests,this.memories)}
+}_renderQuadrantTab(e){_renderQuadrantTabFn(e,this);}_renderLessonTab(e){_renderLessonTabFn(e,this);}_renderAchievementTab(e){_renderAchTabFn(e,this.plugin,this.decks,this.quests,this.memories,this.courses)}
 _buildTree(items, getPathFn) {
     let root = { name: "Root", children: {}, items: [] };
     items.forEach(item => {
