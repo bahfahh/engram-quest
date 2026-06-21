@@ -30,6 +30,14 @@ Every module works on its own, or chains into the next. **AI is optional** — a
 
 ---
 
+## 🧭 Where to open it
+
+Once the plugin is installed, click the **EngramQuest icon in the left ribbon** — that's how you open it. (A few people miss this at first, so here's exactly where to look.)
+
+<img src="assets/guide/obsidianpluginicon.png" width="380" alt="Open EngramQuest from the left ribbon">
+
+---
+
 ## ⚡ Quick Start (AI Path)
 
 <div align="center">
@@ -249,6 +257,14 @@ AI 跑在你本來就在用的工具上 — **Claude Desktop、Claude Code、Cod
 Anki 解決「何時複習」。EngramQuest 解決「如何真正記住」 — 以及閃卡階段**之前**該做什麼：學會它、練熟它、把它連起來，而不只是反覆刷卡。
 
 每個模組都能單獨使用，也能串接到下一個。**AI 完全可選** — 而且它跑在你已經在用的 AI 工具上（Claude Code、Codex、Antigravity、Gemini CLI、Cursor），不是另一個訂閱服務。
+
+---
+
+## 🧭 從哪裡打開
+
+安裝插件完成後，點左側 ribbon 的 **EngramQuest 圖示**就能打開。（不少人一開始會找不到入口，這裡標清楚位置。）
+
+<img src="assets/guide/obsidianpluginicon.png" width="380" alt="從左側 ribbon 打開 EngramQuest">
 
 ---
 
