@@ -30,6 +30,26 @@ Every module works on its own, or chains into the next. **AI is optional** — a
 
 ---
 
+## ⚡ Quick Start (AI Path)
+
+<div align="center">
+
+<a href="https://youtu.be/X9RhfC-l8d4"><img src="https://img.youtube.com/vi/X9RhfC-l8d4/maxresdefault.jpg" width="600" alt="EngramQuest Quick Start — 1 minute"></a>
+
+▶️ **[Watch the 1-minute Quick Start](https://youtu.be/X9RhfC-l8d4)**
+
+</div>
+
+1. **Install the plugin** — [open in Obsidian](obsidian://show-plugin?id=engram-quest), search **EngramQuest** in Community Plugins, or grab it from [GitHub Releases](https://github.com/bahfahh/engram-quest/releases).
+2. **Install the Skills** — go to `Settings → EngramQuest → AI Skills` and click **Install** for your tool (Claude Code, Codex / Antigravity, Gemini CLI, or Cursor).
+   ![Install Skills](assets/install-skills.png)
+3. **Ask your AI** — *"Turn `Note.md` into a quest-map medium"* or *"Build a review deck from notes tagged math."*
+4. **Open the Hub** — click the 🗺️ ribbon icon, switch to the relevant tab, and start learning.
+
+> **Not a SaaS.** Skills are the execution logic that run inside the AI tool you already have. No extra account, no subscription, and AI is fully optional.
+
+---
+
 ## ✨ Features
 
 ### 🃏 Review Deck — Remember More, Study Less
@@ -49,6 +69,10 @@ A three-stage recall system that builds real memory, not just familiarity:
 - **5 mixable card formats** — paste long AI answers, multi-line Q&A, cloze, one-liners, all in one note
 - **Edit writes back** — fix a card mid-review and the change saves to your source note
 - **Auto-detection** — any note tagged `#flashcards/topic` is picked up automatically
+
+**📺 Watch:** <a href="https://youtu.be/XC0NsPVfcwE"><img src="https://img.youtube.com/vi/XC0NsPVfcwE/mqdefault.jpg" width="280" alt="Build your own Review Deck"></a> <a href="https://youtu.be/pMf5mfCswBo"><img src="https://img.youtube.com/vi/pMf5mfCswBo/mqdefault.jpg" width="280" alt="Create a deck by pasting an AI answer"></a>
+
+▶️ [Build your own Review Deck](https://youtu.be/XC0NsPVfcwE) · ▶️ [Create a deck by pasting an AI answer](https://youtu.be/pMf5mfCswBo)
 
 ### 🗺️ Quest Map — Practice Missions
 
@@ -73,6 +97,10 @@ Tell the AI what you want to learn — it builds a course of interactive HTML le
 - **Vault-aware** — point it at your existing notes and the course connects to what you already know
 - **Web-verified** — for fast-moving tech topics it checks the web and cites sources, instead of guessing
 - **Each lesson ends with a quiz** for an immediate feedback loop — then convert the whole course into Review Deck cards or a Quest Map
+
+**📺 Watch:** <a href="https://youtu.be/G8HxBl9Hf9o"><img src="https://img.youtube.com/vi/G8HxBl9Hf9o/mqdefault.jpg" width="280" alt="Create a course with Claude Code"></a>
+
+▶️ [Create a course with Claude Code](https://youtu.be/G8HxBl9Hf9o)
 
 ### 🧠 Memory Map — See the Big Picture
 
@@ -103,18 +131,6 @@ Turns a single flashcard into an A4 four-quadrant "super memory" sheet (**Q1 que
 3. **Pick a path:**
    - **No AI?** Tag any note `#flashcards/topic`, write a `Q:/A:` card, and it appears in your Review Deck instantly. → [Write cards yourself](#-write-cards-yourself-no-ai-required)
    - **Have an AI tool?** Install the Skills once (`Settings → EngramQuest → AI Skills`), then just say *"Build a review deck from my math notes."* → [The AI path](#-quick-start-ai-path)
-
----
-
-## ⚡ Quick Start (AI Path)
-
-1. **Install the plugin** — [open in Obsidian](obsidian://show-plugin?id=engram-quest), search **EngramQuest** in Community Plugins, or grab it from [GitHub Releases](https://github.com/bahfahh/engram-quest/releases).
-2. **Install the Skills** — go to `Settings → EngramQuest → AI Skills` and click **Install** for your tool (Claude Code, Codex / Antigravity, Gemini CLI, or Cursor).
-   ![Install Skills](assets/install-skills.png)
-3. **Ask your AI** — *"Turn `Note.md` into a quest-map medium"* or *"Build a review deck from notes tagged math."*
-4. **Open the Hub** — click the 🗺️ ribbon icon, switch to the relevant tab, and start learning.
-
-> **Not a SaaS.** Skills are the execution logic that run inside the AI tool you already have. No extra account, no subscription, and AI is fully optional.
 
 ---
 
@@ -236,6 +252,26 @@ Anki 解決「何時複習」。EngramQuest 解決「如何真正記住」 — �
 
 ---
 
+## ⚡ 快速開始（AI 路徑）
+
+<div align="center">
+
+<a href="https://youtu.be/X9RhfC-l8d4"><img src="https://img.youtube.com/vi/X9RhfC-l8d4/maxresdefault.jpg" width="600" alt="EngramQuest 快速開始 — 1 分鐘"></a>
+
+▶️ **[看 1 分鐘快速上手影片](https://youtu.be/X9RhfC-l8d4)**
+
+</div>
+
+1. **安裝插件** — [在 Obsidian 中開啟](obsidian://show-plugin?id=engram-quest)、在 Community Plugins 搜尋 **EngramQuest**，或從 [GitHub Releases](https://github.com/bahfahh/engram-quest/releases) 下載。
+2. **安裝 Skills** — 到 `設定 → EngramQuest → AI Skills`，為你的工具（Claude Code、Codex / Antigravity、Gemini CLI 或 Cursor）點 **安裝**。
+   ![安裝 Skills](assets/install-skills.png)
+3. **問你的 AI** — *「把 `Note.md` 變成 quest-map medium」* 或 *「用標 math 的筆記建一副 review deck。」*
+4. **打開 Hub** — 點 🗺️ ribbon 圖示，切到對應分頁，開始學習。
+
+> **不是 SaaS。** Skills 是在你已有的 AI 工具裡執行的邏輯，不需要額外帳號、不需要訂閱，而且 AI 完全可選。
+
+---
+
 ## ✨ 功能特色
 
 ### 🃏 Review Deck — 記得更多，學得更少
@@ -255,6 +291,10 @@ Anki 解決「何時複習」。EngramQuest 解決「如何真正記住」 — �
 - **5 種可混用格式** — 貼整段 AI 回答、多行 Q&A、克漏字、單行卡，同一筆記自由混用
 - **編輯寫回** — 複習中改卡片，修改直接存回來源筆記
 - **自動偵測** — 任何打上 `#flashcards/主題` 的筆記都會自動收錄
+
+**📺 影片：** <a href="https://youtu.be/XC0NsPVfcwE"><img src="https://img.youtube.com/vi/XC0NsPVfcwE/mqdefault.jpg" width="280" alt="自己手動建立 Review Deck"></a> <a href="https://youtu.be/pMf5mfCswBo"><img src="https://img.youtube.com/vi/pMf5mfCswBo/mqdefault.jpg" width="280" alt="貼上 AI 回答快速建卡"></a>
+
+▶️ [自己手動建立 Review Deck](https://youtu.be/XC0NsPVfcwE) · ▶️ [貼上 AI 回答快速建卡](https://youtu.be/pMf5mfCswBo)
 
 ### 🗺️ Quest Map — 應用任務地圖
 
@@ -279,6 +319,10 @@ Anki 解決「何時複習」。EngramQuest 解決「如何真正記住」 — �
 - **讀懂你的 vault** — 指向你既有的筆記，課程就和你已知的知識連在一起
 - **網路查證** — 對快速更新的技術主題會查網路並附上來源，而不是瞎猜
 - **每堂課以測驗結尾**，形成即時回饋迴圈 — 之後還能把整套課程轉成 Review Deck 卡片或 Quest Map
+
+**📺 影片：** <a href="https://youtu.be/G8HxBl9Hf9o"><img src="https://img.youtube.com/vi/G8HxBl9Hf9o/mqdefault.jpg" width="280" alt="用 Claude Code 建立課程"></a>
+
+▶️ [用 Claude Code 建立課程](https://youtu.be/G8HxBl9Hf9o)
 
 ### 🧠 Memory Map — 看見全局
 
@@ -309,18 +353,6 @@ Anki 解決「何時複習」。EngramQuest 解決「如何真正記住」 — �
 3. **選一條路：**
    - **不用 AI？** 任何筆記打上 `#flashcards/主題` tag，寫一張 `Q:/A:` 卡片，它就立刻出現在你的 Review Deck。→ [自己寫卡片](#-自己寫卡片不需要-ai)
    - **有 AI 工具？** 安裝一次 Skills（`設定 → EngramQuest → AI Skills`），然後直接說：*「用我的數學筆記建一副 review deck。」* → [AI 路徑](#-快速開始ai-路徑)
-
----
-
-## ⚡ 快速開始（AI 路徑）
-
-1. **安裝插件** — [在 Obsidian 中開啟](obsidian://show-plugin?id=engram-quest)、在 Community Plugins 搜尋 **EngramQuest**，或從 [GitHub Releases](https://github.com/bahfahh/engram-quest/releases) 下載。
-2. **安裝 Skills** — 到 `設定 → EngramQuest → AI Skills`，為你的工具（Claude Code、Codex / Antigravity、Gemini CLI 或 Cursor）點 **安裝**。
-   ![安裝 Skills](assets/install-skills.png)
-3. **問你的 AI** — *「把 `Note.md` 變成 quest-map medium」* 或 *「用標 math 的筆記建一副 review deck。」*
-4. **打開 Hub** — 點 🗺️ ribbon 圖示，切到對應分頁，開始學習。
-
-> **不是 SaaS。** Skills 是在你已有的 AI 工具裡執行的邏輯，不需要額外帳號、不需要訂閱，而且 AI 完全可選。
 
 ---
 
