@@ -1,6 +1,9 @@
 "use strict";
+let EMBEDDED = {};
+try { EMBEDDED = require("./embedded-skills"); } catch (_) { /* generated file missing in test */ }
 
-function createInstaller() {
+function createInstaller(embeddedOverride) {
+  const embedded = embeddedOverride !== undefined ? embeddedOverride : EMBEDDED;
   const INSTALLER_VERSION = "2026-06-10";
   const MODULES = [
     {
@@ -135,7 +138,8 @@ function createInstaller() {
     return Array.from(arguments).filter(Boolean).join("/").replace(/\/+/g, "/");
   }
 
-  async function readBundledSkill(adapter, bundledSkillsRoot, relativePath) {
+  function readBundledSkill(adapter, bundledSkillsRoot, relativePath) {
+    if (embedded[relativePath]) return Promise.resolve(embedded[relativePath]);
     return adapter.read(joinPath(bundledSkillsRoot, relativePath));
   }
 

@@ -7,7 +7,7 @@
   "scripts": {
     "test": "vitest run tests/",
     "dev": "node esbuild.config.mjs",
-    "build": "node scripts/sync-bundled-skills.js && node esbuild.config.mjs --prod",
+    "build": "node scripts/sync-bundled-skills.js && node scripts/embed-skills.js && node esbuild.config.mjs --prod",
     "check:bundle-parity": "node scripts/check-bundle-parity.mjs",
     "sync:bundled-skills": "node scripts/sync-bundled-skills.js",
     "sync:vault": "node scripts/sync-to-vault.mjs",

@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import createInstaller from "../src/skills/installer.js";
 
-const installer = createInstaller();
+const installer = createInstaller({});
 
 function makeAdapter(files) {
   return { read: async (path) => files[path] ?? "" };
