@@ -130,7 +130,20 @@ Pick the course metadata now:
 - `courseSlug` — short kebab-case ASCII (e.g. `dotnet-basics`, `marketing-seo`)
 - `icon` — one emoji that captures the topic (🔷 💊 📈 🧘 …)
 - `colorScheme` — one of `indigo | green | amber | rose | cyan` (pick what fits the topic mood)
-- `tags` — 2–3 short topic tags in the user's language
+- `tags` — **reuse existing tags first; only add a new one if nothing fits:**
+  1. Scan the existing tag pool before deciding:
+     ```bash
+     python3 -c "
+     import json, glob
+     tags = set()
+     for f in glob.glob('engram-quest/lessons/*/meta.json'):
+         tags.update(json.load(open(f, encoding='utf-8')).get('tags', []))
+     print(sorted(tags))
+     "
+     ```
+  2. Pick 1–2 tags from the pool that best match this course's topic.
+  3. Only add a brand-new tag when the pool has nothing suitable. Maximum **2 tags total**.
+  4. Exception: if the user explicitly specifies tags, use those exactly.
 - `description` — one sentence, shown on the course card (≤ 40 chars in zh, ≤ 80 in en)
 
 ## Step 4: Generate lessons
