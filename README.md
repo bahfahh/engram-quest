@@ -54,6 +54,8 @@ Once the plugin is installed, click the **EngramQuest icon in the left ribbon** 
 3. **Ask your AI** — *"Turn `Note.md` into a quest-map medium"* or *"Build a review deck from notes tagged math."*
 4. **Open the Hub** — click the 🗺️ ribbon icon, switch to the relevant tab, and start learning.
 
+> 💬 **Using Claude Desktop?** No terminal required — paste one Setup Prompt and Claude connects to your vault automatically, loads the skills, and remembers the rules. Open the in-plugin Guide (❓ icon in the Hub) and copy the **Claude Desktop Setup Prompt** from the top of the guide. Claude Desktop also has built-in web search and can generate SVG diagrams alongside your content.
+
 > **Not a SaaS.** Skills are the execution logic that run inside the AI tool you already have. No extra account, no subscription, and AI is fully optional.
 
 ---
@@ -283,6 +285,8 @@ Anki 解決「何時複習」。EngramQuest 解決「如何真正記住」 — �
    ![安裝 Skills](assets/install-skills.png)
 3. **問你的 AI** — *「把 `Note.md` 變成 quest-map medium」* 或 *「用標 math 的筆記建一副 review deck。」*
 4. **打開 Hub** — 點 🗺️ ribbon 圖示，切到對應分頁，開始學習。
+
+> 💬 **用 Claude Desktop？** 不需要 terminal — 貼一段 Setup Prompt，Claude 自動連上你的 vault、載入 skills 並記住規則。開 plugin 的 Guide（Hub 的 ❓ 圖示），在指南最上方的「連接 AI 工具」區塊複製 **Claude Desktop Setup Prompt**。Claude Desktop 還有內建網路搜尋，可以生成 SVG 圖解。
 
 > **不是 SaaS。** Skills 是在你已有的 AI 工具裡執行的邏輯，不需要額外帳號、不需要訂閱，而且 AI 完全可選。
 

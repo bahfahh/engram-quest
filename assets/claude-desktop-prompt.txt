@@ -1,0 +1,150 @@
+You are about to install a set of rules that will help the user create high-quality EngramQuest content in their Obsidian vault. Walk through this as an interactive setup wizard. Do NOT skip ahead. Wait for the user's confirmation at each checkpoint.
+
+CRITICAL: For every question to the user in this wizard, use the `ask_user_input_v0` tool to present tappable options. Do NOT ask questions as plain text — always use the tool so the user can choose by tapping/clicking.
+
+═══════════════════════════════════════
+EngramQuest Setup Wizard
+═══════════════════════════════════════
+
+**Step 1 — Check ability to edit the user's Obsidian vault**
+
+Check whether you currently have any tool capable of reading and writing files in the user's Obsidian vault. This could be the official filesystem MCP, a third-party MCP, a desktop file integration, or any other method — what matters is the capability, not the specific tool.
+
+→ If you CANNOT edit the vault:
+   Tell the user:
+   "I don't currently have a way to read or write files in your Obsidian vault. To use these rules, you'll need to connect a tool that gives me access to your vault folder.
+   The most common option is the official filesystem MCP server:
+   https://github.com/modelcontextprotocol/servers/tree/main/src/filesystem
+   Other MCPs or integrations work too — anything that lets me read and write notes in your vault.
+   Once connected, paste this prompt again."
+   STOP. Do not proceed.
+
+→ If you CAN edit the vault:
+   Tell the user: "✓ I have access to your Obsidian vault."
+   Continue to Step 2.
+
+---
+
+**Step 2 — Scan for EngramQuest skills**
+
+Look for a `.claude/skills/` folder inside the user's vault. Scan for any subfolder whose name starts with `engram-quest-`. Do not hardcode a list — discover whatever exists.
+
+→ If NO `engram-quest-*` folders are found:
+   Tell the user:
+   "I couldn't find any EngramQuest skills in your vault. To install them:
+   1. Open Obsidian
+   2. Go to Settings → Community Plugins → EngramQuest
+   3. Scroll down to the AI Skills section
+   4. Click 'Install Skills'
+   Once installed, paste this prompt again."
+   STOP. Do not proceed.
+
+→ If `engram-quest-*` folders are found:
+   Read the `SKILL.md` file inside each folder to understand what that skill does.
+   Tell the user which skills were found (list their names).
+   Tell the user: "✓ EngramQuest skills loaded."
+   Continue to Step 3.
+
+---
+
+**Step 3 — Check for existing Obsidian-related memory**
+
+Search your existing memory for any entries related to Obsidian, note-taking, flashcards, or EngramQuest skills.
+
+→ If existing entries are found:
+   Show a brief summary of what already exists, then use `ask_user_input_v0`:
+   Question: "I found existing Obsidian-related rules in memory. How would you like to proceed?"
+   Options:
+     - "Append (only if existing rules cover different topics — may cause duplicates)"
+     - "Replace (recommended if existing rules cover similar topics)"
+     - "Cancel"
+   WAIT for selection.
+
+→ If no existing entries:
+   Tell the user: "No existing Obsidian rules found. I'll create a new memory entry."
+   Continue to Step 4.
+
+---
+
+**Step 4 — Choose optional modules**
+
+Use `ask_user_input_v0` to present two questions in a single call:
+
+  Question 1: "Allow SVG diagrams in cards (visual illustrations)?"
+  Options: ["Yes", "No"]
+
+  Question 2: "Allow Mermaid diagrams in cards (flowcharts, sequence diagrams, ER diagrams)?"
+  Options: ["Yes", "No"]
+
+WAIT for both answers. Record which modules the user enabled.
+
+---
+
+**Step 5 — Show the final ruleset and confirm**
+
+Show the user the rules you are about to save (as plain text, NOT through the tool). Include only the modules they enabled in Step 4.
+
+**[ALWAYS INCLUDE — Core rules]**
+
+```
+Rules for creating EngramQuest content in Obsidian notes
+
+When the user asks to create QA, flashcards, review deck, study cards, courses, quest maps, or any other learning content in their Obsidian notes:
+
+1. Only generate content when the user explicitly asks. Do not create cards or courses automatically.
+
+2. Before executing any EngramQuest content request, check which skills were loaded in Step 2 of this setup. Match the user's request to the most relevant skill and follow that skill's SKILL.md instructions.
+
+3. For flashcards and QA cards specifically:
+   - Do not split one question into multiple questions. Generate exactly the number of cards the user requests.
+   - The note must include a #flashcards/{topic} tag for the plugin to detect it. Before choosing a topic, check what tags other notes in the same folder use, and reuse an existing topic intelligently. Do not invent new topics arbitrarily.
+   - Always use the %%card%% format:
+
+     %%card%%
+     Q: Question content
+     A:
+     Answer content
+     %%card%%
+
+   %%card%% is the plugin's boundary marker. Anything between the markers will not be misparsed, no matter how long or what it contains. Answers can include tables, code blocks, long-form text, and embedded content. Do not limit yourself.
+```
+
+**[INCLUDE ONLY IF user said Yes to SVG]**
+
+```
+4. SVG diagrams in cards:
+   - Do NOT inline SVG code inside the card body — it renders unreliably in Reading Mode.
+   - Always save SVG as a standalone .svg file somewhere in the user's vault (ask the user where if uncertain).
+   - Embed the SVG in the card using ![[filename.svg]].
+   - Use hardcoded hex colors inside the SVG. Do not rely on external CSS classes.
+```
+
+**[INCLUDE ONLY IF user said Yes to Mermaid]**
+
+```
+5. Mermaid diagrams in cards:
+   - Embed directly inside the %%card%% block using a ```mermaid code fence.
+   - Use sequenceDiagram or flowchart for processes, graph for architecture, erDiagram for data models.
+   - Mermaid renders natively in Obsidian — no external file needed.
+```
+
+Then use `ask_user_input_v0`:
+  Question: "Save these rules to memory?"
+  Options: ["Yes, save", "No, cancel"]
+
+WAIT for reply. Do not save without an explicit "Yes, save".
+
+---
+
+**Step 6 — Save and confirm**
+
+Once the user confirms:
+- Save the rules to memory using the action chosen in Step 3 (Append / Replace / new entry).
+- Also save a memory entry listing which EngramQuest skills are available in this vault, so future requests can reference them without re-scanning.
+- Tell the user:
+  "✓ Setup complete.
+  Available skills: [list the skills found in Step 2]
+  You can now ask me to create flashcards, courses, quest maps, and more — I'll use the right skill automatically."
+
+If the user declined:
+  Tell them: "No changes made. You can paste this prompt again anytime."

@@ -49,6 +49,7 @@ var fe=class extends I.Modal{constructor(e,t){super(e),this.plugin=t}onClose(){v
       .lh-help.lh-dark .lh-help-sub { background:rgba(255,255,255,0.04); }
       .lh-help.lh-dark .lh-help-intro { background:linear-gradient(135deg,rgba(59,130,246,0.16),rgba(124,58,237,0.14)); }
       .lh-help.lh-dark .lh-help-intro p { color:var(--text-normal); }
+      .lh-help .modal-close-button { display:none !important; }
     `,a.id="lh-help-styles",activeDocument.head.appendChild(a);let o=r.createEl("div",{attr:{style:"flex:1;overflow-y:auto;padding:20px;font-size:14px;line-height:1.6"}}),i=o.createEl("div",{attr:{class:"lh-help-intro"}});i.innerHTML=t==="zh-tw"?`
       <p><strong>EngramQuest</strong> 把你的筆記變成完整學習閉環：<strong>學 → 練 → 記 → 連</strong>。每個模組可單獨用，也能串接。</p>
       <div class="lh-help-chips">
@@ -66,6 +67,84 @@ var fe=class extends I.Modal{constructor(e,t){super(e),this.plugin=t}onClose(){v
       </div>
       <p style="margin-top:10px;font-size:12.5px;line-height:1.6">👉 <strong>First step</strong>: No AI? Tag a note <code>#flashcards/topic</code> + one <code>Q:/A:</code> card. With AI? Install Skills in Settings → AI Skills, then talk to your AI. Each feature tab pops a visual guide the first time you open it.</p>
     `;
+    // AI Connect section — three tool tabs shown at the top of the guide
+    {
+      const _assetBase = this.plugin.manifest.dir;
+      const _adapter = this.app.vault.adapter;
+      const _aiSec = o.createEl("div", { attr: { style: `margin:0 0 16px;border:1px solid var(--background-modifier-border);border-radius:12px;overflow:hidden` } });
+      _aiSec.createEl("div", {
+        text: t === "zh-tw" ? "🤖 連接 AI 工具" : "🤖 Connect an AI Tool",
+        attr: { style: `padding:8px 14px;font-size:12px;font-weight:700;color:${_textMuted};background:${_bgSecondary};border-bottom:1px solid var(--background-modifier-border)` }
+      });
+      const _aiTabBar = _aiSec.createEl("div", { attr: { style: `display:flex;background:${_bgSecondary};border-bottom:1px solid var(--background-modifier-border)` } });
+      const _aiPanel = _aiSec.createEl("div", { attr: { style: `padding:12px 14px;background:${_bgCard}` } });
+      const _AI_TABS = [
+        { key: "desktop", zh: "💬 Claude Desktop", en: "💬 Claude Desktop" },
+        { key: "code", zh: "⌨️ Claude Code", en: "⌨️ Claude Code" },
+        { key: "codex", zh: "📦 Codex App", en: "📦 Codex App" },
+      ];
+      const _AI_HTML = {
+        desktop: {
+          zh: `<p style="margin:0 0 8px;font-size:13px;line-height:1.6;color:${_textNormal}">不需要 terminal。貼一段 Setup Prompt，Claude Desktop 自動連上 vault 並載入 EngramQuest skills。內建網路搜尋，可生成 SVG 圖解和 Mermaid 圖表。</p><ol style="margin:0 0 10px 18px;font-size:13px;line-height:1.8;color:${_textNormal}"><li>安裝 <strong>Filesystem MCP</strong>（讓 Claude Desktop 讀寫你的 vault）</li><li>Obsidian：<strong>設定 → EngramQuest → AI Skills → 安裝</strong></li><li>複製下方 Prompt，貼入 Claude Desktop，跟著精靈走一次（約 2 分鐘）</li><li>完成後就可以開始建立內容，例如：<br>「把微積分筆記做成課程」<br>「把 math 筆記建成 Review Deck」<br>「把這篇 .md 做成 quest-map medium」</li></ol>`,
+          en: `<p style="margin:0 0 8px;font-size:13px;line-height:1.6;color:${_textNormal}">No terminal needed. Paste one Setup Prompt — Claude Desktop connects to your vault, loads EngramQuest skills, and remembers the rules. Built-in web search, generates SVG diagrams and Mermaid charts.</p><ol style="margin:0 0 10px 18px;font-size:13px;line-height:1.8;color:${_textNormal}"><li>Install <strong>Filesystem MCP</strong> so Claude Desktop can read your vault</li><li>In Obsidian: <strong>Settings → EngramQuest → AI Skills → Install</strong></li><li>Copy the Setup Prompt below, paste into Claude Desktop, follow the wizard once (~2 min)</li><li>Now build content, e.g.:<br>"Build a course from my calculus notes"<br>"Make a Review Deck from math notes"<br>"Turn this note into a quest-map medium"</li></ol>`,
+        },
+        code: {
+          zh: `<p style="margin:0 0 8px;font-size:13px;line-height:1.6;color:${_textNormal}">從 vault 根目錄開啟 Claude Code，skills 放在 <code>.claude/skills/</code>，直接用自然語言說要做什麼。</p><ol style="margin:0 0 10px 18px;font-size:13px;line-height:1.8;color:${_textNormal}"><li>Obsidian：<strong>設定 → EngramQuest → AI Skills</strong> → 選 <strong>Claude Code</strong> → 安裝</li><li>Terminal 在 vault 根目錄執行：<code>claude</code></li><li>現在就可以開始建立內容，例如：<br>「把 math 筆記做成 Review Deck」<br>「建一套 TypeScript 課程」<br>「把微積分.md 做成 quest-map medium」</li></ol>`,
+          en: `<p style="margin:0 0 8px;font-size:13px;line-height:1.6;color:${_textNormal}">Open Claude Code from your vault root. Skills live in <code>.claude/skills/</code> — just talk naturally.</p><ol style="margin:0 0 10px 18px;font-size:13px;line-height:1.8;color:${_textNormal}"><li>In Obsidian: <strong>Settings → EngramQuest → AI Skills</strong> → select <strong>Claude Code</strong> → Install</li><li>Run <code>claude</code> in a terminal at your vault root</li><li>Now build content, e.g.:<br>"Build a Review Deck from my math notes"<br>"Create a TypeScript course"<br>"Turn calculus.md into a quest-map medium"</li></ol>`,
+        },
+        codex: {
+          zh: `<p style="margin:0 0 8px;font-size:13px;line-height:1.6;color:${_textNormal}">Codex / Antigravity 與 Claude Code 原理相同，安裝 skills 時選對應的工具即可。</p><ol style="margin:0 0 10px 18px;font-size:13px;line-height:1.8;color:${_textNormal}"><li>Obsidian：<strong>設定 → EngramQuest → AI Skills</strong> → 選 <strong>Codex / Antigravity</strong> → 安裝</li><li>從 vault 根目錄開啟 Codex / Antigravity App</li><li>現在就可以開始建立內容，例如：<br>「把 math 筆記做成 Review Deck」<br>「建一套 TypeScript 課程」<br>「把這篇 .md 做成 quest-map medium」</li></ol>`,
+          en: `<p style="margin:0 0 8px;font-size:13px;line-height:1.6;color:${_textNormal}">Codex / Antigravity works the same as Claude Code — just pick the right tool when installing skills.</p><ol style="margin:0 0 10px 18px;font-size:13px;line-height:1.8;color:${_textNormal}"><li>In Obsidian: <strong>Settings → EngramQuest → AI Skills</strong> → select <strong>Codex / Antigravity</strong> → Install</li><li>Open Codex / Antigravity App from your vault root</li><li>Now build content, e.g.:<br>"Build a Review Deck from my math notes"<br>"Create a TypeScript course"<br>"Turn this note into a quest-map medium"</li></ol>`,
+        }
+      };
+      const _showAiTab = (key) => {
+        const lang = t === "zh-tw" ? "zh" : "en";
+        let html = _AI_HTML[key][lang];
+        if (key === "desktop") {
+          const btnLabel = t === "zh-tw" ? "📋 複製 Setup Prompt" : "📋 Copy Setup Prompt";
+          const btnCopied = t === "zh-tw" ? "✓ 已複製！" : "✓ Copied!";
+          html += `<button id="eq-copy-cdprompt" style="display:block;width:100%;margin-top:4px;padding:9px 16px;background:${_isDark ? "#4f46e5" : "#6366f1"};color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer">${btnLabel}</button>`;
+          _aiPanel.innerHTML = html;
+          _aiPanel.querySelector("#eq-copy-cdprompt")?.addEventListener("click", async function() {
+            try {
+              const url = _adapter.getResourcePath(I.normalizePath(`${_assetBase}/assets/claude-desktop-prompt.txt`));
+              const resp = await fetch(url);
+              const text = await resp.text();
+              await navigator.clipboard.writeText(text);
+              this.textContent = btnCopied;
+              setTimeout(() => { this.textContent = btnLabel; }, 2000);
+            } catch(e) {
+              this.textContent = t === "zh-tw" ? "請手動複製 Prompt" : "Copy failed — copy manually";
+            }
+          });
+        } else {
+          _aiPanel.innerHTML = html;
+        }
+        _aiTabBar.querySelectorAll(".eq-ai-tab-btn").forEach(b => {
+          b.style.borderBottomColor = "transparent";
+          b.style.color = _textMuted;
+          b.style.fontWeight = "500";
+        });
+        const activeBtn = _aiTabBar.querySelector(`[data-aitab="${key}"]`);
+        if (activeBtn) {
+          activeBtn.style.borderBottomColor = _isDark ? "#818cf8" : "#6366f1";
+          activeBtn.style.color = _isDark ? "#c7d2fe" : "#4f46e5";
+          activeBtn.style.fontWeight = "700";
+        }
+      };
+      _AI_TABS.forEach((tool, idx) => {
+        const btn = _aiTabBar.createEl("button", {
+          attr: {
+            class: "eq-ai-tab-btn",
+            "data-aitab": tool.key,
+            style: `flex:1;padding:8px 4px;font-size:12px;font-weight:${idx === 0 ? "700" : "500"};border:none;border-bottom:2px solid ${idx === 0 ? (_isDark ? "#818cf8" : "#6366f1") : "transparent"};cursor:pointer;background:transparent;color:${idx === 0 ? (_isDark ? "#c7d2fe" : "#4f46e5") : _textMuted};transition:color 0.15s`
+          }
+        });
+        btn.textContent = t === "zh-tw" ? tool.zh : tool.en;
+        btn.addEventListener("click", () => _showAiTab(tool.key));
+      });
+      _showAiTab("desktop");
+    }
     // Concept-image hero + feature cards that deep-link into each per-feature guide (hybrid global guide).
     let _cimg = this.app.vault.adapter.getResourcePath(I.normalizePath(`${this.plugin.manifest.dir}/assets/guide/整體概念_${t === "zh-tw" ? "中文" : "英文"}.webp`));
     let _hero = o.createEl("div", { attr: { style: `position:relative;margin:0 0 16px;border-radius:12px;overflow:hidden;border:1px solid var(--background-modifier-border);cursor:zoom-in;background:${_bgSecondary}` } });
