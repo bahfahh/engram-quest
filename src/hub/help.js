@@ -112,7 +112,7 @@ var fe=class extends I.Modal{constructor(e,t){super(e),this.plugin=t}onClose(){v
               const text = await resp.text();
               await navigator.clipboard.writeText(text);
               this.textContent = btnCopied;
-              setTimeout(() => { this.textContent = btnLabel; }, 2000);
+              window.setTimeout(() => { this.textContent = btnLabel; }, 2000);
             } catch(e) {
               this.textContent = t === "zh-tw" ? "請手動複製 Prompt" : "Copy failed — copy manually";
             }
