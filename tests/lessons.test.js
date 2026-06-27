@@ -13,6 +13,7 @@ import {
   createCourse,
   addPlannedLesson,
   toggleCourseStar,
+  toggleCourseArchive,
   safeSlugPart,
   extractHtmlTitle,
   importLesson,
@@ -95,6 +96,7 @@ describe("normalizeMeta", () => {
     expect(meta.lessons[1].file).toBe(null);
     expect(meta.icon).toBe("📘");
     expect(meta.tags).toEqual([]);
+    expect(meta.archived).toBe(false);
     expect(meta.completion).toEqual({});
   });
 
@@ -194,6 +196,7 @@ describe("createCourse / addPlannedLesson", () => {
       outline: ["HTTP", "", "REST API"],
     });
     expect(slug).toBe("backend-basics");
+    expect(meta.archived).toBe(false);
     expect(meta.lessons).toHaveLength(2); // blank line skipped
     expect(meta.lessons.every((l) => l.file === null)).toBe(true);
     expect(Object.keys(meta.completion)).toHaveLength(2);
@@ -215,6 +218,28 @@ describe("createCourse / addPlannedLesson", () => {
     expect(meta.lessons).toHaveLength(3);
     expect(meta.lessons[2].title).toBe("New topic");
     expect(meta.completion[lesson.id]).toEqual({ viewed: false, completed: false, starred: false });
+  });
+});
+
+describe("toggleCourseArchive", () => {
+  it("archives and unarchives a course without removing its files", async () => {
+    const adapter = makeAdapter({
+      ...seedCourse("c", courseMeta()),
+      [`${LESSONS_DIR}/c/lsn-1-a.html`]: "<html>1</html>",
+    });
+    expect(await toggleCourseArchive(adapter, "c")).toBe(true);
+    let meta = await loadCourse(adapter, "c");
+    expect(meta.archived).toBe(true);
+    expect(adapter.files[`${LESSONS_DIR}/c/lsn-1-a.html`]).toBe("<html>1</html>");
+
+    expect(await toggleCourseArchive(adapter, "c")).toBe(false);
+    meta = await loadCourse(adapter, "c");
+    expect(meta.archived).toBe(false);
+  });
+
+  it("returns null for a missing course", async () => {
+    const adapter = makeAdapter();
+    expect(await toggleCourseArchive(adapter, "missing")).toBe(null);
   });
 });
 

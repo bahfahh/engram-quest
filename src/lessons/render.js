@@ -10,7 +10,7 @@ const I = require("obsidian");
 const { t: c, interpolate: K } = require("../i18n");
 const {
   listCourses, lessonCompletion, lessonStatus, courseProgress,
-  toggleCourseStar, importLesson, deleteLesson, deleteCourse,
+  toggleCourseStar, toggleCourseArchive, importLesson, deleteLesson, deleteCourse,
   createCourse, addPlannedLesson,
   recentLessons, overallStats,
 } = require("./data");
@@ -124,11 +124,16 @@ async function renderLessonTab(content, hub) {
       courseTag: saved.tag || "all",
       courseProg: saved.prog || "all",
       courseSort: saved.sort || "recent",
+      courseScope: saved.scope || "active",
     };
   }
   const state = hub._lessonState;
-  if (!courses.some((cs) => cs.slug === state.slug)) {
-    state.slug = courses.length ? courses[0].slug : null;
+  if (state.courseScope === "archived" && !courses.some((cs) => cs.meta.archived)) {
+    state.courseScope = "active";
+  }
+  const scopedCourses = courses.filter((cs) => matchesCourseScope(cs.meta, state.courseScope));
+  if (!scopedCourses.some((cs) => cs.slug === state.slug)) {
+    state.slug = scopedCourses.length ? scopedCourses[0].slug : null;
   }
 
   const refresh = () => { content.empty(); renderLessonTab(content, hub); };
@@ -160,19 +165,19 @@ async function renderLessonTab(content, hub) {
     });
   }
 
-  renderHeader(main, hub, t, tk, courses, state, refresh);
+  renderHeader(main, hub, t, tk, scopedCourses, state, refresh);
   renderCourseCards(main, hub, t, tk, dark, courses, state, refresh);
   // Only show the lesson list for a course whose card is actually visible under the current
   // search + tag filter. Expanded mode is a pure course picker — the grid gets the full height
   // and the lesson list stays hidden until a card is clicked (which auto-collapses).
-  const selected = courses.find(
+  const selected = scopedCourses.find(
     (cs) => cs.slug === state.slug &&
       matchesCourseQuery(cs.meta, state.courseQuery) &&
       matchesCourseTag(cs.meta, state.courseTag) &&
       matchesCourseProg(cs.meta, state.courseProg)
   );
   if (selected && !state.expanded) renderLessonList(main, hub, t, tk, selected, state, refresh);
-  if (sidebar) renderSidebar(sidebar, hub, t, tk, courses, refresh);
+  if (sidebar) renderSidebar(sidebar, hub, t, tk, scopedCourses, refresh);
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -312,10 +317,14 @@ function matchesCourseProg(meta, courseProg) {
   return courseProgBucket(meta) === courseProg;
 }
 
+function matchesCourseScope(meta, courseScope) {
+  return courseScope === "archived" ? !!meta.archived : !meta.archived;
+}
+
 /** Persist the course filter/sort picks (settings._lessonCourseView) so they survive reopen. */
 async function saveCourseView(hub, state) {
   hub.plugin.settings._lessonCourseView = {
-    tag: state.courseTag, prog: state.courseProg, sort: state.courseSort,
+    tag: state.courseTag, prog: state.courseProg, sort: state.courseSort, scope: state.courseScope,
   };
   try { await hub.plugin.saveData(hub.plugin.settings); }
   catch (e) { console.warn("EngramQuest: save course view failed", e); }
@@ -323,8 +332,14 @@ async function saveCourseView(hub, state) {
 
 // Always-visible filter/sort row above the course cards: 類別 | 進度 | 排序 dropdowns.
 function renderCourseFilterRow(main, hub, t, tk, courses, state, refresh) {
+  const archivedCount = courses.filter(({ meta }) => meta.archived).length;
+  if (state.courseScope === "archived" && archivedCount === 0) {
+    state.courseScope = "active";
+    saveCourseView(hub, state);
+  }
+  const scopedCourses = courses.filter(({ meta }) => matchesCourseScope(meta, state.courseScope));
   const counts = new Map();
-  for (const { meta } of courses) {
+  for (const { meta } of scopedCourses) {
     for (const tag of meta.tags) counts.set(tag, (counts.get(tag) || 0) + 1);
   }
   const tags = [...counts.keys()].sort((a, b) => counts.get(b) - counts.get(a));
@@ -359,6 +374,22 @@ function renderCourseFilterRow(main, hub, t, tk, courses, state, refresh) {
     });
   };
 
+  if (archivedCount > 0 || state.courseScope === "archived") {
+    mkSelect(
+      [
+        { id: "active", label: c(t, "LESSON_SCOPE_ACTIVE") },
+        { id: "archived", label: c(t, "LESSON_SCOPE_ARCHIVED") },
+      ],
+      state.courseScope, state.courseScope === "active",
+      (v) => {
+        state.courseScope = v;
+        state.courseTag = "all";
+        state.courseProg = "all";
+        state.slug = null;
+      }
+    );
+  }
+
   mkSelect(
     [
       { id: "all", label: c(t, "LESSON_CFILTER_TAG_ALL") },
@@ -392,7 +423,8 @@ function renderCourseFilterRow(main, hub, t, tk, courses, state, refresh) {
 function renderCourseCards(main, hub, t, tk, dark, courses, state, refresh) {
   // Also shown below 2 courses whenever a filter is active — a persisted filter must never be
   // in effect while its only escape control is hidden.
-  if (courses.length >= 2 || state.courseTag !== "all" || state.courseProg !== "all") {
+  const scopedCourses = courses.filter(({ meta }) => matchesCourseScope(meta, state.courseScope));
+  if (courses.length >= 2 || state.courseTag !== "all" || state.courseProg !== "all" || courses.some(({ meta }) => meta.archived)) {
     renderCourseFilterRow(main, hub, t, tk, courses, state, refresh);
   }
 
@@ -406,7 +438,7 @@ function renderCourseCards(main, hub, t, tk, dark, courses, state, refresh) {
 
   // Sort means exactly what the selected control says. Starred is still available as a filter
   // and card marker, but it should not silently push newly-created courses behind old favorites.
-  const recency = new Map(courses.map(({ slug, meta }) => [slug, courseRecency(meta)]));
+  const recency = new Map(scopedCourses.map(({ slug, meta }) => [slug, courseRecency(meta)]));
   const sortFns = {
     recent: (a, b) =>
       recency.get(b.slug).localeCompare(recency.get(a.slug)) ||
@@ -415,7 +447,7 @@ function renderCourseCards(main, hub, t, tk, dark, courses, state, refresh) {
     progress: (a, b) => courseProgress(b.meta).pct - courseProgress(a.meta).pct,
   };
   const sortFn = sortFns[state.courseSort] || sortFns.recent;
-  const visibleCourses = courses
+  const visibleCourses = scopedCourses
     .filter(({ meta }) =>
       matchesCourseQuery(meta, state.courseQuery) &&
       matchesCourseTag(meta, state.courseTag) &&
@@ -427,9 +459,9 @@ function renderCourseCards(main, hub, t, tk, dark, courses, state, refresh) {
     state.slug = visibleCourses[0].slug;
   }
 
-  if (visibleCourses.length === 0 && (state.courseQuery || state.courseTag !== "all" || state.courseProg !== "all")) {
+  if (visibleCourses.length === 0) {
     strip.createEl("div", {
-      text: "—",
+      text: state.courseScope === "archived" ? c(t, "LESSON_ARCHIVE_EMPTY") : "—",
       attr: { style: `padding:24px;color:${tk.faint};font-size:13px;` },
     });
   }
@@ -487,6 +519,13 @@ function renderCourseCards(main, hub, t, tk, dark, courses, state, refresh) {
       try { await toggleCourseStar(hub.app.vault.adapter, slug); refresh(); }
       catch (err) { console.error("EngramQuest: course star failed", err); }
     });
+
+    if (meta.archived) {
+      card.createEl("span", {
+        text: c(t, "LESSON_ARCHIVED_BADGE"),
+        attr: { style: `align-self:flex-start;font-size:9px;padding:2px 7px;border-radius:10px;background:${tk.pillIdleBg};color:${tk.pillIdleText};` },
+      });
+    }
 
     if (meta.tags.length) {
       const tagRow = card.createEl("div", { attr: { style: "display:flex;gap:4px;flex-wrap:wrap;" } });
@@ -621,6 +660,26 @@ function renderLessonList(main, hub, t, tk, course, state, refresh) {
     attr: { style: `font-size:11px;padding:4px 10px;border-radius:8px;border:1px solid ${tk.border};background:transparent;color:${tk.muted};cursor:pointer;` },
   });
   importBtn.addEventListener("click", () => pickAndImportHtml(hub, t, slug, refresh));
+
+  const archiveBtn = head.createEl("button", {
+    text: meta.archived ? c(t, "LESSON_UNARCHIVE") : c(t, "LESSON_ARCHIVE"),
+    attr: {
+      style: `font-size:11px;padding:4px 10px;border-radius:8px;border:1px solid ${tk.border};background:transparent;color:${tk.muted};cursor:pointer;`,
+      title: meta.archived ? c(t, "LESSON_UNARCHIVE_HINT") : c(t, "LESSON_ARCHIVE_HINT"),
+    },
+  });
+  archiveBtn.addEventListener("click", async () => {
+    try {
+      const archived = await toggleCourseArchive(adapter, slug);
+      new I.Notice(archived
+        ? K(c(t, "LESSON_ARCHIVED_NOTICE"), { course: meta.title })
+        : K(c(t, "LESSON_UNARCHIVED_NOTICE"), { course: meta.title }));
+    } catch (e) {
+      console.error("EngramQuest: course archive failed", e);
+      new I.Notice(c(t, "LESSON_ARCHIVE_FAILED"));
+    }
+    refresh();
+  });
 
   // Course delete (trash icon at far right of the header)
   const delCourse = head.createEl("button", {

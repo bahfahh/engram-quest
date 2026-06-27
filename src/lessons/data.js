@@ -29,6 +29,7 @@ function normalizeMeta(meta) {
     tags: Array.isArray(meta.tags) ? meta.tags.map(String) : [],
     colorScheme: String(meta.colorScheme || ""),
     starred: !!meta.starred,
+    archived: !!meta.archived,
     createdAt: meta.createdAt || null,
     lessons: Array.isArray(meta.lessons)
       ? meta.lessons.filter((l) => l && l.id).map((l) => ({
@@ -149,6 +150,7 @@ async function createCourse(adapter, { title, description = "", icon = "📘", o
     tags: [],
     colorScheme: SCHEME_NAMES[Math.abs(hashStr(slug)) % SCHEME_NAMES.length],
     starred: false,
+    archived: false,
     createdAt: now.toISOString().slice(0, 10),
     lessons: [],
     completion: {},
@@ -191,6 +193,15 @@ async function toggleCourseStar(adapter, slug) {
   meta.starred = !meta.starred;
   await saveCourse(adapter, slug, meta);
   return meta.starred;
+}
+
+/** Toggle course-level archive. Archived courses stay on disk and remain readable by skills. */
+async function toggleCourseArchive(adapter, slug) {
+  const meta = await loadCourse(adapter, slug);
+  if (!meta) return null;
+  meta.archived = !meta.archived;
+  await saveCourse(adapter, slug, meta);
+  return meta.archived;
 }
 
 /** Keep slugs filesystem- and vault-path-safe; non-latin titles collapse to the fallback. */
@@ -367,6 +378,7 @@ module.exports = {
   createCourse,
   addPlannedLesson,
   toggleCourseStar,
+  toggleCourseArchive,
   safeSlugPart,
   extractHtmlTitle,
   importLesson,
