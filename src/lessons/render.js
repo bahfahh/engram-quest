@@ -126,10 +126,15 @@ async function renderLessonTab(content, hub) {
   const layout = scroll.createEl("div", {
     attr: { style: "display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap;" },
   });
-  const main = layout.createEl("div", { attr: { style: "flex:1;min-width:320px;" } });
-  const sidebar = layout.createEl("div", {
-    attr: { style: `width:210px;flex-shrink:0;background:${tk.panel};border:1px solid ${tk.border};border-radius:14px;padding:16px;` },
+  const main = layout.createEl("div", {
+    attr: { style: state.expanded ? "width:100%;min-width:0;" : "flex:1 1 0;min-width:360px;" },
   });
+  let sidebar = null;
+  if (!state.expanded) {
+    sidebar = layout.createEl("div", {
+      attr: { style: `width:210px;flex-shrink:0;background:${tk.panel};border:1px solid ${tk.border};border-radius:14px;padding:16px;` },
+    });
+  }
 
   renderHeader(main, hub, t, tk, courses, state, refresh);
   renderCourseCards(main, hub, t, tk, dark, courses, state, refresh);
@@ -143,7 +148,7 @@ async function renderLessonTab(content, hub) {
       matchesCourseProg(cs.meta, state.courseProg)
   );
   if (selected && !state.expanded) renderLessonList(main, hub, t, tk, selected, state, refresh);
-  renderSidebar(sidebar, hub, t, tk, courses, refresh);
+  if (sidebar) renderSidebar(sidebar, hub, t, tk, courses, refresh);
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -369,9 +374,9 @@ function renderCourseCards(main, hub, t, tk, dark, courses, state, refresh) {
 
   const strip = main.createEl("div", {
     attr: {
-      style:
-        "display:flex;gap:12px;padding:4px 2px 12px;" +
-        (state.expanded ? "flex-wrap:wrap;" : "overflow-x:auto;"),
+      style: state.expanded
+        ? "display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px;align-items:stretch;padding:4px 2px 12px;"
+        : "display:flex;gap:12px;padding:4px 2px 12px;overflow-x:auto;",
     },
   });
 
@@ -411,7 +416,7 @@ function renderCourseCards(main, hub, t, tk, dark, courses, state, refresh) {
     const card = strip.createEl("div", {
       attr: {
         style:
-          `flex-shrink:0;width:200px;border-radius:14px;padding:14px;cursor:pointer;background:${sc.bg};` +
+          `${state.expanded ? "min-width:0;" : "flex-shrink:0;width:240px;"}border-radius:14px;padding:14px;cursor:pointer;background:${sc.bg};` +
           `border:1px solid ${isActive ? sc.edge : tk.border};` +
           (isActive ? `box-shadow:0 0 0 1px ${sc.edge},0 4px 18px ${sc.edge}33;` : "") +
           "display:flex;flex-direction:column;gap:8px;transition:box-shadow .15s;",
@@ -433,7 +438,12 @@ function renderCourseCards(main, hub, t, tk, dark, courses, state, refresh) {
     const titleCol = top.createEl("div", { attr: { style: "flex:1;min-width:0;" } });
     titleCol.createEl("div", {
       text: meta.title,
-      attr: { style: `font-size:14px;font-weight:700;color:${tk.text};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;`, title: meta.title },
+      attr: {
+        style:
+          `min-height:36px;font-size:14px;font-weight:700;line-height:1.25;color:${tk.text};overflow:hidden;` +
+          "display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;word-break:break-word;",
+        title: meta.title,
+      },
     });
     titleCol.createEl("div", {
       text: K(c(t, "LESSON_COURSE_DONE"), { completed: prog.completed, total: prog.total }),
@@ -545,12 +555,12 @@ function renderLessonList(main, hub, t, tk, course, state, refresh) {
     attr: { style: "display:flex;align-items:center;gap:8px;margin:6px 0 10px;flex-wrap:wrap;" },
   });
   head.createEl("span", { text: "📖", attr: { style: "font-size:15px;" } });
-  // nowrap+ellipsis: on narrow (mobile) widths the shrink-proof pills/buttons in this row would
-  // otherwise squeeze the title into one-character-per-line vertical CJK text.
   head.createEl("span", {
     text: K(c(t, "LESSON_CONTENT_OF"), { course: meta.title }),
     attr: {
-      style: `flex:1;min-width:0;font-size:14px;font-weight:700;color:${tk.text};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;`,
+      style:
+        `flex:1 1 220px;min-width:220px;font-size:14px;font-weight:700;line-height:1.35;color:${tk.text};overflow:hidden;` +
+        "display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;word-break:break-word;",
       title: meta.title,
     },
   });
@@ -650,7 +660,12 @@ function renderLessonList(main, hub, t, tk, course, state, refresh) {
     const titleRow = mid.createEl("div", { attr: { style: "display:flex;align-items:center;gap:6px;" } });
     titleRow.createEl("span", {
       text: lesson.title,
-      attr: { style: `font-size:13px;font-weight:600;color:${tk.text};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;` },
+      attr: {
+        style:
+          `flex:1;min-width:0;font-size:13px;font-weight:600;line-height:1.35;color:${tk.text};overflow:hidden;` +
+          "display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;word-break:break-word;",
+        title: lesson.title,
+      },
     });
     if (lesson.source === "import") {
       titleRow.createEl("span", {
