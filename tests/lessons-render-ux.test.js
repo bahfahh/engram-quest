@@ -43,6 +43,14 @@ describe("Lesson Academy render UX", () => {
     expect(src).toContain("renderSidebar(sidebar, hub, t, tk, scopedCourses, refresh)");
   });
 
+  it("places the archive scope after the primary tag, progress, and sort controls", () => {
+    const src = source();
+
+    expect(src.indexOf('LESSON_CFILTER_TAG_ALL')).toBeLessThan(src.indexOf('LESSON_SCOPE_ACTIVE'));
+    expect(src.indexOf('LESSON_CFILTER_PROG_ALL')).toBeLessThan(src.indexOf('LESSON_SCOPE_ACTIVE'));
+    expect(src.indexOf('LESSON_CSORT_RECENT')).toBeLessThan(src.indexOf('LESSON_SCOPE_ACTIVE'));
+  });
+
   it("offers archive and unarchive actions without using the delete flow", () => {
     const src = source();
 

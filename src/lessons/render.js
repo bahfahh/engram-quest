@@ -374,22 +374,6 @@ function renderCourseFilterRow(main, hub, t, tk, courses, state, refresh) {
     });
   };
 
-  if (archivedCount > 0 || state.courseScope === "archived") {
-    mkSelect(
-      [
-        { id: "active", label: c(t, "LESSON_SCOPE_ACTIVE") },
-        { id: "archived", label: c(t, "LESSON_SCOPE_ARCHIVED") },
-      ],
-      state.courseScope, state.courseScope === "active",
-      (v) => {
-        state.courseScope = v;
-        state.courseTag = "all";
-        state.courseProg = "all";
-        state.slug = null;
-      }
-    );
-  }
-
   mkSelect(
     [
       { id: "all", label: c(t, "LESSON_CFILTER_TAG_ALL") },
@@ -418,6 +402,21 @@ function renderCourseFilterRow(main, hub, t, tk, courses, state, refresh) {
     state.courseSort, state.courseSort === "recent",
     (v) => { state.courseSort = v; }
   );
+  if (archivedCount > 0 || state.courseScope === "archived") {
+    mkSelect(
+      [
+        { id: "active", label: c(t, "LESSON_SCOPE_ACTIVE") },
+        { id: "archived", label: c(t, "LESSON_SCOPE_ARCHIVED") },
+      ],
+      state.courseScope, state.courseScope === "active",
+      (v) => {
+        state.courseScope = v;
+        state.courseTag = "all";
+        state.courseProg = "all";
+        state.slug = null;
+      }
+    );
+  }
 }
 
 function renderCourseCards(main, hub, t, tk, dark, courses, state, refresh) {
