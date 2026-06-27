@@ -18,4 +18,19 @@ describe("Lesson Academy render UX", () => {
     expect(src).toContain("grid-template-columns:repeat(auto-fill,minmax(240px,1fr))");
     expect(src).not.toContain("width:200px");
   });
+
+  it("keeps course sorting faithful to the selected sort mode", () => {
+    const src = source();
+
+    expect(src).toContain(".sort(sortFn)");
+    expect(src).not.toContain("Number(!!b.meta.starred) - Number(!!a.meta.starred)");
+  });
+
+  it("adds stronger deterministic visual identity to course cards", () => {
+    const src = source();
+
+    expect(src).toContain("function cardBackground");
+    expect(src).toContain("background:${cardBackground(slug, sc, dark)}");
+    expect(src).toContain("width:42px;height:42px");
+  });
 });

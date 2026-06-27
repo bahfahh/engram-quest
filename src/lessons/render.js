@@ -24,19 +24,43 @@ const SCHEMES = {
   amber:  { dark: { bg: "#1c1710", icon: "#92400e", bar: "#f59e0b", edge: "#f59e0b" }, light: { bg: "#fffbeb", icon: "#d97706", bar: "#f59e0b", edge: "#d97706" } },
   rose:   { dark: { bg: "#1f0d10", icon: "#9f1239", bar: "#f43f5e", edge: "#f43f5e" }, light: { bg: "#fff1f2", icon: "#e11d48", bar: "#f43f5e", edge: "#e11d48" } },
   cyan:   { dark: { bg: "#0a1a1f", icon: "#164e63", bar: "#06b6d4", edge: "#06b6d4" }, light: { bg: "#ecfeff", icon: "#0891b2", bar: "#06b6d4", edge: "#0891b2" } },
+  violet: { dark: { bg: "#1b1430", icon: "#6d28d9", bar: "#8b5cf6", edge: "#8b5cf6" }, light: { bg: "#f5f3ff", icon: "#7c3aed", bar: "#8b5cf6", edge: "#7c3aed" } },
+  blue:   { dark: { bg: "#0b1a31", icon: "#1d4ed8", bar: "#3b82f6", edge: "#3b82f6" }, light: { bg: "#eff6ff", icon: "#2563eb", bar: "#3b82f6", edge: "#2563eb" } },
+  teal:   { dark: { bg: "#08201f", icon: "#0f766e", bar: "#14b8a6", edge: "#14b8a6" }, light: { bg: "#f0fdfa", icon: "#0f766e", bar: "#14b8a6", edge: "#0f766e" } },
+  lime:   { dark: { bg: "#17200b", icon: "#4d7c0f", bar: "#84cc16", edge: "#84cc16" }, light: { bg: "#f7fee7", icon: "#65a30d", bar: "#84cc16", edge: "#65a30d" } },
+  orange: { dark: { bg: "#241209", icon: "#c2410c", bar: "#f97316", edge: "#f97316" }, light: { bg: "#fff7ed", icon: "#ea580c", bar: "#f97316", edge: "#ea580c" } },
+  fuchsia:{ dark: { bg: "#240f24", icon: "#a21caf", bar: "#d946ef", edge: "#d946ef" }, light: { bg: "#fdf4ff", icon: "#c026d3", bar: "#d946ef", edge: "#c026d3" } },
+  slate:  { dark: { bg: "#111827", icon: "#334155", bar: "#94a3b8", edge: "#94a3b8" }, light: { bg: "#f8fafc", icon: "#475569", bar: "#64748b", edge: "#475569" } },
 };
 const SCHEME_KEYS = Object.keys(SCHEMES);
+
+function hashStr(str) {
+  let h = 0;
+  for (let i = 0; i < str.length; i++) h = (h * 31 + str.charCodeAt(i)) | 0;
+  return Math.abs(h);
+}
 
 function schemeFor(slug, meta, dark) {
   let key = meta.colorScheme;
   if (!SCHEMES[key]) {
     // Same hash formula as data.js createCourse so a missing colorScheme resolves to the same
     // scheme everywhere.
-    let h = 0;
-    for (let i = 0; i < slug.length; i++) h = (h * 31 + slug.charCodeAt(i)) | 0;
-    key = SCHEME_KEYS[Math.abs(h) % SCHEME_KEYS.length];
+    key = SCHEME_KEYS[hashStr(slug) % SCHEME_KEYS.length];
   }
   return SCHEMES[key][dark ? "dark" : "light"];
+}
+
+function cardBackground(slug, sc, dark) {
+  const seed = hashStr(slug);
+  const x = 18 + (seed % 64);
+  const y = 14 + ((seed >> 3) % 58);
+  const angle = 120 + (seed % 90);
+  const glow = dark ? "22" : "18";
+  return [
+    `radial-gradient(circle at ${x}% ${y}%, ${sc.edge}${glow} 0, transparent 34%)`,
+    `linear-gradient(${angle}deg, ${sc.bg} 0%, ${sc.bg} 68%, ${sc.icon}${dark ? "38" : "20"} 100%)`,
+    sc.bg,
+  ].join(",");
 }
 
 function isDarkMode() {
@@ -380,10 +404,13 @@ function renderCourseCards(main, hub, t, tk, dark, courses, state, refresh) {
     },
   });
 
-  // Starred courses always lead; within that, the persisted sort pick decides the order.
+  // Sort means exactly what the selected control says. Starred is still available as a filter
+  // and card marker, but it should not silently push newly-created courses behind old favorites.
   const recency = new Map(courses.map(({ slug, meta }) => [slug, courseRecency(meta)]));
   const sortFns = {
-    recent: (a, b) => recency.get(b.slug).localeCompare(recency.get(a.slug)),
+    recent: (a, b) =>
+      recency.get(b.slug).localeCompare(recency.get(a.slug)) ||
+      String(b.meta.createdAt || "").localeCompare(String(a.meta.createdAt || "")),
     created: (a, b) => String(b.meta.createdAt || "").localeCompare(String(a.meta.createdAt || "")),
     progress: (a, b) => courseProgress(b.meta).pct - courseProgress(a.meta).pct,
   };
@@ -393,9 +420,7 @@ function renderCourseCards(main, hub, t, tk, dark, courses, state, refresh) {
       matchesCourseQuery(meta, state.courseQuery) &&
       matchesCourseTag(meta, state.courseTag) &&
       matchesCourseProg(meta, state.courseProg))
-    .sort((a, b) =>
-      (Number(!!b.meta.starred) - Number(!!a.meta.starred)) || sortFn(a, b)
-    );
+    .sort(sortFn);
   // If the search hides the selected course, follow the first match so the lesson list below
   // always corresponds to a visible card.
   if (visibleCourses.length && !visibleCourses.some((cs) => cs.slug === state.slug)) {
@@ -416,7 +441,7 @@ function renderCourseCards(main, hub, t, tk, dark, courses, state, refresh) {
     const card = strip.createEl("div", {
       attr: {
         style:
-          `${state.expanded ? "min-width:0;" : "flex-shrink:0;width:240px;"}border-radius:14px;padding:14px;cursor:pointer;background:${sc.bg};` +
+          `${state.expanded ? "min-width:0;" : "flex-shrink:0;width:240px;"}border-radius:14px;padding:14px;cursor:pointer;position:relative;overflow:hidden;background:${cardBackground(slug, sc, dark)};` +
           `border:1px solid ${isActive ? sc.edge : tk.border};` +
           (isActive ? `box-shadow:0 0 0 1px ${sc.edge},0 4px 18px ${sc.edge}33;` : "") +
           "display:flex;flex-direction:column;gap:8px;transition:box-shadow .15s;",
@@ -430,10 +455,14 @@ function renderCourseCards(main, hub, t, tk, dark, courses, state, refresh) {
       refresh();
     });
 
-    const top = card.createEl("div", { attr: { style: "display:flex;align-items:center;gap:8px;" } });
+    const top = card.createEl("div", { attr: { style: "display:flex;align-items:center;gap:10px;position:relative;z-index:1;" } });
     top.createEl("div", {
       text: meta.icon,
-      attr: { style: `width:34px;height:34px;border-radius:10px;background:${sc.icon};display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;` },
+      attr: {
+        style:
+          `width:42px;height:42px;border-radius:13px;background:${sc.icon};display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;` +
+          `box-shadow:inset 0 0 0 1px rgba(255,255,255,.14),0 8px 18px ${sc.edge}22;`,
+      },
     });
     const titleCol = top.createEl("div", { attr: { style: "flex:1;min-width:0;" } });
     titleCol.createEl("div", {

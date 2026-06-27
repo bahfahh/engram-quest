@@ -162,7 +162,10 @@ async function createCourse(adapter, { title, description = "", icon = "📘", o
   return { slug, meta };
 }
 
-const SCHEME_NAMES = ["indigo", "green", "amber", "rose", "cyan"];
+const SCHEME_NAMES = [
+  "indigo", "green", "amber", "rose", "cyan", "violet",
+  "blue", "teal", "lime", "orange", "fuchsia", "slate",
+];
 function hashStr(s) {
   let h = 0;
   for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0;
