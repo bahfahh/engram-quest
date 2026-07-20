@@ -136,6 +136,11 @@ multi-column layout at that width squeezes each column to ~120px, and CJK text t
 **CRITICAL UX rule**: wrong answers must allow retry — only lock the question after a correct answer.
 Do NOT add `pointer-events: none` or `cursor: default` to `.wrong` — users must be able to click again.
 
+**Structural rule**: every `.quiz-feedback` is the immediate next sibling of its `.quiz-options`, and the
+handler reaches it with `group.nextElementSibling`. All questions share one `.quiz` container, so
+`group.parentElement.querySelector(".quiz-feedback")` returns question 1's box for *every* question —
+the page looks fine until you click question 2. Verify by clicking through every question, not just the first.
+
 ```html
 <div class="quiz">
   <h3>✅ 自我檢測</h3>
@@ -144,6 +149,10 @@ Do NOT add `pointer-events: none` or `cursor: default` to `.wrong` — users mus
     <div class="quiz-opt">Option A</div>
     <div class="quiz-opt">Option B (correct)</div>
   </div>
+  <div class="quiz-feedback"></div>
+
+  <p class="quiz-q">2. ...</p>
+  <div class="quiz-options" data-answer="0">...</div>
   <div class="quiz-feedback"></div>
 </div>
 <style>
@@ -159,7 +168,7 @@ Do NOT add `pointer-events: none` or `cursor: default` to `.wrong` — users mus
 </style>
 <script>
 document.querySelectorAll(".quiz-options").forEach(group => {
-  const fb = group.parentElement.querySelector(".quiz-feedback");
+  const fb = group.nextElementSibling;           // its own feedback box, not the quiz's first one
   const opts = group.querySelectorAll(".quiz-opt");
   let solved = false;
   opts.forEach((opt, i) => {
