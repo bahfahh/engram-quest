@@ -269,6 +269,7 @@ expect(result.completed).toBe(true)
               <li>跟 AI 說：「教我 SEO」或「我想學 .NET，幫我建課程」（Lesson Academy skill）</li>
               <li>AI 詢問你的目標和程度，設計課程大綱，逐課生成 HTML 教材到 <code>engram-quest/lessons/</code></li>
               <li>打開 plugin → 學習 → 教材，點任一課時即可閱讀，附互動測驗</li>
+              <li>課程可穿插 🗺️ 概念圖課時（學習地圖、對比、分類…）：點開後按「開啟概念圖」，在 Obsidian 原生 Canvas 分頁自由拖拉、加註記</li>
               <li>看完按「標記完成」，課程卡會顯示進度；可加星標記重點課時</li>
               <li>也可以用「匯入 HTML」把其他 AI（如 Gemini）生成的教材加進課程</li>
               <li>課程多時用卡片上方的「類別／進度／排序」下拉篩選排序，選擇會自動記住</li>
@@ -559,6 +560,7 @@ expect(result.completed).toBe(true)
               <li>Ask AI: "Teach me SEO" or "I want to learn .NET — build me a course" (Lesson Academy skill)</li>
               <li>AI asks about your goal and level, designs an outline, then generates HTML lessons into <code>engram-quest/lessons/</code></li>
               <li>Open the plugin → Learn → Lessons; click any lesson to read it, with built-in quizzes</li>
+              <li>Courses can mix in 🗺️ concept-map steps (learning maps, comparisons, classifications…): open one and press "Open concept map" to view it in a native Obsidian Canvas tab — drag nodes and add your own notes</li>
               <li>Press "Mark done" when finished — the course card shows your progress; star key lessons</li>
               <li>You can also "Import HTML" to add lessons generated elsewhere (e.g. by Gemini)</li>
               <li>With many courses, use the tag / progress / sort dropdowns above the cards — your picks are remembered</li>

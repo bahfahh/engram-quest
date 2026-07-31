@@ -106,6 +106,7 @@ Tell the AI what you want to learn — it builds a course of interactive HTML le
 - **Outline-first** — it shows the course plan for your approval before generating (changing the plan is cheap; regenerating lessons is not)
 - **Vault-aware** — point it at your existing notes and the course connects to what you already know
 - **Web-verified** — for fast-moving tech topics it checks the web and cites sources, instead of guessing
+- **Concept-map steps** — courses can mix in native Obsidian Canvas maps (learning maps, comparisons, classifications) that open in a real Canvas tab, fully draggable and annotatable
 - **Each lesson ends with a quiz** for an immediate feedback loop — then convert the whole course into Review Deck cards or a Quest Map
 
 **📺 Watch:** <a href="https://youtu.be/G8HxBl9Hf9o"><img src="https://img.youtube.com/vi/G8HxBl9Hf9o/mqdefault.jpg" width="280" alt="Create a course with Claude Code"></a>
@@ -338,6 +339,7 @@ Anki 解決「何時複習」。EngramQuest 解決「如何真正記住」 — �
 - **課綱先行** — 生成前先給你課程大綱確認（改大綱很便宜，重生成課程很貴）
 - **讀懂你的 vault** — 指向你既有的筆記，課程就和你已知的知識連在一起
 - **網路查證** — 對快速更新的技術主題會查網路並附上來源，而不是瞎猜
+- **概念圖課時** — 課程可穿插 Obsidian 原生 Canvas 概念圖（學習地圖、對比、分類），在真正的 Canvas 分頁開啟，可自由拖拉、加註記
 - **每堂課以測驗結尾**，形成即時回饋迴圈 — 之後還能把整套課程轉成 Review Deck 卡片或 Quest Map
 
 **📺 影片：** <a href="https://youtu.be/G8HxBl9Hf9o"><img src="https://img.youtube.com/vi/G8HxBl9Hf9o/mqdefault.jpg" width="280" alt="用 Claude Code 建立課程"></a>

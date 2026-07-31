@@ -14,7 +14,7 @@ const {
   createCourse, addPlannedLesson,
   recentLessons, overallStats,
 } = require("./data");
-const { LessonViewerModal } = require("./viewer-modal");
+const { LessonViewerModal, CanvasLessonModal } = require("./viewer-modal");
 const { attachInfoButton: _attachGuideInfo } = require("../hub/feature-guide");
 
 // Per-course color schemes (picked by meta.colorScheme, else hashed from the slug).
@@ -729,8 +729,13 @@ function renderLessonList(main, hub, t, tk, course, state, refresh) {
     row.addEventListener("mouseenter", () => { row.style.background = tk.rowHover; });
     row.addEventListener("mouseleave", () => { row.style.background = baseBg; });
     row.addEventListener("click", () => {
-      // Planned (outline-only) lessons have no HTML yet — explain instead of opening a viewer.
+      // Planned (outline-only) lessons have no content yet — explain instead of opening a viewer.
       if (!lesson.file) { new I.Notice(c(t, "LESSON_PLANNED_HINT")); return; }
+      // Canvas lessons get the thin jump modal — the iframe viewer can't render .canvas.
+      if (lesson.type === "canvas") {
+        new CanvasLessonModal(hub.app, hub.plugin, slug, meta, lesson, refresh, hub).open();
+        return;
+      }
       new LessonViewerModal(hub.app, hub.plugin, slug, meta, lesson, refresh).open();
     });
 
@@ -754,6 +759,12 @@ function renderLessonList(main, hub, t, tk, course, state, refresh) {
         title: lesson.title,
       },
     });
+    if (lesson.type === "canvas") {
+      titleRow.createEl("span", {
+        text: "🗺️ " + c(t, "LESSON_TYPE_CANVAS"),
+        attr: { style: `flex-shrink:0;font-size:9px;padding:1px 6px;border-radius:8px;background:${tk.pillIdleBg};color:${tk.pillIdleText};` },
+      });
+    }
     if (lesson.source === "import") {
       titleRow.createEl("span", {
         text: "📥 " + c(t, "LESSON_SOURCE_IMPORT"),
@@ -803,6 +814,23 @@ function renderLessonList(main, hub, t, tk, course, state, refresh) {
     const input = addRow.createEl("input", {
       attr: { type: "text", placeholder: c(t, "LESSON_ADD_OUTLINE_PH"), style: "flex:1;padding:5px 8px;border-radius:6px;border:1px solid var(--background-modifier-border);background:var(--background-primary);color:var(--text-normal);font-size:12px;" },
     });
+    // Type toggle: off = HTML lesson (default), on = canvas concept-map step the skill will
+    // generate as a .canvas file. mousedown+preventDefault so clicking it doesn't blur-commit.
+    let asCanvas = false;
+    const typeBtn = addRow.createEl("button", {
+      text: "🗺️",
+      attr: {
+        title: c(t, "LESSON_TYPE_CANVAS"),
+        style: `flex-shrink:0;font-size:12px;padding:4px 8px;border-radius:6px;cursor:pointer;border:1px solid ${tk.border};background:transparent;opacity:.45;`,
+      },
+    });
+    typeBtn.addEventListener("mousedown", (ev) => {
+      ev.preventDefault();
+      asCanvas = !asCanvas;
+      typeBtn.style.opacity = asCanvas ? "1" : ".45";
+      typeBtn.style.borderColor = asCanvas ? "#6366f1" : tk.border;
+      typeBtn.style.background = asCanvas ? "#6366f122" : "transparent";
+    });
     input.focus();
     // Enter triggers keydown AND the subsequent blur — guard so the title is only committed once.
     let committed = false;
@@ -811,7 +839,7 @@ function renderLessonList(main, hub, t, tk, course, state, refresh) {
       committed = true;
       const title = input.value.trim();
       if (!title) { refresh(); return; }
-      try { await addPlannedLesson(adapter, slug, title); }
+      try { await addPlannedLesson(adapter, slug, title, asCanvas ? "canvas" : "html"); }
       catch (e) { console.error("EngramQuest: add outline failed", e); }
       refresh();
     };
@@ -995,6 +1023,11 @@ function renderSidebar(sidebar, hub, t, tk, courses, refresh) {
     row.addEventListener("mouseleave", () => { row.style.background = "transparent"; });
     if (courseObj) {
       row.addEventListener("click", () => {
+        // Same type branch as the lesson-list rows — the iframe viewer can't render .canvas.
+        if (r.lesson.type === "canvas") {
+          new CanvasLessonModal(hub.app, hub.plugin, r.slug, courseObj.meta, r.lesson, refresh, hub).open();
+          return;
+        }
         new LessonViewerModal(hub.app, hub.plugin, r.slug, courseObj.meta, r.lesson, refresh).open();
       });
     }

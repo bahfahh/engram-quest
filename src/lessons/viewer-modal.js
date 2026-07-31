@@ -43,6 +43,50 @@ const MOBILE_GRID_FIX = `
 })();
 <\/script>`;
 
+// Shared modal footer: "course · lesson" label + star/done toggles that flip in place.
+// `mark` persists the completion patch (both modals route it through their serialized _mark).
+function buildCompletionFooter(parentEl, t, meta, lesson, mark) {
+  const completion = lessonCompletion(meta, lesson.id);
+  const footer = parentEl.createEl("div", {
+    attr: { style: "display:flex;align-items:center;gap:8px;padding:0 2px;" },
+  });
+  footer.createEl("span", {
+    text: meta.title + " · " + lesson.title,
+    attr: { style: "flex:1;min-width:0;font-size:11px;color:var(--text-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" },
+  });
+
+  const btnStyle = "flex-shrink:0;font-size:12px;padding:5px 14px;border-radius:8px;border:1px solid var(--background-modifier-border);background:var(--background-secondary);color:var(--text-normal);cursor:pointer;white-space:nowrap;";
+
+  const starBtn = footer.createEl("button", { attr: { style: btnStyle } });
+  const paintStar = (on) => {
+    starBtn.textContent = (on ? "★ " : "☆ ") + c(t, "LESSON_MARK_STAR");
+    starBtn.style.color = on ? "#f59e0b" : "var(--text-normal)";
+  };
+  paintStar(completion.starred);
+  let starred = completion.starred;
+  starBtn.addEventListener("click", () => {
+    starred = !starred;
+    paintStar(starred);
+    mark({ starred });
+  });
+
+  const doneBtn = footer.createEl("button", { attr: { style: btnStyle } });
+  const paintDone = (on) => {
+    doneBtn.textContent = on ? "✓ " + c(t, "LESSON_MARKED_DONE") : c(t, "LESSON_MARK_DONE");
+    doneBtn.style.background = on ? "#22c55e" : "var(--background-secondary)";
+    doneBtn.style.color = on ? "#fff" : "var(--text-normal)";
+    doneBtn.style.borderColor = on ? "#22c55e" : "var(--background-modifier-border)";
+  };
+  paintDone(completion.completed);
+  let completed = completion.completed;
+  doneBtn.addEventListener("click", () => {
+    completed = !completed;
+    paintDone(completed);
+    mark({ completed });
+  });
+  return footer;
+}
+
 class LessonViewerModal extends I.Modal {
   constructor(app, plugin, slug, meta, lesson, onDone) {
     super(app);
@@ -96,44 +140,7 @@ class LessonViewerModal extends I.Modal {
     });
 
     // Footer: done + star toggles. State reflects the current completion and flips in place.
-    const completion = lessonCompletion(this.meta, this.lesson.id);
-    const footer = contentEl.createEl("div", {
-      attr: { style: "display:flex;align-items:center;gap:8px;padding:0 2px;" },
-    });
-    footer.createEl("span", {
-      text: this.meta.title + " · " + this.lesson.title,
-      attr: { style: "flex:1;min-width:0;font-size:11px;color:var(--text-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" },
-    });
-
-    const btnStyle = "flex-shrink:0;font-size:12px;padding:5px 14px;border-radius:8px;border:1px solid var(--background-modifier-border);background:var(--background-secondary);color:var(--text-normal);cursor:pointer;white-space:nowrap;";
-
-    const starBtn = footer.createEl("button", { attr: { style: btnStyle } });
-    const paintStar = (on) => {
-      starBtn.textContent = (on ? "★ " : "☆ ") + c(t, "LESSON_MARK_STAR");
-      starBtn.style.color = on ? "#f59e0b" : "var(--text-normal)";
-    };
-    paintStar(completion.starred);
-    let starred = completion.starred;
-    starBtn.addEventListener("click", () => {
-      starred = !starred;
-      paintStar(starred);
-      this._mark({ starred });
-    });
-
-    const doneBtn = footer.createEl("button", { attr: { style: btnStyle } });
-    const paintDone = (on) => {
-      doneBtn.textContent = on ? "✓ " + c(t, "LESSON_MARKED_DONE") : c(t, "LESSON_MARK_DONE");
-      doneBtn.style.background = on ? "#22c55e" : "var(--background-secondary)";
-      doneBtn.style.color = on ? "#fff" : "var(--text-normal)";
-      doneBtn.style.borderColor = on ? "#22c55e" : "var(--background-modifier-border)";
-    };
-    paintDone(completion.completed);
-    let completed = completion.completed;
-    doneBtn.addEventListener("click", () => {
-      completed = !completed;
-      paintDone(completed);
-      this._mark({ completed });
-    });
+    buildCompletionFooter(contentEl, t, this.meta, this.lesson, (patch) => this._mark(patch));
 
     const showError = (message) => {
       box.empty();
@@ -212,4 +219,81 @@ class LessonViewerModal extends I.Modal {
   }
 }
 
-module.exports = { LessonViewerModal };
+// Thin modal for a canvas lesson (type:"canvas"): title + "open canvas" button + the same
+// done/star footer as the HTML viewer. The canvas itself opens in a native Obsidian tab —
+// an iframe can't host the canvas renderer, and native editing (drag, annotate) is the point.
+class CanvasLessonModal extends I.Modal {
+  constructor(app, plugin, slug, meta, lesson, onDone, hub) {
+    super(app);
+    this.plugin = plugin;
+    this.slug = slug;
+    this.meta = meta;
+    this.lesson = lesson;
+    this.onDone = onDone;
+    this.hub = hub || null; // hub modal — minimized on jump so the canvas tab is actually visible
+    this._changed = false;
+    // Same write serialization as LessonViewerModal: markLesson is read-modify-write.
+    this._saving = Promise.resolve();
+  }
+
+  _mark(patch) {
+    this._changed = true;
+    this._saving = this._saving.then(
+      () => markLesson(this.app.vault.adapter, this.slug, this.lesson.id, patch)
+    ).catch((e) => console.error("EngramQuest: lesson mark failed", e));
+    return this._saving;
+  }
+
+  onOpen() {
+    const t = this.plugin.settings;
+    const { contentEl, modalEl } = this;
+    modalEl.style.cssText = "width:min(94vw,440px);padding:0;border-radius:16px;overflow:hidden;";
+    contentEl.style.cssText = "padding:20px;display:flex;flex-direction:column;gap:14px;";
+
+    const titleRow = contentEl.createEl("div", {
+      attr: { style: "display:flex;align-items:center;gap:10px;padding-right:28px;" },
+    });
+    titleRow.createEl("span", { text: "🗺️", attr: { style: "font-size:24px;flex-shrink:0;" } });
+    const col = titleRow.createEl("div", { attr: { style: "flex:1;min-width:0;" } });
+    col.createEl("div", {
+      text: this.lesson.title,
+      attr: { style: "font-size:15px;font-weight:700;color:var(--text-normal);line-height:1.35;word-break:break-word;" },
+    });
+    col.createEl("div", { text: this.meta.title, attr: { style: "font-size:11px;color:var(--text-muted);" } });
+
+    contentEl.createEl("div", {
+      text: c(t, "LESSON_CANVAS_HINT"),
+      attr: { style: "font-size:12px;color:var(--text-muted);line-height:1.6;" },
+    });
+
+    const openBtn = contentEl.createEl("button", {
+      text: c(t, "LESSON_OPEN_CANVAS") + " →",
+      attr: { style: "padding:10px 16px;border-radius:10px;border:none;background:#6366f1;color:#fff;cursor:pointer;font-size:14px;font-weight:600;" },
+    });
+    openBtn.addEventListener("click", async () => {
+      const path = `${LESSONS_DIR}/${this.slug}/${this.lesson.file}`;
+      const adapter = this.app.vault.adapter;
+      try {
+        if (adapter.exists && !(await adapter.exists(path))) {
+          new I.Notice(K(c(t, "LESSON_NOT_FOUND"), { file: this.lesson.file }));
+          return;
+        }
+      } catch { /* can't check — try to open anyway */ }
+      // Opening the map counts as viewed — parity with the HTML viewer's iframe-load mark.
+      // Await it so the refresh triggered by onClose reads the already-persisted state.
+      await this._mark({ viewed: true });
+      this.close();
+      if (this.hub && typeof this.hub._minimize === "function") this.hub._minimize();
+      this.app.workspace.openLinkText(path, "", false);
+    });
+
+    buildCompletionFooter(contentEl, t, this.meta, this.lesson, (patch) => this._mark(patch));
+  }
+
+  onClose() {
+    this.contentEl.empty();
+    if (this._changed && this.onDone) this.onDone();
+  }
+}
+
+module.exports = { LessonViewerModal, CanvasLessonModal };

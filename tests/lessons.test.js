@@ -104,6 +104,18 @@ describe("normalizeMeta", () => {
     expect(normalizeMeta(null)).toBe(null);
     expect(normalizeMeta("not an object")).toBe(null);
   });
+
+  it("keeps type:canvas, defaults everything else to html", () => {
+    const meta = normalizeMeta({
+      lessons: [
+        { id: "a", title: "map", file: "a.canvas", type: "canvas" },
+        { id: "b", title: "html", file: "b.html" },
+        { id: "c", title: "bogus", file: "c.html", type: "excalidraw" },
+        { id: "d", title: "planned map", file: null, type: "canvas" },
+      ],
+    });
+    expect(meta.lessons.map((l) => l.type)).toEqual(["canvas", "html", "html", "canvas"]);
+  });
 });
 
 describe("lessonStatus / lessonCompletion", () => {
@@ -120,6 +132,14 @@ describe("lessonStatus / lessonCompletion", () => {
       lessons: [{ id: "lsn-p", title: "planned", file: null }],
     }));
     expect(lessonStatus(meta, "lsn-p")).toBe("planned");
+  });
+
+  it("planned canvas entries (file:null + type:canvas) are planned too", () => {
+    const meta = normalizeMeta(courseMeta({
+      lessons: [{ id: "lsn-c", title: "map", file: null, type: "canvas" }],
+    }));
+    expect(lessonStatus(meta, "lsn-c")).toBe("planned");
+    expect(meta.lessons[0].type).toBe("canvas");
   });
 });
 
@@ -185,6 +205,21 @@ describe("markLesson", () => {
     const adapter = makeAdapter();
     expect(await markLesson(adapter, "nope", "x", { viewed: true })).toBe(null);
   });
+
+  it("preserves lesson type through the load→save round-trip", async () => {
+    // The #1 trap from the PRD: normalizeMeta stripping unknown fields would wipe type:"canvas"
+    // on the very first star/done click. Lock the round-trip down.
+    const adapter = makeAdapter(seedCourse("c", courseMeta({
+      lessons: [
+        { id: "lsn-1", title: "L1", file: "lsn-1-a.html", source: "skill" },
+        { id: "lsn-m", title: "Map", file: "lsn-m-map.canvas", type: "canvas", source: "skill" },
+      ],
+    })));
+    await markLesson(adapter, "c", "lsn-m", { starred: true });
+    const onDisk = JSON.parse(adapter.files[`${LESSONS_DIR}/c/meta.json`]);
+    expect(onDisk.lessons.find((l) => l.id === "lsn-m").type).toBe("canvas");
+    expect(onDisk.lessons.find((l) => l.id === "lsn-1").type).toBe("html");
+  });
 });
 
 describe("createCourse / addPlannedLesson", () => {
@@ -214,10 +249,21 @@ describe("createCourse / addPlannedLesson", () => {
     const adapter = makeAdapter(seedCourse("c", courseMeta()));
     const lesson = await addPlannedLesson(adapter, "c", "New topic");
     expect(lesson.file).toBe(null);
+    expect(lesson.type).toBe("html");
     const meta = await loadCourse(adapter, "c");
     expect(meta.lessons).toHaveLength(3);
     expect(meta.lessons[2].title).toBe("New topic");
     expect(meta.completion[lesson.id]).toEqual({ viewed: false, completed: false, starred: false });
+  });
+
+  it("appends a planned canvas lesson when type is given", async () => {
+    const adapter = makeAdapter(seedCourse("c", courseMeta()));
+    const lesson = await addPlannedLesson(adapter, "c", "Concept map", "canvas");
+    expect(lesson.type).toBe("canvas");
+    expect(lesson.file).toBe(null);
+    const meta = await loadCourse(adapter, "c");
+    expect(meta.lessons[2].type).toBe("canvas");
+    expect(lessonStatus(meta, lesson.id)).toBe("planned");
   });
 });
 

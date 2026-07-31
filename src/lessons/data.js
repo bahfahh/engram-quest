@@ -38,6 +38,9 @@ function normalizeMeta(meta) {
           // No file = a planned outline entry (user- or AI-authored) whose HTML the lesson-academy
           // skill hasn't generated yet. It still renders in the list as "pending".
           file: l.file ? String(l.file) : null,
+          // "canvas" lessons open in a native Obsidian Canvas tab instead of the iframe viewer.
+          // Anything else collapses to "html" so a bogus value can't break the click branch.
+          type: l.type === "canvas" ? "canvas" : "html",
           source: l.source === "import" ? "import" : "skill",
           ...(l.importedAt ? { importedAt: l.importedAt } : {}),
         }))
@@ -175,11 +178,17 @@ function hashStr(s) {
 }
 
 /** Append one planned (outline-only) lesson to an existing course. Returns the new entry. */
-async function addPlannedLesson(adapter, slug, title) {
+async function addPlannedLesson(adapter, slug, title, type) {
   const meta = await loadCourse(adapter, slug);
   if (!meta) return null;
   const id = `lsn-${Date.now()}`;
-  const lesson = { id, title: String(title || "").trim(), file: null, source: "skill" };
+  const lesson = {
+    id,
+    title: String(title || "").trim(),
+    file: null,
+    type: type === "canvas" ? "canvas" : "html",
+    source: "skill",
+  };
   meta.lessons.push(lesson);
   meta.completion[id] = { viewed: false, completed: false, starred: false };
   await saveCourse(adapter, slug, meta);

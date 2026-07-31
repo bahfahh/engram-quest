@@ -11,7 +11,8 @@ engram-quest/lessons/
 └── {courseSlug}/                      ← short kebab-case ASCII, one folder per course
     ├── meta.json                      ← course contract (below)
     ├── lsn-1717977600000-types.html   ← one self-contained HTML per lesson
-    └── lsn-1717977700000-linq.html
+    ├── lsn-1717977700000-linq.html
+    └── lsn-1717977800000-map.canvas   ← canvas lesson step (type:"canvas" — see canvas-recipe.md)
 ```
 
 `courseSlug` rules: lowercase ASCII letters, digits, hyphens. No spaces, no CJK (the slug is a
@@ -58,7 +59,8 @@ folder name; the human-readable title lives in meta.json).
 | `lessons` | array | **Array order = display order.** No order field exists. |
 | `lessons[].id` | string | `lsn-<unix-ms>`. Unique forever; never reuse or renumber |
 | `lessons[].title` | string | Lesson title, user's language |
-| `lessons[].file` | string \| null | Filename (not path) of the HTML inside the course folder. **`null` = planned** (outline entry without content yet — see below) |
+| `lessons[].file` | string \| null | Filename (not path) inside the course folder. **`null` = planned** (outline entry without content yet — see below) |
+| `lessons[].type` | string | `"html"` (default — may be omitted) or `"canvas"`. Canvas lessons open in a native Obsidian Canvas tab; their `file` is a `.canvas` (never ending `-memory.canvas`). Generation rules: `canvas-recipe.md` |
 | `lessons[].source` | string | `"skill"` for generated lessons. (`"import"` is written by the plugin's import button — never set it yourself) |
 | `completion` | object | Keyed by lesson id — **plugin-owned progress state** |
 
@@ -92,10 +94,15 @@ Planned" in the UI:
 { "id": "lsn-1718000000000", "title": "REST API 設計", "file": null, "source": "skill" }
 ```
 
+A planned entry may also carry `"type": "canvas"` — the outline already commits that step to
+being a concept map, and the UI shows it with a 🗺️ badge. The plugin's outline row has a 🗺️
+toggle too, so user-added planned canvas entries look the same.
+
 When the user asks to "generate my course" / "把課綱生成內容" / "fill in the lessons":
 1. Read meta.json, find every entry with `file: null`.
-2. Generate HTML for each, **keeping the entry's existing `id`** (progress and order depend
-   on it). Filename = `<existing-id>-<short-ascii-slug>.html`.
+2. Generate content for each, **keeping the entry's existing `id`** (progress and order depend
+   on it). Filename = `<existing-id>-<short-ascii-slug>.html` — or `.canvas` when the entry has
+   `"type": "canvas"` (follow `canvas-recipe.md`).
 3. Set the entry's `file` to the new filename. Touch nothing else in the entry.
 
 The skill may also create outline-only courses (all `file: null`) when the user wants to

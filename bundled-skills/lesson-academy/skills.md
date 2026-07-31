@@ -126,6 +126,26 @@ Produce an outline of N lessons, each one line:
 Order matters: each lesson should rely only on earlier lessons. Show the outline to the user
 for approval before generating (generation is expensive; outline changes are cheap).
 
+### Canvas steps in the outline
+
+Some steps teach better as a native Obsidian canvas concept map than as an HTML page — the user
+can pan it, drag nodes, and annotate it, so it works as a living map rather than a document.
+Decide these at outline time and mark them:
+
+```
+3. 🗺️ <title> — canvas: <form, e.g. comparison of X vs Y>
+```
+
+- Canvas is a **medium, not a diagram type**: learning maps, mindmaps, classification,
+  comparison, flows, section summaries are all fair game (form menu in
+  `references/canvas-recipe.md`).
+- Density: roughly **one canvas step per three HTML lessons** as a ceiling, not a quota —
+  concept-heavy courses can use it fully, hands-on or code-heavy courses may need zero.
+  Never add a canvas step just to hit a number.
+- Placement is free: **before** the lessons it maps (orient with the big picture first) or
+  **after** them (consolidate what was just learned).
+- Content that is table-heavy, code-heavy, or a linear narrative belongs in HTML.
+
 Pick the course metadata now:
 - `courseSlug` — short kebab-case ASCII (e.g. `dotnet-basics`, `marketing-seo`)
 - `icon` — one emoji that captures the topic (🔷 💊 📈 🧘 …)
@@ -157,10 +177,15 @@ When a visual would materially improve learning, also read `references/visual-te
 choose the visual type and production method before writing the lesson. Keep the visual count
 tight: usually one, rarely two.
 
+Canvas steps produce a JSON Canvas file instead of HTML — read
+`references/canvas-recipe.md` before generating the first one (naming rules, layout spacing,
+script validation). Their meta.json entry carries `"type": "canvas"`.
+
 Lesson ID and filename:
 - `id` = `lsn-<current unix ms timestamp>` (e.g. `lsn-1717977600000`); when generating several
   lessons in one run, make each timestamp distinct (increment by 1 if needed)
-- filename = `<id>-<short-ascii-slug>.html` (e.g. `lsn-1717977600000-seo-basics.html`)
+- filename = `<id>-<short-ascii-slug>.html` (e.g. `lsn-1717977600000-seo-basics.html`);
+  canvas steps use `.canvas` instead — and must never end with `-memory.canvas`
 
 Write the file to:
 
