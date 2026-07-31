@@ -49,7 +49,7 @@ Once the plugin is installed, click the **EngramQuest icon in the left ribbon** 
 </div>
 
 1. **Install the plugin** — [open in Obsidian](obsidian://show-plugin?id=engram-quest), search **EngramQuest** in Community Plugins, or grab it from [GitHub Releases](https://github.com/bahfahh/engram-quest/releases).
-2. **Install the Skills** — go to `Settings → EngramQuest → AI Skills` and click **Install** for your tool (Claude Code, Codex / Antigravity, Gemini CLI, or Cursor).
+2. **Install the Skills** — go to `Settings → EngramQuest → AI Skills` and click **Install** for your tool (Claude Code, Codex / Antigravity, Gemini CLI, or Cursor). Installed skills stay up to date automatically when the plugin updates (toggle in Settings); if outdated skills are ever detected, the Hub shows a reminder banner with a one-click **Update skills** button.
    ![Install Skills](assets/install-skills.png)
 3. **Ask your AI** — *"Turn `Note.md` into a quest-map medium"* or *"Build a review deck from notes tagged math."*
 4. **Open the Hub** — click the 🗺️ ribbon icon, switch to the relevant tab, and start learning.
@@ -282,7 +282,7 @@ Anki 解決「何時複習」。EngramQuest 解決「如何真正記住」 — �
 </div>
 
 1. **安裝插件** — [在 Obsidian 中開啟](obsidian://show-plugin?id=engram-quest)、在 Community Plugins 搜尋 **EngramQuest**，或從 [GitHub Releases](https://github.com/bahfahh/engram-quest/releases) 下載。
-2. **安裝 Skills** — 到 `設定 → EngramQuest → AI Skills`，為你的工具（Claude Code、Codex / Antigravity、Gemini CLI 或 Cursor）點 **安裝**。
+2. **安裝 Skills** — 到 `設定 → EngramQuest → AI Skills`，為你的工具（Claude Code、Codex / Antigravity、Gemini CLI 或 Cursor）點 **安裝**。插件更新後會自動更新已安裝的 skills（可在設定關閉）；若偵測到 skills 過期，Hub 會顯示提醒橫幅，一鍵按「更新 Skills」即可。
    ![安裝 Skills](assets/install-skills.png)
 3. **問你的 AI** — *「把 `Note.md` 變成 quest-map medium」* 或 *「用標 math 的筆記建一副 review deck。」*
 4. **打開 Hub** — 點 🗺️ ribbon 圖示，切到對應分頁，開始學習。
