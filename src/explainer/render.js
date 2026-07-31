@@ -10,6 +10,7 @@ const I = require("obsidian");
 const { t: c, interpolate: K } = require("../i18n");
 const { scanExplainers, groupExplainersByDeck, readState, deleteExplainer } = require("./data");
 const { ExplainerViewerModal } = require("./viewer-modal");
+const { attachInfoButton } = require("../hub/feature-guide");
 
 const DECK_EMOJIS = ["📖", "📘", "🧠", "💡", "🔍", "🗺️", "🌿", "🧩", "📝", "🌊", "⚡", "📚"];
 const TRASH_SVG = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>';
@@ -105,7 +106,9 @@ async function renderExplainerTab(el, hub) {
 
   const card = el.createEl("div", { attr: { class: "lh-card" } });
   const head = card.createEl("div", { attr: { class: "lh-card-header" } });
-  head.createEl("span", { text: c(t, "TAB_EXPLAINER"), attr: { class: "lh-card-title" } });
+  const headGrp = head.createEl("div", { attr: { style: "display:flex;align-items:center;gap:8px" } });
+  headGrp.createEl("span", { text: c(t, "TAB_EXPLAINER"), attr: { class: "lh-card-title" } });
+  attachInfoButton(headGrp, hub.app, hub.plugin, "explainer");
 
   const bar = card.createEl("div", { attr: { class: "lh-toolbar" } });
   const content = card.createEl("div", { attr: { style: "flex:1;overflow-y:auto" } });

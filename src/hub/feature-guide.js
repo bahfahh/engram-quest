@@ -346,6 +346,71 @@ const CONTENT = {
       },
     },
   },
+  explainer: {
+    emoji: "📖", img: "deepdive",
+    "zh-tw": {
+      title: "深入解析 — 難卡的白話救援",
+      lines: [
+        "複習時看不懂的卡，按「<strong>➕ 加入解析佇列</strong>」，AI 會生成一頁<strong>白話、圖解</strong>的深入解析。",
+        "解析頁<strong>沒有自己的排程</strong>：原卡照常複習；若持續答錯，AI 下次會用更淺的方式重寫這頁。",
+      ],
+      pickPrompt: "你想了解什麼？",
+      options: [
+        { id: "build", emoji: "🛠️", label: "如何生成", sub: "標記佇列 + 跟 AI 說一句話" },
+        { id: "read", emoji: "📖", label: "閱讀與狀態", sub: "已讀 / ⭐ 加星 / ✓ 完成" },
+      ],
+      pages: {
+        build: {
+          title: "🛠️ 如何生成深入解析",
+          body: [
+            { h: "① 複習時遇到看不懂的卡 → 按「<strong>➕ 加入解析佇列</strong>」標記。" },
+            { h: "② 跟你的 AI 工具說「<strong>處理解析</strong>」— AI 會讀佇列、診斷這張卡為什麼難（太難？太簡略？缺脈絡？），批次生成解析頁。" },
+            { h: "也可以不經佇列直接說：「幫我做一份 HTTPS 的深入解析」。" },
+          ],
+          first: "複習時按「➕ 加入解析佇列」，之後跟 AI 說「處理解析」。",
+        },
+        read: {
+          title: "📖 閱讀與狀態",
+          body: [
+            { h: "解析頁按 deck 分組；點開自動標記<strong>已讀</strong>，也可加 <strong>⭐</strong> 或標記 <strong>✓ 完成</strong>。" },
+            { h: "解析頁是原卡的<strong>輔助教材</strong>，不佔複習排程 —— 有沒有真的懂，下次複習那張卡見真章。" },
+          ],
+          first: "點開一頁解析讀讀看；讀完回 Review Deck 複習原卡。",
+        },
+      },
+    },
+    en: {
+      title: "Deep Dive — plain-language rescue for hard cards",
+      lines: [
+        "When a card is too hard to understand, hit \"<strong>➕ Queue deep dive</strong>\" — the AI generates a <strong>plain-language, illustrated</strong> deep-dive page.",
+        "Deep dives have <strong>no schedule of their own</strong>: the original card keeps reviewing; if it keeps failing, the AI rewrites the page from a shallower entry point.",
+      ],
+      pickPrompt: "What do you want to know?",
+      options: [
+        { id: "build", emoji: "🛠️", label: "How to generate", sub: "Queue a card + one sentence to your AI" },
+        { id: "read", emoji: "📖", label: "Reading & status", sub: "Read / ⭐ star / ✓ complete" },
+      ],
+      pages: {
+        build: {
+          title: "🛠️ How to generate a Deep Dive",
+          body: [
+            { h: "① During review, hit \"<strong>➕ Queue deep dive</strong>\" on a hard card." },
+            { h: "② Tell your AI tool to \"<strong>process the deep dive queue</strong>\" — it reads the queue, diagnoses why the card failed you (too hard? too terse? missing context?), and generates the pages in batch." },
+            { h: "You can also skip the queue: \"Make a deep dive about HTTPS.\"" },
+          ],
+          first: "Hit ➕ during review, then tell your AI to \"process the deep dive queue\".",
+        },
+        read: {
+          title: "📖 Reading & status",
+          body: [
+            { h: "Pages are grouped by deck; opening one marks it <strong>read</strong>, and you can <strong>⭐ star</strong> or mark it <strong>✓ complete</strong>." },
+            { h: "A deep dive is <strong>support material</strong> for the original card — it takes no review slot; the card's next review is the real test." },
+          ],
+          first: "Open a page and read it; then review the original card in your Review Deck.",
+        },
+      },
+    },
+  },
 };
 
 function hasGuide(tab) {
