@@ -48,6 +48,7 @@ async function renderExplainerTab(el, hub) {
   el.empty();
   hub._xSearch = hub._xSearch || "";
   hub._xFilter = hub._xFilter || "all";
+  hub._xSort = hub._xSort || "unread";
 
   let scan, state;
   try {
@@ -130,6 +131,13 @@ function fillToolbar(bar, hub, t, rerenderContent) {
   });
   filter.addEventListener("change", () => { hub._xFilter = filter.value; rerenderContent(); });
 
+  const sort = bar.createEl("select", { attr: { class: "lh-filter" } });
+  [["unread", "SORT_UNREAD_FIRST"], ["newest", "SORT_NEWEST"], ["oldest", "SORT_OLDEST"], ["name", "SORT_NAME"]].forEach(([val, key]) => {
+    const opt = sort.createEl("option", { text: c(t, key), attr: { value: val } });
+    if (val === hub._xSort) opt.selected = true;
+  });
+  sort.addEventListener("change", () => { hub._xSort = sort.value; rerenderContent(); });
+
   const toggle = bar.createEl("div", { attr: { class: "lh-view-toggle" } });
   const mode = getViewMode(hub);
   const btns = [];
@@ -166,10 +174,36 @@ function filterPages(hub, pages) {
   return r;
 }
 
+// Sort pages inside a deck. Default "unread" ranks unread → viewed → completed (newest within
+// each rank) so the next thing to read is always on top.
+function sortPages(pages, mode) {
+  const r = pages.slice();
+  const created = (p) => String(p.created || "");
+  if (mode === "newest") r.sort((a, b) => created(b).localeCompare(created(a)));
+  else if (mode === "oldest") r.sort((a, b) => created(a).localeCompare(created(b)));
+  else if (mode === "name") r.sort((a, b) => String(a.title || a.id).localeCompare(String(b.title || b.id)));
+  else {
+    const rank = (p) => (p._completed ? 2 : p._viewed ? 1 : 0);
+    r.sort((a, b) => rank(a) - rank(b) || created(b).localeCompare(created(a)));
+  }
+  return r;
+}
+
+// Order decks to match: with "unread first" the deck holding the most unread floats to the top.
+function sortDecks(decks, mode) {
+  const r = decks.slice();
+  const latest = (d) => d.pages.reduce((m, p) => (String(p.created || "") > m ? String(p.created) : m), "");
+  const unread = (d) => d.pages.filter((p) => !p._viewed).length;
+  if (mode === "newest") r.sort((a, b) => latest(b).localeCompare(latest(a)));
+  else if (mode === "oldest") r.sort((a, b) => latest(a).localeCompare(latest(b)));
+  else if (mode !== "name") r.sort((a, b) => unread(b) - unread(a) || a.name.localeCompare(b.name));
+  return r; // "name": groupExplainersByDeck already sorts alphabetically
+}
+
 function renderContent(content, hub, t, pages, refresh) {
   content.empty();
   const visible = filterPages(hub, pages);
-  const decks = groupExplainersByDeck(visible);
+  const decks = sortDecks(groupExplainersByDeck(visible), hub._xSort);
 
   // Drill-in: a deck is open — show its page list. Fall back to the deck list when the open deck
   // no longer exists under the current filters (deleted its last page, or filtered out).
@@ -375,7 +409,7 @@ function renderDeckPages(content, hub, t, deck, refresh) {
   });
 
   const list = content.createEl("div", { attr: { class: "lh-deck-list" } });
-  deck.pages.forEach((page) => {
+  sortPages(deck.pages, hub._xSort).forEach((page) => {
     const row = list.createEl("div", { attr: { class: "lh-deck-row" } });
 
     // Status glyph: ✅ completed > 📄 default; unread additionally gets a ● accent dot.
