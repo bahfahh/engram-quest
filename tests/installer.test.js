@@ -175,19 +175,18 @@ describe("installer quest-map reference assets", () => {
   });
 });
 
-describe("installer quadrant card (Pro)", () => {
-  function withQuadrant(overrides = {}) {
-    const base = "bundled-skills/quadrant";
+describe("installer explainer (Pro)", () => {
+  function withExplainer(overrides = {}) {
+    const base = "bundled-skills/explainer";
     const root = ".obsidian/plugins/engram-quest/" + base;
     return makeAllBundledFiles({
-      [`${root}/skills.md`]: "quadrant skill",
-      [`${root}/references/recipes.md`]: "recipes",
-      [`${root}/references/q3-q4-quality.md`]: "quality",
-      [`${root}/references/layout-contract.md`]: "layout",
+      [`${root}/skills.md`]: "explainer skill",
+      [`${root}/references/html-recipe.md`]: "recipe",
+      [`${root}/references/visual-ip.md`]: "visual",
       [`${root}/references/obsidian-cli.md`]: "cli",
-      [`${root}/assets/recipe-A-flywheel.html`]: "<html>A</html>",
-      [`${root}/assets/recipe-B-comic.html`]: "<html>B</html>",
-      [`${root}/assets/recipe-C-emoji.html`]: "<html>C</html>",
+      [`${root}/assets/examples/explainer-too-hard.html`]: "<html>hard</html>",
+      [`${root}/assets/examples/explainer-no-context.html`]: "<html>ctx</html>",
+      [`${root}/assets/examples/explainer-poor-description.html`]: "<html>desc</html>",
       ...overrides,
     });
   }
@@ -195,35 +194,36 @@ describe("installer quadrant card (Pro)", () => {
   it("is a Pro module — excluded when isPro is false", async () => {
     const entries = await installer.getInstallEntries(
       "claude",
-      makeAdapter(withQuadrant()),
+      makeAdapter(withExplainer()),
       ".obsidian",
       { isPro: false },
     );
-    expect(entries.some((e) => e.path.includes("engram-quest-quadrant"))).toBe(false);
+    expect(entries.some((e) => e.path.includes("engram-quest-explainer"))).toBe(false);
   });
 
-  it("installs the skill + recipe assets when isPro is true", async () => {
+  it("installs the skill + example assets when isPro is true", async () => {
     const entries = await installer.getInstallEntries(
       "claude",
-      makeAdapter(withQuadrant()),
+      makeAdapter(withExplainer()),
       ".obsidian",
       { isPro: true },
     );
 
-    const skillMd = entries.find((e) => e.path === ".claude/skills/engram-quest-quadrant/SKILL.md");
+    const skillMd = entries.find((e) => e.path === ".claude/skills/engram-quest-explainer/SKILL.md");
     expect(skillMd).toBeDefined();
-    expect(skillMd.content).toBe("quadrant skill");
+    expect(skillMd.content).toBe("explainer skill");
 
-    const flywheel = entries.find(
-      (e) => e.path === ".claude/skills/engram-quest-quadrant/assets/recipe-A-flywheel.html",
-    );
-    expect(flywheel).toBeDefined();
-    expect(flywheel.content).toBe("<html>A</html>");
-
-    // all four references present
-    for (const ref of ["recipes.md", "q3-q4-quality.md", "layout-contract.md", "obsidian-cli.md"]) {
+    // one example page per diagnosis type
+    for (const ex of ["explainer-too-hard.html", "explainer-no-context.html", "explainer-poor-description.html"]) {
       expect(
-        entries.some((e) => e.path === `.claude/skills/engram-quest-quadrant/references/${ref}`),
+        entries.some((e) => e.path === `.claude/skills/engram-quest-explainer/assets/examples/${ex}`),
+      ).toBe(true);
+    }
+
+    // all three references present
+    for (const ref of ["html-recipe.md", "visual-ip.md", "obsidian-cli.md"]) {
+      expect(
+        entries.some((e) => e.path === `.claude/skills/engram-quest-explainer/references/${ref}`),
       ).toBe(true);
     }
   });

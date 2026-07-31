@@ -254,7 +254,7 @@ async function importLesson(adapter, slug, htmlContent, suggestedTitle) {
 
 /**
  * Move a single file to trash: OS trash → vault-local .trash → permanent remove (same ladder as
- * the quadrant data layer). True when the file is gone, false when every method failed.
+ * the explainer data layer). True when the file is gone, false when every method failed.
  */
 async function trashPath(adapter, path) {
   try {

@@ -299,27 +299,25 @@ expect(result.completed).toBe(true)
             </ol>
             <p>跟「全部複習」共用同一個 review session UI 與 SR 寫回流程，沒有額外風險。</p>
             <p><strong>需要 Pro license</strong>。</p>
-          `},{icon:"🎴",title:"四象限卡 (Pro)",tag:"Pro",html:`
-            <p>把一張 Q/A 卡升級成一張 A4「超記憶卡」，用四個象限從不同角度編碼同一個概念，專治最難記、最核心的觀念。</p>
-            <p><strong>四個象限</strong></p>
+          `},{icon:"📖",title:"深入解析 (Pro)",tag:"Pro",html:`
+            <p>複習時遇到看不懂、背不起來的卡，按「➕ 加入解析佇列」標記它。AI 會診斷這張卡為什麼難（內容太難？描述太簡略？缺乏脈絡？），生成一頁白話、圖解式的深入解析——從宏觀到細部，把卡片沒講清楚的事講清楚。</p>
+            <p><strong>一頁解析有什麼</strong></p>
             <ol>
-              <li><strong>Q1 問題</strong> — 要記住的提問</li>
-              <li><strong>Q2 答案</strong> — 精準的正解</li>
-              <li><strong>Q3 文字比喻</strong> — 用口訣／類比把抽象變好懂</li>
-              <li><strong>Q4 視覺圖像</strong> — 一張畫面或 emoji 場景，讓大腦用圖像記</li>
+              <li><strong>它解決什麼問題</strong> — 先讓你想要這個概念，再解釋它</li>
+              <li><strong>宏觀地圖</strong> — 概念在整張知識地圖的位置</li>
+              <li><strong>記憶錨</strong> — 一個生活比喻 + emoji 圖像，閉眼能重現</li>
+              <li><strong>逐層拆解與常見混淆</strong> — 由淺到深，最後回到你原本的卡片</li>
             </ol>
-            <p><strong>有什麼用</strong></p>
-            <div class="lh-help-sub" style="border-color:#0078d4"><div class="lh-help-sub-icon">DC</div><div><strong>雙重編碼</strong> — 同時用文字與圖像記，比純文字更牢</div></div>
-            <div class="lh-help-sub" style="border-color:#0078d4"><div class="lh-help-sub-icon">EE</div><div><strong>精緻化編碼</strong> — 比喻 + 圖像把抽象概念掛上熟悉的鉤子</div></div>
-            <div class="lh-help-sub" style="border-color:#0078d4"><div class="lh-help-sub-icon">SR</div><div><strong>獨立排程</strong> — 每張四象限卡有自己的 FSRS 排程，與 Review Deck 分開</div></div>
+            <p><strong>設計重點</strong></p>
+            <div class="lh-help-sub" style="border-color:#0078d4"><div class="lh-help-sub-icon">NF</div><div><strong>無獨立排程</strong> — 解析頁是原卡的輔助教材，原卡照常在 Review Deck 複習；解析有沒有用，下次複習見真章</div></div>
+            <div class="lh-help-sub" style="border-color:#0078d4"><div class="lh-help-sub-icon">RW</div><div><strong>自動重寫</strong> — 解析後原卡還是一直答錯？skill 下次會用更淺的切入點重寫這頁</div></div>
             <p><strong>怎麼用</strong></p>
             <ol>
-              <li>跟 AI 說「四象限卡 / 四格卡 / 超記憶卡 / Quadrant Card」任一名稱，或在複習時把卡標記「升級」</li>
-              <li>到 Hub →「四象限卡」分頁複習，自評後自動更新排程</li>
-              <li>複習卡上可按 📄 開啟來源筆記、📋 複製問答、✏️ 編輯（標題即時生效；改 Q1–Q4 內容後重跑 skill 說「升級」才會重建卡片視覺）</li>
-              <li>不要的卡可在牌組列或複習卡內按 🗑️ 刪除</li>
+              <li>複習時對難卡按「➕ 加入解析佇列」，之後跟 AI 說「處理解析」批次生成</li>
+              <li>也可直接跟 AI 說「幫我做一份 X 的深入解析」</li>
+              <li>到 Hub →「深入解析」分頁閱讀；開啟自動標記已讀，可加 ⭐ 或標記 ✓ 完成，🗑️ 刪除不要的頁</li>
             </ol>
-            <p><strong>需要 Pro license</strong>。適合用在最重要、最難記的核心概念，不必每張卡都升級。</p>
+            <p><strong>需要 Pro license</strong>。</p>
           `},{icon:"🔬",title:"Learning Science",tag:c(e,"HELP_SCIENCE_TAG"),html:`
             <div class="lh-help-sub"><div class="lh-help-sub-icon">SR</div><div><strong>Spaced Repetition</strong><br>在快忘記時複習，提升效率。Review Deck 使用 FSRS 自動安排下次複習。</div></div>
             <div class="lh-help-sub"><div class="lh-help-sub-icon">RP</div><div><strong>Retrieval Practice</strong><br>先回想，再看答案，比重讀更有效。Review Deck 訓練記憶；Quest Map 把記憶放進情境中練習應用。</div></div>
@@ -590,27 +588,25 @@ expect(result.completed).toBe(true)
             </ol>
             <p>Reuses the regular review session UI and SR write-back path, so there is no risk to your scheduling data.</p>
             <p><strong>Requires a Pro license.</strong></p>
-          `},{icon:"🎴",title:"Quadrant Card (Pro)",tag:"Pro",html:`
-            <p>Upgrade a single Q/A card into an A4 "super memory" sheet that encodes one concept from four angles — built for your hardest, most important ideas.</p>
-            <p><strong>The four quadrants</strong></p>
+          `},{icon:"📖",title:"Deep Dive (Pro)",tag:"Pro",html:`
+            <p>When a flashcard is too hard to understand, hit <strong>➕ Queue deep dive</strong> during review. The AI diagnoses why the card failed you (too hard? too terse? missing context?) and generates a plain-language, illustrated deep-dive page — from the big picture down to the details.</p>
+            <p><strong>What's on a deep dive page</strong></p>
             <ol>
-              <li><strong>Q1 Question</strong> — what you need to recall</li>
-              <li><strong>Q2 Answer</strong> — the precise answer</li>
-              <li><strong>Q3 Verbal metaphor</strong> — a mnemonic or analogy that makes the abstract concrete</li>
-              <li><strong>Q4 Visual image</strong> — a scene or emoji that lets your brain remember by picture</li>
+              <li><strong>The problem it solves</strong> — make you want the concept before defining it</li>
+              <li><strong>The map</strong> — where the concept lives in the bigger picture</li>
+              <li><strong>A memory anchor</strong> — one everyday metaphor + emoji visual you can replay with closed eyes</li>
+              <li><strong>Layered deep-dive & common confusions</strong> — ending back at your original card</li>
             </ol>
-            <p><strong>Why it helps</strong></p>
-            <div class="lh-help-sub" style="border-color:#0078d4"><div class="lh-help-sub-icon">DC</div><div><strong>Dual coding</strong> — words + image together stick better than text alone</div></div>
-            <div class="lh-help-sub" style="border-color:#0078d4"><div class="lh-help-sub-icon">EE</div><div><strong>Elaborative encoding</strong> — metaphor + image hook the abstract onto something familiar</div></div>
-            <div class="lh-help-sub" style="border-color:#0078d4"><div class="lh-help-sub-icon">SR</div><div><strong>Own schedule</strong> — each quadrant card carries its own FSRS schedule, separate from your review decks</div></div>
+            <p><strong>Design notes</strong></p>
+            <div class="lh-help-sub" style="border-color:#0078d4"><div class="lh-help-sub-icon">NF</div><div><strong>No own schedule</strong> — a deep dive supports the original card; that card keeps reviewing in your Review Deck, and its next reviews are the real test</div></div>
+            <div class="lh-help-sub" style="border-color:#0078d4"><div class="lh-help-sub-icon">RW</div><div><strong>Auto-rewrite</strong> — still failing the card after the deep dive? The skill rewrites the page from a shallower entry point next run</div></div>
             <p><strong>How to use it</strong></p>
             <ol>
-              <li>Tell the AI any alias — "Quadrant Card", "quadrant", "四象限卡", "四格卡", "超記憶卡" — or mark a card "upgrade" during review</li>
-              <li>Review them in Hub → Quadrant Card tab; your self-assessment updates the schedule</li>
-              <li>On a review card: 📄 opens the source note, 📋 copies the Q&amp;A, ✏️ edits it (title applies instantly; Q1–Q4 content edits rebuild the card visuals after you re-run the skill and say "upgrade")</li>
-              <li>Delete unwanted cards with the 🗑️ button on a deck row or inside the review card</li>
+              <li>Queue hard cards with ➕ during review, then tell the AI to "process the deep dive queue"</li>
+              <li>Or ask directly: "make a deep dive about X"</li>
+              <li>Read them in Hub → Deep Dive tab; opening marks them read, add ⭐ or ✓ complete, 🗑️ deletes a page</li>
             </ol>
-            <p><strong>Requires a Pro license.</strong> Best for your most important, hardest-to-remember concepts — you don't need to upgrade every card.</p>
+            <p><strong>Requires a Pro license.</strong></p>
           `},{icon:"🔬",title:"Why It Works",tag:c(e,"HELP_SCIENCE_TAG"),html:`
             <div class="lh-help-sub"><div class="lh-help-sub-icon">SR</div><div><strong>Spaced Repetition</strong><br>Review at the point of near-forgetting. FSRS calculates the next interval automatically.</div></div>
             <div class="lh-help-sub"><div class="lh-help-sub-icon">RP</div><div><strong>Retrieval Practice</strong><br>Active recall is more effective than re-reading. Review Deck trains memory; Quest Map puts that memory into applied scenarios.</div></div>
@@ -793,6 +789,6 @@ Store all Memory Maps in the Maps/Memory/ directory.</pre>
         </table>
         <div class="lh-help-sub"><div class="lh-help-sub-icon">💡</div><div><strong>Codex and Antigravity share <code>.agents/skills</code></strong>: install the Codex target and Antigravity picks it up automatically when opened from the same vault — no separate install.</div></div>
         <div class="lh-help-sub"><div class="lh-help-sub-icon">🔄</div><div><strong>Skills stay up to date automatically</strong>: installed skills are refreshed when the plugin loads after an update (can be turned off in Settings). If outdated skills are detected, the Hub also shows a reminder banner — click "Update skills" to update in one step.</div></div>
-      `}),h=h.filter(u=>!new Set(["建立第一個 Review Deck","Create Your First Review Deck","Review Deck","Quest Map","Memory Map","課程學院（教材）","Lesson Academy","Synapse (Pro)","Time-boxed Review (Pro)","四象限卡 (Pro)","Quadrant Card (Pro)"]).has(u.title)),h.forEach((u,v)=>{let p=o.createEl("div",{attr:{class:"lh-help-acc"}}),g=p.createEl("div",{attr:{class:"lh-help-acc-hdr"+(v===f?" open":"")}});g.createEl("span",{text:u.icon,attr:{class:"lh-help-acc-icon"}}),g.createEl("span",{text:u.title,attr:{class:"lh-help-acc-title"}}),g.createEl("span",{text:u.tag,attr:{class:"lh-help-acc-tag"}});let E=g.createEl("span",{attr:{class:"lh-help-acc-arrow"}});E.innerHTML=d;let m=p.createEl("div",{attr:{class:"lh-help-acc-body"+(v===f?" open":"")}});m.innerHTML=u.html,g.addEventListener("click",()=>{let x=m.classList.contains("open");o.querySelectorAll(".lh-help-acc-body").forEach(S=>S.classList.remove("open")),o.querySelectorAll(".lh-help-acc-hdr").forEach(S=>S.classList.remove("open")),x||(m.classList.add("open"),g.classList.add("open"))})});let _coffeeFoot=o.createEl("div",{attr:{style:"margin-top:28px;padding:20px 16px 8px;border-top:1px solid var(--background-modifier-border);text-align:center;"}});_coffeeFoot.createEl("div",{text:t==="zh-tw"?"覺得 EngramQuest 對你有幫助？":"Find EngramQuest helpful?",attr:{style:"font-size:13px;color:var(--text-muted);margin-bottom:10px;"}});let _coffeeBtn=_coffeeFoot.createEl("a",{attr:{href:"https://ko-fi.com/wen_aidev",target:"_blank",rel:"noopener",style:"display:inline-flex;align-items:center;gap:8px;padding:10px 20px;border-radius:8px;background:#fcd34d;color:#1f2937;text-decoration:none;font-size:14px;font-weight:600;"}});_coffeeBtn.createEl("span",{text:"☕"});_coffeeBtn.createEl("span",{text:"Buy me a coffee"});}};
+      `}),h=h.filter(u=>!new Set(["建立第一個 Review Deck","Create Your First Review Deck","Review Deck","Quest Map","Memory Map","課程學院（教材）","Lesson Academy","Synapse (Pro)","Time-boxed Review (Pro)","深入解析 (Pro)","Deep Dive (Pro)"]).has(u.title)),h.forEach((u,v)=>{let p=o.createEl("div",{attr:{class:"lh-help-acc"}}),g=p.createEl("div",{attr:{class:"lh-help-acc-hdr"+(v===f?" open":"")}});g.createEl("span",{text:u.icon,attr:{class:"lh-help-acc-icon"}}),g.createEl("span",{text:u.title,attr:{class:"lh-help-acc-title"}}),g.createEl("span",{text:u.tag,attr:{class:"lh-help-acc-tag"}});let E=g.createEl("span",{attr:{class:"lh-help-acc-arrow"}});E.innerHTML=d;let m=p.createEl("div",{attr:{class:"lh-help-acc-body"+(v===f?" open":"")}});m.innerHTML=u.html,g.addEventListener("click",()=>{let x=m.classList.contains("open");o.querySelectorAll(".lh-help-acc-body").forEach(S=>S.classList.remove("open")),o.querySelectorAll(".lh-help-acc-hdr").forEach(S=>S.classList.remove("open")),x||(m.classList.add("open"),g.classList.add("open"))})});let _coffeeFoot=o.createEl("div",{attr:{style:"margin-top:28px;padding:20px 16px 8px;border-top:1px solid var(--background-modifier-border);text-align:center;"}});_coffeeFoot.createEl("div",{text:t==="zh-tw"?"覺得 EngramQuest 對你有幫助？":"Find EngramQuest helpful?",attr:{style:"font-size:13px;color:var(--text-muted);margin-bottom:10px;"}});let _coffeeBtn=_coffeeFoot.createEl("a",{attr:{href:"https://ko-fi.com/wen_aidev",target:"_blank",rel:"noopener",style:"display:inline-flex;align-items:center;gap:8px;padding:10px 20px;border-radius:8px;background:#fcd34d;color:#1f2937;text-decoration:none;font-size:14px;font-weight:600;"}});_coffeeBtn.createEl("span",{text:"☕"});_coffeeBtn.createEl("span",{text:"Buy me a coffee"});}};
 
 module.exports = { HelpModal: fe };

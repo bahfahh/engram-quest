@@ -885,7 +885,7 @@ function pickAndImportHtml(hub, t, slug, refresh) {
 }
 
 // ---------------------------------------------------------------------------------------------
-// Delete confirmations (lesson / course) — same compact confirm modal as quadrant
+// Delete confirmations (lesson / course) — same compact confirm modal as explainer
 // ---------------------------------------------------------------------------------------------
 
 function confirmModal(hub, t, title, body, onConfirm) {

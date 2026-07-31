@@ -16,7 +16,7 @@ EngramQuest artifact and read it directly from the folder below.
 | "course", "課程", "教材", "lesson", "the X course" | A Lesson Academy course | `engram-quest/lessons/{courseSlug}/` |
 | "deck", "review deck", "卡片", "flashcards", "複習卡" | A Review Deck | `engram-review/` |
 | "quest", "quest map", "關卡", "the quest I made" | A Quest Map | a `*-quest.md` note **or** `engram-quest/state/` for progress |
-| "quadrant card", "四象限卡" | A Quadrant Card (Pro) | `engram-quest/quadrant/` |
+| "explainer", "詳解" | An Explainer page (Pro) | `engram-quest/explainer/` |
 
 ## Folder reference
 
@@ -26,7 +26,7 @@ engram-quest/
 │   ├── meta.json          ← course info + lessons array + completion (the index)
 │   └── lsn-*.html         ← one self-contained HTML per lesson (the actual content)
 ├── state/{quest}.json     ← Quest Map progress / scores (not source content)
-└── quadrant/{cardId}.html ← four-quadrant cards (Pro)
+└── explainer/{id}.html ← explainer pages (Pro; metadata in explainer/meta/)
 
 engram-review/
 ├── ai-cards/{note}.md     ← AI-generated flashcards (`question :: answer` lines)

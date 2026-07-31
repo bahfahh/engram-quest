@@ -1,6 +1,6 @@
 "use strict";
 // Lesson viewer modal. Embeds a course lesson's self-contained HTML in a sandboxed iframe
-// (same srcdoc + postMessage embed as the quadrant review modal, minus the FSRS rating flow).
+// (same srcdoc + postMessage embed as the explainer viewer modal).
 // Opening auto-marks the lesson as viewed; the footer lets the user toggle done / star, which
 // patch the course's meta.json via the lessons data layer.
 

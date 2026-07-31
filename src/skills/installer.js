@@ -33,9 +33,9 @@ function createInstaller(embeddedOverride) {
       pro: true
     },
     {
-      id: "quadrant",
-      title: "Quadrant Card (Pro)",
-      summary: "Upgrade a flashcard into an A4 four-quadrant super-memory card (question, answer, verbal metaphor, visual image). Pro feature.",
+      id: "explainer",
+      title: "Deep Dive (Pro)",
+      summary: "Generate plain-language visual deep-dive pages for flashcards that are too hard, badly worded, or missing context. Pro feature.",
       pro: true
     }
   ];
@@ -123,15 +123,14 @@ function createInstaller(embeddedOverride) {
       { source: "synapse/scripts/dump_sr_pool.sh", target: "scripts/dump_sr_pool.sh" },
       { source: "synapse/scripts/dump_sr_pool.js", target: "scripts/dump_sr_pool.js" }
     ],
-    "quadrant": [
-      { source: "quadrant/skills.md", target: "SKILL.md" },
-      { source: "quadrant/references/recipes.md", target: "references/recipes.md" },
-      { source: "quadrant/references/q3-q4-quality.md", target: "references/q3-q4-quality.md" },
-      { source: "quadrant/references/layout-contract.md", target: "references/layout-contract.md" },
-      { source: "quadrant/references/obsidian-cli.md", target: "references/obsidian-cli.md" },
-      { source: "quadrant/assets/recipe-A-flywheel.html", target: "assets/recipe-A-flywheel.html" },
-      { source: "quadrant/assets/recipe-B-comic.html", target: "assets/recipe-B-comic.html" },
-      { source: "quadrant/assets/recipe-C-emoji.html", target: "assets/recipe-C-emoji.html" }
+    "explainer": [
+      { source: "explainer/skills.md", target: "SKILL.md" },
+      { source: "explainer/references/html-recipe.md", target: "references/html-recipe.md" },
+      { source: "explainer/references/visual-ip.md", target: "references/visual-ip.md" },
+      { source: "explainer/references/obsidian-cli.md", target: "references/obsidian-cli.md" },
+      { source: "explainer/assets/examples/explainer-too-hard.html", target: "assets/examples/explainer-too-hard.html" },
+      { source: "explainer/assets/examples/explainer-no-context.html", target: "assets/examples/explainer-no-context.html" },
+      { source: "explainer/assets/examples/explainer-poor-description.html", target: "assets/examples/explainer-poor-description.html" }
     ]
   };
 

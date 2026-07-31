@@ -129,9 +129,9 @@ Visualizes abstract concepts using Obsidian Canvas.
 
 Track your learning milestones with 3D-rendered icons and rarity tiers — from reviews and streaks to mastered cards, Lesson Academy completion, and Quest Map progress. Click any achievement for your activity calendar and progress data.
 
-### 🎴 Quadrant Card — A4 Super-Memory (Pro)
+### 📖 Deep Dive — plain-language rescue for hard cards (Pro)
 
-Turns a single flashcard into an A4 four-quadrant "super memory" sheet (**Q1 question · Q2 answer · Q3 verbal metaphor · Q4 visual image**), each carrying its **own FSRS schedule** separate from your review decks. Upgrade existing cards in a batch, or create new ones directly — *"Make a quadrant card about the data flywheel."*
+When a flashcard is too hard to understand, hit **➕ Queue deep dive** during review. The AI diagnoses why the card failed you (too hard? too terse? missing context?) and generates a self-contained, illustrated deep-dive page — problem first, then the big-picture map, a memory anchor metaphor, a layered walkthrough, and common confusions, ending back at your original card. Deep dives carry **no schedule of their own**: the original card keeps reviewing, and if it keeps failing, the page is automatically rewritten from a shallower entry point. You can also ask directly — *"Make a deep dive about the data flywheel."*
 
 ---
 
@@ -362,9 +362,9 @@ Anki 解決「何時複習」。EngramQuest 解決「如何真正記住」 — �
 
 用 3D 渲染圖示與稀有度分級追蹤你的學習里程碑 — 從複習次數、連續天數、精熟卡片，到 Lesson Academy 完課與 Quest Map 進度。點任一成就查看你的活動日曆與進度數據。
 
-### 🎴 四象限卡 — A4 超記憶（Pro）
+### 📖 深入解析 — 難卡的白話救援（Pro）
 
-把單張閃卡升級成一張 A4 四象限「超記憶」卡（**Q1 問題 · Q2 答案 · Q3 語言比喻 · Q4 視覺圖像**），每張卡有自己**獨立的 FSRS 排程**，與你的 review deck 分開。可批次升級既有卡片，也能直接建立新卡 — *「幫我做一張關於資料飛輪的四象限卡。」*
+複習時遇到看不懂的卡，按「**➕ 加入解析佇列**」標記它。AI 會診斷這張卡為什麼難（內容太難？描述太簡略？缺乏脈絡？），生成一頁自包含的圖解深入解析——先講它解決什麼問題，再給宏觀地圖、記憶錨比喻、逐層拆解與常見混淆，最後回到你原本的卡片。解析頁**沒有自己的排程**：原卡照常複習，若持續答錯，解析會自動用更淺的切入點重寫。也可以直接說 — *「幫我做一份資料飛輪的深入解析。」*
 
 ---
 
