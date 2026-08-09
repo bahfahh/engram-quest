@@ -74,7 +74,10 @@ async function renderExplainerTab(el, hub) {
     const dark = activeDocument.body.classList.contains("theme-dark");
     bg = adapter.getResourcePath(hub.app.vault.configDir + "/plugins/engram-quest/" + (dark ? "stats_bg_dark.webp" : "bg.png"));
   } catch { bg = ""; }
-  const header = el.createEl("div", { attr: { class: "lh-stats-header", style: bg ? `background-image:url('${bg}')` : "" } });
+  // Scoped wrapper: lets styles/index.js recolor this tab's stats/pills/cards without touching
+  // Review Deck, which reuses the same lh-stat-num / lh-deck-metric / lh-deck-ready class names.
+  const root = el.createEl("div", { attr: { class: "lh-explainer-view" } });
+  const header = root.createEl("div", { attr: { class: "lh-stats-header", style: bg ? `background-image:url('${bg}')` : "" } });
   const unreadTotal = scan.pages.filter((p) => !p._viewed).length;
   [
     { label: c(t, "EXPLAINER_STAT_PAGES"), val: scan.total, cls: "total", left: "17%", top: "30%" },
@@ -105,7 +108,7 @@ async function renderExplainerTab(el, hub) {
   // Guard: refresh only while the tab is still in the document.
   const refresh = () => { if (el.isConnected) renderExplainerTab(el, hub); };
 
-  const card = el.createEl("div", { attr: { class: "lh-card" } });
+  const card = root.createEl("div", { attr: { class: "lh-card" } });
   const head = card.createEl("div", { attr: { class: "lh-card-header" } });
   const headGrp = head.createEl("div", { attr: { style: "display:flex;align-items:center;gap:8px" } });
   headGrp.createEl("span", { text: c(t, "TAB_EXPLAINER"), attr: { class: "lh-card-title" } });
@@ -239,8 +242,8 @@ function deckStats(deck) {
 function appendMetrics(rowEl, t, s) {
   const metrics = rowEl.createEl("div", { attr: { class: "lh-deck-metrics" } });
   const unreadBox = metrics.createEl("div", { attr: { class: `lh-deck-ready${s.unread === 0 ? " is-zero" : ""}` } });
-  unreadBox.createEl("div", { text: c(t, "EXPLAINER_STAT_UNREAD"), attr: { class: "lh-deck-ready-label" } });
-  unreadBox.createEl("div", { text: String(s.unread), attr: { class: "lh-deck-ready-num" } });
+  unreadBox.createEl("div", { text: s.unread === 0 ? c(t, "FILTER_DONE") : c(t, "EXPLAINER_STAT_UNREAD"), attr: { class: "lh-deck-ready-label" } });
+  unreadBox.createEl("div", { text: s.unread === 0 ? "✓" : String(s.unread), attr: { class: "lh-deck-ready-num" } });
   const breakdown = metrics.createEl("div", { attr: { class: "lh-deck-breakdown" } });
   [
     { key: "FILTER_STARRED", cls: "new", value: s.starred },
@@ -341,7 +344,7 @@ function renderGridView(content, hub, t, decks, refresh) {
     gc.createEl("div", { attr: { class: "lh-deck-gc-emoji" } }).textContent = DECK_EMOJIS[o % DECK_EMOJIS.length];
     gc.createEl("div", { attr: { class: "lh-deck-gc-name" } }).textContent = deck.name;
     gc.createEl("div", {
-      text: s.unread > 0 ? K(c(t, "EXPLAINER_UNREAD_COUNT"), { count: s.unread }) : c(t, "EXPLAINER_ALL_READ"),
+      text: s.unread > 0 ? K(c(t, "EXPLAINER_UNREAD_COUNT"), { count: s.unread }) : `✓ ${c(t, "EXPLAINER_ALL_READ")}`,
       attr: { class: "lh-deck-gc-status" },
     });
     const r = gc.createEl("div", { attr: { class: "lh-deck-gc-ready" } });
