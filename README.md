@@ -131,7 +131,7 @@ Track your learning milestones with 3D-rendered icons and rarity tiers — from 
 
 ### 📖 Deep Dive — plain-language rescue for hard cards (Pro)
 
-When a flashcard is too hard to understand, hit **➕ Queue deep dive** during review. The AI diagnoses why the card failed you (too hard? too terse? missing context?) and generates a self-contained, illustrated deep-dive page — problem first, then the big-picture map, a memory anchor metaphor, a layered walkthrough, and common confusions, ending back at your original card. Deep dives carry **no schedule of their own**: the original card keeps reviewing, and if it keeps failing, the page is automatically rewritten from a shallower entry point. You can also ask directly — *"Make a deep dive about the data flywheel."*
+When a flashcard is too hard to understand, hit **➕ Queue deep dive** during review. The AI diagnoses why the card failed you (too hard? too terse? missing context?) and generates a self-contained, illustrated deep-dive page — problem first, then the big-picture map, a memory anchor metaphor, a layered walkthrough, and common confusions, ending back at your original card. Deep dives carry **no schedule of their own**: the original card keeps reviewing, and if it keeps failing, the page is automatically rewritten from a shallower entry point. You can also ask directly — *"Make a deep dive about the data flywheel."* Reading state is colour-coded the same way across the Memory tabs: **amber = unread, blue = read, indigo = starred, green = completed** — and only your own ✓ mark turns something green.
 
 ---
 
@@ -364,7 +364,7 @@ Anki 解決「何時複習」。EngramQuest 解決「如何真正記住」 — �
 
 ### 📖 深入解析 — 難卡的白話救援（Pro）
 
-複習時遇到看不懂的卡，按「**➕ 加入解析佇列**」標記它。AI 會診斷這張卡為什麼難（內容太難？描述太簡略？缺乏脈絡？），生成一頁自包含的圖解深入解析——先講它解決什麼問題，再給宏觀地圖、記憶錨比喻、逐層拆解與常見混淆，最後回到你原本的卡片。解析頁**沒有自己的排程**：原卡照常複習，若持續答錯，解析會自動用更淺的切入點重寫。也可以直接說 — *「幫我做一份資料飛輪的深入解析。」*
+複習時遇到看不懂的卡，按「**➕ 加入解析佇列**」標記它。AI 會診斷這張卡為什麼難（內容太難？描述太簡略？缺乏脈絡？），生成一頁自包含的圖解深入解析——先講它解決什麼問題，再給宏觀地圖、記憶錨比喻、逐層拆解與常見混淆，最後回到你原本的卡片。解析頁**沒有自己的排程**：原卡照常複習，若持續答錯，解析會自動用更淺的切入點重寫。也可以直接說 — *「幫我做一份資料飛輪的深入解析。」* 閱讀狀態在記憶分頁使用一致的配色：**琥珀 = 未讀、藍 = 已讀、靛 = 已加星、綠 = 已完成** — 只有你自己按 ✓ 標記，才會變成綠色。
 
 ---
 

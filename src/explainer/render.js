@@ -3,8 +3,10 @@
 // background art, toolbar (search / filter / list-grid-tree view toggle), deck cards — with
 // explainer semantics: no schedules, so the numbers are pages / unread / decks, and clicking a
 // deck drills into its page list (Lesson Academy navigation pattern) where each page shows its
-// reading state (● unread dot, ⭐ starred, ✅ completed) and opens the reader. Reading state lives
-// in the plugin-owned engram-quest/explainer/state.json (see data.js).
+// reading state (📄 unread, 📘 read, ✅ completed, ⭐ starred) and opens the reader. Reading state
+// lives in the plugin-owned engram-quest/explainer/state.json (see data.js).
+// Colours come from the shared st-* palette in styles/index.js: amber = unread/due, blue = read,
+// indigo = starred, green = completed. Green is reserved for a state the user set by hand.
 
 const I = require("obsidian");
 const { t: c, interpolate: K } = require("../i18n");
@@ -74,15 +76,16 @@ async function renderExplainerTab(el, hub) {
     const dark = activeDocument.body.classList.contains("theme-dark");
     bg = adapter.getResourcePath(hub.app.vault.configDir + "/plugins/engram-quest/" + (dark ? "stats_bg_dark.webp" : "bg.png"));
   } catch { bg = ""; }
-  // Scoped wrapper: lets styles/index.js recolor this tab's stats/pills/cards without touching
-  // Review Deck, which reuses the same lh-stat-num / lh-deck-metric / lh-deck-ready class names.
+  // Wrapper exists for layout only (flex column that owns the tab's height) — the colours come from
+  // the shared st-* palette this tab deliberately has in common with Review Deck.
   const root = el.createEl("div", { attr: { class: "lh-explainer-view" } });
   const header = root.createEl("div", { attr: { class: "lh-stats-header", style: bg ? `background-image:url('${bg}')` : "" } });
   const unreadTotal = scan.pages.filter((p) => !p._viewed).length;
+  // cls keeps the shared font size; st-* carries the shared state colour.
   [
-    { label: c(t, "EXPLAINER_STAT_PAGES"), val: scan.total, cls: "total", left: "17%", top: "30%" },
-    { label: c(t, "EXPLAINER_STAT_UNREAD"), val: unreadTotal, cls: "new", left: "50%", top: "26%" },
-    { label: c(t, "EXPLAINER_STAT_DECKS"), val: allDecks.length, cls: "ready", left: "79%", top: "30%" },
+    { label: c(t, "EXPLAINER_STAT_PAGES"), val: scan.total, cls: "total st-total", left: "17%", top: "30%" },
+    { label: c(t, "EXPLAINER_STAT_UNREAD"), val: unreadTotal, cls: "new st-todo", left: "50%", top: "26%" },
+    { label: c(t, "EXPLAINER_STAT_DECKS"), val: allDecks.length, cls: "ready st-read", left: "79%", top: "30%" },
   ].forEach((p) => {
     const g = header.createEl("div", { attr: { class: "lh-stat-grp", style: `left:${p.left};top:${p.top}` } });
     g.createEl("span", { text: p.label, attr: { class: "lh-stat-label" } });
@@ -92,7 +95,7 @@ async function renderExplainerTab(el, hub) {
 
   // ----- Empty state -----
   if (scan.total === 0) {
-    const empty = el.createEl("div", { attr: { class: "lh-quadrant-empty" } });
+    const empty = root.createEl("div", { attr: { class: "lh-quadrant-empty" } });
     empty.createEl("div", { text: "📖", attr: { style: "font-size:40px;text-align:center;" } });
     empty.createEl("div", {
       text: c(t, "EXPLAINER_EMPTY_TITLE"),
@@ -128,7 +131,7 @@ function fillToolbar(bar, hub, t, rerenderContent) {
   input.addEventListener("input", () => { hub._xSearch = input.value; rerenderContent(); });
 
   const filter = bar.createEl("select", { attr: { class: "lh-filter" } });
-  [["all", "FILTER_ALL"], ["unread", "EXPLAINER_STAT_UNREAD"], ["starred", "FILTER_STARRED"], ["completed", "FILTER_DONE"], ["recent", "FILTER_RECENT"]].forEach(([val, key]) => {
+  [["all", "FILTER_ALL"], ["unread", "EXPLAINER_STAT_UNREAD"], ["read", "EXPLAINER_STAT_READ"], ["starred", "FILTER_STARRED"], ["completed", "FILTER_DONE"], ["recent", "FILTER_RECENT"]].forEach(([val, key]) => {
     const opt = filter.createEl("option", { text: c(t, key), attr: { value: val } });
     if (val === hub._xFilter) opt.selected = true;
   });
@@ -171,6 +174,7 @@ function filterPages(hub, pages) {
   }
   const f = hub._xFilter || "all";
   if (f === "unread") r = r.filter((p) => !p._viewed);
+  else if (f === "read") r = r.filter((p) => p._viewed && !p._completed);
   else if (f === "starred") r = r.filter((p) => p._starred);
   else if (f === "completed") r = r.filter((p) => p._completed);
   else if (f === "recent") { const cut = recentCutoffStr(7); r = r.filter((p) => String(p.created || "") >= cut); }
@@ -230,25 +234,47 @@ function renderContent(content, hub, t, pages, refresh) {
 // Deck-level metrics helpers
 // ---------------------------------------------------------------------------------------------
 
+// Deck state is three-way on purpose: "read" (everything opened) is NOT "done". Only pages the
+// user ticked ✅ in the reader count as completed, and only "done" is allowed to look green.
+function deckState(total, unread, completed) {
+  if (unread > 0) return "todo";
+  return total > 0 && completed === total ? "done" : "read";
+}
+
 function deckStats(deck) {
   const total = deck.pages.length;
   const unread = deck.pages.filter((p) => !p._viewed).length;
   const starred = deck.pages.filter((p) => p._starred).length;
   const completed = deck.pages.filter((p) => p._completed).length;
   const latest = deck.pages.reduce((m, p) => (String(p.created || "") > m ? String(p.created) : m), "");
-  return { total, unread, starred, completed, latest, readPct: total ? Math.round((total - unread) / total * 100) : 0 };
+  return {
+    total, unread, starred, completed, latest,
+    // `read` excludes completed so unread + read + completed === total and the two pills never show
+    // the same number. Same definition as the "read" filter and the 📘 glyph.
+    read: deck.pages.filter((p) => p._viewed && !p._completed).length,
+    readPct: total ? Math.round((total - unread) / total * 100) : 0,
+    donePct: total ? Math.round(completed / total * 100) : 0,
+    state: deckState(total, unread, completed),
+  };
 }
+
+// The big box reports the deck's state; the three pills report the counts behind it.
+const STATE_BOX = {
+  todo: { key: "EXPLAINER_STAT_UNREAD", num: (s) => String(s.unread) },
+  read: { key: "EXPLAINER_ALL_READ", num: () => "✓" },
+  done: { key: "EXPLAINER_ALL_DONE", num: () => "✓" },
+};
 
 function appendMetrics(rowEl, t, s) {
   const metrics = rowEl.createEl("div", { attr: { class: "lh-deck-metrics" } });
-  const unreadBox = metrics.createEl("div", { attr: { class: `lh-deck-ready${s.unread === 0 ? " is-zero" : ""}` } });
-  unreadBox.createEl("div", { text: s.unread === 0 ? c(t, "FILTER_DONE") : c(t, "EXPLAINER_STAT_UNREAD"), attr: { class: "lh-deck-ready-label" } });
-  unreadBox.createEl("div", { text: s.unread === 0 ? "✓" : String(s.unread), attr: { class: "lh-deck-ready-num" } });
+  const box = metrics.createEl("div", { attr: { class: `lh-deck-ready st-${s.state}` } });
+  box.createEl("div", { text: c(t, STATE_BOX[s.state].key), attr: { class: "lh-deck-ready-label" } });
+  box.createEl("div", { text: STATE_BOX[s.state].num(s), attr: { class: "lh-deck-ready-num" } });
   const breakdown = metrics.createEl("div", { attr: { class: "lh-deck-breakdown" } });
   [
-    { key: "FILTER_STARRED", cls: "new", value: s.starred },
-    { key: "FILTER_DONE", cls: "due", value: s.completed },
-    { key: "TOTAL", cls: "total", value: s.total },
+    { key: "EXPLAINER_STAT_READ", cls: "st-read", value: s.read },
+    { key: "FILTER_STARRED", cls: "st-star", value: s.starred },
+    { key: "FILTER_DONE", cls: "st-done", value: s.completed },
   ].forEach((m) => {
     const g = breakdown.createEl("div", { attr: { class: `lh-deck-metric ${m.cls}` } });
     g.createEl("div", { text: c(t, m.key), attr: { class: "lh-deck-metric-label" } });
@@ -320,7 +346,7 @@ function renderListView(content, hub, t, decks, refresh) {
   const list = content.createEl("div", { attr: { class: "lh-deck-list" } });
   decks.forEach((deck, o) => {
     const s = deckStats(deck);
-    const row = list.createEl("div", { attr: { class: `lh-deck-row${s.unread === 0 ? " is-emptyready" : ""}` } });
+    const row = list.createEl("div", { attr: { class: `lh-deck-row${s.state === "done" ? " is-emptyready" : ""}` } });
     row.createEl("span", { text: ">", attr: { class: "lh-deck-chevron" } });
     const main = row.createEl("div", { attr: { class: "lh-deck-main" } });
     const nameRow = main.createEl("div", { attr: { class: "lh-deck-row-name", style: "display:flex;align-items:center;gap:8px;" } });
@@ -340,23 +366,29 @@ function renderGridView(content, hub, t, decks, refresh) {
   const grid = content.createEl("div", { attr: { class: "lh-deck-grid" } });
   decks.forEach((deck, o) => {
     const s = deckStats(deck);
-    const gc = grid.createEl("div", { attr: { class: `lh-deck-gc${s.unread > 0 ? " has-due" : " is-emptyready"}` } });
+    const gc = grid.createEl("div", {
+      attr: { class: `lh-deck-gc st-${s.state}${s.state === "todo" ? " has-due" : ""}${s.state === "done" ? " is-emptyready" : ""}` },
+    });
     gc.createEl("div", { attr: { class: "lh-deck-gc-emoji" } }).textContent = DECK_EMOJIS[o % DECK_EMOJIS.length];
     gc.createEl("div", { attr: { class: "lh-deck-gc-name" } }).textContent = deck.name;
     gc.createEl("div", {
-      text: s.unread > 0 ? K(c(t, "EXPLAINER_UNREAD_COUNT"), { count: s.unread }) : `✓ ${c(t, "EXPLAINER_ALL_READ")}`,
+      text: s.state === "todo" ? K(c(t, "EXPLAINER_UNREAD_COUNT"), { count: s.unread })
+        : s.state === "read" ? c(t, "EXPLAINER_ALL_READ")
+          : `✓ ${c(t, "EXPLAINER_ALL_DONE")}`,
       attr: { class: "lh-deck-gc-status" },
     });
     const r = gc.createEl("div", { attr: { class: "lh-deck-gc-ready" } });
     r.createEl("div", { text: String(s.total), attr: { class: "lh-deck-gc-ready-num" } });
     r.createEl("div", { text: c(t, "EXPLAINER_STAT_PAGES"), attr: { class: "lh-deck-gc-ready-label" } });
-    gc.createEl("div", { attr: { class: "lh-deck-gc-bar-bg" } }).createEl("div", { attr: { class: "lh-deck-gc-bar", style: `width:${s.readPct}%` } });
-    gc.createEl("div", { attr: { class: "lh-deck-gc-sub" } }).textContent = K(c(t, "EXPLAINER_READ_RATE"), { percent: s.readPct });
+    // The bar tracks completion, not reading — reading alone must never look like a finished deck.
+    gc.createEl("div", { attr: { class: "lh-deck-gc-bar-bg" } }).createEl("div", { attr: { class: "lh-deck-gc-bar", style: `width:${s.donePct}%` } });
+    gc.createEl("div", { attr: { class: "lh-deck-gc-sub" } }).textContent =
+      `${K(c(t, "EXPLAINER_READ_RATE"), { percent: s.readPct })} · ${K(c(t, "EXPLAINER_DONE_RATE"), { percent: s.donePct })}`;
     const metrics = gc.createEl("div", { attr: { class: "lh-deck-gc-metrics" } });
     [
-      { key: "EXPLAINER_STAT_UNREAD", cls: "new", value: s.unread },
-      { key: "FILTER_STARRED", cls: "due", value: s.starred },
-      { key: "FILTER_DONE", cls: "total", value: s.completed },
+      { key: "EXPLAINER_STAT_UNREAD", cls: "st-todo", value: s.unread },
+      { key: "FILTER_STARRED", cls: "st-star", value: s.starred },
+      { key: "FILTER_DONE", cls: "st-done", value: s.completed },
     ].forEach((m) => {
       const e = metrics.createEl("div", { attr: { class: `lh-deck-gc-metric ${m.cls}` } });
       e.createEl("div", { text: c(t, m.key), attr: { class: "lh-deck-gc-metric-label" } });
@@ -373,7 +405,7 @@ function renderTreeView(content, hub, t, decks, refresh) {
   let count = 0;
   hub._renderTreeRecursive(container, tree, (parentEl, deck) => {
     const s = deckStats(deck);
-    const row = parentEl.createEl("div", { attr: { class: `lh-deck-row lh-tree-item-row${s.unread === 0 ? " is-emptyready" : ""}` } });
+    const row = parentEl.createEl("div", { attr: { class: `lh-deck-row lh-tree-item-row${s.state === "done" ? " is-emptyready" : ""}` } });
     const main = row.createEl("div", { attr: { class: "lh-deck-main" } });
     const nameRow = main.createEl("div", { attr: { class: "lh-deck-row-name", style: "display:flex;align-items:center;gap:8px;" } });
     nameRow.createEl("span", { text: DECK_EMOJIS[count % DECK_EMOJIS.length], attr: { style: "font-size:16px;line-height:1;" } });
@@ -407,7 +439,7 @@ function renderDeckPages(content, hub, t, deck, refresh) {
   backBtn.addEventListener("click", () => { hub._xDeck = null; refresh(); });
   headRow.createEl("span", { text: `📖 ${deck.name}`, attr: { style: "font-size:14px;font-weight:700;color:var(--text-normal);" } });
   headRow.createEl("span", {
-    text: K(c(t, "EXPLAINER_READ_RATE"), { percent: s.readPct }),
+    text: `${K(c(t, "EXPLAINER_READ_RATE"), { percent: s.readPct })} · ${K(c(t, "EXPLAINER_DONE_RATE"), { percent: s.donePct })}`,
     attr: { style: "font-size:12px;color:var(--text-muted);margin-left:auto;" },
   });
 
@@ -415,9 +447,9 @@ function renderDeckPages(content, hub, t, deck, refresh) {
   sortPages(deck.pages, hub._xSort).forEach((page) => {
     const row = list.createEl("div", { attr: { class: "lh-deck-row" } });
 
-    // Status glyph: ✅ completed > 📄 default; unread additionally gets a ● accent dot.
+    // Status glyph mirrors the deck-level three states: ✅ completed / 📘 read / 📄 unread.
     row.createEl("span", {
-      text: page._completed ? "✅" : "📄",
+      text: page._completed ? "✅" : page._viewed ? "📘" : "📄",
       attr: { style: "font-size:16px;line-height:1;flex-shrink:0;" },
     });
 
@@ -488,4 +520,6 @@ function confirmDeletePage(hub, t, page, refresh) {
   modal.open();
 }
 
-module.exports = { renderExplainerTab };
+// deckState / deckStats are pure and are the heart of the read-vs-completed distinction, so they
+// are exported for unit tests even though the rest of this file is render-layer.
+module.exports = { renderExplainerTab, deckState, deckStats };

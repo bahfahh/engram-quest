@@ -16,6 +16,7 @@ import {
   QUEUE_PATH,
   STATE_PATH,
 } from "../src/explainer/data.js";
+import { deckState, deckStats } from "../src/explainer/render.js";
 
 // In-memory vault adapter mimicking the Obsidian adapter surface the data layer uses.
 function makeAdapter(initial = {}) {
@@ -187,5 +188,48 @@ describe("explainer deleteExplainer", () => {
   it("succeeds when the files are already gone", async () => {
     const adapter = makeAdapter();
     await expect(deleteExplainer(adapter, "ghost-1")).resolves.toBeUndefined();
+  });
+});
+
+// ---------------------------------------------------------------------------------------------
+// Deck state machine (render layer, but pure): reading a page must never be mistaken for completing
+// it — only a manual ✅ puts a deck into "done", the one state allowed to look green.
+// ---------------------------------------------------------------------------------------------
+
+describe("deckState / deckStats", () => {
+  const deck = (...pages) => ({ pages: pages.map((p, i) => ({ id: `p${i}`, created: "2026-01-0" + (i + 1), ...p })) });
+  const page = (viewed, completed = false, starred = false) => ({ _viewed: viewed, _completed: completed, _starred: starred });
+
+  it("is todo while any page is unread, even when others are completed", () => {
+    expect(deckState(3, 1, 2)).toBe("todo");
+    expect(deckStats(deck(page(false), page(true, true), page(true, true))).state).toBe("todo");
+  });
+
+  it("is read when everything is opened but not everything is marked done", () => {
+    expect(deckState(3, 0, 0)).toBe("read");
+    expect(deckState(3, 0, 2)).toBe("read");
+    expect(deckStats(deck(page(true), page(true), page(true, true))).state).toBe("read");
+  });
+
+  it("is done only when every page is marked completed", () => {
+    expect(deckState(2, 0, 2)).toBe("done");
+    expect(deckStats(deck(page(true, true), page(true, true))).state).toBe("done");
+  });
+
+  it("splits unread / read / completed so the three counts sum to the total", () => {
+    const s = deckStats(deck(page(false), page(true), page(true), page(true, true)));
+    expect([s.unread, s.read, s.completed]).toEqual([1, 2, 1]);
+    expect(s.unread + s.read + s.completed).toBe(s.total);
+  });
+
+  it("reports read rate and completion rate separately", () => {
+    const s = deckStats(deck(page(true), page(true), page(true, true), page(true, true)));
+    expect(s.readPct).toBe(100);
+    expect(s.donePct).toBe(50);
+  });
+
+  it("never divides by zero on an empty deck", () => {
+    const s = deckStats(deck());
+    expect([s.total, s.readPct, s.donePct]).toEqual([0, 0, 0]);
   });
 });

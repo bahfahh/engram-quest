@@ -316,6 +316,7 @@ expect(result.completed).toBe(true)
               <li>複習時對難卡按「➕ 加入解析佇列」，之後跟 AI 說「處理解析」批次生成</li>
               <li>也可直接跟 AI 說「幫我做一份 X 的深入解析」</li>
               <li>到 Hub →「深入解析」分頁閱讀；開啟自動標記已讀，可加 ⭐ 或標記 ✓ 完成，🗑️ 刪除不要的頁</li>
+              <li>顏色一致代表狀態：<strong>琥珀 = 未讀</strong>、<strong>藍 = 已讀</strong>、<strong>靛 = 已加星</strong>、<strong>綠 = 已完成</strong>。只有你自己按 ✓ 標記完成才會變綠，單純讀過不會</li>
             </ol>
             <p><strong>需要 Pro license</strong>。</p>
           `},{icon:"🔬",title:"Learning Science",tag:c(e,"HELP_SCIENCE_TAG"),html:`
@@ -605,6 +606,7 @@ expect(result.completed).toBe(true)
               <li>Queue hard cards with ➕ during review, then tell the AI to "process the deep dive queue"</li>
               <li>Or ask directly: "make a deep dive about X"</li>
               <li>Read them in Hub → Deep Dive tab; opening marks them read, add ⭐ or ✓ complete, 🗑️ deletes a page</li>
+              <li>Colours mean the same thing everywhere: <strong>amber = unread</strong>, <strong>blue = read</strong>, <strong>indigo = starred</strong>, <strong>green = completed</strong>. Only your own ✓ turns a deck green — reading alone never does</li>
             </ol>
             <p><strong>Requires a Pro license.</strong></p>
           `},{icon:"🔬",title:"Why It Works",tag:c(e,"HELP_SCIENCE_TAG"),html:`
