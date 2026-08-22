@@ -2,6 +2,7 @@
 
 const obsidian = require("obsidian");
 const { loadSrData, saveSrData } = require("./helpers");
+const { normalizeMarkdown } = require("../ui/markdown");
 
 function openReviewCardModal(app, card, onDone, settings, deps) {
   let modal = new obsidian.Modal(app);
@@ -25,7 +26,7 @@ function openReviewCardModal(app, card, onDone, settings, deps) {
     let frontEl = body.createEl("div", {
       attr: { style: "font-size:17px;font-weight:700;color:var(--text-normal);line-height:1.55" }
     });
-    obsidian.MarkdownRenderer.renderMarkdown(card.front||"", frontEl, card.notePath||"", null);
+    obsidian.MarkdownRenderer.renderMarkdown(normalizeMarkdown(card.front||""), frontEl, card.notePath||"", null);
     body.createEl("div", { attr: { style: "border-top:1px dashed var(--background-modifier-border)" } });
 
     let hintBackgrounds = ["", "#dbeafe", "#fef9c3", "#dcfce7"];
@@ -41,14 +42,14 @@ function openReviewCardModal(app, card, onDone, settings, deps) {
         text: hintLabels[index]
       });
       let hintEl = block.createEl("div", { attr: { style: "font-size:14px;color:#1f2937;line-height:1.65" } });
-      obsidian.MarkdownRenderer.renderMarkdown(hints[index] || deps.translate(settings, "NO_HINT"), hintEl, card.notePath||"", null);
+      obsidian.MarkdownRenderer.renderMarkdown(normalizeMarkdown(hints[index] || deps.translate(settings, "NO_HINT")), hintEl, card.notePath||"", null);
     }
 
     if (answerShown) {
       let answerEl = body.createEl("div", {
         attr: { style: "font-size:15px;line-height:1.7;color:var(--text-normal);background:var(--background-secondary);border-radius:10px;padding:15px 17px;border:1px solid var(--background-modifier-border)" }
       });
-      obsidian.MarkdownRenderer.renderMarkdown(card.back||"", answerEl, card.notePath||"", null);
+      obsidian.MarkdownRenderer.renderMarkdown(normalizeMarkdown(card.back||""), answerEl, card.notePath||"", null);
     }
 
     body.createEl("div", { attr: { style: "flex:1" } });

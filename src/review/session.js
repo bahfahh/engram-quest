@@ -7,6 +7,7 @@ const { loadSynapseStatus, loadSynapseBatch, attachSynapseToCards, isSynapseEnab
 const { ACHIEVEMENTS, RARITY_DARK, RARITY_LIGHT } = require("../hub/achievement");
 const { saveTagSourceCard, saveInlineCard, deleteTagSourceCard, applyFormatToCardBack, refreshTagSourceCard } = require("./edit");
 const { registerSelectionCopy } = require("../ui/selection-copy");
+const { normalizeMarkdown } = require("../ui/markdown");
 const { addToQueue, readQueue, isQueued } = require("../explainer/data");
 const W_ref = { get locale() { try { return I.moment && I.moment.locale && I.moment.locale(); } catch(e) { return "en"; } } };
 function L(s) { return _getLocale(s, W_ref.locale); }
@@ -407,7 +408,7 @@ var Q=class extends I.Modal{
     // answer (initial), and answer (in-place refresh after format apply).
     const renderMd=(el,text)=>{
       el.empty();
-      I.MarkdownRenderer.renderMarkdown(text||"",el,e.notePath||"",null);
+      I.MarkdownRenderer.renderMarkdown(normalizeMarkdown(text||""),el,e.notePath||"",null);
       postProcessEmbed(el,this.app,e.notePath||"");
       attachImgZoom(el);
     };
