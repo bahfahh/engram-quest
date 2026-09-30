@@ -32,6 +32,7 @@ function ensureHubMobilePatch() {
   const styleEl = activeDocument.createElement("style");
   styleEl.id = HUB_MOBILE_PATCH_ID;
   styleEl.textContent = `
+body:not(.is-phone) .lh-hub > .modal-close-button { display:none !important; }
 body.is-phone .lh-nav { overflow:hidden !important; }
 body.is-phone .lh-nav > .lh-tabs {
   flex:1 1 auto;
