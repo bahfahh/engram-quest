@@ -1,11 +1,18 @@
 "use strict";
-// "+ New series" pop-up for the Video Academy (ADR-14/15): one sentence of what to learn plus a source
-// menu — auto-pick relevant notes (default; notes/folders can be dropped in to narrow it down) or
-// don't use notes. Submitting only records a pending topic; the video skill generates it later.
+// "+ New series" pop-up for the Video Academy, also used to edit a series that is still pending.
+// The learner only says what they want to learn (the goal, which becomes the series name) plus
+// optional detail, the series' video style and the source — auto-pick relevant notes (default;
+// notes/folders can be dropped in to narrow it down) or don't use notes. How many videos and what
+// each covers is the video skill's call. Saving only writes a pending series; nothing is generated here.
 
 const I = require("obsidian");
 const { t: c } = require("../i18n");
-const { createRequest } = require("./data");
+const { createRequest, updateRequest, SERIES_STYLES, GOAL_MAX } = require("./data");
+
+const SERIES_STYLE_KEYS = {
+  auto: "VIDEO_STYLE_AUTO", fast: "VIDEO_STYLE_FAST", system: "VIDEO_STYLE_SYSTEM",
+  visual: "VIDEO_STYLE_VISUAL", drawn: "VIDEO_STYLE_DRAWN",
+};
 
 /** Resolve an obsidian://open URL, [[wikilink]] or bare path to an existing vault file/folder path. */
 function resolveRef(app, raw) {
@@ -38,22 +45,63 @@ function refsFromDrop(app, evt) {
   });
 }
 
-function openNewVideoModal(hub, t, onCreated) {
+/** Build a <select> of the series style options; returns the element. */
+function styleSelect(parent, t, id, value) {
+  const sel = parent.createEl("select", { cls: "lh-vid-select", attr: { id } });
+  for (const s of SERIES_STYLES) sel.createEl("option", { text: c(t, SERIES_STYLE_KEYS[s]), attr: { value: s } });
+  sel.value = value || "auto";
+  return sel;
+}
+
+/**
+ * Open the form. With `edit` = { slug, meta } it edits that pending series and shows a delete
+ * button (`onDelete`); otherwise it creates one. `onSaved(slug)` runs after a successful save.
+ */
+function openNewVideoModal(hub, t, onSaved, edit = null, onDelete = null) {
   const app = hub.app;
+  const req = edit && edit.meta.request;
   const modal = new I.Modal(app);
   modal.modalEl.addClass("lh-vid-modal", "lh-vid-new");
   const wrap = modal.contentEl;
-  let refs = [];
+  let refs = req ? [...req.refs] : [];
 
-  const label = wrap.createEl("label", { cls: "lh-vid-modal-title", text: c(t, "VIDEO_NEW_TITLE"), attr: { for: "lh-vid-new-text" } });
-  const input = wrap.createEl("textarea", { cls: "lh-vid-input", attr: { id: "lh-vid-new-text", rows: "2", placeholder: c(t, "VIDEO_NEW_PH") } });
+  wrap.createDiv({ cls: "lh-vid-modal-title", text: c(t, edit ? "VIDEO_EDIT_TITLE" : "VIDEO_NEW_TITLE") });
 
-  const srcRow = wrap.createDiv({ cls: "lh-vid-src-row" });
-  const select = srcRow.createEl("select", { cls: "lh-vid-select", attr: { "aria-label": label.textContent } });
+  const field = (labelKey, forId, optional) => {
+    const f = wrap.createDiv({ cls: "lh-vid-field" });
+    const label = f.createEl("label", { cls: "lh-vid-label", text: c(t, labelKey), attr: { for: forId } });
+    if (optional) label.createSpan({ cls: "lh-vid-optional", text: c(t, "VIDEO_OPTIONAL") });
+    return f;
+  };
+
+  const goalField = field("VIDEO_NEW_GOAL", "lh-vid-new-goal");
+  const goal = goalField.createEl("input", {
+    cls: "lh-vid-input",
+    attr: { id: "lh-vid-new-goal", type: "text", maxlength: String(GOAL_MAX), placeholder: c(t, "VIDEO_NEW_PH") },
+  });
+  // A series named before the name limit existed may be longer; keep the full text as detail.
+  const oldTitle = edit ? edit.meta.title : "";
+  const titleTooLong = Array.from(oldTitle).length > GOAL_MAX;
+  goal.value = Array.from(oldTitle).slice(0, GOAL_MAX).join("");
+
+  const detailField = field("VIDEO_NEW_DETAIL", "lh-vid-new-detail", true);
+  const detail = detailField.createEl("textarea", {
+    cls: "lh-vid-input",
+    attr: { id: "lh-vid-new-detail", rows: "3", placeholder: c(t, "VIDEO_NEW_DETAIL_PH") },
+  });
+  detail.value = (req && req.detail) || (titleTooLong ? oldTitle : "");
+  detailField.createDiv({ cls: "lh-vid-modal-desc", text: c(t, "VIDEO_NEW_DETAIL_HINT") });
+
+  const styleField = field("VIDEO_SERIES_STYLE", "lh-vid-new-style");
+  const style = styleSelect(styleField, t, "lh-vid-new-style", edit ? edit.meta.style : "auto");
+
+  const srcField = field("VIDEO_NEW_SOURCE", "lh-vid-new-src");
+  const select = srcField.createEl("select", { cls: "lh-vid-select", attr: { id: "lh-vid-new-src" } });
   select.createEl("option", { text: c(t, "VIDEO_SOURCE_NOTES"), attr: { value: "notes" } });
   select.createEl("option", { text: c(t, "VIDEO_SOURCE_GENERAL"), attr: { value: "general" } });
-  const desc = wrap.createDiv({ cls: "lh-vid-modal-desc" });
-  const drop = wrap.createDiv({ cls: "lh-vid-drop" });
+  select.value = req && req.source === "general" ? "general" : "notes";
+  const desc = srcField.createDiv({ cls: "lh-vid-modal-desc" });
+  const drop = srcField.createDiv({ cls: "lh-vid-drop" });
 
   const renderSource = () => {
     const useNotes = select.value === "notes";
@@ -82,28 +130,38 @@ function openNewVideoModal(hub, t, onCreated) {
   });
 
   const actions = wrap.createDiv({ cls: "lh-vid-modal-actions" });
+  if (edit && onDelete) {
+    actions.createEl("button", { cls: "lh-vid-btn lh-vid-btn-danger-text", text: c(t, "DELETE") })
+      .addEventListener("click", () => { modal.close(); onDelete(); });
+    actions.createDiv({ cls: "lh-vid-spacer" });
+  }
   actions.createEl("button", { cls: "lh-vid-btn", text: c(t, "DELETE_CANCEL_BTN") }).addEventListener("click", () => modal.close());
-  const submit = actions.createEl("button", { cls: "lh-vid-btn lh-vid-btn-primary", text: c(t, "VIDEO_NEW_SUBMIT") });
-  const syncSubmit = () => { submit.disabled = !input.value.trim(); };
-  input.addEventListener("input", syncSubmit);
+  const submit = actions.createEl("button", { cls: "lh-vid-btn lh-vid-btn-primary", text: c(t, edit ? "VIDEO_SET_SAVE" : "VIDEO_NEW_SUBMIT") });
+  const syncSubmit = () => { submit.disabled = !goal.value.trim(); };
+  goal.addEventListener("input", syncSubmit);
   syncSubmit();
   submit.addEventListener("click", async () => {
     if (submit.disabled) return;
     submit.disabled = true;
+    const input = { text: goal.value, detail: detail.value, source: select.value, refs, style: style.value };
     try {
-      const { slug } = await createRequest(app.vault.adapter, { text: input.value, source: select.value, refs });
+      const adapter = app.vault.adapter;
+      if (edit) {
+        if (!(await updateRequest(adapter, edit.slug, input, edit.meta))) throw new Error("series changed or is no longer pending");
+      }
+      const slug = edit ? edit.slug : (await createRequest(adapter, input)).slug;
       modal.close();
-      new I.Notice(c(t, "VIDEO_NEW_DONE"));
-      onCreated(slug);
+      new I.Notice(c(t, edit ? "VIDEO_EDIT_DONE" : "VIDEO_NEW_DONE"));
+      onSaved(slug);
     } catch (e) {
-      console.error("EngramQuest: video request failed", e);
-      new I.Notice(c(t, "VIDEO_NEW_FAILED"));
+      console.error("EngramQuest: video request save failed", e);
+      new I.Notice(c(t, edit ? "VIDEO_EDIT_FAILED" : "VIDEO_NEW_FAILED"));
       submit.disabled = false;
     }
   });
 
   modal.open();
-  input.focus();
+  goal.focus();
 }
 
-module.exports = { openNewVideoModal };
+module.exports = { openNewVideoModal, styleSelect };

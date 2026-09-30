@@ -15,6 +15,10 @@ import {
   continueWatching,
   saveProgress,
   createRequest,
+  updateRequest,
+  setTopicStyle,
+  topicState,
+  GOAL_MAX,
   deleteTopic,
 } from "../src/videos/data.js";
 
@@ -202,6 +206,85 @@ describe("continueWatching threshold", () => {
   it("ignores a video that was only opened (position 0)", () => {
     const meta = normalizeTopic(topicMeta({ progress: { "vid-1": { position: 0, lastViewed: "2026-09-30T08:00:00.000Z" } } }));
     expect(continueWatching([{ slug: "t", meta }])).toBeNull();
+  });
+});
+
+describe("series request: goal, detail, style", () => {
+  it("stores the goal as the name, keeps detail, and defaults the style to auto", async () => {
+    const a = makeAdapter();
+    const { slug, meta } = await createRequest(a, { text: "  架設網站 ", detail: " 從零開始，想用 Obsidian 發布 " });
+    expect(meta).toMatchObject({ title: "架設網站", style: "auto", status: "pending" });
+    expect(meta.request).toMatchObject({ text: "架設網站", detail: "從零開始，想用 Obsidian 發布" });
+    expect(JSON.parse(a.files[metaPath(slug)]).style).toBe("auto");
+  });
+
+  it("caps the goal length so it stays a name, and drops unknown styles", async () => {
+    const { meta } = await createRequest(makeAdapter(), { text: "x".repeat(GOAL_MAX + 20), style: "neon" });
+    expect(meta.title).toHaveLength(GOAL_MAX);
+    expect(meta.style).toBe("auto");
+  });
+
+  it("updateRequest edits a pending series in place and keeps plugin/skill fields", async () => {
+    const a = makeAdapter();
+    const { slug } = await createRequest(a, { text: "SEO", refs: ["a.md"] });
+    const raw = JSON.parse(a.files[metaPath(slug)]);
+    a.files[metaPath(slug)] = JSON.stringify({ ...raw, note: "no notes found" });
+    const meta = await updateRequest(a, slug, { text: "SEO 教學", detail: "技術 SEO", style: "system", refs: ["b.md"] });
+    expect(meta).toMatchObject({ title: "SEO 教學", style: "system", note: "no notes found" });
+    expect(meta.request).toMatchObject({ text: "SEO 教學", detail: "技術 SEO", refs: ["b.md"] });
+    expect(meta.request.createdAt).toBe(raw.request.createdAt);
+  });
+
+  it("updateRequest refuses when the skill changed the series after the form opened", async () => {
+    const a = makeAdapter();
+    const { slug, meta: opened } = await createRequest(a, { text: "SEO" });
+    const raw = JSON.parse(a.files[metaPath(slug)]);
+    a.files[metaPath(slug)] = JSON.stringify({ ...raw, title: "SEO 入門（AI 命名）" });
+    expect(await updateRequest(a, slug, { text: "SEO 2" }, opened)).toBeNull();
+    expect(JSON.parse(a.files[metaPath(slug)]).title).toBe("SEO 入門（AI 命名）");
+  });
+
+  it("updateRequest keeps a style the form can't show unless the user changed it", async () => {
+    const a = makeAdapter();
+    const { slug } = await createRequest(a, { text: "SEO" });
+    const raw = JSON.parse(a.files[metaPath(slug)]);
+    a.files[metaPath(slug)] = JSON.stringify({ ...raw, style: "isometric" });
+    const opened = normalizeTopic(JSON.parse(a.files[metaPath(slug)]));
+    expect(opened.style).toBe("auto");
+    await updateRequest(a, slug, { text: "SEO 教學", style: "auto" }, opened);
+    expect(JSON.parse(a.files[metaPath(slug)]).style).toBe("isometric");
+    await updateRequest(a, slug, { text: "SEO 教學", style: "fast" }, normalizeTopic(JSON.parse(a.files[metaPath(slug)])));
+    expect(JSON.parse(a.files[metaPath(slug)]).style).toBe("fast");
+  });
+
+  it("updateRequest needs the file itself to say pending, not just have no videos yet", async () => {
+    const a = makeAdapter({ [metaPath("t")]: JSON.stringify({ title: "x", status: "ready", videos: [] }) });
+    expect(await updateRequest(a, "t", { text: "y" })).toBeNull();
+  });
+
+  it("updateRequest refuses once the series has videos, or is gone", async () => {
+    const a = makeAdapter({ [metaPath("t")]: JSON.stringify(topicMeta()) });
+    expect(await updateRequest(a, "t", { text: "new" })).toBeNull();
+    expect(JSON.parse(a.files[metaPath("t")]).title).toBe("AI Coding 品質防線");
+    expect(await updateRequest(a, "gone", { text: "new" })).toBeNull();
+  });
+
+  it("setTopicStyle writes a valid style and rejects others", async () => {
+    const a = makeAdapter({ [metaPath("t")]: JSON.stringify(topicMeta()) });
+    expect(await setTopicStyle(a, "t", "drawn")).toBe(true);
+    expect(normalizeTopic(JSON.parse(a.files[metaPath("t")])).style).toBe("drawn");
+    await expect(setTopicStyle(a, "t", "neon")).rejects.toThrow();
+    expect(await setTopicStyle(a, "gone", "fast")).toBe(false);
+  });
+});
+
+describe("topicState", () => {
+  it("buckets series for the shelf filters", () => {
+    expect(topicState(normalizeTopic({ title: "p", status: "pending", videos: [] }))).toBe("pending");
+    expect(topicState(normalizeTopic(topicMeta()))).toBe("new");
+    expect(topicState(normalizeTopic(topicMeta({ progress: { "vid-1": { position: 12 } } })))).toBe("watching");
+    expect(topicState(normalizeTopic(topicMeta({ progress: { "vid-1": { completed: true } } })))).toBe("watching");
+    expect(topicState(normalizeTopic(topicMeta({ progress: { "vid-1": { completed: true }, "vid-2": { completed: true } } })))).toBe("done");
   });
 });
 

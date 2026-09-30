@@ -1,6 +1,6 @@
 "use strict";
-// Hub "Video Academy" tab (影片學院). Two views (ADR-12): the shelf — a continue-watching hero plus
-// one row per topic — and the topic view — inline player + that topic's playlist. Watching writes
+// Hub "Video Academy" tab (影片學院). Two views (ADR-12): the shelf — a continue-watching bar, filter
+// chips and a card grid of every series (ADR-20) — and the topic view — inline player + playlist. Watching writes
 // position / completed back into the topic's meta.json. The plugin never generates videos: "+ New series"
 // only records a pending topic for the video skill (doc/開發計劃/影片學院/skills.md).
 // View state lives on the hub: hub._vTopic = { slug, videoId, autoplay } | null.
@@ -8,7 +8,7 @@
 const I = require("obsidian");
 const { t: c, interpolate: K } = require("../i18n");
 const data = require("./data");
-const { openNewVideoModal } = require("./new-modal");
+const { openNewVideoModal, styleSelect } = require("./new-modal");
 const { openVideoSettingsModal } = require("./settings-modal");
 const { attachInfoButton } = require("../hub/feature-guide");
 
@@ -17,6 +17,13 @@ const MODE_KEYS = { basic: "VIDEO_MODE_BASIC", polished: "VIDEO_MODE_POLISHED", 
 // One progress-write chain per topic, shared across re-renders: the old player's final "pause"
 // save and the new player's first save must not interleave their read-merge-write of meta.json.
 const saveChains = new Map();
+
+/** Serialise the plugin's read-merge-writes of one topic's meta.json (progress saves, style changes). */
+function queueWrite(slug, fn) {
+  const chain = (saveChains.get(slug) || Promise.resolve()).then(fn);
+  saveChains.set(slug, chain.catch(() => {}));
+  return chain;
+}
 
 function fmtTime(sec) {
   const s = Math.max(0, Math.round(Number(sec) || 0));
@@ -79,12 +86,16 @@ async function renderVideoTab(el, hub) {
     left.createEl("button", { cls: "lh-vid-back", text: c(t, "VIDEO_BACK") })
       .addEventListener("click", () => { hub._vTopic = null; refresh(); });
     left.createSpan({ cls: "lh-vid-head-title", text: open.meta.title });
+    renderStylePicker(left, hub, t, open, refresh);
   } else {
     left.createSpan({ cls: "lh-vid-head-title", text: c(t, "TAB_VIDEO") });
     attachInfoButton(left, hub.app, hub.plugin, "video");
   }
   head.createEl("button", { cls: "lh-vid-btn lh-vid-btn-primary", text: c(t, "VIDEO_NEW") })
-    .addEventListener("click", () => openNewVideoModal(hub, t, (slug) => { hub._vTopic = null; hub._vFlash = slug; refresh(); }));
+    .addEventListener("click", () => openNewVideoModal(hub, t, (slug) => {
+      hub._vTopic = null; hub._vFlash = slug; hub._vFilter = "all"; hub._vQuery = "";
+      refresh();
+    }));
   head.createEl("button", { cls: "lh-vid-btn", text: c(t, "VIDEO_SETTINGS") })
     .addEventListener("click", () => openVideoSettingsModal(hub, t));
 
@@ -97,6 +108,16 @@ async function renderVideoTab(el, hub) {
 // Shelf
 // ---------------------------------------------------------------------------------------------
 
+const FILTERS = [["all", "VIDEO_F_ALL"], ["watching", "VIDEO_F_WATCHING"], ["new", "VIDEO_F_NEW"], ["done", "VIDEO_F_DONE"], ["pending", "VIDEO_PENDING"]];
+// Search only earns its space once the grid stops fitting on one screen (same rule as Lessons).
+const SEARCH_MIN_TOPICS = 6;
+
+function matchesQuery(meta, q) {
+  if (!q) return true;
+  const hay = [meta.title, meta.request ? meta.request.detail : ""].join(" ").toLowerCase();
+  return hay.includes(q.toLowerCase());
+}
+
 function renderShelf(body, hub, t, topics, refresh) {
   if (!topics.length) {
     const empty = body.createDiv({ cls: "lh-vid-empty" });
@@ -108,57 +129,87 @@ function renderShelf(body, hub, t, topics, refresh) {
 
   const cw = data.continueWatching(topics);
   if (cw) {
-    const hero = body.createDiv({ cls: "lh-vid-hero" });
-    renderThumb(hero, hub, cw.slug, cw.meta, cw.video, "is-hero").addEventListener("click", () => openVideo(cw.slug, cw.video.id, true));
-    const info = hero.createDiv({ cls: "lh-vid-hero-info" });
-    info.createSpan({ cls: "lh-vid-kicker", text: c(t, "VIDEO_CONTINUE") });
-    info.createDiv({ cls: "lh-vid-hero-topic", text: cw.meta.title });
-    info.createDiv({ cls: "lh-vid-hero-title", text: cw.video.title });
-    info.createEl("button", { cls: "lh-vid-btn lh-vid-btn-primary", text: `▶ ${K(c(t, "VIDEO_RESUME_AT"), { time: fmtTime(cw.progress.position) })}` })
+    const bar = body.createDiv({ cls: "lh-vid-continue" });
+    renderThumb(bar, hub, cw.slug, cw.meta, cw.video, "is-continue").addEventListener("click", () => openVideo(cw.slug, cw.video.id, true));
+    const info = bar.createDiv({ cls: "lh-vid-continue-info" });
+    info.createDiv({ cls: "lh-vid-kicker", text: `${c(t, "VIDEO_CONTINUE")} · ${cw.meta.title}` });
+    info.createDiv({ cls: "lh-vid-continue-title", text: cw.video.title });
+    bar.createEl("button", { cls: "lh-vid-btn lh-vid-btn-primary", text: `▶ ${K(c(t, "VIDEO_RESUME_AT"), { time: fmtTime(cw.progress.position) })}` })
       .addEventListener("click", () => openVideo(cw.slug, cw.video.id, true));
   }
 
-  for (const { slug, meta } of topics) {
-    const sec = body.createDiv({ cls: "lh-vid-shelf" + (hub._vFlash === slug ? " is-new" : "") });
-    const sh = sec.createDiv({ cls: "lh-vid-shelf-head" });
-    sh.createSpan({ cls: "lh-vid-shelf-title", text: meta.title });
-    if (meta.status === "pending") {
-      renderPending(sec, sh, hub, t, slug, meta, refresh);
-      continue;
-    }
-    const prog = data.topicProgress(meta);
-    sh.createSpan({ cls: "lh-vid-shelf-meta", text: K(c(t, "VIDEO_TOPIC_META"), { count: prog.total, done: prog.completed }) });
-    sh.createDiv({ cls: "lh-vid-spacer" });
-    sh.createEl("button", { cls: "lh-vid-link", text: c(t, "VIDEO_OPEN_TOPIC") })
-      .addEventListener("click", () => openVideo(slug, null, false));
-    const row = sec.createDiv({ cls: "lh-vid-row" });
-    for (const video of meta.videos.filter((v) => v.file)) {
-      const card = row.createDiv({ cls: "lh-vid-card" });
-      renderThumb(card, hub, slug, meta, video);
-      card.createDiv({ cls: "lh-vid-card-title", text: video.title });
-      const st = statusOf(t, meta, video);
-      card.createDiv({ cls: `lh-vid-status ${st.cls}`, text: st.text });
-      card.addEventListener("click", () => openVideo(slug, video.id, true));
-    }
-  }
+  const states = new Map(topics.map(({ slug, meta }) => [slug, data.topicState(meta)]));
+  // A remembered filter whose bucket has emptied (e.g. the last pending series was deleted) resets.
+  if (!FILTERS.some(([id]) => id === hub._vFilter) || (hub._vFilter !== "all" && ![...states.values()].includes(hub._vFilter))) hub._vFilter = "all";
+  const flash = hub._vFlash;
   hub._vFlash = null;
+
+  const bar = body.createDiv({ cls: "lh-vid-filters" });
+  const chips = bar.createDiv({ cls: "lh-vid-chips" });
+  bar.createDiv({ cls: "lh-vid-spacer" });
+  const results = body.createDiv();
+  // Chips and grid redraw from the topics already in memory: typing in the search box must never
+  // rebuild the tab, which would drop the input mid-IME composition and rescan every meta.json.
+  const draw = () => {
+    const matching = topics.filter(({ meta }) => matchesQuery(meta, hub._vQuery || ""));
+    const count = (id) => (id === "all" ? matching.length : matching.filter(({ slug }) => states.get(slug) === id).length);
+    chips.empty();
+    for (const [id, key] of FILTERS) {
+      const n = count(id);
+      if (id !== "all" && n === 0 && hub._vFilter !== id) continue;
+      chips.createEl("button", { cls: "lh-vid-chip-btn" + (hub._vFilter === id ? " is-on" : ""), text: `${c(t, key)} ${n}` })
+        .addEventListener("click", () => { hub._vFilter = id; draw(); });
+    }
+    results.empty();
+    const shown = matching.filter(({ slug }) => hub._vFilter === "all" || states.get(slug) === hub._vFilter);
+    if (!shown.length) {
+      results.createDiv({ cls: "lh-vid-empty-body", text: c(t, "VIDEO_NO_MATCH") });
+      return;
+    }
+    const grid = results.createDiv({ cls: "lh-vid-grid" });
+    for (const topic of shown) {
+      const card = grid.createEl("button", { cls: "lh-vid-scard" + (flash === topic.slug ? " is-new" : "") });
+      if (topic.meta.status === "pending") renderPendingCard(card, hub, t, topic, refresh);
+      else renderSeriesCard(card, hub, t, topic, () => openVideo(topic.slug, null, false));
+    }
+  };
+  if (topics.length >= SEARCH_MIN_TOPICS || hub._vQuery) {
+    const search = bar.createEl("input", { cls: "lh-vid-search", attr: { type: "search", placeholder: c(t, "VIDEO_SEARCH_PH"), "aria-label": c(t, "VIDEO_SEARCH_PH") } });
+    search.value = hub._vQuery || "";
+    const apply = () => { hub._vQuery = search.value; draw(); };
+    search.addEventListener("input", (e) => { if (!e.isComposing) apply(); });
+    search.addEventListener("compositionend", apply);
+  }
+  draw();
 }
 
-function renderPending(sec, sh, hub, t, slug, meta, refresh) {
-  sh.createSpan({ cls: "lh-vid-badge-pending", text: c(t, "VIDEO_PENDING") });
-  sh.createDiv({ cls: "lh-vid-spacer" });
-  sh.createEl("button", { cls: "lh-vid-link is-danger", text: c(t, "DELETE") })
-    .addEventListener("click", () => confirmDelete(hub, t, slug, meta, refresh));
-  const box = sec.createDiv({ cls: "lh-vid-pending" });
+/** Ready series: cover (first poster), video count, overall progress, name. */
+function renderSeriesCard(card, hub, t, { slug, meta }, open) {
+  const prog = data.topicProgress(meta);
+  const cover = card.createSpan({ cls: "lh-vid-scard-cover" });
+  const poster = meta.videos.find((v) => v.file && v.poster);
+  if (poster) cover.createEl("img", { attr: { src: fileUrl(hub, slug, poster.poster), alt: "", loading: "lazy" } });
+  cover.createSpan({ cls: "lh-vid-thumb-dur", text: K(c(t, "VIDEO_COUNT"), { count: prog.total }) });
+  const pct = prog.total ? Math.round((prog.completed / prog.total) * 100) : 0;
+  cover.createSpan({ cls: "lh-vid-thumb-bar" }).createSpan({ cls: "lh-vid-thumb-fill", attr: { style: `width:${pct}%` } });
+  card.createSpan({ cls: "lh-vid-scard-title", text: meta.title });
+  card.createSpan({ cls: "lh-vid-scard-meta", text: K(c(t, "VIDEO_TOPIC_META"), { count: prog.total, done: prog.completed }) });
+  card.addEventListener("click", open);
+}
+
+/** Pending series: what the learner asked for; clicking opens the same form to edit or delete it. */
+function renderPendingCard(card, hub, t, { slug, meta }, refresh) {
+  card.addClass("is-pending");
+  const box = card.createSpan({ cls: "lh-vid-scard-cover is-pending" });
+  box.createSpan({ cls: "lh-vid-badge-pending", text: c(t, "VIDEO_PENDING") });
   const req = meta.request;
-  if (req) {
-    const src = req.source === "general" ? "VIDEO_SOURCE_GENERAL" : "VIDEO_SOURCE_NOTES";
-    const line = box.createDiv({ cls: "lh-vid-pending-src" });
-    line.createSpan({ text: c(t, src) });
-    for (const ref of req.refs) line.createSpan({ cls: "lh-vid-chip", text: ref.split("/").pop() || ref });
-  }
-  if (meta.note) box.createDiv({ cls: "lh-vid-pending-note", text: meta.note });
-  box.createDiv({ cls: "lh-vid-pending-hint", text: c(t, "VIDEO_PENDING_HINT") });
+  box.createSpan({ cls: "lh-vid-scard-goal", text: meta.note || (req && req.detail) || c(t, "VIDEO_PENDING_HINT") });
+  card.createSpan({ cls: "lh-vid-scard-title", text: meta.title });
+  const bits = [req && req.source === "general" ? c(t, "VIDEO_SOURCE_GENERAL") : c(t, "VIDEO_SOURCE_NOTES")];
+  if (req && req.refs.length) bits.push(K(c(t, "VIDEO_REFS_COUNT"), { count: req.refs.length }));
+  card.createSpan({ cls: "lh-vid-scard-meta", text: bits.join(" · ") });
+  card.setAttr("title", c(t, "VIDEO_PENDING_EDIT"));
+  card.addEventListener("click", () => openNewVideoModal(hub, t, () => refresh(), { slug, meta }, () => confirmDelete(hub, t, slug, meta, refresh)));
 }
 
 function confirmDelete(hub, t, slug, meta, refresh) {
@@ -182,6 +233,19 @@ function confirmDelete(hub, t, slug, meta, refresh) {
     refresh();
   });
   modal.open();
+}
+
+/** The series' video style (ADR-22): the skill uses it for this series' next videos. */
+function renderStylePicker(parent, hub, t, { slug, meta }, refresh) {
+  const wrap = parent.createDiv({ cls: "lh-vid-style-pick" });
+  wrap.createEl("label", { text: c(t, "VIDEO_SERIES_STYLE"), attr: { for: "lh-vid-series-style" } });
+  const sel = styleSelect(wrap, t, "lh-vid-series-style", meta.style);
+  sel.addEventListener("change", () => {
+    const style = sel.value;
+    queueWrite(slug, () => data.setTopicStyle(hub.app.vault.adapter, slug, style))
+      .then((ok) => { if (ok) new I.Notice(c(t, "VIDEO_STYLE_SAVED")); else refresh(); })
+      .catch((e) => { console.error("EngramQuest: video series style save failed", e); refresh(); });
+  });
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -212,13 +276,8 @@ function renderTopic(body, hub, t, topic, refresh) {
   const main = layout.createDiv({ cls: "lh-vid-main" });
   const stage = main.createDiv({ cls: "lh-vid-stage" });
 
-  const save = (patch) => {
-    const chain = (saveChains.get(slug) || Promise.resolve())
-      .then(() => data.saveProgress(adapter, slug, video.id, patch))
-      .catch((e) => console.warn("EngramQuest: video progress save failed", e));
-    saveChains.set(slug, chain);
-    return chain;
-  };
+  const save = (patch) => queueWrite(slug, () => data.saveProgress(adapter, slug, video.id, patch))
+    .catch((e) => console.warn("EngramQuest: video progress save failed", e));
   let player = null;
   const leave = (next) => {
     const pending = player && !player.ended && player.currentTime > 0 ? save({ position: player.currentTime }) : saveChains.get(slug) || Promise.resolve();

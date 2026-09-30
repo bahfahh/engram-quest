@@ -17,6 +17,10 @@ const LENGTHS = [30, 60, 90];
 const STYLES = ["auto", "fast", "system", "visual", "drawn"];
 const NARRATION_LANGS = ["follow", "zh-tw", "en"];
 const DEFAULT_SETTINGS = { mode: "basic", length: 60, style: "auto", narrationLang: "follow", subtitles: true };
+// A series may pin its own style; "auto" (the default) lets the skill's adapter pick one from the
+// content. The style list itself is provisional until the skill's style packs are settled.
+const SERIES_STYLES = STYLES;
+const GOAL_MAX = 40;
 
 async function readJson(adapter, path) {
   try {
@@ -90,9 +94,11 @@ function normalizeTopic(meta) {
     title: String(meta.title || (req && req.text) || ""),
     // A topic with no playable video yet is pending no matter what the file claims.
     status: meta.status === "pending" || !videos.some((v) => v.file) ? "pending" : "ready",
+    style: SERIES_STYLES.includes(meta.style) ? meta.style : "auto",
     request: req
       ? {
           text: String(req.text || ""),
+          detail: String(req.detail || ""),
           source: req.source === "general" ? "general" : "notes",
           refs: Array.isArray(req.refs) ? req.refs.map(String) : [],
           createdAt: req.createdAt || null,
@@ -121,6 +127,18 @@ function topicProgress(meta) {
   const playable = meta.videos.filter((v) => v.file);
   const completed = playable.filter((v) => videoProgress(meta, v.id).completed).length;
   return { completed, total: playable.length };
+}
+
+/** Shelf filter bucket: "pending" | "new" (nothing watched) | "watching" | "done" (all watched). */
+function topicState(meta) {
+  if (meta.status === "pending") return "pending";
+  const { completed, total } = topicProgress(meta);
+  if (total && completed === total) return "done";
+  const touched = meta.videos.some((v) => {
+    const p = videoProgress(meta, v.id);
+    return p.completed || p.position > 0;
+  });
+  return touched ? "watching" : "new";
 }
 
 /** Latest activity timestamp of a topic: newest lastViewed, else creation time. */
@@ -195,20 +213,38 @@ async function saveProgress(adapter, slug, videoId, patch = {}) {
 }
 
 /**
- * Record a learner's request as a pending topic the video skill picks up on its next run.
+ * Clean a learner's request. `text` is the goal ("架設網站") and doubles as the series name;
+ * `detail` is optional extra context. How to split it into videos is the skill's call.
  * `source` is "notes" (AI picks relevant notes, optionally narrowed to `refs`) or "general".
  */
-async function createRequest(adapter, { text, source = "notes", refs = [] }) {
-  const clean = String(text || "").trim();
-  if (!clean) throw new Error("empty request");
-  let slug = safeSlugPart(clean, `topic-${Date.now()}`);
+function cleanRequest({ text, detail = "", source = "notes", refs = [], style = "auto" }) {
+  // Cut by code point so an emoji is never split in half.
+  const goal = Array.from(String(text || "").trim().replace(/\s+/g, " ")).slice(0, GOAL_MAX).join("");
+  if (!goal) throw new Error("empty request");
+  const useNotes = source !== "general";
+  return {
+    goal,
+    style: SERIES_STYLES.includes(style) ? style : "auto",
+    request: {
+      text: goal,
+      detail: String(detail || "").trim(),
+      source: useNotes ? "notes" : "general",
+      refs: useNotes ? [...new Set(refs.map(String))] : [],
+    },
+  };
+}
+
+/** Record a learner's request as a pending series the video skill picks up on its next run. */
+async function createRequest(adapter, input) {
+  const { goal, style, request } = cleanRequest(input);
+  let slug = safeSlugPart(goal, `topic-${Date.now()}`);
   if (await adapter.exists(`${VIDEOS_DIR}/${slug}/meta.json`)) slug = `${slug}-${Date.now()}`;
   const now = new Date().toISOString();
-  const useNotes = source !== "general";
   const meta = {
-    title: clean,
+    title: goal,
     status: "pending",
-    request: { text: clean, source: useNotes ? "notes" : "general", refs: useNotes ? [...new Set(refs.map(String))] : [], createdAt: now },
+    style,
+    request: { ...request, createdAt: now },
     starred: false,
     createdAt: now,
     videos: [],
@@ -217,6 +253,39 @@ async function createRequest(adapter, { text, source = "notes", refs = [] }) {
   await adapter.mkdir(`${VIDEOS_DIR}/${slug}`).catch(() => {});
   await adapter.write(`${VIDEOS_DIR}/${slug}/meta.json`, JSON.stringify(meta, null, 2));
   return { slug, meta: normalizeTopic(meta) };
+}
+
+/**
+ * Edit a still-pending series (read-merge-write; the slug stays). `base` is the normalised meta the
+ * form was opened with: if the file's title or style has changed since (the skill got there first),
+ * nothing is written. The style is only written when the user changed it, so a skill-set value the
+ * form can't show survives. Returns the normalised meta, or null when the series is gone, no
+ * longer pending, or changed underneath the form.
+ */
+async function updateRequest(adapter, slug, input, base) {
+  const path = `${VIDEOS_DIR}/${slug}/meta.json`;
+  const raw = await readJson(adapter, path);
+  if (!raw || typeof raw !== "object" || raw.status !== "pending") return null;
+  const now = normalizeTopic(raw);
+  if (now.status !== "pending" || (base && (now.title !== base.title || now.style !== base.style))) return null;
+  const { goal, style, request } = cleanRequest(input);
+  const prev = raw.request && typeof raw.request === "object" ? raw.request : {};
+  raw.title = goal;
+  if (!base || style !== base.style) raw.style = style;
+  raw.request = { ...prev, ...request };
+  await adapter.write(path, JSON.stringify(raw, null, 2));
+  return normalizeTopic(raw);
+}
+
+/** Set a series' style for the videos the skill makes next ("auto" = let the skill decide). */
+async function setTopicStyle(adapter, slug, style) {
+  if (!SERIES_STYLES.includes(style)) throw new Error(`invalid style: ${style}`);
+  const path = `${VIDEOS_DIR}/${slug}/meta.json`;
+  const raw = await readJson(adapter, path);
+  if (!raw || typeof raw !== "object") return false;
+  raw.style = style;
+  await adapter.write(path, JSON.stringify(raw, null, 2));
+  return true;
 }
 
 /** Trash every file under dir (subfolders included) except `skip`. True only if all were trashed. */
@@ -254,6 +323,8 @@ module.exports = {
   STYLES,
   NARRATION_LANGS,
   DEFAULT_SETTINGS,
+  SERIES_STYLES,
+  GOAL_MAX,
   normalizeSettings,
   readSettings,
   saveSettings,
@@ -261,9 +332,12 @@ module.exports = {
   normalizeTopic,
   videoProgress,
   topicProgress,
+  topicState,
   listTopics,
   continueWatching,
   saveProgress,
   createRequest,
+  updateRequest,
+  setTopicStyle,
   deleteTopic,
 };
