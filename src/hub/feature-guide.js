@@ -346,6 +346,27 @@ const CONTENT = {
       },
     },
   },
+  video: {
+    emoji: "🎬", img: "video_academy",
+    "zh-tw": {
+      title: "影片學院 — 一句話，AI 做成教學短片",
+      lines: [
+        "說一句<strong>想學或想複習什麼</strong>，AI 會自己判斷要讀哪些筆記、拆成幾支 <strong>90 秒以內的短片</strong>。",
+        "外層是影片書架，點進主題就是播放器；看到哪裡都會記住，下次<strong>從上次的位置續播</strong>。",
+        "想調整做法（模式、長度、風格）只要去「影片設定」設一次。",
+      ],
+      first: "按「<strong>＋ 新增</strong>」寫下想學的東西；之後在 AI 工具執行影片 skill，影片就會出現在這裡。",
+    },
+    en: {
+      title: "Video Academy — one sentence, AI turns it into short lessons",
+      lines: [
+        "Say <strong>what you want to learn or review</strong>; the AI decides which notes to use and splits it into <strong>short videos of 90 seconds or less</strong>.",
+        "The outer view is a video shelf; open a topic to watch. Your place is remembered, so you <strong>resume where you stopped</strong>.",
+        "To change how videos are made (mode, length, style), set it once in \"Video settings\".",
+      ],
+      first: "Click <strong>+ New</strong> and write what you want to learn; then run the video skill in your AI tool and the videos appear here.",
+    },
+  },
   explainer: {
     emoji: "📖", img: "deepdive",
     "zh-tw": {

@@ -1,0 +1,180 @@
+// Tests for the Video Academy data layer (src/videos/data.js): settings clamping incl. the Pro
+// fallback, topic scan/normalisation, progress read-merge-write, continue-watching, requests.
+import { describe, it, expect } from "vitest";
+import {
+  VIDEOS_DIR,
+  SETTINGS_PATH,
+  normalizeSettings,
+  readSettings,
+  saveSettings,
+  normalizeTopic,
+  videoProgress,
+  topicProgress,
+  listTopics,
+  continueWatching,
+  saveProgress,
+  createRequest,
+  deleteTopic,
+} from "../src/videos/data.js";
+
+// In-memory vault adapter mimicking the Obsidian adapter surface the data layer uses.
+function makeAdapter(initial = {}) {
+  const files = { ...initial };
+  return {
+    files,
+    async exists(p) { return Object.prototype.hasOwnProperty.call(files, p); },
+    async read(p) {
+      if (!(p in files)) throw new Error("ENOENT " + p);
+      return files[p];
+    },
+    async write(p, content) { files[p] = content; },
+    async mkdir() {},
+    async remove(p) { delete files[p]; },
+    async list(dir) {
+      const prefix = dir.replace(/\/$/, "") + "/";
+      const folders = new Set();
+      for (const k of Object.keys(files)) {
+        if (!k.startsWith(prefix)) continue;
+        const rest = k.slice(prefix.length);
+        const slash = rest.indexOf("/");
+        if (slash > 0) folders.add(prefix + rest.slice(0, slash));
+      }
+      return {
+        files: Object.keys(files).filter((k) => k.startsWith(prefix) && !k.slice(prefix.length).includes("/")),
+        folders: [...folders],
+      };
+    },
+  };
+}
+
+function topicMeta(overrides = {}) {
+  return {
+    title: "AI Coding 品質防線",
+    status: "ready",
+    createdAt: "2026-09-29T00:00:00.000Z",
+    videos: [
+      { id: "vid-1", title: "突變測試", file: "vid-1.mp4", subtitles: "vid-1.vtt", duration: 146, style: "fast", mode: "basic", source: "skill" },
+      { id: "vid-2", title: "SDLC", file: "vid-2.mp4", duration: 179, style: "system", mode: "basic", source: "skill" },
+    ],
+    progress: {},
+    ...overrides,
+  };
+}
+
+const metaPath = (slug) => `${VIDEOS_DIR}/${slug}/meta.json`;
+
+describe("normalizeSettings", () => {
+  it("fills defaults for missing or invalid values", () => {
+    expect(normalizeSettings(null, false)).toEqual({ mode: "basic", length: 60, style: "auto", narrationLang: "follow", subtitles: true });
+    expect(normalizeSettings({ mode: "nope", length: 45, style: "x", narrationLang: "fr", subtitles: 0 }, true))
+      .toEqual({ mode: "basic", length: 60, style: "auto", narrationLang: "follow", subtitles: false });
+  });
+
+  it("falls back to basic when a free user holds a Pro mode", () => {
+    expect(normalizeSettings({ mode: "principle", length: 90 }, false).mode).toBe("basic");
+    expect(normalizeSettings({ mode: "principle", length: 90 }, true)).toMatchObject({ mode: "principle", length: 90 });
+  });
+
+  it("pins polished to 60 s and leaves auto length to the AI", () => {
+    expect(normalizeSettings({ mode: "polished", length: 30 }, true).length).toBe(60);
+    expect(normalizeSettings({ mode: "auto", length: 30 }, true).length).toBeNull();
+  });
+});
+
+describe("settings file", () => {
+  it("round-trips through settings.json, normalised on write", async () => {
+    const a = makeAdapter();
+    expect(await readSettings(a, false)).toMatchObject({ mode: "basic", length: 60 });
+    await saveSettings(a, { mode: "polished", length: 90, style: "drawn" }, true);
+    expect(JSON.parse(a.files[SETTINGS_PATH])).toMatchObject({ mode: "polished", length: 60, style: "drawn" });
+    expect((await readSettings(a, false)).mode).toBe("basic");
+  });
+});
+
+describe("normalizeTopic", () => {
+  it("treats a topic without any playable file as pending", () => {
+    const m = normalizeTopic({ title: "x", status: "ready", videos: [{ id: "v", file: null }] });
+    expect(m.status).toBe("pending");
+    expect(normalizeTopic(topicMeta()).status).toBe("ready");
+  });
+
+  it("keeps the request and defaults its source to notes", () => {
+    const m = normalizeTopic({ request: { text: "SEO 教學", refs: ["SEO"] } });
+    expect(m.title).toBe("SEO 教學");
+    expect(m.request).toMatchObject({ text: "SEO 教學", source: "notes", refs: ["SEO"] });
+  });
+
+  it("drops entries without an id and rejects non-objects", () => {
+    expect(normalizeTopic(topicMeta({ videos: [{ title: "no id" }] })).videos).toEqual([]);
+    expect(normalizeTopic("nope")).toBeNull();
+  });
+});
+
+describe("progress", () => {
+  it("videoProgress returns a full object", () => {
+    expect(videoProgress(normalizeTopic(topicMeta()), "vid-1")).toEqual({ position: 0, completed: false, lastViewed: null });
+  });
+
+  it("saveProgress merges without touching skill-owned fields", async () => {
+    const a = makeAdapter({ [metaPath("t")]: JSON.stringify(topicMeta({ extra: "keep" })) });
+    await saveProgress(a, "t", "vid-1", { position: 31.6 });
+    await saveProgress(a, "t", "vid-1", { completed: true });
+    const raw = JSON.parse(a.files[metaPath("t")]);
+    expect(raw.extra).toBe("keep");
+    expect(raw.videos).toHaveLength(2);
+    expect(raw.progress["vid-1"]).toMatchObject({ position: 32, completed: true });
+    expect(raw.progress["vid-1"].lastViewed).toBeTruthy();
+    expect(topicProgress(normalizeTopic(raw))).toEqual({ completed: 1, total: 2 });
+  });
+
+  it("saveProgress returns null for a missing topic", async () => {
+    expect(await saveProgress(makeAdapter(), "gone", "v", { position: 1 })).toBeNull();
+  });
+});
+
+describe("listTopics / continueWatching", () => {
+  it("orders by starred, then latest activity, and picks the latest unfinished video", async () => {
+    const a = makeAdapter({
+      [metaPath("old")]: JSON.stringify(topicMeta({ progress: { "vid-2": { position: 50, lastViewed: "2026-09-30T08:00:00.000Z" } } })),
+      [metaPath("new")]: JSON.stringify({ title: "SEO", status: "pending", createdAt: "2026-09-30T09:00:00.000Z", videos: [] }),
+      [metaPath("fav")]: JSON.stringify(topicMeta({ starred: true, createdAt: "2026-01-01" })),
+      [`${VIDEOS_DIR}/broken/meta.json`]: "{not json",
+    });
+    const topics = await listTopics(a);
+    expect(topics.map((t) => t.slug)).toEqual(["fav", "new", "old"]);
+    const cw = continueWatching(topics);
+    expect(cw).toMatchObject({ slug: "old", video: { id: "vid-2" }, progress: { position: 50 } });
+  });
+
+  it("returns nothing when the videos folder is missing", async () => {
+    expect(await listTopics(makeAdapter())).toEqual([]);
+    expect(continueWatching([])).toBeNull();
+  });
+});
+
+describe("createRequest / deleteTopic", () => {
+  it("writes a pending topic; non-ASCII text gets a timestamp slug", async () => {
+    const a = makeAdapter();
+    const { slug, meta } = await createRequest(a, { text: "  我的 coding 流程 ", refs: ["a.md", "a.md"] });
+    expect(slug).toMatch(/^coding$|^topic-\d+$/);
+    expect(meta.status).toBe("pending");
+    expect(meta.request).toMatchObject({ text: "我的 coding 流程", source: "notes", refs: ["a.md"] });
+  });
+
+  it("drops refs for general requests and avoids slug collisions", async () => {
+    const a = makeAdapter({ [metaPath("seo")]: "{}" });
+    const { slug, meta } = await createRequest(a, { text: "SEO", source: "general", refs: ["x.md"] });
+    expect(slug).not.toBe("seo");
+    expect(meta.request).toMatchObject({ source: "general", refs: [] });
+  });
+
+  it("rejects an empty request", async () => {
+    await expect(createRequest(makeAdapter(), { text: "  " })).rejects.toThrow();
+  });
+
+  it("deleteTopic trashes every file of the topic", async () => {
+    const a = makeAdapter({ [metaPath("t")]: "{}", [`${VIDEOS_DIR}/t/vid-1.mp4`]: "bin", [metaPath("other")]: "{}" });
+    await deleteTopic(a, "t");
+    expect(Object.keys(a.files)).toEqual([metaPath("other")]);
+  });
+});

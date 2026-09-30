@@ -54,7 +54,7 @@ var fe=class extends I.Modal{constructor(e,t){super(e),this.plugin=t}onClose(){v
       <p><strong>EngramQuest</strong> 把你的筆記變成完整學習閉環：<strong>學 → 練 → 記 → 連</strong>。每個模組可單獨用，也能串接。</p>
       <div class="lh-help-chips">
         <span class="lh-help-chip" style="background:#dbeafe;color:#1d4ed8">📚 記憶 — Review Deck · Memory Map</span>
-        <span class="lh-help-chip" style="background:#d1fae5;color:#065f46">🎓 學習 — 教材 · Quest Map</span>
+        <span class="lh-help-chip" style="background:#d1fae5;color:#065f46">🎓 學習 — 教材 · Quest Map · 影片學院</span>
         <span class="lh-help-chip" style="background:#fef3c7;color:#92400e">🏆 成就 — 里程碑追蹤</span>
       </div>
       <p style="margin-top:10px;font-size:12.5px;line-height:1.6">👉 <strong>第一步</strong>：免 AI 就打 <code>#flashcards/主題</code> + 一張 <code>Q:/A:</code> 卡；用 AI 就到「設定 → AI Skills」安裝後對 AI 說話。每個功能分頁第一次開啟都會跳出圖解說明。</p>
@@ -62,7 +62,7 @@ var fe=class extends I.Modal{constructor(e,t){super(e),this.plugin=t}onClose(){v
       <p><strong>EngramQuest</strong> turns your notes into a complete learning loop: <strong>Learn → Practice → Remember → Connect</strong>. Each module works alone or chains into the next.</p>
       <div class="lh-help-chips">
         <span class="lh-help-chip" style="background:#dbeafe;color:#1d4ed8">📚 Memory — Review Deck · Memory Map</span>
-        <span class="lh-help-chip" style="background:#d1fae5;color:#065f46">🎓 Learn — Lessons · Quest Map</span>
+        <span class="lh-help-chip" style="background:#d1fae5;color:#065f46">🎓 Learn — Lessons · Quest Map · Video Academy</span>
         <span class="lh-help-chip" style="background:#fef3c7;color:#92400e">🏆 Achieve — milestone tracking</span>
       </div>
       <p style="margin-top:10px;font-size:12.5px;line-height:1.6">👉 <strong>First step</strong>: No AI? Tag a note <code>#flashcards/topic</code> + one <code>Q:/A:</code> card. With AI? Install Skills in Settings → AI Skills, then talk to your AI. Each feature tab pops a visual guide the first time you open it.</p>
@@ -158,6 +158,7 @@ var fe=class extends I.Modal{constructor(e,t){super(e),this.plugin=t}onClose(){v
       { tab: "review", emoji: "🃏", zh: "Review Deck", en: "Review Deck", zhs: "三階回想閃卡", ens: "Three-stage recall flashcards" },
       { tab: "quest", emoji: "🗺️", zh: "Quest Map", en: "Quest Map", zhs: "把筆記變成遊戲關卡", ens: "Notes into game levels" },
       { tab: "lesson", emoji: "🎓", zh: "教材", en: "Lessons", zhs: "AI 為你打造課程", ens: "AI-built courses" },
+      { tab: "video", emoji: "🎬", zh: "影片學院", en: "Video Academy", zhs: "一句話做成教學短片", ens: "One sentence into short lessons" },
       { tab: "memory", emoji: "🧠", zh: "Memory Map", en: "Memory Map", zhs: "看見知識全局", ens: "See the big picture" },
     ].forEach(cd => {
       let card = _featGrid.createEl("button", { attr: { style: `text-align:left;display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:12px;border:1px solid var(--background-modifier-border);background:${_bgCard};cursor:pointer;color:${_textNormal}` } });

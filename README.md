@@ -113,6 +113,17 @@ Tell the AI what you want to learn — it builds a course of interactive HTML le
 
 ▶️ [Create a course with Claude Code](https://youtu.be/G8HxBl9Hf9o)
 
+### 🎬 Video Academy — One Sentence, Short Video Lessons (preview)
+
+Say what you want to learn or review — "my coding workflow", "SEO" — and the AI turns it into short video lessons (90 seconds or less each).
+
+- **One sentence is enough** — the AI decides which of your notes to use (drop notes in to narrow it down, or choose *Don't use my notes*), whether it's a lesson or a review, and how many videos to make
+- **Shelf → player** — browse topics on a video shelf, open one to watch with a playlist; your position is saved so you resume where you stopped
+- **Set it once** — production mode, length (30 / 60 / 90 s), preferred style, narration language and subtitles live in *Video settings*; Pro unlocks the polished, principle-breakdown and auto modes
+- Videos live in `engram-quest/videos/` inside your vault. If you sync your vault with git, consider ignoring `*.mp4` there
+
+> Preview: the Hub tab, player and settings are in place; the video-generating skill ships separately.
+
 ### 🧠 Memory Map — See the Big Picture
 
 ![Memory Map](assets/guide/memory_map_english.webp)
@@ -345,6 +356,17 @@ Anki 解決「何時複習」。EngramQuest 解決「如何真正記住」 — �
 **📺 影片：** <a href="https://youtu.be/G8HxBl9Hf9o"><img src="https://img.youtube.com/vi/G8HxBl9Hf9o/mqdefault.jpg" width="280" alt="用 Claude Code 建立課程"></a>
 
 ▶️ [用 Claude Code 建立課程](https://youtu.be/G8HxBl9Hf9o)
+
+### 🎬 影片學院 — 一句話，做成教學短片（預覽）
+
+說一句想學或想複習什麼，例如「我的 coding 流程」「SEO」，AI 就把它做成教學短片，每支 90 秒以內。
+
+- **一句話就好** — 要用哪些筆記、是教學還是複習、拆成幾支，都由 AI 判斷（也可以拖入筆記指定範圍，或選「不使用筆記」）
+- **書架 → 播放器** — 在影片書架瀏覽主題，點進去邊看邊切換播放清單；看到哪裡都會記住，下次從上次的位置續播
+- **設一次就好** — 製作模式、長度（30／60／90 秒）、偏好風格、旁白語言、字幕都在「影片設定」；Pro 解鎖精緻教學、原理拆解、自動選擇三種模式
+- 影片存在 vault 的 `engram-quest/videos/`。如果你用 git 同步 vault，建議把那裡的 `*.mp4` 加進 .gitignore
+
+> 預覽版：Hub 分頁、播放器與設定已完成；生成影片的 skill 會另外推出。
 
 ### 🧠 Memory Map — 看見全局
 
