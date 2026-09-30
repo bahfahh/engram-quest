@@ -582,6 +582,7 @@ function openCreateCourseModal(hub, t, state, refresh) {
     attr: { style: "padding:7px 16px;border-radius:8px;border:1px solid var(--background-modifier-border);background:var(--background-secondary);color:var(--text-normal);cursor:pointer;font-size:13px;" },
   }).addEventListener("click", () => modal.close());
   const saveBtn = btnRow.createEl("button", {
+    cls: "lh-btn-primary",
     text: c(t, "LESSON_CREATE_SAVE"),
     attr: { style: "padding:7px 16px;border-radius:8px;border:none;background:#6366f1;color:#fff;cursor:pointer;font-size:13px;font-weight:600;" },
   });

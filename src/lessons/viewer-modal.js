@@ -267,6 +267,7 @@ class CanvasLessonModal extends I.Modal {
     });
 
     const openBtn = contentEl.createEl("button", {
+      cls: "lh-btn-primary",
       text: c(t, "LESSON_OPEN_CANVAS") + " →",
       attr: { style: "padding:10px 16px;border-radius:10px;border:none;background:#6366f1;color:#fff;cursor:pointer;font-size:14px;font-weight:600;" },
     });
