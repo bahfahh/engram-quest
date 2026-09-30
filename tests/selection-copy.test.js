@@ -2,7 +2,7 @@
 // that restore native-style Ctrl/Cmd+C and Ctrl/Cmd+A inside EngramQuest modals
 // (Obsidian's Modal scope otherwise swallows the keydown before the browser acts).
 
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { registerSelectionCopy } from "../src/ui/selection-copy.js";
 
 // Build a fake modal whose scope.register records each handler by key so we can invoke
@@ -35,8 +35,11 @@ function stubSelection(text) {
 let writeText;
 beforeEach(() => {
   writeText = vi.fn(() => Promise.resolve());
-  globalThis.navigator = { clipboard: { writeText } };
+  // Node 21+ exposes navigator as a getter-only global, so plain assignment throws;
+  // stubGlobal redefines it and afterEach restores the real one.
+  vi.stubGlobal("navigator", { clipboard: { writeText } });
 });
+afterEach(() => vi.unstubAllGlobals());
 
 describe("registerSelectionCopy — registration", () => {
   it("registers Mod+C and Mod+A on the modal scope", () => {
@@ -95,7 +98,7 @@ describe("registerSelectionCopy — Mod+C copy", () => {
   it("returns true (lets native try) when clipboard API is unavailable", () => {
     const { modal, copy } = makeModal({ containsNode: true });
     stubSelection("hello");
-    globalThis.navigator = {}; // no clipboard
+    vi.stubGlobal("navigator", {}); // no clipboard
     registerSelectionCopy(modal);
     expect(copy()).toBe(true);
   });
