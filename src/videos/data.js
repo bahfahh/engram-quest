@@ -50,6 +50,18 @@ async function readSettings(adapter, isPro) {
   return normalizeSettings(await readJson(adapter, SETTINGS_PATH), isPro);
 }
 
+/**
+ * Keep settings.json honest for the video skill, which reads the raw file: once the licence has
+ * lapsed, a stored Pro mode is rewritten to basic (ADR-04). No-op for Pro users or no file.
+ */
+async function enforceSettingsTier(adapter, isPro) {
+  if (isPro) return false;
+  const raw = await readJson(adapter, SETTINGS_PATH);
+  if (!raw || !PRO_MODES.has(raw.mode)) return false;
+  await saveSettings(adapter, raw, false);
+  return true;
+}
+
 async function saveSettings(adapter, settings, isPro) {
   const next = normalizeSettings(settings, isPro);
   await adapter.mkdir(VIDEOS_DIR).catch(() => {});
@@ -148,7 +160,7 @@ async function listTopics(adapter) {
 
 /**
  * The most recently watched, unfinished, playable video across all topics — the shelf's
- * "continue watching" hero. Null when nothing is in progress.
+ * "continue watching" hero. A video only opened (position 0) doesn't count. Null when none.
  */
 function continueWatching(topics) {
   let best = null;
@@ -156,7 +168,7 @@ function continueWatching(topics) {
     for (const video of meta.videos) {
       if (!video.file) continue;
       const p = videoProgress(meta, video.id);
-      if (!p.lastViewed || p.completed) continue;
+      if (!p.lastViewed || p.completed || p.position <= 0) continue;
       if (!best || String(p.lastViewed) > String(best.progress.lastViewed)) best = { slug, meta, video, progress: p };
     }
   }
@@ -207,15 +219,30 @@ async function createRequest(adapter, { text, source = "notes", refs = [] }) {
   return { slug, meta: normalizeTopic(meta) };
 }
 
-/** Delete a topic: trash every file in its folder, then the folder itself (best-effort). */
-async function deleteTopic(adapter, slug) {
-  const dir = `${VIDEOS_DIR}/${slug}`;
+/** Trash every file under dir (subfolders included) except `skip`. True only if all were trashed. */
+async function trashTree(adapter, dir, skip) {
   let listing = null;
-  try { listing = await adapter.list(dir); } catch { listing = null; }
-  for (const file of (listing && listing.files) || []) await trashPath(adapter, file);
+  try { listing = await adapter.list(dir); } catch { return true; }
+  let ok = true;
+  for (const file of listing.files || []) if (file !== skip) ok = (await trashPath(adapter, file)) && ok;
+  for (const sub of listing.folders || []) ok = (await trashTree(adapter, sub, skip)) && ok;
+  return ok;
+}
+
+/**
+ * Delete a topic: trash every file (subfolders included), meta.json last, then drop the now-empty
+ * folders. On any trash failure it stops with meta.json still in place, so the topic stays visible
+ * and nothing is removed without going to the trash. Returns whether the topic is fully gone.
+ */
+async function deleteTopic(adapter, slug) {
+  if (!slug || /[\\/]|^\.+$/.test(slug)) throw new Error(`invalid topic slug: ${slug}`);
+  const dir = `${VIDEOS_DIR}/${slug}`;
+  const metaFile = `${dir}/meta.json`;
+  if (!(await trashTree(adapter, dir, metaFile)) || !(await trashPath(adapter, metaFile))) return false;
   try {
     if (typeof adapter.rmdir === "function") await adapter.rmdir(dir, true);
   } catch (e) { console.warn("EngramQuest: video topic folder cleanup failed", e); }
+  return true;
 }
 
 module.exports = {
@@ -230,6 +257,7 @@ module.exports = {
   normalizeSettings,
   readSettings,
   saveSettings,
+  enforceSettingsTier,
   normalizeTopic,
   videoProgress,
   topicProgress,

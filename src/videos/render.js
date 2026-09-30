@@ -1,7 +1,7 @@
 "use strict";
 // Hub "Video Academy" tab (影片學院). Two views (ADR-12): the shelf — a continue-watching hero plus
 // one row per topic — and the topic view — inline player + that topic's playlist. Watching writes
-// position / completed back into the topic's meta.json. The plugin never generates videos: "+ New"
+// position / completed back into the topic's meta.json. The plugin never generates videos: "+ New series"
 // only records a pending topic for the video skill (doc/開發計劃/影片學院/skills.md).
 // View state lives on the hub: hub._vTopic = { slug, videoId, autoplay } | null.
 
@@ -14,6 +14,9 @@ const { attachInfoButton } = require("../hub/feature-guide");
 
 const STYLE_KEYS = { auto: "VIDEO_STYLE_AUTO", fast: "VIDEO_STYLE_FAST", system: "VIDEO_STYLE_SYSTEM", visual: "VIDEO_STYLE_VISUAL", drawn: "VIDEO_STYLE_DRAWN" };
 const MODE_KEYS = { basic: "VIDEO_MODE_BASIC", polished: "VIDEO_MODE_POLISHED", principle: "VIDEO_MODE_PRINCIPLE", auto: "VIDEO_MODE_AUTO" };
+// One progress-write chain per topic, shared across re-renders: the old player's final "pause"
+// save and the new player's first save must not interleave their read-merge-write of meta.json.
+const saveChains = new Map();
 
 function fmtTime(sec) {
   const s = Math.max(0, Math.round(Number(sec) || 0));
@@ -51,12 +54,18 @@ function renderThumb(parent, hub, slug, meta, video, cls) {
 
 async function renderVideoTab(el, hub) {
   const t = hub.plugin.settings;
+  const adapter = hub.app.vault.adapter;
+  // The Hub renders every tab into the same container; if the user switched tabs while we were
+  // scanning, drop this render instead of overwriting the tab now on screen.
+  const gen = hub._tabGen;
   let topics = [];
   try {
-    topics = await data.listTopics(hub.app.vault.adapter);
+    await data.enforceSettingsTier(adapter, !!t.licenseValid);
+    topics = await data.listTopics(adapter);
   } catch (err) {
     console.error("EngramQuest: video topic scan failed", err);
   }
+  if (hub._tabGen !== gen || !el.isConnected) return;
   el.empty();
   const refresh = () => { if (el.isConnected) renderVideoTab(el, hub); };
   const root = el.createDiv({ cls: "lh-vid" });
@@ -166,7 +175,7 @@ function confirmDelete(hub, t, slug, meta, refresh) {
     ok.disabled = true;
     modal.close();
     try {
-      await data.deleteTopic(hub.app.vault.adapter, slug);
+      if (!(await data.deleteTopic(hub.app.vault.adapter, slug))) new I.Notice(c(t, "VIDEO_DELETE_PARTIAL"));
     } catch (e) {
       console.error("EngramQuest: video topic delete failed", e);
     }
@@ -203,16 +212,17 @@ function renderTopic(body, hub, t, topic, refresh) {
   const main = layout.createDiv({ cls: "lh-vid-main" });
   const stage = main.createDiv({ cls: "lh-vid-stage" });
 
-  // Progress writes are serialised so read-merge-write calls never interleave.
-  let chain = Promise.resolve();
   const save = (patch) => {
-    chain = chain.then(() => data.saveProgress(adapter, slug, video.id, patch)).catch((e) => console.warn("EngramQuest: video progress save failed", e));
+    const chain = (saveChains.get(slug) || Promise.resolve())
+      .then(() => data.saveProgress(adapter, slug, video.id, patch))
+      .catch((e) => console.warn("EngramQuest: video progress save failed", e));
+    saveChains.set(slug, chain);
     return chain;
   };
   let player = null;
   const leave = (next) => {
-    if (player && !player.ended && player.currentTime > 0) save({ position: player.currentTime });
-    chain.then(() => { hub._vTopic = next; refresh(); });
+    const pending = player && !player.ended && player.currentTime > 0 ? save({ position: player.currentTime }) : saveChains.get(slug) || Promise.resolve();
+    pending.then(() => { hub._vTopic = next; refresh(); });
   };
 
   mountPlayer(stage, hub, t, slug, meta, video, autoplay, save, playable, (p) => { player = p; }, (next) => leave(next));
@@ -258,12 +268,15 @@ function mountPlayer(stage, hub, t, slug, meta, video, autoplay, save, playable,
     vid.createEl("track", { attr: { kind: "subtitles", src: fileUrl(hub, slug, video.subtitles), srclang: "und", label: c(t, "VIDEO_SET_SUBS"), default: "" } });
   }
   setPlayer(vid);
-  // A synced vault can carry meta.json without the (git-ignored / unsynced) mp4.
-  hub.app.vault.adapter.exists(src).then((ok) => {
-    if (ok) return;
+  // A synced vault can carry meta.json without the (git-ignored / unsynced) mp4, and a file can
+  // exist yet fail to decode — both show the same message instead of a black player.
+  const showMissing = () => {
+    if (!vid.isConnected) return;
     vid.remove();
     stage.createDiv({ cls: "lh-vid-missing", text: c(t, "VIDEO_MISSING_FILE") });
-  }).catch(() => {});
+  };
+  vid.addEventListener("error", showMissing);
+  hub.app.vault.adapter.exists(src).then((ok) => { if (!ok) showMissing(); }).catch(() => {});
 
   const start = data.videoProgress(meta, video.id);
   let lastSaved = start.position;

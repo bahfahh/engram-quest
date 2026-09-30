@@ -1,5 +1,5 @@
 "use strict";
-// "+ New" pop-up for the Video Academy (ADR-14/15): one sentence of what to learn plus a source
+// "+ New series" pop-up for the Video Academy (ADR-14/15): one sentence of what to learn plus a source
 // menu — auto-pick relevant notes (default; notes/folders can be dropped in to narrow it down) or
 // don't use notes. Submitting only records a pending topic; the video skill generates it later.
 
@@ -19,15 +19,23 @@ function resolveRef(app, raw) {
   return hit ? hit.path : null;
 }
 
-/** Paths carried by a drop from Obsidian's file explorer (drag manager first, text payload as fallback). */
+/**
+ * Note/folder paths carried by a drop from Obsidian's file explorer (drag manager first, text
+ * payload as fallback). Only markdown notes and folders count as reading material.
+ */
 function refsFromDrop(app, evt) {
   const dragged = app.dragManager && app.dragManager.draggable;
-  if (dragged) {
-    if (dragged.file) return [dragged.file.path];
-    if (Array.isArray(dragged.files)) return dragged.files.map((f) => f.path);
+  let paths;
+  if (dragged && dragged.file) paths = [dragged.file.path];
+  else if (dragged && Array.isArray(dragged.files)) paths = dragged.files.map((f) => f.path);
+  else {
+    const text = (evt.dataTransfer && evt.dataTransfer.getData("text/plain")) || "";
+    paths = text.split(/\r?\n/).map((line) => resolveRef(app, line)).filter(Boolean);
   }
-  const text = (evt.dataTransfer && evt.dataTransfer.getData("text/plain")) || "";
-  return text.split(/\r?\n/).map((line) => resolveRef(app, line)).filter(Boolean);
+  return paths.filter((p) => {
+    const f = app.vault.getAbstractFileByPath(p);
+    return f && (f instanceof I.TFolder || f.extension === "md");
+  });
 }
 
 function openNewVideoModal(hub, t, onCreated) {

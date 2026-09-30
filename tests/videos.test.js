@@ -7,6 +7,7 @@ import {
   normalizeSettings,
   readSettings,
   saveSettings,
+  enforceSettingsTier,
   normalizeTopic,
   videoProgress,
   topicProgress,
@@ -172,9 +173,45 @@ describe("createRequest / deleteTopic", () => {
     await expect(createRequest(makeAdapter(), { text: "  " })).rejects.toThrow();
   });
 
-  it("deleteTopic trashes every file of the topic", async () => {
-    const a = makeAdapter({ [metaPath("t")]: "{}", [`${VIDEOS_DIR}/t/vid-1.mp4`]: "bin", [metaPath("other")]: "{}" });
-    await deleteTopic(a, "t");
+  it("deleteTopic trashes every file of the topic, subfolders included", async () => {
+    const a = makeAdapter({ [metaPath("t")]: "{}", [`${VIDEOS_DIR}/t/vid-1.mp4`]: "bin", [`${VIDEOS_DIR}/t/assets/a.png`]: "img", [metaPath("other")]: "{}" });
+    const removed = [];
+    a.rmdir = async (dir) => { removed.push(dir); };
+    expect(await deleteTopic(a, "t")).toBe(true);
     expect(Object.keys(a.files)).toEqual([metaPath("other")]);
+    expect(removed).toEqual([`${VIDEOS_DIR}/t`]);
+  });
+
+  it("deleteTopic keeps the folder when a file can't be trashed", async () => {
+    const stuck = `${VIDEOS_DIR}/t/vid-1.mp4`;
+    const a = makeAdapter({ [metaPath("t")]: "{}", [stuck]: "bin" });
+    const remove = a.remove;
+    a.remove = async (p) => { if (p === stuck) throw new Error("locked"); return remove(p); };
+    a.rmdir = async () => { throw new Error("rmdir must not run"); };
+    expect(await deleteTopic(a, "t")).toBe(false);
+    expect(a.files[stuck]).toBe("bin");
+    expect(a.files[metaPath("t")]).toBe("{}"); // topic stays listed so the user sees it wasn't deleted
+  });
+
+  it("deleteTopic rejects slugs that escape the topic folder", async () => {
+    for (const bad of ["", "..", "a/b", "a\\b"]) await expect(deleteTopic(makeAdapter(), bad)).rejects.toThrow();
+  });
+});
+
+describe("continueWatching threshold", () => {
+  it("ignores a video that was only opened (position 0)", () => {
+    const meta = normalizeTopic(topicMeta({ progress: { "vid-1": { position: 0, lastViewed: "2026-09-30T08:00:00.000Z" } } }));
+    expect(continueWatching([{ slug: "t", meta }])).toBeNull();
+  });
+});
+
+describe("enforceSettingsTier", () => {
+  it("rewrites a stored Pro mode to basic for free users only", async () => {
+    const a = makeAdapter({ [SETTINGS_PATH]: JSON.stringify({ mode: "principle", length: 90, style: "drawn" }) });
+    expect(await enforceSettingsTier(a, true)).toBe(false);
+    expect(JSON.parse(a.files[SETTINGS_PATH]).mode).toBe("principle");
+    expect(await enforceSettingsTier(a, false)).toBe(true);
+    expect(JSON.parse(a.files[SETTINGS_PATH])).toMatchObject({ mode: "basic", length: 90, style: "drawn" });
+    expect(await enforceSettingsTier(makeAdapter(), false)).toBe(false);
   });
 });

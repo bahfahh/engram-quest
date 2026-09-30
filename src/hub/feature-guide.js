@@ -355,7 +355,7 @@ const CONTENT = {
         "外層是影片書架，點進主題就是播放器；看到哪裡都會記住，下次<strong>從上次的位置續播</strong>。",
         "想調整做法（模式、長度、風格）只要去「影片設定」設一次。",
       ],
-      first: "按「<strong>＋ 新增</strong>」寫下想學的東西；之後在 AI 工具執行影片 skill，影片就會出現在這裡。",
+      first: "按「<strong>＋ 新系列</strong>」寫下想學的東西；之後在 AI 工具執行影片 skill，影片就會出現在這裡。",
     },
     en: {
       title: "Video Academy — one sentence, AI turns it into short lessons",
@@ -364,7 +364,7 @@ const CONTENT = {
         "The outer view is a video shelf; open a topic to watch. Your place is remembered, so you <strong>resume where you stopped</strong>.",
         "To change how videos are made (mode, length, style), set it once in \"Video settings\".",
       ],
-      first: "Click <strong>+ New</strong> and write what you want to learn; then run the video skill in your AI tool and the videos appear here.",
+      first: "Click <strong>+ New series</strong> and write what you want to learn; then run the video skill in your AI tool and the videos appear here.",
     },
   },
   explainer: {
