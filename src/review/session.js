@@ -2,7 +2,7 @@
 const I = require("obsidian");
 const { computeFsrs: P } = require("../fsrs");
 const { t: c, tAlt: C, getLocale: _getLocale } = require("../i18n");
-const { anySrPattern: ge, getReviewStatus: $, loadSrData, saveSrData } = require("./helpers");
+const { anySrPattern: ge, getReviewStatus: $, loadSrData, saveSrData, buildSrRecord } = require("./helpers");
 const { loadSynapseStatus, loadSynapseBatch, attachSynapseToCards, isSynapseEnabled } = require("./synapse");
 const { ACHIEVEMENTS, RARITY_DARK, RARITY_LIGHT } = require("../hub/achievement");
 const { saveTagSourceCard, saveInlineCard, deleteTagSourceCard, applyFormatToCardBack, refreshTagSourceCard } = require("./edit");
@@ -652,7 +652,7 @@ var Q=class extends I.Modal{
             let w=P(E.q,p,t);
             if(e.notePath) try {
               let srData=await loadSrData(this.app.vault.adapter,e.notePath);
-              srData[e.front]={due:w.due,interval:w.interval,stability:w.stability,difficulty:w.difficulty,state:w.state,repetitions:w.repetitions};
+              srData[e.front]=buildSrRecord(srData[e.front],w,E.q);
               await saveSrData(this.app.vault.adapter,e.notePath,srData);
             } catch(y){ console.error("review-deck write failed",y); }
             // Stats tracking for achievement system

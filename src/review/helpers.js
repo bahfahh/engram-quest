@@ -374,6 +374,18 @@ async function saveSrData(adapter, notePath, srData) {
   await adapter.write(srPath, JSON.stringify(srData, null, 2));
 }
 
+// SR record written after a rating. FSRS state alone cannot answer "how many Again since
+// date X" (the explainer skill's rewrite loop needs that), so keep a short per-review log.
+const SR_LOG_MAX = 20;
+function buildSrRecord(prev, result, rating, date = getLocalDateStr()) {
+  const log = Array.isArray(prev && prev.log) ? prev.log : [];
+  return {
+    due: result.due, interval: result.interval, stability: result.stability,
+    difficulty: result.difficulty, state: result.state, repetitions: result.repetitions,
+    log: [...log, { d: date, r: rating }].slice(-SR_LOG_MAX)
+  };
+}
+
 function mergeSrIntoCards(cards, srData) {
   cards.forEach((card) => {
     const sr = srData[card.front];
@@ -504,6 +516,7 @@ module.exports = {
   mergeReviewHints,
   matchFlashcardTagPrefix,
   srFileName,
+  buildSrRecord,
   loadSrData,
   saveSrData,
   mergeSrIntoCards,

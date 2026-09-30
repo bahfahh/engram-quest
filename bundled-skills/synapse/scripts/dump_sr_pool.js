@@ -15,6 +15,11 @@
 // after Again rating). Anchors that point to a card no longer in sr/ at all are
 // also stale.
 //
+// Empty-anchor targets: a target the skill paired last run but that got no anchor is
+// stored as an entry with `anchors: []`. It is preserved while the mastered pool has
+// not grown, and re-queued ("empty-retry") once it has — new mastered cards are the
+// only thing that can give it an anchor.
+//
 // Each mastered entry now includes a `back` field extracted from the source note,
 // so the skill can embed back text into anchor records for runtime display without
 // relying on the target card being present in the same review session.
@@ -248,7 +253,7 @@ function decideMode({ status, masteredByFront, targetsByFront, existingByFront, 
   if (forceFull) return "full";
   if (!status || !status.generatedAt) return "full";
   if (status.enabled === false) return "full"; // probably first successful run after pool grew
-  // Threshold: if mastered pool size grew/shrank by > 20% (and at least 10), force full.
+  // Threshold: pool size changed by at least max(10, 20% of last run's size) → force full.
   const last = status.masteredPoolSize || 0;
   const now = masteredByFront.size;
   if (last > 0 && Math.abs(now - last) >= Math.max(10, last * 0.2)) return "full";
@@ -256,9 +261,10 @@ function decideMode({ status, masteredByFront, targetsByFront, existingByFront, 
   return "incremental";
 }
 
-function buildWorkQueue({ masteredByFront, targetsByFront, existingByFront }) {
+function buildWorkQueue({ masteredByFront, targetsByFront, existingByFront, poolGrew }) {
   const newTargets = [];     // targets with no existing synapse entry
   const staleTargets = [];   // targets whose existing anchors include cards no longer mastered
+  const emptyRetryTargets = []; // targets that got no anchors last run, retried after pool growth
   const preservedFronts = []; // targets whose anchors are all still valid
 
   for (const [front, target] of targetsByFront) {
@@ -273,14 +279,13 @@ function buildWorkQueue({ masteredByFront, targetsByFront, existingByFront }) {
     }
     if (stale.length > 0) {
       staleTargets.push({ ...target, reason: "stale-anchor", staleAnchors: stale });
-    } else if (prior.anchorFronts.size === 0) {
-      // Target was processed last time but yielded no anchors. Don't redo unless full.
-      preservedFronts.push(front);
+    } else if (prior.anchorFronts.size === 0 && poolGrew) {
+      emptyRetryTargets.push({ ...target, reason: "empty-retry" });
     } else {
       preservedFronts.push(front);
     }
   }
-  return { newTargets, staleTargets, preservedFronts };
+  return { newTargets, staleTargets, emptyRetryTargets, preservedFronts };
 }
 
 function main() {
@@ -344,10 +349,11 @@ function main() {
   }
 
   // Incremental
-  const { newTargets, staleTargets, preservedFronts } = buildWorkQueue({
-    masteredByFront, targetsByFront, existingByFront
+  const poolGrew = masteredByFront.size > ((status && status.masteredPoolSize) || 0);
+  const { newTargets, staleTargets, emptyRetryTargets, preservedFronts } = buildWorkQueue({
+    masteredByFront, targetsByFront, existingByFront, poolGrew
   });
-  const workQueue = [...newTargets, ...staleTargets];
+  const workQueue = [...newTargets, ...staleTargets, ...emptyRetryTargets];
 
   if (workQueue.length === 0) {
     process.stdout.write(JSON.stringify({
@@ -372,6 +378,7 @@ function main() {
       targetCount: targetsArr.length,
       newTargets: newTargets.length,
       staleTargets: staleTargets.length,
+      emptyRetryTargets: emptyRetryTargets.length,
       preservedTargets: preservedFronts.length,
       threshold: MASTERED_STABILITY_THRESHOLD,
       filesScanned: listJsonFiles(SR_DIR).length,

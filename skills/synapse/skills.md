@@ -103,9 +103,9 @@ available, running in fallback mode (full rebuild every run)."
 
 | `mode` | When | What the skill should do next |
 |---|---|---|
-| `full` | First run, no `_status.json`, or pool drifted > 20% / ≥ 10 cards, or `--full` | Run the full LLM prompt over `targets[]` (Step 2 onward) |
-| `incremental` | `_status.json` exists, pool drifted < 20%, and `workQueue[]` is non-empty | Run the LLM prompt only over `workQueue[]`. **Do NOT touch `synapse/*.json` files for fronts in `preservedFronts[]`.** |
-| `noop` | `_status.json` exists, no new targets, no stale anchors | Skip the LLM. Just bump `_status.json.generatedAt` to now and report "nothing to update" |
+| `full` | First run, no `_status.json`, mastered pool size changed by ≥ `max(10, last × 0.2)`, or `--full` | Run the full LLM prompt over `targets[]` (Step 2 onward) |
+| `incremental` | `_status.json` exists, pool change below that threshold, and `workQueue[]` is non-empty | Run the LLM prompt only over `workQueue[]`. **Do NOT touch `synapse/*.json` files for fronts in `preservedFronts[]`.** |
+| `noop` | `_status.json` exists and `workQueue[]` would be empty | Skip the LLM. Just bump `_status.json.generatedAt` to now and report "nothing to update" |
 | `pool-too-small` | Mastered pool < 10 cards | Write `_status.json` with `enabled: false, reason: "pool-too-small"` and tell the user to keep reviewing |
 | `error` | sr/ folder missing | Tell the user no SR data exists yet |
 
@@ -115,7 +115,7 @@ available, running in fallback mode (full rebuild every run)."
 {
   "mode": "full" | "incremental",
   "stats": { "masteredCount": 164, "targetCount": 89, "newTargets": 5,
-             "staleTargets": 1, "preservedTargets": 83, "threshold": 7,
+             "staleTargets": 1, "emptyRetryTargets": 0, "preservedTargets": 83, "threshold": 7,
              "filesScanned": 96, "fileErrors": 0 },
   "mastered": [
     { "id": "m1", "front": "<front>", "back": "<back>", "notePath": "engram-review/ai-cards/Foo.md", "stability": 17.108 }
@@ -125,7 +125,9 @@ available, running in fallback mode (full rebuild every run)."
     { "id": "t1", "front": "<front>", "notePath": "Study/Bar.md", "stability": 2.3,
       "reason": "new-target" },
     { "id": "t7", "front": "<front>", "notePath": "Study/Baz.md", "stability": 4.1,
-      "reason": "stale-anchor", "staleAnchors": ["<old anchor front>"] }
+      "reason": "stale-anchor", "staleAnchors": ["<old anchor front>"] },
+    { "id": "t9", "front": "<front>", "notePath": "Study/Qux.md", "stability": 1.2,
+      "reason": "empty-retry" }
   ],
   "preservedFronts": [ "<front>", "<front>", ... ]
 }
@@ -288,8 +290,9 @@ For each affected notePath, write `engram-review/synapse/{srFileName(notePath)}.
 
 For full schema reference, see `references/plugin-architecture.md`.
 
-**Skip targets with empty anchors** — do not write empty `cards.{front}` entries unless
-preserving previous `userRejected` lists. (See incremental update below.)
+**Targets with no anchor still get an entry**: write `{ "anchors": [], "userRejected": [] }`.
+The dumper treats "has an entry" as "already paired"; omitting it re-queues the target as
+`new-target` on every run and `noop` never happens. The runtime hides ⚡ for empty anchors.
 
 **Resolve anchor `notePath`**: look up the mastered card's notePath from the pool entry.
 If a mastered card's source SR file maps to a real file in the vault, use that path.
@@ -326,6 +329,7 @@ Report tailored to `mode`:
 ✅ Synapse updated (incremental)
   New targets paired: 5 (4 found anchors, 1 empty)
   Stale targets re-paired: 1
+  Empty targets retried: 0
   Preserved (no change): 83
   Total runtime: 12s
 
@@ -357,19 +361,20 @@ The skill is invoked by:
 
 ## Stale logic detail
 
-When `engram-review/synapse/_status.json` already exists:
+The dumper decides everything below; this section explains its output so you do not
+re-derive it. When `_status.json` exists and the pool change is below the `full`
+threshold, each target lands in exactly one bucket:
 
-1. Compare `currentMastered` vs `_status.json.masteredPoolSize`
-2. If `abs(diff) ≥ max(5, last × 0.10)` → **full rebuild** (pool structure changed enough that
-   anchors based on the old pool may not be valid). Run Steps 1-6 from scratch.
-3. Otherwise → **partial rebuild**:
-   - Re-scan only notes whose mtime > `_status.generatedAt`
-   - Plus any note whose existing synapse file references anchors that are no longer
-     in the current mastered pool
-   - Preserve `userRejected` lists when overwriting per-note files
+- `new-target` — no entry in any synapse file (never paired, or its front text changed)
+- `stale-anchor` — at least one anchor is no longer in the mastered pool
+- `empty-retry` — paired last time with no anchor, and the mastered pool has grown since
+- preserved — everything else
 
-Pure mtime-only incremental misses "note unchanged but new mastered card should anchor it"
-cases, so the pool-change check is the primary trigger.
+Consequences worth knowing:
+- Editing only a card's back does not re-pair it.
+- Targets that already have anchors never pick up newly mastered cards in incremental
+  mode. They are re-paired only by a `full` run, which happens automatically once the
+  pool drifts past the threshold, or on demand with `--full`.
 
 ---
 

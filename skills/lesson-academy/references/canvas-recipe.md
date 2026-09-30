@@ -75,11 +75,9 @@ for a, b in itertools.combinations(groups, 2):
     if overlap(a, b, 100, 200): bad.append(f"groups too close: {a['id']} / {b['id']}")
 for g in groups:
     for n in nodes:
-        inside_x = n["x"] >= g["x"] and n["x"] + n["width"] <= g["x"] + g["width"]
-        inside_y = n["y"] >= g["y"] and n["y"] + n["height"] <= g["y"] + g["height"]
-        if (inside_x != inside_y) or (inside_x and inside_y and (
-            n["x"] < g["x"] + 60 or n["x"] + n["width"] > g["x"] + g["width"] - 60 or
-            n["y"] < g["y"] + 60 or n["y"] + n["height"] > g["y"] + g["height"] - 60)):
+        if not overlap(g, n, 0, 0): continue  # fully outside the group: fine
+        if (n["x"] < g["x"] + 60 or n["x"] + n["width"] > g["x"] + g["width"] - 60 or
+            n["y"] < g["y"] + 60 or n["y"] + n["height"] > g["y"] + g["height"] - 60):
             bad.append(f"node {n['id']} straddles or hugs group {g['id']}")
 print("\n".join(bad) or "layout OK"); sys.exit(1 if bad else 0)
 EOF

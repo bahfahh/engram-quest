@@ -72,6 +72,9 @@ pages, so first read the evidence and pick the failure type:
 Evidence sources (all available at batch time, no user interaction needed):
 - The card itself (`q`/`a` from the queue entry).
 - The original card's SR history: `engram-review/sr/{srFileName}.json` (srFileName = notePath with `/` → `__`).
+  Each card's `log` lists its most recent reviews (up to 20) as `{ "d": "YYYY-MM-DD", "r": 1–4 }`, where
+  `r: 1` is Again. Cards last reviewed before the plugin started logging have no `log`; fall back to
+  low `stability` / high `difficulty` as the signal.
 - Hints: `engram-review/hints/{note-name}.json`.
 - The source note (read it — it feeds sections ②④⑤).
 - Deck siblings: other cards in the same deck are natural candidates for the "common confusions"
@@ -155,8 +158,9 @@ An Explainer that didn't help must get simpler, not stay stale. During every Mod
 draining the queue:
 
 1. List existing `meta/*.json` entries with a non-null `sourceCard`.
-2. For each, read the original card's SR history. If the card has ≥2 `Again` reviews dated
-   **after** the Explainer's `created`/last rewrite date, the page failed — rewrite it.
+2. For each, read the original card's SR `log`. If it has ≥2 entries with `r: 1` (Again) dated
+   **after** the Explainer's `created`/last rewrite date, the page failed — rewrite it. No `log`,
+   or no such entries → leave the page alone.
 3. Rewrite = same `id`, `rewriteCount + 1`, and a genuinely different approach: shallower entry
    point, different metaphor, more prerequisite coverage. Do not lightly rephrase the old page.
 
