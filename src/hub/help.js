@@ -49,7 +49,7 @@ var fe=class extends I.Modal{constructor(e,t){super(e),this.plugin=t}onClose(){v
       .lh-help.lh-dark .lh-help-sub { background:rgba(255,255,255,0.04); }
       .lh-help.lh-dark .lh-help-intro { background:linear-gradient(135deg,rgba(59,130,246,0.16),rgba(124,58,237,0.14)); }
       .lh-help.lh-dark .lh-help-intro p { color:var(--text-normal); }
-      .lh-help .modal-close-button { display:none !important; }
+      .lh-help > .modal-close-button, .lh-help > .modal-header-button { display:none !important; }
     `,a.id="lh-help-styles",activeDocument.head.appendChild(a);let o=r.createEl("div",{attr:{style:"flex:1;overflow-y:auto;padding:20px;font-size:14px;line-height:1.6"}}),i=o.createEl("div",{attr:{class:"lh-help-intro"}});i.innerHTML=t==="zh-tw"?`
       <p><strong>EngramQuest</strong> 把你的筆記變成完整學習閉環：<strong>學 → 練 → 記 → 連</strong>。每個模組可單獨用，也能串接。</p>
       <div class="lh-help-chips">

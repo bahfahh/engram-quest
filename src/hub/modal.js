@@ -104,7 +104,6 @@ body.is-phone .lh-deck-gc-metric {
   padding:6px 4px;
 }
 `;
-  activeDocument.head.appendChild(styleEl);
 }
 
 var ne=class n extends I.Modal{constructor(e,t){super(e),this.plugin=t,this.decks=[],this.quests=[],this.memories=[],this.courses=[],this.activeTab="review",this.viewModes=t.settings._viewModes||{review:"list",memory:"list",quest:"list"},this.viewMode=this.viewModes.review,this.treeExpanded=t.settings._treeExpanded||{},this.filterStatus="all",this.searchQuery="",this.sortQuest="newest",this.sortMemory="newest",this.filterQuestStatus="all"}loadDecks(){return this._decksReady=(async()=>{this.decks=await lt(this.app,this.plugin.settings);})();}
