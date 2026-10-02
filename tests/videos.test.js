@@ -18,6 +18,7 @@ import {
   updateRequest,
   setTopicStyle,
   topicState,
+  collectTags,
   GOAL_MAX,
   deleteTopic,
 } from "../src/videos/data.js";
@@ -70,28 +71,27 @@ const metaPath = (slug) => `${VIDEOS_DIR}/${slug}/meta.json`;
 
 describe("normalizeSettings", () => {
   it("fills defaults for missing or invalid values", () => {
-    expect(normalizeSettings(null, false)).toEqual({ mode: "basic", length: 60, style: "auto", narrationLang: "follow", subtitles: true });
-    expect(normalizeSettings({ mode: "nope", length: 45, style: "x", narrationLang: "fr", subtitles: 0 }, true))
-      .toEqual({ mode: "basic", length: 60, style: "auto", narrationLang: "follow", subtitles: false });
+    expect(normalizeSettings(null, false)).toEqual({ mode: "basic", quality: "high", style: "auto", narrationLang: "follow", subtitles: true });
+    expect(normalizeSettings({ mode: "nope", quality: "ultra", style: "x", narrationLang: "fr", subtitles: 0 }, true))
+      .toEqual({ mode: "basic", quality: "high", style: "auto", narrationLang: "follow", subtitles: false });
   });
 
   it("falls back to basic when a free user holds a Pro mode", () => {
-    expect(normalizeSettings({ mode: "principle", length: 90 }, false).mode).toBe("basic");
-    expect(normalizeSettings({ mode: "principle", length: 90 }, true)).toMatchObject({ mode: "principle", length: 90 });
+    expect(normalizeSettings({ mode: "principle", quality: "compact" }, false).mode).toBe("basic");
+    expect(normalizeSettings({ mode: "principle", quality: "compact" }, true)).toMatchObject({ mode: "principle", quality: "compact" });
   });
 
-  it("pins polished to 60 s and leaves auto length to the AI", () => {
-    expect(normalizeSettings({ mode: "polished", length: 30 }, true).length).toBe(60);
-    expect(normalizeSettings({ mode: "auto", length: 30 }, true).length).toBeNull();
+  it("drops the retired length setting — the skill sizes videos to their objectives", () => {
+    expect(normalizeSettings({ mode: "polished", length: 30 }, true)).not.toHaveProperty("length");
   });
 });
 
 describe("settings file", () => {
   it("round-trips through settings.json, normalised on write", async () => {
     const a = makeAdapter();
-    expect(await readSettings(a, false)).toMatchObject({ mode: "basic", length: 60 });
-    await saveSettings(a, { mode: "polished", length: 90, style: "drawn" }, true);
-    expect(JSON.parse(a.files[SETTINGS_PATH])).toMatchObject({ mode: "polished", length: 60, style: "drawn" });
+    expect(await readSettings(a, false)).toMatchObject({ mode: "basic", quality: "high" });
+    await saveSettings(a, { mode: "polished", quality: "compact", style: "drawn" }, true);
+    expect(JSON.parse(a.files[SETTINGS_PATH])).toMatchObject({ mode: "polished", quality: "compact", style: "drawn" });
     expect((await readSettings(a, false)).mode).toBe("basic");
   });
 });
@@ -288,13 +288,26 @@ describe("topicState", () => {
   });
 });
 
+describe("tags", () => {
+  it("normalizes skill-written tags and counts them across series, most used first", () => {
+    const a = normalizeTopic(topicMeta({ tags: [" 軟體 ", "AI Coding", "軟體", "", 3] }));
+    expect(a.tags).toEqual(["軟體", "AI Coding", "3"]);
+    const b = normalizeTopic(topicMeta({ tags: ["軟體", "SDD"] }));
+    const c = normalizeTopic({ title: "p", status: "pending" });
+    expect(c.tags).toEqual([]);
+    expect(collectTags([{ meta: a }, { meta: b }, { meta: c }])).toEqual([
+      { tag: "軟體", count: 2 }, { tag: "3", count: 1 }, { tag: "AI Coding", count: 1 }, { tag: "SDD", count: 1 },
+    ]);
+  });
+});
+
 describe("enforceSettingsTier", () => {
   it("rewrites a stored Pro mode to basic for free users only", async () => {
-    const a = makeAdapter({ [SETTINGS_PATH]: JSON.stringify({ mode: "principle", length: 90, style: "drawn" }) });
+    const a = makeAdapter({ [SETTINGS_PATH]: JSON.stringify({ mode: "principle", quality: "compact", style: "drawn" }) });
     expect(await enforceSettingsTier(a, true)).toBe(false);
     expect(JSON.parse(a.files[SETTINGS_PATH]).mode).toBe("principle");
     expect(await enforceSettingsTier(a, false)).toBe(true);
-    expect(JSON.parse(a.files[SETTINGS_PATH])).toMatchObject({ mode: "basic", length: 90, style: "drawn" });
+    expect(JSON.parse(a.files[SETTINGS_PATH])).toMatchObject({ mode: "basic", quality: "compact", style: "drawn" });
     expect(await enforceSettingsTier(makeAdapter(), false)).toBe(false);
   });
 });

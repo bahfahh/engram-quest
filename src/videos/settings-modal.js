@@ -1,5 +1,5 @@
 "use strict";
-// Video Academy settings (ADR-05): production mode, length, preferred style, narration language,
+// Video Academy settings (ADR-05, ADR-25): production mode, quality, preferred style, narration language,
 // subtitles — saved to engram-quest/videos/settings.json for the video skill to read. Pro modes are
 // visible to free users but disabled (ADR-04); data.normalizeSettings enforces the same rules.
 
@@ -14,14 +14,13 @@ const MODE_TEXT = {
   auto: ["VIDEO_MODE_AUTO", "VIDEO_MODE_AUTO_DESC"],
 };
 const STYLE_TEXT = { auto: "VIDEO_STYLE_AUTO", fast: "VIDEO_STYLE_FAST", system: "VIDEO_STYLE_SYSTEM", visual: "VIDEO_STYLE_VISUAL", drawn: "VIDEO_STYLE_DRAWN" };
+const QUALITY_TEXT = { high: ["VIDEO_Q_HIGH", "VIDEO_Q_HIGH_DESC"], compact: ["VIDEO_Q_COMPACT", "VIDEO_Q_COMPACT_DESC"] };
 const LANG_TEXT = { follow: "VIDEO_LANG_FOLLOW", "zh-tw": "VIDEO_LANG_ZH", en: "VIDEO_LANG_EN" };
 
 async function openVideoSettingsModal(hub, t) {
   const adapter = hub.app.vault.adapter;
   const isPro = !!hub.plugin.settings.licenseValid;
   let s = await data.readSettings(adapter, isPro);
-  // Remember the free-choice length so switching into and back out of polished/auto keeps it.
-  let chosenLength = s.length || 60;
 
   const modal = new I.Modal(hub.app);
   modal.modalEl.addClass("lh-vid-modal", "lh-vid-settings");
@@ -31,7 +30,7 @@ async function openVideoSettingsModal(hub, t) {
   const form = wrap.createDiv({ cls: "lh-vid-set-form" });
 
   const render = () => {
-    s = data.normalizeSettings({ ...s, length: chosenLength }, isPro);
+    s = data.normalizeSettings(s, isPro);
     form.empty();
 
     form.createDiv({ cls: "lh-vid-set-label", text: c(t, "VIDEO_SET_MODE") });
@@ -47,16 +46,13 @@ async function openVideoSettingsModal(hub, t) {
       card.addEventListener("click", () => { s.mode = id; render(); });
     }
 
-    const lenHead = form.createDiv({ cls: "lh-vid-set-label" });
-    lenHead.createSpan({ text: c(t, "VIDEO_SET_LENGTH") });
-    const lenHint = s.mode === "polished" ? "VIDEO_LEN_FIXED" : s.mode === "auto" ? "VIDEO_LEN_AUTO" : "VIDEO_LEN_HINT";
-    lenHead.createSpan({ cls: "lh-vid-set-hint", text: c(t, lenHint) });
-    const lens = form.createDiv({ cls: "lh-vid-lens" });
-    for (const n of data.LENGTHS) {
-      const fixed = s.mode === "polished" || s.mode === "auto";
-      const btn = lens.createEl("button", { cls: "lh-vid-len" + (s.length === n ? " is-on" : ""), text: K(c(t, "VIDEO_LEN_SEC"), { n }) });
-      if (fixed) btn.disabled = true;
-      btn.addEventListener("click", () => { chosenLength = n; render(); });
+    const qHead = form.createDiv({ cls: "lh-vid-set-label" });
+    qHead.createSpan({ text: c(t, "VIDEO_SET_QUALITY") });
+    qHead.createSpan({ cls: "lh-vid-set-hint", text: c(t, QUALITY_TEXT[s.quality][1]) });
+    const qs = form.createDiv({ cls: "lh-vid-lens" });
+    for (const id of data.QUALITIES) {
+      const btn = qs.createEl("button", { cls: "lh-vid-len" + (s.quality === id ? " is-on" : ""), text: c(t, QUALITY_TEXT[id][0]) });
+      btn.addEventListener("click", () => { s.quality = id; render(); });
     }
 
     const selectRow = (labelKey, keys, value, onChange) => {
@@ -89,7 +85,7 @@ async function openVideoSettingsModal(hub, t) {
     if (save.disabled) return;
     save.disabled = true;
     try {
-      await data.saveSettings(adapter, { ...s, length: chosenLength }, isPro);
+      await data.saveSettings(adapter, s, isPro);
       modal.close();
       new I.Notice(c(t, "VIDEO_SET_SAVED"));
     } catch (e) {

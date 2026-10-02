@@ -93,7 +93,7 @@ async function renderVideoTab(el, hub) {
   }
   head.createEl("button", { cls: "lh-vid-btn lh-vid-btn-primary", text: c(t, "VIDEO_NEW") })
     .addEventListener("click", () => openNewVideoModal(hub, t, (slug) => {
-      hub._vTopic = null; hub._vFlash = slug; hub._vFilter = "all"; hub._vQuery = "";
+      hub._vTopic = null; hub._vFlash = slug; hub._vFilter = "all"; hub._vQuery = ""; hub._vTag = "";
       refresh();
     }));
   head.createEl("button", { cls: "lh-vid-btn", text: c(t, "VIDEO_SETTINGS") })
@@ -114,7 +114,7 @@ const SEARCH_MIN_TOPICS = 6;
 
 function matchesQuery(meta, q) {
   if (!q) return true;
-  const hay = [meta.title, meta.request ? meta.request.detail : ""].join(" ").toLowerCase();
+  const hay = [meta.title, meta.request ? meta.request.detail : "", ...meta.tags].join(" ").toLowerCase();
   return hay.includes(q.toLowerCase());
 }
 
@@ -144,6 +144,11 @@ function renderShelf(body, hub, t, topics, refresh) {
   const flash = hub._vFlash;
   hub._vFlash = null;
 
+  // Tags come from the skill (ADR-23); a remembered tag no series carries any more resets.
+  const tags = data.collectTags(topics);
+  // "" = all tags (not a word, so a skill-written tag can never collide with it).
+  if (hub._vTag && !tags.some((x) => x.tag === hub._vTag)) hub._vTag = "";
+
   const bar = body.createDiv({ cls: "lh-vid-filters" });
   const chips = bar.createDiv({ cls: "lh-vid-chips" });
   bar.createDiv({ cls: "lh-vid-spacer" });
@@ -151,7 +156,7 @@ function renderShelf(body, hub, t, topics, refresh) {
   // Chips and grid redraw from the topics already in memory: typing in the search box must never
   // rebuild the tab, which would drop the input mid-IME composition and rescan every meta.json.
   const draw = () => {
-    const matching = topics.filter(({ meta }) => matchesQuery(meta, hub._vQuery || ""));
+    const matching = topics.filter(({ meta }) => matchesQuery(meta, hub._vQuery || "") && (!hub._vTag || meta.tags.includes(hub._vTag)));
     const count = (id) => (id === "all" ? matching.length : matching.filter(({ slug }) => states.get(slug) === id).length);
     chips.empty();
     for (const [id, key] of FILTERS) {
@@ -173,6 +178,14 @@ function renderShelf(body, hub, t, topics, refresh) {
       else renderSeriesCard(card, hub, t, topic, () => openVideo(topic.slug, null, false));
     }
   };
+  if (tags.length) {
+    const sel = bar.createEl("select", { cls: "lh-vid-select lh-vid-tag-select", attr: { "aria-label": c(t, "VIDEO_TAG_FILTER") } });
+    sel.createEl("option", { text: c(t, "VIDEO_TAG_ALL"), attr: { value: "" } });
+    for (const { tag, count } of tags) sel.createEl("option", { text: `${tag} (${count})`, attr: { value: tag } });
+    sel.value = hub._vTag || "";
+    sel.toggleClass("is-on", !!hub._vTag);
+    sel.addEventListener("change", () => { hub._vTag = sel.value; sel.toggleClass("is-on", !!sel.value); draw(); });
+  }
   if (topics.length >= SEARCH_MIN_TOPICS || hub._vQuery) {
     const search = bar.createEl("input", { cls: "lh-vid-search", attr: { type: "search", placeholder: c(t, "VIDEO_SEARCH_PH"), "aria-label": c(t, "VIDEO_SEARCH_PH") } });
     search.value = hub._vQuery || "";
@@ -292,6 +305,18 @@ function renderTopic(body, hub, t, topic, refresh) {
   titles.createDiv({ cls: "lh-vid-info-title", text: video.title });
   const metaBits = [labelOf(t, STYLE_KEYS, video.style), labelOf(t, MODE_KEYS, video.mode), video.duration ? fmtTime(video.duration) : ""].filter(Boolean);
   titles.createDiv({ cls: "lh-vid-info-meta", text: metaBits.join(" · ") });
+  // Desktop only: open the OS file manager at this video's mp4 (or its folder if the file isn't on this device).
+  if (I.Platform.isDesktopApp && typeof hub.app.showInFolder === "function") {
+    const label = c(t, "VIDEO_SHOW_IN_FOLDER");
+    const reveal = titleRow.createEl("button", { cls: "lh-vid-btn lh-vid-icon-btn", attr: { "aria-label": label, title: label } });
+    I.setIcon(reveal, "folder-open");
+    reveal.addEventListener("click", async () => {
+      const dir = I.normalizePath(`${data.VIDEOS_DIR}/${slug}`);
+      const file = I.normalizePath(`${dir}/${video.file}`);
+      try { await hub.app.showInFolder((await adapter.exists(file)) ? file : dir); }
+      catch (e) { console.warn("EngramQuest: show video in folder failed", e); }
+    });
+  }
   const done = data.videoProgress(meta, video.id).completed;
   const doneBtn = titleRow.createEl("button", { cls: "lh-vid-btn" + (done ? " is-done" : " lh-vid-btn-primary"), text: c(t, done ? "VIDEO_MARKED_DONE" : "VIDEO_MARK_DONE") });
   doneBtn.addEventListener("click", () => { save({ completed: !done }); leave({ slug, videoId: video.id, autoplay: false }); });
@@ -327,15 +352,17 @@ function mountPlayer(stage, hub, t, slug, meta, video, autoplay, save, playable,
     vid.createEl("track", { attr: { kind: "subtitles", src: fileUrl(hub, slug, video.subtitles), srclang: "und", label: c(t, "VIDEO_SET_SUBS"), default: "" } });
   }
   setPlayer(vid);
-  // A synced vault can carry meta.json without the (git-ignored / unsynced) mp4, and a file can
-  // exist yet fail to decode — both show the same message instead of a black player.
-  const showMissing = () => {
+  // A synced vault can carry meta.json without the unsynced mp4, and a file can exist yet fail to
+  // decode on this device — each gets its own message instead of a black player, so the learner
+  // knows whether to fix their sync or the file.
+  const showProblem = (key) => {
     if (!vid.isConnected) return;
     vid.remove();
-    stage.createDiv({ cls: "lh-vid-missing", text: c(t, "VIDEO_MISSING_FILE") });
+    stage.createDiv({ cls: "lh-vid-missing", text: c(t, key) });
   };
-  vid.addEventListener("error", showMissing);
-  hub.app.vault.adapter.exists(src).then((ok) => { if (!ok) showMissing(); }).catch(() => {});
+  const fileExists = hub.app.vault.adapter.exists(src).catch(() => true);
+  fileExists.then((ok) => { if (!ok) showProblem("VIDEO_MISSING_FILE"); });
+  vid.addEventListener("error", () => { fileExists.then((ok) => showProblem(ok ? "VIDEO_PLAY_FAILED" : "VIDEO_MISSING_FILE")); });
 
   const start = data.videoProgress(meta, video.id);
   let lastSaved = start.position;

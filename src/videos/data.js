@@ -13,10 +13,13 @@ const SETTINGS_PATH = `${VIDEOS_DIR}/settings.json`;
 
 const MODES = ["basic", "polished", "principle", "auto"];
 const PRO_MODES = new Set(["polished", "principle", "auto"]);
-const LENGTHS = [30, 60, 90];
+// Encode quality the skill reads (ADR-25): "high" keeps a fixed visual quality and lets the file size
+// follow the content; "compact" squeezes each video under 5 MB (Obsidian Sync Standard per-file cap).
+// Length is not a setting: the skill sizes each video to its learning objectives.
+const QUALITIES = ["high", "compact"];
 const STYLES = ["auto", "fast", "system", "visual", "drawn"];
 const NARRATION_LANGS = ["follow", "zh-tw", "en"];
-const DEFAULT_SETTINGS = { mode: "basic", length: 60, style: "auto", narrationLang: "follow", subtitles: true };
+const DEFAULT_SETTINGS = { mode: "basic", quality: "high", style: "auto", narrationLang: "follow", subtitles: true };
 // A series may pin its own style; "auto" (the default) lets the skill's adapter pick one from the
 // content. The style list itself is provisional until the skill's style packs are settled.
 const SERIES_STYLES = STYLES;
@@ -32,18 +35,15 @@ async function readJson(adapter, path) {
 
 /**
  * Clamp raw settings to valid values. Free users can't hold a Pro mode (a lapsed licence falls
- * back to "basic"); "polished" is fixed at 60 s and "auto" leaves length to the AI (null).
+ * back to "basic"). Fields the plugin no longer offers (e.g. the old `length`) are dropped.
  */
 function normalizeSettings(raw, isPro) {
   const s = raw && typeof raw === "object" ? raw : {};
   let mode = MODES.includes(s.mode) ? s.mode : DEFAULT_SETTINGS.mode;
   if (!isPro && PRO_MODES.has(mode)) mode = "basic";
-  let length = LENGTHS.includes(Number(s.length)) ? Number(s.length) : DEFAULT_SETTINGS.length;
-  if (mode === "polished") length = 60;
-  if (mode === "auto") length = null;
   return {
     mode,
-    length,
+    quality: QUALITIES.includes(s.quality) ? s.quality : DEFAULT_SETTINGS.quality,
     style: STYLES.includes(s.style) ? s.style : DEFAULT_SETTINGS.style,
     narrationLang: NARRATION_LANGS.includes(s.narrationLang) ? s.narrationLang : DEFAULT_SETTINGS.narrationLang,
     subtitles: s.subtitles === undefined ? DEFAULT_SETTINGS.subtitles : !!s.subtitles,
@@ -105,6 +105,8 @@ function normalizeTopic(meta) {
         }
       : null,
     note: String(meta.note || ""),
+    // Written by the skill (broad subject areas such as "軟體"); drives the shelf's tag filter.
+    tags: Array.isArray(meta.tags) ? [...new Set(meta.tags.map((x) => String(x).trim()).filter(Boolean))] : [],
     sources: Array.isArray(meta.sources) ? meta.sources.map(String) : [],
     starred: !!meta.starred,
     createdAt: meta.createdAt || (req && req.createdAt) || null,
@@ -139,6 +141,14 @@ function topicState(meta) {
     return p.completed || p.position > 0;
   });
   return touched ? "watching" : "new";
+}
+
+/** Every tag used across the series, most used first (ties by name): [{ tag, count }]. */
+function collectTags(topics) {
+  const counts = new Map();
+  for (const { meta } of topics) for (const tag of meta.tags) counts.set(tag, (counts.get(tag) || 0) + 1);
+  return [...counts].map(([tag, count]) => ({ tag, count }))
+    .sort((a, b) => b.count - a.count || a.tag.localeCompare(b.tag));
 }
 
 /** Latest activity timestamp of a topic: newest lastViewed, else creation time. */
@@ -319,7 +329,7 @@ module.exports = {
   SETTINGS_PATH,
   MODES,
   PRO_MODES,
-  LENGTHS,
+  QUALITIES,
   STYLES,
   NARRATION_LANGS,
   DEFAULT_SETTINGS,
@@ -333,6 +343,7 @@ module.exports = {
   videoProgress,
   topicProgress,
   topicState,
+  collectTags,
   listTopics,
   continueWatching,
   saveProgress,

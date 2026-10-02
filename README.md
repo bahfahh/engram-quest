@@ -115,13 +115,13 @@ Tell the AI what you want to learn — it builds a course of interactive HTML le
 
 ### 🎬 Video Academy — One Sentence, Short Video Lessons (preview)
 
-Say what you want to learn or review — "my coding workflow", "SEO" — and the AI turns it into short video lessons (90 seconds or less each).
+Say what you want to learn or review — "my coding workflow", "SEO" — and the AI turns it into short video lessons (about 1–3 minutes each, sized to what each one teaches).
 
 - **Just say the goal** — "build a website", "learn functions"; add detail if you like. The AI decides which of your notes to use (drop notes in to narrow it down, or choose *Don't use my notes*), whether it's a lesson or a review, and how many videos to make
-- **Shelf → player** — browse series as cards (filter by watching / not started / finished / to be generated, search once you have many), open one to watch with a playlist; your position is saved so you resume where you stopped
+- **Shelf → player** — browse series as cards (filter by watching / not started / finished / to be generated, by tags the AI assigns such as "Software", and search once you have many), open one to watch with a playlist; your position is saved so you resume where you stopped
 - **Style per series** — each series can pin a video style, or leave it to the AI (default); series still waiting to be generated can be edited
-- **Set it once** — production mode, length (30 / 60 / 90 s), preferred style, narration language and subtitles live in *Video settings*; Pro unlocks the polished, principle-breakdown and auto modes
-- Videos live in `engram-quest/videos/` inside your vault. If you sync your vault with git, consider ignoring `*.mp4` there
+- **Set it once** — production mode, quality (*High quality*, or *Space saver* that keeps each video under 5 MB for Obsidian Sync Standard), preferred style, narration language and subtitles live in *Video settings*; Pro unlocks the polished, principle-breakdown and auto modes
+- Videos live in `engram-quest/videos/` inside your vault. On desktop, the folder button next to *Mark as watched* shows the video file in your system file explorer. To watch on your phone, make sure your sync tool also syncs the mp4 files there — don't exclude them (with git, every video stays in the history; that is your trade-off to make)
 
 > Preview: the Hub tab, player and settings are in place; the video-generating skill ships separately.
 
@@ -360,13 +360,13 @@ Anki 解決「何時複習」。EngramQuest 解決「如何真正記住」 — �
 
 ### 🎬 影片學院 — 一句話，做成教學短片（預覽）
 
-說一句想學或想複習什麼，例如「我的 coding 流程」「SEO」，AI 就把它做成教學短片，每支 90 秒以內。
+說一句想學或想複習什麼，例如「我的 coding 流程」「SEO」，AI 就把它做成教學短片，每支約 1–3 分鐘，依要教的內容決定。
 
 - **說目標就好** — 例如「架設網站」「學會函數」，想補充再補充。要用哪些筆記、是教學還是複習、拆成幾支，都由 AI 判斷（也可以拖入筆記指定範圍，或選「不使用筆記」）
-- **書架 → 播放器** — 系列以卡片呈現（可篩選觀看中／未開始／已看完／待生成，系列多了可搜尋），點進去邊看邊切換播放清單；看到哪裡都會記住，下次從上次的位置續播
+- **書架 → 播放器** — 系列以卡片呈現（可篩選觀看中／未開始／已看完／待生成、依 AI 分好的標籤如「軟體」篩選，系列多了可搜尋），點進去邊看邊切換播放清單；看到哪裡都會記住，下次從上次的位置續播
 - **每個系列可選風格** — 可自己指定影片風格，或交給 AI 判斷（預設）；還在待生成的系列可以編輯
-- **設一次就好** — 製作模式、長度（30／60／90 秒）、偏好風格、旁白語言、字幕都在「影片設定」；Pro 解鎖精緻教學、原理拆解、自動選擇三種模式
-- 影片存在 vault 的 `engram-quest/videos/`。如果你用 git 同步 vault，建議把那裡的 `*.mp4` 加進 .gitignore
+- **設一次就好** — 製作模式、畫質（高畫質，或每支壓在 5 MB 內、適合 Obsidian Sync 基本方案的「省空間」）、偏好風格、旁白語言、字幕都在「影片設定」；Pro 解鎖精緻教學、原理拆解、自動選擇三種模式
+- 影片存在 vault 的 `engram-quest/videos/`。桌面版可按「標記已看完」旁的資料夾按鈕，直接在系統檔案總管中找到影片檔。想在手機上看，同步工具也要同步這裡的 mp4，不要排除（用 git 的話，每支影片都會留在 git 歷史裡，這個取捨由你決定）
 
 > 預覽版：Hub 分頁、播放器與設定已完成；生成影片的 skill 會另外推出。
 
