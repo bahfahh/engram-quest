@@ -6,14 +6,13 @@
 // View state lives on the hub: hub._vTopic = { slug, videoId, autoplay } | null.
 
 const I = require("obsidian");
-const { t: c, interpolate: K } = require("../i18n");
+const { t: c, interpolate: K, getLocale } = require("../i18n");
 const data = require("./data");
+const looks = require("./looks");
 const { openNewVideoModal, styleSelect } = require("./new-modal");
 const { openVideoSettingsModal } = require("./settings-modal");
 const { attachInfoButton } = require("../hub/feature-guide");
 
-const STYLE_KEYS = { auto: "VIDEO_STYLE_AUTO", fast: "VIDEO_STYLE_FAST", system: "VIDEO_STYLE_SYSTEM", visual: "VIDEO_STYLE_VISUAL", drawn: "VIDEO_STYLE_DRAWN" };
-const MODE_KEYS = { basic: "VIDEO_MODE_BASIC", polished: "VIDEO_MODE_POLISHED", principle: "VIDEO_MODE_PRINCIPLE", auto: "VIDEO_MODE_AUTO" };
 // One progress-write chain per topic, shared across re-renders: the old player's final "pause"
 // save and the new player's first save must not interleave their read-merge-write of meta.json.
 const saveChains = new Map();
@@ -30,9 +29,10 @@ function fmtTime(sec) {
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 }
 
-/** Display name for a style/mode id; unknown ids (future skill values) show as-is. */
-function labelOf(t, keys, id) {
-  return keys[id] ? c(t, keys[id]) : id;
+/** Display name of the look a video was made in; ids no registry knows (legacy values) show nothing. */
+function lookLabel(hub, t, id) {
+  const look = looks.findLook(id, hub._vLooks || []);
+  return look ? looks.localText(look.name, getLocale(t), id) : "";
 }
 
 function fileUrl(hub, slug, name) {
@@ -49,7 +49,6 @@ function statusOf(t, meta, video) {
 /** Thumbnail: the skill's poster when present, otherwise a flat tile; progress bar on the bottom edge. */
 function renderThumb(parent, hub, slug, meta, video, cls) {
   const thumb = parent.createDiv({ cls: `lh-vid-thumb ${cls || ""}` });
-  thumb.dataset.style = video.style || "none";
   if (video.poster) thumb.createEl("img", { attr: { src: fileUrl(hub, slug, video.poster), alt: "", loading: "lazy" } });
   thumb.createSpan({ cls: "lh-vid-thumb-play", text: "▶" });
   if (video.duration) thumb.createSpan({ cls: "lh-vid-thumb-dur", text: fmtTime(video.duration) });
@@ -67,8 +66,9 @@ async function renderVideoTab(el, hub) {
   const gen = hub._tabGen;
   let topics = [];
   try {
-    await data.enforceSettingsTier(adapter, !!t.licenseValid);
-    topics = await data.listTopics(adapter);
+    // Keep the two files the skill reads in step with the licence and the bundled look registry.
+    await Promise.all([data.syncSettingsLicense(adapter, !!t.licenseValid), looks.syncCatalog(adapter)]);
+    [topics, hub._vLooks] = await Promise.all([data.listTopics(adapter), looks.listUserLooks(adapter)]);
   } catch (err) {
     console.error("EngramQuest: video topic scan failed", err);
   }
@@ -252,7 +252,7 @@ function confirmDelete(hub, t, slug, meta, refresh) {
 function renderStylePicker(parent, hub, t, { slug, meta }, refresh) {
   const wrap = parent.createDiv({ cls: "lh-vid-style-pick" });
   wrap.createEl("label", { text: c(t, "VIDEO_SERIES_STYLE"), attr: { for: "lh-vid-series-style" } });
-  const sel = styleSelect(wrap, t, "lh-vid-series-style", meta.style);
+  const sel = styleSelect(wrap, t, "lh-vid-series-style", meta.style, { isPro: !!t.licenseValid, userLooks: hub._vLooks || [] });
   sel.addEventListener("change", () => {
     const style = sel.value;
     queueWrite(slug, () => data.setTopicStyle(hub.app.vault.adapter, slug, style))
@@ -303,7 +303,7 @@ function renderTopic(body, hub, t, topic, refresh) {
   const titleRow = info.createDiv({ cls: "lh-vid-info-row" });
   const titles = titleRow.createDiv({ cls: "lh-vid-info-titles" });
   titles.createDiv({ cls: "lh-vid-info-title", text: video.title });
-  const metaBits = [labelOf(t, STYLE_KEYS, video.style), labelOf(t, MODE_KEYS, video.mode), video.duration ? fmtTime(video.duration) : ""].filter(Boolean);
+  const metaBits = [lookLabel(hub, t, video.style), video.duration ? fmtTime(video.duration) : ""].filter(Boolean);
   titles.createDiv({ cls: "lh-vid-info-meta", text: metaBits.join(" · ") });
   // Desktop only: open the OS file manager at this video's mp4 (or its folder if the file isn't on this device).
   if (I.Platform.isDesktopApp && typeof hub.app.showInFolder === "function") {

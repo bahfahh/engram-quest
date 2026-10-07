@@ -7,22 +7,19 @@
 // adapter so the logic is unit-testable. Contract: doc/開發計劃/影片學院/skills.md §4.
 
 const { safeSlugPart, trashPath } = require("../lessons/data");
+const { isLookId, AUTO } = require("./looks");
 
 const VIDEOS_DIR = "engram-quest/videos";
 const SETTINGS_PATH = `${VIDEOS_DIR}/settings.json`;
 
-const MODES = ["basic", "polished", "principle", "auto"];
-const PRO_MODES = new Set(["polished", "principle", "auto"]);
 // Encode quality the skill reads (ADR-25): "high" keeps a fixed visual quality and lets the file size
 // follow the content; "compact" squeezes each video under 5 MB (Obsidian Sync Standard per-file cap).
 // Length is not a setting: the skill sizes each video to its learning objectives.
 const QUALITIES = ["high", "compact"];
-const STYLES = ["auto", "fast", "system", "visual", "drawn"];
 const NARRATION_LANGS = ["follow", "zh-tw", "en"];
-const DEFAULT_SETTINGS = { mode: "basic", quality: "high", style: "auto", narrationLang: "follow", subtitles: true };
-// A series may pin its own style; "auto" (the default) lets the skill's adapter pick one from the
-// content. The style list itself is provisional until the skill's style packs are settled.
-const SERIES_STYLES = STYLES;
+const DEFAULT_SETTINGS = { quality: "high", style: AUTO, narrationLang: "follow", subtitles: true };
+// `style` (global preference) and a series' `style` hold a look id from looks.js, or "auto" to let
+// the skill match a look to the content. Unknown ids read as "auto" — the skill does the same.
 const GOAL_MAX = 40;
 
 async function readJson(adapter, path) {
@@ -34,19 +31,17 @@ async function readJson(adapter, path) {
 }
 
 /**
- * Clamp raw settings to valid values. Free users can't hold a Pro mode (a lapsed licence falls
- * back to "basic"). Fields the plugin no longer offers (e.g. the old `length`) are dropped.
+ * Clamp raw settings to valid values and stamp the licence state: `pro` tells the skill whether
+ * Pro looks may be used (ADR-26). Fields the plugin no longer offers (`length`, `mode`) are dropped.
  */
 function normalizeSettings(raw, isPro) {
   const s = raw && typeof raw === "object" ? raw : {};
-  let mode = MODES.includes(s.mode) ? s.mode : DEFAULT_SETTINGS.mode;
-  if (!isPro && PRO_MODES.has(mode)) mode = "basic";
   return {
-    mode,
     quality: QUALITIES.includes(s.quality) ? s.quality : DEFAULT_SETTINGS.quality,
-    style: STYLES.includes(s.style) ? s.style : DEFAULT_SETTINGS.style,
+    style: isLookId(s.style) ? s.style : DEFAULT_SETTINGS.style,
     narrationLang: NARRATION_LANGS.includes(s.narrationLang) ? s.narrationLang : DEFAULT_SETTINGS.narrationLang,
     subtitles: s.subtitles === undefined ? DEFAULT_SETTINGS.subtitles : !!s.subtitles,
+    pro: !!isPro,
   };
 }
 
@@ -55,14 +50,14 @@ async function readSettings(adapter, isPro) {
 }
 
 /**
- * Keep settings.json honest for the video skill, which reads the raw file: once the licence has
- * lapsed, a stored Pro mode is rewritten to basic (ADR-04). No-op for Pro users or no file.
+ * Keep settings.json's `pro` flag in step with the licence, since the skill reads the raw file to
+ * decide whether Pro looks may be used. Writes only on a change; a free user with no file needs
+ * none (the skill's defaults are already free).
  */
-async function enforceSettingsTier(adapter, isPro) {
-  if (isPro) return false;
+async function syncSettingsLicense(adapter, isPro) {
   const raw = await readJson(adapter, SETTINGS_PATH);
-  if (!raw || !PRO_MODES.has(raw.mode)) return false;
-  await saveSettings(adapter, raw, false);
+  if (!raw ? !isPro : raw.pro === !!isPro) return false;
+  await saveSettings(adapter, raw, isPro);
   return true;
 }
 
@@ -85,7 +80,6 @@ function normalizeTopic(meta) {
         poster: v.poster ? String(v.poster) : null,
         duration: Number(v.duration) > 0 ? Number(v.duration) : null,
         style: String(v.style || ""),
-        mode: String(v.mode || ""),
         source: v.source === "import" ? "import" : "skill",
       }))
     : [];
@@ -94,7 +88,7 @@ function normalizeTopic(meta) {
     title: String(meta.title || (req && req.text) || ""),
     // A topic with no playable video yet is pending no matter what the file claims.
     status: meta.status === "pending" || !videos.some((v) => v.file) ? "pending" : "ready",
-    style: SERIES_STYLES.includes(meta.style) ? meta.style : "auto",
+    style: isLookId(meta.style) ? meta.style : AUTO,
     request: req
       ? {
           text: String(req.text || ""),
@@ -227,14 +221,14 @@ async function saveProgress(adapter, slug, videoId, patch = {}) {
  * `detail` is optional extra context. How to split it into videos is the skill's call.
  * `source` is "notes" (AI picks relevant notes, optionally narrowed to `refs`) or "general".
  */
-function cleanRequest({ text, detail = "", source = "notes", refs = [], style = "auto" }) {
+function cleanRequest({ text, detail = "", source = "notes", refs = [], style = AUTO }) {
   // Cut by code point so an emoji is never split in half.
   const goal = Array.from(String(text || "").trim().replace(/\s+/g, " ")).slice(0, GOAL_MAX).join("");
   if (!goal) throw new Error("empty request");
   const useNotes = source !== "general";
   return {
     goal,
-    style: SERIES_STYLES.includes(style) ? style : "auto",
+    style: isLookId(style) ? style : AUTO,
     request: {
       text: goal,
       detail: String(detail || "").trim(),
@@ -281,7 +275,8 @@ async function updateRequest(adapter, slug, input, base) {
   const { goal, style, request } = cleanRequest(input);
   const prev = raw.request && typeof raw.request === "object" ? raw.request : {};
   raw.title = goal;
-  if (!base || style !== base.style) raw.style = style;
+  // `style` absent = the learner didn't touch the menu; keep whatever the series holds.
+  if (input.style !== undefined && (!base || style !== base.style)) raw.style = style;
   raw.request = { ...prev, ...request };
   await adapter.write(path, JSON.stringify(raw, null, 2));
   return normalizeTopic(raw);
@@ -289,7 +284,7 @@ async function updateRequest(adapter, slug, input, base) {
 
 /** Set a series' style for the videos the skill makes next ("auto" = let the skill decide). */
 async function setTopicStyle(adapter, slug, style) {
-  if (!SERIES_STYLES.includes(style)) throw new Error(`invalid style: ${style}`);
+  if (!isLookId(style)) throw new Error(`invalid style: ${style}`);
   const path = `${VIDEOS_DIR}/${slug}/meta.json`;
   const raw = await readJson(adapter, path);
   if (!raw || typeof raw !== "object") return false;
@@ -327,18 +322,14 @@ async function deleteTopic(adapter, slug) {
 module.exports = {
   VIDEOS_DIR,
   SETTINGS_PATH,
-  MODES,
-  PRO_MODES,
   QUALITIES,
-  STYLES,
   NARRATION_LANGS,
   DEFAULT_SETTINGS,
-  SERIES_STYLES,
   GOAL_MAX,
   normalizeSettings,
   readSettings,
   saveSettings,
-  enforceSettingsTier,
+  syncSettingsLicense,
   normalizeTopic,
   videoProgress,
   topicProgress,

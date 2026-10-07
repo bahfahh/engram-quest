@@ -1,5 +1,5 @@
-// Tests for the Video Academy data layer (src/videos/data.js): settings clamping incl. the Pro
-// fallback, topic scan/normalisation, progress read-merge-write, continue-watching, requests.
+// Tests for the Video Academy data layer (src/videos/data.js): settings clamping incl. the licence
+// flag, topic scan/normalisation, progress read-merge-write, continue-watching, requests.
 import { describe, it, expect } from "vitest";
 import {
   VIDEOS_DIR,
@@ -7,7 +7,7 @@ import {
   normalizeSettings,
   readSettings,
   saveSettings,
-  enforceSettingsTier,
+  syncSettingsLicense,
   normalizeTopic,
   videoProgress,
   topicProgress,
@@ -70,29 +70,30 @@ function topicMeta(overrides = {}) {
 const metaPath = (slug) => `${VIDEOS_DIR}/${slug}/meta.json`;
 
 describe("normalizeSettings", () => {
-  it("fills defaults for missing or invalid values", () => {
-    expect(normalizeSettings(null, false)).toEqual({ mode: "basic", quality: "high", style: "auto", narrationLang: "follow", subtitles: true });
-    expect(normalizeSettings({ mode: "nope", quality: "ultra", style: "x", narrationLang: "fr", subtitles: 0 }, true))
-      .toEqual({ mode: "basic", quality: "high", style: "auto", narrationLang: "follow", subtitles: false });
+  it("fills defaults for missing or invalid values and stamps the licence", () => {
+    expect(normalizeSettings(null, false)).toEqual({ quality: "high", style: "auto", narrationLang: "follow", subtitles: true, pro: false });
+    expect(normalizeSettings({ quality: "ultra", style: "Not a look!", narrationLang: "fr", subtitles: 0 }, true))
+      .toEqual({ quality: "high", style: "auto", narrationLang: "follow", subtitles: false, pro: true });
   });
 
-  it("falls back to basic when a free user holds a Pro mode", () => {
-    expect(normalizeSettings({ mode: "principle", quality: "compact" }, false).mode).toBe("basic");
-    expect(normalizeSettings({ mode: "principle", quality: "compact" }, true)).toMatchObject({ mode: "principle", quality: "compact" });
+  it("keeps any look id as the preferred style — the skill decides whether it may use it", () => {
+    expect(normalizeSettings({ style: "sketchbook" }, false)).toMatchObject({ style: "sketchbook", pro: false });
   });
 
-  it("drops the retired length setting — the skill sizes videos to their objectives", () => {
-    expect(normalizeSettings({ mode: "polished", length: 30 }, true)).not.toHaveProperty("length");
+  it("drops retired settings: length (the skill sizes videos) and production mode (ADR-26)", () => {
+    const s = normalizeSettings({ mode: "polished", length: 30 }, true);
+    expect(s).not.toHaveProperty("length");
+    expect(s).not.toHaveProperty("mode");
   });
 });
 
 describe("settings file", () => {
   it("round-trips through settings.json, normalised on write", async () => {
     const a = makeAdapter();
-    expect(await readSettings(a, false)).toMatchObject({ mode: "basic", quality: "high" });
-    await saveSettings(a, { mode: "polished", quality: "compact", style: "drawn" }, true);
-    expect(JSON.parse(a.files[SETTINGS_PATH])).toMatchObject({ mode: "polished", quality: "compact", style: "drawn" });
-    expect((await readSettings(a, false)).mode).toBe("basic");
+    expect(await readSettings(a, false)).toMatchObject({ quality: "high", pro: false });
+    await saveSettings(a, { quality: "compact", style: "chalk" }, true);
+    expect(JSON.parse(a.files[SETTINGS_PATH])).toEqual({ quality: "compact", style: "chalk", narrationLang: "follow", subtitles: true, pro: true });
+    expect((await readSettings(a, false)).pro).toBe(false);
   });
 });
 
@@ -218,8 +219,8 @@ describe("series request: goal, detail, style", () => {
     expect(JSON.parse(a.files[metaPath(slug)]).style).toBe("auto");
   });
 
-  it("caps the goal length so it stays a name, and drops unknown styles", async () => {
-    const { meta } = await createRequest(makeAdapter(), { text: "x".repeat(GOAL_MAX + 20), style: "neon" });
+  it("caps the goal length so it stays a name, and drops styles that aren't look ids", async () => {
+    const { meta } = await createRequest(makeAdapter(), { text: "x".repeat(GOAL_MAX + 20), style: "Neon Glow!" });
     expect(meta.title).toHaveLength(GOAL_MAX);
     expect(meta.style).toBe("auto");
   });
@@ -244,17 +245,18 @@ describe("series request: goal, detail, style", () => {
     expect(JSON.parse(a.files[metaPath(slug)]).title).toBe("SEO 入門（AI 命名）");
   });
 
-  it("updateRequest keeps a style the form can't show unless the user changed it", async () => {
+  it("updateRequest keeps the series style unless the form sends a new one", async () => {
     const a = makeAdapter();
     const { slug } = await createRequest(a, { text: "SEO" });
     const raw = JSON.parse(a.files[metaPath(slug)]);
-    a.files[metaPath(slug)] = JSON.stringify({ ...raw, style: "isometric" });
+    // A look this device doesn't know (e.g. an own look synced from elsewhere) — the form can't show it.
+    a.files[metaPath(slug)] = JSON.stringify({ ...raw, style: "my-neon" });
     const opened = normalizeTopic(JSON.parse(a.files[metaPath(slug)]));
-    expect(opened.style).toBe("auto");
-    await updateRequest(a, slug, { text: "SEO 教學", style: "auto" }, opened);
-    expect(JSON.parse(a.files[metaPath(slug)]).style).toBe("isometric");
-    await updateRequest(a, slug, { text: "SEO 教學", style: "fast" }, normalizeTopic(JSON.parse(a.files[metaPath(slug)])));
-    expect(JSON.parse(a.files[metaPath(slug)]).style).toBe("fast");
+    expect(opened.style).toBe("my-neon");
+    await updateRequest(a, slug, { text: "SEO 教學" }, opened);
+    expect(JSON.parse(a.files[metaPath(slug)]).style).toBe("my-neon");
+    await updateRequest(a, slug, { text: "SEO 教學", style: "chalk" }, normalizeTopic(JSON.parse(a.files[metaPath(slug)])));
+    expect(JSON.parse(a.files[metaPath(slug)]).style).toBe("chalk");
   });
 
   it("updateRequest needs the file itself to say pending, not just have no videos yet", async () => {
@@ -273,7 +275,7 @@ describe("series request: goal, detail, style", () => {
     const a = makeAdapter({ [metaPath("t")]: JSON.stringify(topicMeta()) });
     expect(await setTopicStyle(a, "t", "drawn")).toBe(true);
     expect(normalizeTopic(JSON.parse(a.files[metaPath("t")])).style).toBe("drawn");
-    await expect(setTopicStyle(a, "t", "neon")).rejects.toThrow();
+    await expect(setTopicStyle(a, "t", "Neon Glow!")).rejects.toThrow();
     expect(await setTopicStyle(a, "gone", "fast")).toBe(false);
   });
 });
@@ -301,13 +303,23 @@ describe("tags", () => {
   });
 });
 
-describe("enforceSettingsTier", () => {
-  it("rewrites a stored Pro mode to basic for free users only", async () => {
-    const a = makeAdapter({ [SETTINGS_PATH]: JSON.stringify({ mode: "principle", quality: "compact", style: "drawn" }) });
-    expect(await enforceSettingsTier(a, true)).toBe(false);
-    expect(JSON.parse(a.files[SETTINGS_PATH]).mode).toBe("principle");
-    expect(await enforceSettingsTier(a, false)).toBe(true);
-    expect(JSON.parse(a.files[SETTINGS_PATH])).toMatchObject({ mode: "basic", quality: "compact", style: "drawn" });
-    expect(await enforceSettingsTier(makeAdapter(), false)).toBe(false);
+describe("syncSettingsLicense", () => {
+  it("keeps settings.json's pro flag in step with the licence, writing only on a change", async () => {
+    const a = makeAdapter({ [SETTINGS_PATH]: JSON.stringify({ quality: "compact", style: "chalk", pro: false }) });
+    expect(await syncSettingsLicense(a, false)).toBe(false);
+    expect(await syncSettingsLicense(a, true)).toBe(true);
+    expect(JSON.parse(a.files[SETTINGS_PATH])).toMatchObject({ quality: "compact", style: "chalk", pro: true });
+    expect(await syncSettingsLicense(a, true)).toBe(false);
+    expect(await syncSettingsLicense(a, false)).toBe(true);
+    expect(JSON.parse(a.files[SETTINGS_PATH]).pro).toBe(false);
+  });
+
+  it("creates the file for a Pro user who never saved settings, but not for a free user", async () => {
+    const free = makeAdapter();
+    expect(await syncSettingsLicense(free, false)).toBe(false);
+    expect(free.files[SETTINGS_PATH]).toBeUndefined();
+    const pro = makeAdapter();
+    expect(await syncSettingsLicense(pro, true)).toBe(true);
+    expect(JSON.parse(pro.files[SETTINGS_PATH])).toMatchObject({ style: "auto", pro: true });
   });
 });

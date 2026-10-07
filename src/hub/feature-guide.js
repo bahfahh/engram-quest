@@ -353,7 +353,7 @@ const CONTENT = {
       lines: [
         "說一句<strong>想學或想複習什麼</strong>，AI 會自己判斷要讀哪些筆記、拆成幾支 <strong>1–3 分鐘的短片</strong>。",
         "外層是系列書架（可篩選、搜尋），點進系列就是播放器；看到哪裡都會記住，下次<strong>從上次的位置續播</strong>。",
-        "每個系列可以指定<strong>影片風格</strong>，預設讓 AI 依內容判斷；模式、畫質等整體做法在「影片設定」設一次。",
+        "每個系列可以指定<strong>影片風格</strong>，預設讓 AI 依內容判斷（極簡編輯、等角藍圖免費，Pro 有更多風格）；畫質等整體做法在「影片設定」設一次。",
       ],
       first: "按「<strong>＋ 新系列</strong>」寫下想學什麼，例如「架設網站」；之後在 AI 工具執行影片 skill，影片就會出現在這裡。",
     },
@@ -362,7 +362,7 @@ const CONTENT = {
       lines: [
         "Say <strong>what you want to learn or review</strong>; the AI decides which notes to use and splits it into <strong>short videos of about 1–3 minutes</strong>.",
         "The outer view is a shelf of series (filter and search); open one to watch. Your place is remembered, so you <strong>resume where you stopped</strong>.",
-        "Each series can have its own <strong>video style</strong> — by default the AI picks one from the content. Mode, quality and the rest are set once in \"Video settings\".",
+        "Each series can have its own <strong>video style</strong> — by default the AI picks one from the content (Editorial and Isometric blueprint are free; Pro adds more). Quality and the rest are set once in \"Video settings\".",
       ],
       first: "Click <strong>+ New series</strong> and write what you want to learn, e.g. \"build a website\"; then run the video skill in your AI tool and the videos appear here.",
     },

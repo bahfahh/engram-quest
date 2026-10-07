@@ -6,13 +6,9 @@
 // each covers is the video skill's call. Saving only writes a pending series; nothing is generated here.
 
 const I = require("obsidian");
-const { t: c } = require("../i18n");
-const { createRequest, updateRequest, SERIES_STYLES, GOAL_MAX } = require("./data");
-
-const SERIES_STYLE_KEYS = {
-  auto: "VIDEO_STYLE_AUTO", fast: "VIDEO_STYLE_FAST", system: "VIDEO_STYLE_SYSTEM",
-  visual: "VIDEO_STYLE_VISUAL", drawn: "VIDEO_STYLE_DRAWN",
-};
+const { t: c, getLocale } = require("../i18n");
+const { createRequest, updateRequest, GOAL_MAX } = require("./data");
+const { AUTO, LOOKS, localText, findLook } = require("./looks");
 
 /** Resolve an obsidian://open URL, [[wikilink]] or bare path to an existing vault file/folder path. */
 function resolveRef(app, raw) {
@@ -45,11 +41,26 @@ function refsFromDrop(app, evt) {
   });
 }
 
-/** Build a <select> of the series style options; returns the element. */
-function styleSelect(parent, t, id, value) {
+/**
+ * Build a look <select> (ADR-26): "Let AI decide", then free, Pro and the learner's own looks.
+ * Pro and own looks are visible but disabled without Pro. An unknown value shows as "Let AI decide".
+ */
+function styleSelect(parent, t, id, value, { isPro = false, userLooks = [] } = {}) {
+  const locale = getLocale(t);
   const sel = parent.createEl("select", { cls: "lh-vid-select", attr: { id } });
-  for (const s of SERIES_STYLES) sel.createEl("option", { text: c(t, SERIES_STYLE_KEYS[s]), attr: { value: s } });
-  sel.value = value || "auto";
+  sel.createEl("option", { text: c(t, "VIDEO_STYLE_AUTO"), attr: { value: AUTO } });
+  const group = (labelKey, looks, locked) => {
+    if (!looks.length) return;
+    const g = sel.createEl("optgroup", { attr: { label: c(t, labelKey) } });
+    for (const look of looks) {
+      const opt = g.createEl("option", { text: localText(look.name, locale, look.id), attr: { value: look.id, title: localText(look.suits, locale) } });
+      opt.disabled = locked;
+    }
+  };
+  group("VIDEO_LOOKS_FREE", LOOKS.filter((l) => l.tier === "free"), false);
+  group("VIDEO_LOOKS_PRO", LOOKS.filter((l) => l.tier === "pro"), !isPro);
+  group("VIDEO_LOOKS_MINE", userLooks, !isPro);
+  sel.value = findLook(value, userLooks) ? value : AUTO;
   return sel;
 }
 
@@ -93,7 +104,8 @@ function openNewVideoModal(hub, t, onSaved, edit = null, onDelete = null) {
   detailField.createDiv({ cls: "lh-vid-modal-desc", text: c(t, "VIDEO_NEW_DETAIL_HINT") });
 
   const styleField = field("VIDEO_SERIES_STYLE", "lh-vid-new-style");
-  const style = styleSelect(styleField, t, "lh-vid-new-style", edit ? edit.meta.style : "auto");
+  const style = styleSelect(styleField, t, "lh-vid-new-style", edit ? edit.meta.style : AUTO, { isPro: !!t.licenseValid, userLooks: hub._vLooks || [] });
+  const shownStyle = style.value;
 
   const srcField = field("VIDEO_NEW_SOURCE", "lh-vid-new-src");
   const select = srcField.createEl("select", { cls: "lh-vid-select", attr: { id: "lh-vid-new-src" } });
@@ -143,7 +155,8 @@ function openNewVideoModal(hub, t, onSaved, edit = null, onDelete = null) {
   submit.addEventListener("click", async () => {
     if (submit.disabled) return;
     submit.disabled = true;
-    const input = { text: goal.value, detail: detail.value, source: select.value, refs, style: style.value };
+    // Send the style only when changed: a look this device doesn't know is shown as "Let AI decide".
+    const input = { text: goal.value, detail: detail.value, source: select.value, refs, style: style.value !== shownStyle ? style.value : undefined };
     try {
       const adapter = app.vault.adapter;
       if (edit) {
