@@ -15,6 +15,8 @@ function makePlugin(files) {
     exists: async (p) => Object.prototype.hasOwnProperty.call(files, p),
     read: async (p) => files[p],
     write: async (p, content) => { files[p] = content; writes[p] = content; },
+    remove: async (p) => { delete files[p]; adapter.removed.push(p); },
+    removed: [],
   };
   return {
     settings: {},
@@ -45,7 +47,28 @@ describe("autoUpdateSkills", () => {
     await autoUpdateSkills(plugin);
 
     expect(plugin.writes[skillMd.path]).toBe(skillMd.content);
-    for (const entry of entries) expect(plugin.writes[entry.path]).toBe(entry.content);
+    for (const entry of entries.filter((e) => !e.pack)) expect(plugin.writes[entry.path]).toBe(entry.content);
+  });
+
+  it("leaves video assets for the user to install: no download, no marker", async () => {
+    const entries = await claudeEntries();
+    const packs = entries.filter((e) => e.pack);
+    const plugin = makePlugin({ [entries[0].path]: "OLD" });
+
+    await autoUpdateSkills(plugin);
+
+    expect(packs.length).toBeGreaterThan(0);
+    for (const entry of packs) expect(plugin.writes[entry.path]).toBeUndefined();
+  });
+
+  it("never removes Pro content on its own", async () => {
+    const proFile = ".claude/skills/engram-quest-animated-course/scripts/studio/lib/cast/skins/glass.js";
+    const plugin = makePlugin({ [proFile]: "x" });
+    plugin.license = { state: { status: "inactive" } };
+
+    await autoUpdateSkills(plugin);
+
+    expect(plugin.app.vault.adapter.removed).toEqual([]);
   });
 
   it("does not touch tools that were never installed", async () => {
@@ -85,6 +108,26 @@ describe("getInstallPreview status", () => {
   });
 });
 
+describe("Pro video content after a licence ends", () => {
+  const proFile = ".claude/skills/engram-quest-animated-course/scripts/studio/lib/cast/skins/glass.js";
+  const removals = async (status) => {
+    const plugin = makePlugin({ [proFile]: "x" });
+    plugin.license = { state: { status } };
+    const preview = await getInstallPreview(plugin, "claude");
+    return preview.items.filter((i) => i.action === "remove").map((i) => i.path);
+  };
+
+  it("is offered for removal when the licence has definitely ended", async () => {
+    expect(await removals("inactive")).toContain(proFile);
+    expect(await removals("invalid")).toContain(proFile);
+  });
+
+  it("stays when the check merely failed", async () => {
+    expect(await removals("unavailable")).toEqual([]);
+    expect(await removals("offline")).toEqual([]);
+  });
+});
+
 describe("checkSkillsUpdates", () => {
   it("returns only installed-but-outdated toolIds and caches the result", async () => {
     const entries = await claudeEntries();
@@ -98,7 +141,8 @@ describe("checkSkillsUpdates", () => {
 
   it("recomputes after an install clears the cache", async () => {
     const entries = await claudeEntries();
-    const plugin = makePlugin({ [entries[0].path]: "OLD" });
+    const markers = Object.fromEntries(entries.filter((e) => e.pack).map((e) => [e.path, e.content]));
+    const plugin = makePlugin({ [entries[0].path]: "OLD", ...markers });
 
     expect(await checkSkillsUpdates(plugin)).toEqual(["claude"]);
     await autoUpdateSkills(plugin); // doInstall runs and clears the cache

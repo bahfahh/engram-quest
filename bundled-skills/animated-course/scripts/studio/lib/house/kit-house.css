@@ -1,0 +1,129 @@
+/* Engram studio skin for lib/kit (kit.css + keypoint.css). Styles only — kit.js / keypoint.js behaviour is unchanged.
+   <link rel="stylesheet" href="/lib/kit/kit.css">
+   <link rel="stylesheet" href="/lib/kit/keypoint.css">
+   <link rel="stylesheet" href="/lib/house/house.css">
+   <link rel="stylesheet" href="/lib/house/kit-house.css">     ← last
+   then put data-house="light" | "dark" on <html> (or any ancestor of the kit stage). For a lights change, set the
+   variables with applyVars(el, k) from tokens.js (ui.lights(k) does it for its root).
+   Mapping of kit colours (kit.js writes them inline as hex, so they are matched here and replaced):
+     teal (concept A) / green / blue → house cyan line · orange (concept B) / amber → house amber (the student's)
+     red → house magenta (warning) · neutral → house ink.  No handwriting: the recap and title fonts become Noto Sans TC. */
+
+[data-house] {
+  --bg: var(--h-bg); --card: var(--h-panel-top); --ink: var(--h-ink); --muted: var(--h-ink2); --line: var(--h-hair); --line2: var(--h-grey);
+  --blue: var(--h-line); --blue-soft: color-mix(in srgb, var(--h-cyan) 16%, transparent); --teal: var(--h-line); --orange: var(--h-amber);
+  --red: var(--h-magenta); --green: var(--h-line); --amber: var(--h-amber);
+  --shadow: 0 0 0 6px var(--h-glow-ring), 0 0 22px var(--h-glow), 0 12px 30px var(--h-drop);
+  --shadow-lg: 0 0 0 6px var(--h-glow-ring), 0 0 30px var(--h-glow), 0 18px 44px var(--h-drop);
+  --font: Inter, "Noto Sans TC", system-ui, sans-serif; --font-tc: "Noto Sans TC", Inter, sans-serif; --font-hand: "Noto Sans TC", Inter, sans-serif;
+  --kp-mark: color-mix(in srgb, var(--h-cyan) 34%, transparent);
+}
+/* kit tones arrive as inline hex (--c); re-map them to the house semantics */
+[data-house] [style*="#0F9D8F" i], [data-house] [style*="#2EA44F" i], [data-house] [style*="#1877F2" i] { --c: var(--h-line) !important; }
+[data-house] [style*="#F2780C" i], [data-house] [style*="#F5A524" i] { --c: var(--h-amber) !important; }
+[data-house] [style*="#E5484D" i] { --c: var(--h-magenta) !important; }
+[data-house] [style*="#1C1E21" i] { --c: var(--h-ink) !important; }
+
+html[data-house], [data-house] body { background: var(--h-bg); color: var(--h-ink); }
+[data-house] .k-frame { background: var(--h-bg); }
+[data-house] .k-world-grid { background-image: radial-gradient(color-mix(in srgb, var(--h-grid) 28%, transparent) 1.4px, transparent 1.6px); }
+
+/* surfaces: every kit card is a house panel (holo / frosted glass) */
+[data-house] .k-card, [data-house] .k-callout, [data-house] .kp-card, [data-house] .kp-mini, [data-house] .k-recap {
+  background:
+    radial-gradient(circle at 0 0, var(--h-tint-a), transparent 58%),
+    radial-gradient(circle at 100% 100%, var(--h-tint-b), transparent 58%),
+    linear-gradient(115deg, transparent 32%, var(--h-sheen) 45%, transparent 58%),
+    linear-gradient(180deg, var(--h-panel-top), var(--h-panel-bot));
+  border: 2px solid var(--h-edge); border-top-color: var(--h-edge-top);
+  box-shadow: 0 0 0 6px var(--h-glow-ring), 0 0 26px var(--h-glow), 0 14px 34px var(--h-drop); color: var(--h-ink); }
+[data-house] .k-card { border-radius: var(--h-r-card); }
+[data-house] .k-label { font: 700 26px var(--h-font-tc); color: var(--h-ink2); }
+[data-house] .k-tag { font: 800 22px var(--h-font-tc); color: #fff; background: linear-gradient(180deg, var(--h-now-a), var(--h-now-b)); border-radius: 10px; }
+
+/* callout = label chip (tone shows on the border and the icon) */
+[data-house] .k-callout { border-color: var(--c); border-radius: var(--h-r-chip); color: var(--h-ink);
+  box-shadow: 0 0 0 6px color-mix(in srgb, var(--c) 12%, transparent), 0 0 22px color-mix(in srgb, var(--c) 28%, transparent), 0 14px 34px var(--h-drop); }
+[data-house] .k-callout .t { font: 700 30px/1.2 var(--h-font-tc); color: var(--h-ink); }
+[data-house] .k-callout .s { font: 700 22px/1.3 var(--h-font-tc); color: var(--h-ink2); }
+[data-house] .k-callout .k-icon { color: var(--c); }
+[data-house] .k-callout.solid { background: linear-gradient(180deg, color-mix(in srgb, var(--c) 82%, white), var(--c)); color: #fff; border-color: var(--c); }
+[data-house] .k-callout.solid .t, [data-house] .k-callout.solid .k-icon { color: #fff; } [data-house] .k-callout.solid .s { color: rgba(255,255,255,.88); }
+
+/* highlight ring = house selection box (3 px line + four square handles) */
+[data-house] .k-hl { border-color: var(--c, var(--h-line)) !important; border-width: 3px !important; border-radius: 4px !important;
+  box-shadow: inset 0 0 0 999px color-mix(in srgb, var(--c, var(--h-cyan)) 10%, transparent);
+  outline: 0; }
+[data-house] .k-hl::before { content: ''; position: absolute; inset: -12px; pointer-events: none;
+  background:
+    linear-gradient(var(--c, var(--h-line)), var(--c, var(--h-line))) 0 0 / 14px 14px no-repeat,
+    linear-gradient(var(--c, var(--h-line)), var(--c, var(--h-line))) 100% 0 / 14px 14px no-repeat,
+    linear-gradient(var(--c, var(--h-line)), var(--c, var(--h-line))) 0 100% / 14px 14px no-repeat,
+    linear-gradient(var(--c, var(--h-line)), var(--c, var(--h-line))) 100% 100% / 14px 14px no-repeat; }
+[data-house] .k-hl::after { content: ''; position: absolute; inset: -9px; pointer-events: none;
+  background:
+    linear-gradient(var(--h-anchor-fill), var(--h-anchor-fill)) 0 0 / 8px 8px no-repeat,
+    linear-gradient(var(--h-anchor-fill), var(--h-anchor-fill)) 100% 0 / 8px 8px no-repeat,
+    linear-gradient(var(--h-anchor-fill), var(--h-anchor-fill)) 0 100% / 8px 8px no-repeat,
+    linear-gradient(var(--h-anchor-fill), var(--h-anchor-fill)) 100% 100% / 8px 8px no-repeat; }
+
+/* chapter bar = the progress capsule's language (cyan = now / done, grey = not yet) */
+[data-house] .k-chapters { background: linear-gradient(180deg, var(--h-panel-top), var(--h-panel-bot)); box-shadow: 0 2px 0 var(--h-edge), 0 0 22px var(--h-glow); }
+[data-house] .k-chapters::after { background: linear-gradient(color-mix(in srgb, var(--h-bg) 80%, transparent), transparent); }
+[data-house] .k-chapters .lesson { font: 800 22px var(--h-font-tc); color: #fff; background: linear-gradient(180deg, var(--h-now-a), var(--h-now-b)); border-radius: 10px; padding: 4px 12px; margin-top: -4px; }
+[data-house] .k-chapters .lesson span { color: rgba(255,255,255,.85); }
+[data-house] .k-chapters .bar { background: color-mix(in srgb, var(--h-grey) 55%, transparent); height: 6px; }
+[data-house] .k-chapters .bar i { background: linear-gradient(90deg, var(--h-now-a), var(--h-now-b)); box-shadow: 0 0 10px var(--h-glow); }
+[data-house] .k-chapters .knob { background: var(--h-anchor-fill); border-color: var(--h-line); }
+[data-house] .k-chapters .nm { font: 700 18px var(--h-font-tc); color: var(--h-grey-ink); }
+[data-house] .k-chapters .seg.cur .nm { color: var(--h-ink); font-weight: 800; }
+[data-house] .k-chapters .seg.done .nm { color: var(--h-cyan-ink); }
+
+/* title card: the studio wall, a cyan tab, the question in the student's amber */
+[data-house] .k-title { background: radial-gradient(1400px 800px at 50% 40%, var(--h-wall-top), transparent 70%), linear-gradient(180deg, var(--h-wall-top), var(--h-wall-low) 70%, var(--h-floor-near)); }
+[data-house] .k-title .no { font: 800 26px var(--h-font-tc); background: linear-gradient(180deg, var(--h-now-a), var(--h-now-b)); box-shadow: 0 0 0 6px var(--h-glow-ring), 0 0 18px var(--h-glow); }
+[data-house] .k-title h1 { font: 900 84px/1.18 var(--h-font-tc); color: var(--h-ink); }
+[data-house] .k-title .q { font: 700 40px/1.45 var(--h-font-tc); color: var(--h-ink2); }
+[data-house] .k-title .q .qm { background: var(--h-amber); font: 800 34px var(--h-font-en); }
+
+/* recap: a house panel, no note paper, no handwriting */
+[data-house] .k-recap-dim { background: var(--h-veil); }
+[data-house] .k-recap { border-radius: var(--h-r-key); padding: 64px 96px 40px 110px; background-position: 0 0; }
+[data-house] .k-recap h2 { font: 800 54px/64px var(--h-font-tc); color: var(--h-ink); }
+[data-house] .k-recap h2 u { background: color-mix(in srgb, var(--h-cyan) 22%, transparent); }
+[data-house] .k-recap .pt { font: 700 38px/60px var(--h-font-tc); color: var(--h-ink); }
+[data-house] .k-recap .pt .n { border-color: var(--c, var(--h-line)); color: var(--c, var(--h-cyan-ink)); font: 800 26px/46px var(--h-font-en); background: var(--h-anchor-fill); }
+[data-house] .k-recap .pt b { font-weight: 800; background: color-mix(in srgb, var(--h-cyan) 22%, transparent); color: var(--h-cyan-ink); }
+
+/* key-point card (keypoint.css) */
+[data-house] .kp-wash { background: var(--h-veil); }
+[data-house] .kp-card { border-radius: 28px; }
+[data-house] .kp-pill { font: 800 28px/1 var(--h-font-tc); letter-spacing: .08em; color: #fff; background: linear-gradient(180deg, var(--h-now-a), var(--h-now-b)); box-shadow: 0 0 0 6px var(--h-glow-ring), 0 0 18px var(--h-glow); }
+[data-house] .kp-dots i { background: color-mix(in srgb, var(--h-grey) 70%, transparent); }
+[data-house] .kp-dots i.done { background: var(--h-line); opacity: .55; }
+[data-house] .kp-dots i.cur { background: linear-gradient(90deg, var(--h-now-a), var(--h-now-b)); box-shadow: 0 0 10px var(--h-glow); }
+[data-house] .kp-sub { color: var(--h-ink2); font-weight: 700; }
+[data-house] .kp-key { font: 800 72px/1.15 var(--h-font-tc); color: var(--h-ink); }
+[data-house] .kp-key b { font-weight: 900; color: var(--h-cyan-ink); }
+[data-house] .kp-tile { background: color-mix(in srgb, var(--c) 16%, transparent); box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--c) 45%, transparent); }
+[data-house] .kp-tile.solid { background: var(--c); color: #fff; }
+[data-house] .kp-node .lb, [data-house] .kp-text { color: var(--h-ink); font-family: var(--h-font-tc); }
+[data-house] .kp-node .sb { color: var(--h-ink2); font-weight: 700; }
+[data-house] .kp-glabel { background: var(--h-panel-top); }
+[data-house] .kp-albl { background: var(--h-anchor-fill); border-color: color-mix(in srgb, var(--c) 45%, transparent); }
+[data-house] .kp-badge { box-shadow: 0 0 0 5px color-mix(in srgb, var(--c) 18%, transparent), 0 0 16px color-mix(in srgb, var(--c) 40%, transparent); }
+[data-house] .kp-badge.ghost { background: var(--h-anchor-fill); }
+[data-house] .kp-mini .hd { color: var(--h-ink); border-bottom-color: var(--h-hair); }
+[data-house] .kp-mini .row { color: var(--h-ink); } [data-house] .kp-mini .row + .row { border-top-color: var(--h-hair); }
+[data-house] .kp-mini .row .v { color: var(--h-ink2); } [data-house] .kp-mini .row .k-icon { color: var(--h-ink3); }
+[data-house] .kp-mini .row .tint { background: color-mix(in srgb, var(--rc) 16%, transparent); }
+[data-house] .kp-col .cs { color: var(--h-ink2); } [data-house] .kp-col .it { color: var(--h-ink); }
+[data-house] .kp-vs { background: var(--h-hair); } [data-house] .kp-vs span { background: var(--h-panel-top); color: var(--h-ink3); }
+
+/* connectors / arrows are SVG with stroke / fill attributes in kit hex: a CSS property beats the attribute */
+[data-house] [stroke="#0F9D8F" i], [data-house] [stroke="#2EA44F" i], [data-house] [stroke="#1877F2" i] { stroke: var(--h-line); }
+[data-house] [stroke="#F2780C" i], [data-house] [stroke="#F5A524" i] { stroke: var(--h-amber); }
+[data-house] [stroke="#E5484D" i] { stroke: var(--h-magenta); }
+[data-house] [fill="#0F9D8F" i], [data-house] [fill="#2EA44F" i], [data-house] [fill="#1877F2" i] { fill: var(--h-line); }
+[data-house] [fill="#F2780C" i], [data-house] [fill="#F5A524" i] { fill: var(--h-amber); }
+[data-house] [fill="#E5484D" i] { fill: var(--h-magenta); }

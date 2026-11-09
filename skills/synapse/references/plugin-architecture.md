@@ -90,10 +90,10 @@ The plugin reads this data via `src/review/synapse.js`:
 ## Reverse-engineering notePath from SR filename
 
 ```
-SR file:   engram-review/sr/3.專案__BanquetAIQA__sql server資料庫.json
-strip:     3.專案__BanquetAIQA__sql server資料庫
-replace:   3.專案/BanquetAIQA/sql server資料庫
-append:    3.專案/BanquetAIQA/sql server資料庫.md
+SR file:   engram-review/sr/3.專案__SampleProject__sql server資料庫.json
+strip:     3.專案__SampleProject__sql server資料庫
+replace:   3.專案/SampleProject/sql server資料庫
+append:    3.專案/SampleProject/sql server資料庫.md
 ```
 
 Edge cases:

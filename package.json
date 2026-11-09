@@ -10,11 +10,13 @@
     "build": "node scripts/sync-bundled-skills.js && node scripts/embed-skills.js && node esbuild.config.mjs --prod",
     "check:bundle-parity": "node scripts/check-bundle-parity.mjs",
     "sync:bundled-skills": "node scripts/sync-bundled-skills.js",
+    "sync:video-skills": "node scripts/sync-video-skills.mjs",
     "sync:vault": "node scripts/sync-to-vault.mjs",
     "build:sync": "npm run build && node scripts/sync-to-vault.mjs"
   },
   "devDependencies": {
     "@typescript-eslint/parser": "^8.59.3",
+    "acorn": "8.16.0",
     "esbuild": "^0.25.3",
     "eslint": "^9.39.4",
     "eslint-plugin-obsidianmd": "^0.3.0",

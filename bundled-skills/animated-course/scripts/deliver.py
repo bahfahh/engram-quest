@@ -1,0 +1,146 @@
+#!/usr/bin/env python3
+"""Deliver a finished lesson into the engram-quest video library.
+
+  STUDIO=<studio> python3 deliver.py <project-id> "<video title>" --series <vault>/engram-quest/videos/<series> \
+      [--series-title "<course title>"] [--tags "tag1,tag2"] [--source engram-quest/lessons/<course>/meta.json] \
+      [--until 9] [--style classroom+real-ui] [--after <previous-id>] [--dry] [--vault <vault root>] [--no-cards]
+
+final.mp4 + narration.wav -> bgm2.py (encoded to the vault's commit spec: CRF 26, maxrate 1800k, AAC 128k; over --max-mb
+(95) it is re-encoded two-pass, so the delivered file can be committed as is; "Morning" at the opening and ending only, ending -3 dB; first frame held 3 s,
+last frame held 5 s; narration at -16 LUFS) -> <series>/<id>.mp4, <id>.vtt, <id>.jpg + an entry in <series>/meta.json
+(with the music credit). The video is placed after --after, or appended; re-delivering an id replaces its entry in place.
+--dry: use narration_dry.wav (voice only, no sound effects) and deliver as <id>-dry — the B version for A/B listening;
+it gets no meta.json entry (it is for review, not for the library).
+Review cards (module `cards`, on by default; reference/12-modules.md §3): if projects/<id>/cards.json exists and the
+module is not turned off (settings.json course.off, or --no-cards), each card's front/back frames are cut from final.mp4
+into <series>/cards/ and an EngramQuest ai-cards deck is written to <vault>/engram-review/ai-cards/video-<series>-<id>.md
+(tag <flashcardTags prefix>/videos/<series>; frontmatter video = the delivered film, video_times = the second to rewatch
+for each card, in card order); the meta.json entry gets "cards" pointing at it.
+Re-delivering keeps the entry's other fields (e.g. cast); "cast" is taken from projects/<id>/cast.json when present.
+settings.json quality "compact" delivers a 720p film (the render stays 1920x1080); "high" or unset keeps the full size."""
+import json, os, shutil, subprocess, sys, tempfile
+HERE = os.path.dirname(os.path.abspath(__file__))
+STUDIO = os.environ.get("STUDIO", "/tmp/studio")
+MUSIC = os.path.join(os.path.dirname(HERE), "assets", "music", "Morning.mp3")
+CREDIT = '"Morning" Kevin MacLeod (incompetech.com) Licensed under Creative Commons: By Attribution 4.0 License http://creativecommons.org/licenses/by/4.0/'
+args = sys.argv[1:]; pid, title = args[0], args[1]
+opt = lambda k, d=None: args[args.index('--' + k) + 1] if '--' + k in args else d
+series = opt('series') or sys.exit("--series <folder> is required")
+until, style = opt('until', '9'), opt('style', 'classroom')
+dry = '--dry' in args
+src = os.path.join(STUDIO, "projects", pid); os.makedirs(series, exist_ok=True)
+oid = pid + ("-dry" if dry else "")
+
+def find_vault(d):
+    d = os.path.abspath(d)
+    for _ in range(12):
+        if os.path.isdir(os.path.join(d, ".obsidian")): return d
+        if os.path.dirname(d) == d: break
+        d = os.path.dirname(d)
+    return None
+
+vault = opt('vault') or find_vault(series)
+settings = {}
+if vault and os.path.exists(os.path.join(vault, "engram-quest", "videos", "settings.json")):
+    try: settings = json.load(open(os.path.join(vault, "engram-quest", "videos", "settings.json"), encoding="utf-8"))
+    except ValueError: pass
+height = ["--height", "720"] if settings.get("quality") == "compact" else []
+
+out = os.path.join(series, f"{oid}.mp4"); voiced = os.path.join(src, "_voiced.mkv")
+subprocess.run(["nice", "-n", "10", "ffmpeg", "-v", "error", "-y", "-i", os.path.join(src, "final.mp4"), "-i", os.path.join(src, "narration_dry.wav" if dry else "narration.wav"),
+                "-map", "0:v:0", "-map", "1:a:0", "-c:v", "copy", "-c:a", "pcm_s16le", "-shortest", voiced], check=True)
+subprocess.run(["nice", "-n", "10", "python3", os.path.join(HERE, "studio", "bgm2.py"), voiced, MUSIC, out, "--until", until, *height,
+                "--vtt", os.path.join(src, "subtitles.vtt"), os.path.join(series, f"{oid}.vtt")], check=True)
+os.remove(voiced)
+# Vault commit spec (AGENTS.md): bgm2 already encodes at CRF 26 / maxrate 1800k / AAC 128k; a file still over 95 MB
+# (GitHub refuses 100 MB) is re-encoded two-pass at a bitrate that fits.
+MAX_MB = float(opt('max-mb', '95'))
+if os.path.getsize(out) > MAX_MB * 1e6:
+    d = float(subprocess.run(['ffprobe', '-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0', out],
+                             capture_output=True, text=True, check=True).stdout)
+    kbps = int(MAX_MB * 0.92 * 8e3 / d) - 128
+    print(f"{os.path.getsize(out)/1e6:.1f} MB > {MAX_MB} MB: two-pass at {kbps} kbps")
+    with tempfile.TemporaryDirectory() as td:
+        src2, log = os.path.join(td, 'in.mp4'), os.path.join(td, 'x264')
+        shutil.move(out, src2)
+        base = ['nice', '-n', '10', 'ffmpeg', '-v', 'error', '-y', '-i', src2, '-c:v', 'libx264', '-preset', 'slow', '-b:v', f'{kbps}k',
+                '-maxrate', '1800k', '-bufsize', '3600k', '-pix_fmt', 'yuv420p', '-passlogfile', log]
+        subprocess.run(base + ['-pass', '1', '-an', '-f', 'null', os.devnull], check=True)
+        subprocess.run(base + ['-pass', '2', '-c:a', 'aac', '-b:a', '128k', '-movflags', '+faststart', out], check=True)
+poster = os.path.join(src, "poster.jpg")
+if not os.path.exists(poster) and os.path.exists(os.path.join(src, "READY")):
+    # no poster from the render (e.g. a local render): take it from final.mp4 at the READY second
+    at = open(os.path.join(src, "READY")).read().split()[0]
+    subprocess.run(["ffmpeg", "-v", "error", "-y", "-ss", at, "-i", os.path.join(src, "final.mp4"), "-frames:v", "1", "-q:v", "2", poster], check=True)
+    print(f"poster: taken from final.mp4 at {at} s (READY)")
+shutil.copy(poster, os.path.join(series, f"{oid}.jpg"))
+if dry:
+    print(f"delivered B version (no sound effects) -> {out}"); sys.exit(0)
+dur = float(subprocess.run(["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", out],
+                           capture_output=True, text=True, check=True).stdout)
+
+def make_cards():
+    """Module `cards`: recap pictures -> an EngramQuest image-card deck. Returns the vault path of the deck or None."""
+    cp = os.path.join(src, "cards.json")
+    if '--no-cards' in args or "cards" in ((settings.get("course") or {}).get("off") or []):
+        print("cards: module turned off -> no review cards"); return None
+    if not os.path.exists(cp):
+        print("cards: no cards.json in the project -> no review cards (module `cards` is on by default; reference/12-modules.md §3)"); return None
+    if not vault:
+        print("cards: vault not found (pass --vault) -> no review cards"); return None
+    cards = json.load(open(cp, encoding="utf-8"))
+    sname = os.path.basename(os.path.normpath(series))
+    prefix = "flashcards"
+    try:
+        dj = json.load(open(os.path.join(vault, ".obsidian", "plugins", "engram-quest", "data.json"), encoding="utf-8"))
+        prefix = (dj.get("flashcardTags") or "flashcards").split()[0].strip("#/") or "flashcards"
+    except (OSError, ValueError): pass
+    cdir = os.path.join(series, "cards"); os.makedirs(cdir, exist_ok=True)
+    rel = lambda p: os.path.relpath(p, vault).replace(os.sep, "/")
+    final = os.path.join(src, "final.mp4")
+    def grab(t, name):
+        out_ = os.path.join(cdir, name)
+        subprocess.run(["ffmpeg", "-v", "error", "-y", "-ss", f"{float(t):.3f}", "-i", final, "-frames:v", "1", "-vf", "scale=1280:-2", "-q:v", "3", out_], check=True)
+        return rel(out_)
+    hold = 3.0  # bgm2.py holds the first frame for 3 s: delivered time = final.mp4 time + 3
+    times = [round(float(c.get("back", c["front"])) + hold, 1) for c in cards]
+    body = [f"---\ntags: [{prefix}/videos/{sname}]\nvideo: {rel(out)}\nvideo_times: [{', '.join(str(x) for x in times)}]\n---\nTARGET DECK: videos/{sname}\n"]
+    for i, c in enumerate(cards, 1):
+        q_img = grab(c["front"], f"{pid}-{i}-q.jpg")
+        a_img = grab(c.get("back", c["front"]), f"{pid}-{i}-a.jpg")
+        tt = float(c.get("back", c["front"])) + hold
+        body.append(f"%%card%%\nQ: ![[{q_img}]] {c['q'].strip()}\nA:\n{c['a'].strip()}\n\n![[{a_img}]]\n\n影片：{title}（{int(tt // 60)}:{int(tt % 60):02d}）\n%%card%%\n")
+    ddir = os.path.join(vault, "engram-review", "ai-cards"); os.makedirs(ddir, exist_ok=True)
+    deck = os.path.join(ddir, f"video-{sname}-{pid}.md")
+    open(deck, "w", encoding="utf-8").write("\n".join(body))
+    print(f"cards: {len(cards)} review cards -> {rel(deck)}")
+    return rel(deck)
+
+# Cards take a while; meta.json is read afterwards so progress saved by the plugin meanwhile is kept.
+cards_file = make_cards()
+mp = os.path.join(series, "meta.json")
+if os.path.exists(mp):
+    meta = json.load(open(mp, encoding="utf-8"))
+else:
+    meta = {"title": opt('series-title', os.path.basename(series)), "status": "ready",
+            "tags": [t for t in opt('tags', '').split(',') if t], "sources": [s for s in [opt('source')] if s],
+            "videos": [], "starred": False,
+            "createdAt": subprocess.run(["date", "-u", "+%Y-%m-%dT%H:%M:%S.000Z"], capture_output=True, text=True).stdout.strip()}
+entry = {"id": pid, "title": title, "file": f"{pid}.mp4", "subtitles": f"{pid}.vtt", "duration": round(dur),
+         "style": style, "mode": "basic", "source": "skill", "poster": f"{pid}.jpg", "credits": CREDIT}
+castp = os.path.join(src, "cast.json")
+if os.path.exists(castp):
+    try: entry["cast"] = json.load(open(castp, encoding="utf-8"))["meta"]["cast"]
+    except (KeyError, ValueError): pass
+if cards_file: entry["cards"] = cards_file
+ids = [v["id"] for v in meta["videos"]]
+if pid in ids:
+    meta["videos"][ids.index(pid)] = {**meta["videos"][ids.index(pid)], **entry}
+elif opt('after') in ids:
+    meta["videos"].insert(ids.index(opt('after')) + 1, entry)
+else:
+    meta["videos"].append(entry)
+# Replace in one step: the plugin may read this file at any moment.
+with open(mp + ".tmp", "w", encoding="utf-8") as f: json.dump(meta, f, ensure_ascii=False, indent=2)
+os.replace(mp + ".tmp", mp)
+print(f"delivered {pid}: {dur:.1f}s, {os.path.getsize(out)/1e6:.1f} MB -> {out}")

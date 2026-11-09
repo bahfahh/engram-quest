@@ -1,0 +1,23 @@
+<!doctype html><html><head><meta charset="utf-8">
+<link rel="stylesheet" href="/lib/kit/kit.css">
+<script type="importmap">{"imports":{"three":"/node_modules/three/build/three.module.js","three/addons/":"/node_modules/three/examples/jsm/"}}</script>
+</head><body><script type="module">
+// Skin test page: lab.html?style=<id> — the fixed 6 s test sequence (labPoses in stage.js), the three roles on the blurred real-UI floor. Copy into a project folder to render.
+import { makeStage, labPoses } from '/lib/cast/stage.js';
+const id = new URLSearchParams(location.search).get('style') || '_sample3d';
+const mod = await import(`/lib/cast/skins/${id}.js`);
+const st = await makeStage();
+const cast = await mod.create(st.env, { variant: new URLSearchParams(location.search).get('variant') });
+st.adopt(cast);
+const tag = document.createElement('div');
+tag.style.cssText = 'position:absolute;left:40px;top:28px;z-index:50;font:700 30px "Noto Sans TC",sans-serif;color:#1C1E21;background:rgba(255,255,255,.85);padding:10px 20px;border-radius:14px';
+tag.textContent = `${mod.meta.no} ${mod.meta.name}`; st.frame.append(tag);
+const LAY = { teacher: [420, 930, 400], student: [1500, 930, 300], embodiment: [1260, 650, 180] };
+window.DURATION = 6;
+window.renderAt = t => {
+  const P = labPoses(t);
+  for (const k of ['teacher', 'student', 'embodiment']) { const [x, y, px] = LAY[k]; st.place(cast[k], x, y, px); cast[k].pose(P[k]); }
+  st.render();
+};
+window.studioReady = document.fonts.ready;
+</script></body></html>

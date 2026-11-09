@@ -43,6 +43,7 @@ await esbuild.build({
     '@lezer/lr'
   ],
   format: 'cjs',
+  loader: { '.jpg': 'dataurl', '.mp3': 'dataurl' },
   target: 'es2018',
   logLevel: 'info',
   sourcemap: prod ? false : 'inline',

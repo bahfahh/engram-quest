@@ -22,6 +22,7 @@ const filesToCopy = [
 const directoriesToCopy = [
   ['assets', 'assets'],
   ['bundled-skills', 'bundled-skills'],
+  ['video-packs', 'video-packs'],
   ['scripts', 'scripts'],
 ];
 
@@ -57,6 +58,10 @@ for (const [sourceRel, targetRel] of filesToCopy) {
 }
 
 for (const [sourceRel, targetRel] of directoriesToCopy) {
+  if (!fs.existsSync(path.join(repoRoot, sourceRel))) {
+    console.warn(`Skipped ${sourceRel}: not generated yet`);
+    continue;
+  }
   const targetPath = path.join(runtimeRoot, targetRel);
   ensureDir(targetPath);
   removeDirContents(targetPath);

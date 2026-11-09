@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 620" font-family="sans-serif">
+  <rect width="1000" height="620" fill="#f4f1ea"/>
+  <rect x="32" y="32" width="936" height="556" rx="14" fill="none" stroke="#b9b2a3" stroke-width="4" stroke-dasharray="16 12"/>
+  <text x="500" y="325" text-anchor="middle" font-size="44" fill="#857d6e">Your figure goes here</text>
+</svg>

@@ -1,0 +1,7 @@
+node_modules/
+package-lock.json
+projects/
+.tts-cache/
+.asr-slot-*
+.render-slots*
+.preview-slots*

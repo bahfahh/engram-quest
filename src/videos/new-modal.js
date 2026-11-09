@@ -1,14 +1,17 @@
 "use strict";
 // "+ New series" pop-up for the Video Academy, also used to edit a series that is still pending.
 // The learner only says what they want to learn (the goal, which becomes the series name) plus
-// optional detail, the series' video style and the source — auto-pick relevant notes (default;
-// notes/folders can be dropped in to narrow it down) or don't use notes. How many videos and what
-// each covers is the video skill's call. Saving only writes a pending series; nothing is generated here.
+// optional detail, an optional teacher for this series (Pro) and the source — auto-pick relevant notes
+// (default; notes/folders can be dropped in to narrow it down) or don't use notes. How many videos and
+// what each covers is the video skill's call. Saving only writes a pending series; nothing is generated here.
 
 const I = require("obsidian");
-const { t: c, getLocale } = require("../i18n");
+const { t: c } = require("../i18n");
+const { ProUpgradeModal } = require("../license/upgrade");
 const { createRequest, updateRequest, GOAL_MAX } = require("./data");
-const { AUTO, LOOKS, localText, findLook } = require("./looks");
+const { findTeacher, localText } = require("./teachers");
+const { openTeacherPicker, teacherAvatar, localeOf } = require("./teacher-picker");
+const { openPromptModal, seriesPrompt } = require("./request-ui");
 
 /** Resolve an obsidian://open URL, [[wikilink]] or bare path to an existing vault file/folder path. */
 function resolveRef(app, raw) {
@@ -39,29 +42,6 @@ function refsFromDrop(app, evt) {
     const f = app.vault.getAbstractFileByPath(p);
     return f && (f instanceof I.TFolder || f.extension === "md");
   });
-}
-
-/**
- * Build a look <select> (ADR-26): "Let AI decide", then free, Pro and the learner's own looks.
- * Pro and own looks are visible but disabled without Pro. An unknown value shows as "Let AI decide".
- */
-function styleSelect(parent, t, id, value, { isPro = false, userLooks = [] } = {}) {
-  const locale = getLocale(t);
-  const sel = parent.createEl("select", { cls: "lh-vid-select", attr: { id } });
-  sel.createEl("option", { text: c(t, "VIDEO_STYLE_AUTO"), attr: { value: AUTO } });
-  const group = (labelKey, looks, locked) => {
-    if (!looks.length) return;
-    const g = sel.createEl("optgroup", { attr: { label: c(t, labelKey) } });
-    for (const look of looks) {
-      const opt = g.createEl("option", { text: localText(look.name, locale, look.id), attr: { value: look.id, title: localText(look.suits, locale) } });
-      opt.disabled = locked;
-    }
-  };
-  group("VIDEO_LOOKS_FREE", LOOKS.filter((l) => l.tier === "free"), false);
-  group("VIDEO_LOOKS_PRO", LOOKS.filter((l) => l.tier === "pro"), !isPro);
-  group("VIDEO_LOOKS_MINE", userLooks, !isPro);
-  sel.value = findLook(value, userLooks) ? value : AUTO;
-  return sel;
 }
 
 /**
@@ -103,9 +83,26 @@ function openNewVideoModal(hub, t, onSaved, edit = null, onDelete = null) {
   detail.value = (req && req.detail) || (titleTooLong ? oldTitle : "");
   detailField.createDiv({ cls: "lh-vid-modal-desc", text: c(t, "VIDEO_NEW_DETAIL_HINT") });
 
-  const styleField = field("VIDEO_SERIES_STYLE", "lh-vid-new-style");
-  const style = styleSelect(styleField, t, "lh-vid-new-style", edit ? edit.meta.style : AUTO, { isPro: !!t.licenseValid, userLooks: hub._vLooks || [] });
-  const shownStyle = style.value;
+  // "" means the teacher from Video settings; a series' own teacher is a Pro choice.
+  const openedTeacher = (edit && edit.meta.cast && edit.meta.cast.teacher) || "";
+  let teacherId = openedTeacher;
+  const teacherRow = field("VIDEO_TEACHER").createDiv({ cls: "lh-vid-teacher-pick" });
+  const drawTeacher = () => {
+    teacherRow.empty();
+    if (teacherId) {
+      const teacher = findTeacher(teacherId);
+      teacherAvatar(teacherRow, t, teacher);
+      teacherRow.createSpan({ cls: "lh-vid-teacher-who", text: localText(teacher.name, localeOf(t)) });
+    } else {
+      teacherRow.createSpan({ cls: "lh-vid-teacher-who", text: c(t, "VIDEO_TEACHER_DEFAULT") });
+    }
+    const isPro = !!t.licenseValid;
+    teacherRow.createEl("button", { cls: "lh-vid-btn", text: isPro ? c(t, "VIDEO_TEACHER_CHANGE") : `${c(t, "VIDEO_TEACHER_CHANGE")} · Pro` }).addEventListener("click", () => {
+      if (!isPro) { new ProUpgradeModal(app, hub.plugin).open(); return; }
+      openTeacherPicker(hub, t, { selected: teacherId, pickVariants: false, inherit: c(t, "VIDEO_TEACHER_DEFAULT"), onPick: (id) => { teacherId = id; drawTeacher(); } });
+    });
+  };
+  drawTeacher();
 
   const srcField = field("VIDEO_NEW_SOURCE", "lh-vid-new-src");
   const select = srcField.createEl("select", { cls: "lh-vid-select", attr: { id: "lh-vid-new-src" } });
@@ -147,6 +144,10 @@ function openNewVideoModal(hub, t, onSaved, edit = null, onDelete = null) {
       .addEventListener("click", () => { modal.close(); onDelete(); });
     actions.createDiv({ cls: "lh-vid-spacer" });
   }
+  if (edit) {
+    actions.createEl("button", { cls: "lh-vid-btn", text: c(t, "VIDEO_COPY_PROMPT") })
+      .addEventListener("click", () => openPromptModal(hub, t, { prompt: seriesPrompt(t, edit.slug, edit.meta.title), module: "animated-course" }));
+  }
   actions.createEl("button", { cls: "lh-vid-btn", text: c(t, "DELETE_CANCEL_BTN") }).addEventListener("click", () => modal.close());
   const submit = actions.createEl("button", { cls: "lh-vid-btn lh-vid-btn-primary", text: c(t, edit ? "VIDEO_SET_SAVE" : "VIDEO_NEW_SUBMIT") });
   const syncSubmit = () => { submit.disabled = !goal.value.trim(); };
@@ -155,8 +156,7 @@ function openNewVideoModal(hub, t, onSaved, edit = null, onDelete = null) {
   submit.addEventListener("click", async () => {
     if (submit.disabled) return;
     submit.disabled = true;
-    // Send the style only when changed: a look this device doesn't know is shown as "Let AI decide".
-    const input = { text: goal.value, detail: detail.value, source: select.value, refs, style: style.value !== shownStyle ? style.value : undefined };
+    const input = { text: goal.value, detail: detail.value, source: select.value, refs, teacher: teacherId !== openedTeacher ? teacherId : undefined };
     try {
       const adapter = app.vault.adapter;
       if (edit) {
@@ -164,7 +164,8 @@ function openNewVideoModal(hub, t, onSaved, edit = null, onDelete = null) {
       }
       const slug = edit ? edit.slug : (await createRequest(adapter, input)).slug;
       modal.close();
-      new I.Notice(c(t, edit ? "VIDEO_EDIT_DONE" : "VIDEO_NEW_DONE"));
+      if (edit) new I.Notice(c(t, "VIDEO_EDIT_DONE"));
+      else openPromptModal(hub, t, { prompt: seriesPrompt(t, slug, goal.value.trim()), module: "animated-course" });
       onSaved(slug);
     } catch (e) {
       console.error("EngramQuest: video request save failed", e);
@@ -177,4 +178,4 @@ function openNewVideoModal(hub, t, onSaved, edit = null, onDelete = null) {
   goal.focus();
 }
 
-module.exports = { openNewVideoModal, styleSelect };
+module.exports = { openNewVideoModal };

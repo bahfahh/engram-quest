@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<title>Film</title>
+<link rel="stylesheet" href="/node_modules/@fontsource/noto-sans-tc/400.css">
+<link rel="stylesheet" href="/node_modules/@fontsource/noto-sans-tc/500.css">
+<link rel="stylesheet" href="/node_modules/@fontsource/noto-sans-tc/700.css">
+<link rel="stylesheet" href="/node_modules/@fontsource/lxgw-wenkai-tc/400.css">
+<link rel="stylesheet" href="/node_modules/@fontsource/inter/400.css">
+<link rel="stylesheet" href="/node_modules/@fontsource/inter/500.css">
+<link rel="stylesheet" href="/node_modules/@fontsource/inter/600.css">
+<link rel="stylesheet" href="/node_modules/@fontsource/inter/700.css">
+<style>
+  @font-face { font-family: "JetBrains Mono"; src: url("./fonts/JetBrainsMono-Medium.ttf") format("truetype"); font-weight: 500; }
+  @font-face { font-family: "JetBrains Mono"; src: url("./fonts/JetBrainsMono-Bold.ttf") format("truetype"); font-weight: 700; }
+  :root { --ink: #f4efe6; --warm: #f6e2b8; --amber: #f2b65c; }
+  html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; background: #000; }
+  body { font-family: "Noto Sans TC", Inter, sans-serif; color: var(--ink); }
+  #gl { position: absolute; left: -12px; top: -7px; width: 1944px; height: 1094px; display: block; }
+  .layer { position: absolute; inset: 0; pointer-events: none; }
+  #screens { overflow: hidden; }
+  #black { background: #000; opacity: 1; }
+  #vignette { background: radial-gradient(ellipse at 50% 48%, rgba(0,0,0,0) 56%, rgba(8,6,4,.42) 100%); }
+  #grain { opacity: .06; mix-blend-mode: overlay; background-size: 256px 256px; }
+  #grade { background: linear-gradient(180deg, rgba(40,30,70,.06), rgba(70,40,10,.05)); mix-blend-mode: soft-light; }
+  #scrim { background: linear-gradient(90deg, rgba(6,6,10,.78) 0%, rgba(6,6,10,.55) 24%, rgba(6,6,10,0) 42%); opacity: 0; }
+  #scrimT { background: linear-gradient(180deg, rgba(4,4,8,.86) 0%, rgba(4,4,8,.6) 30%, rgba(4,4,8,0) 52%); opacity: 0; }
+  .cap { position: absolute; opacity: 0; visibility: hidden; text-shadow: 0 2px 14px rgba(0,0,0,.75), 0 0 2px rgba(0,0,0,.6); }
+  .cap .txt { line-height: 1.35; letter-spacing: .02em; }
+  .cap.open { left: 0; right: 0; text-align: center; }
+  .cap.open.k { top: 450px; } .cap.open.k .txt { font-size: 48px; font-weight: 700; }
+  .cap.open.s { top: 560px; } .cap.open.s .txt { font-size: 32px; color: rgba(244,239,230,.72); }
+  .cap.title { left: 96px; top: 70px; } .cap.title .txt { font-size: 60px; font-weight: 700; letter-spacing: .06em; color: #fbf3e2; }
+  .cap.title.end { top: 66px; }
+  .cap.bye { left: 98px; top: 160px; } .cap.bye .txt { font-size: 34px; color: rgba(244,239,230,.9); }
+  .cap.center { left: 0; right: 0; top: 70px; text-align: center; } .cap.center .txt { font-size: 46px; font-weight: 700; }
+  .cap.lit { left: 98px; top: 150px; } .cap.lit .txt { font-size: 32px; font-weight: 500; color: var(--warm); }
+  .floor { position: absolute; left: 0; top: 0; width: 640px; opacity: 0; text-shadow: 0 2px 12px rgba(0,0,0,.85); }
+  .floor .fn { font-size: 30px; font-weight: 700; letter-spacing: .08em; color: rgba(246,231,200,.72); }
+  .floor .fl { margin-top: 2px; font-size: 21px; line-height: 1.4; color: rgba(244,239,230,.5); }
+  .floor .pills { margin-top: 6px; display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
+  .pill { opacity: 0; padding: 4px 14px 6px; border-radius: 10px; background: rgba(20,14,8,.7); border: 2px solid rgba(242,182,92,.45); }
+  .pill.on { border-color: rgba(242,182,92,.95); box-shadow: 0 0 22px rgba(242,182,92,.35); }
+  .pill .pn { display: inline-flex; align-items: center; gap: 10px; font-size: 30px; font-weight: 700; color: #ffd99a; white-space: nowrap; }
+  .pill .pd { width: 12px; height: 12px; border-radius: 50%; background: var(--amber); box-shadow: 0 0 10px 3px rgba(242,182,92,.7); display: inline-block; }
+  .pill .ps { display: block; margin-top: 0; font-size: 22px; color: rgba(246,226,184,.88); white-space: nowrap; }
+  .ovl { stroke: rgba(255,200,110,.95); stroke-width: 4; fill: none; filter: drop-shadow(0 0 6px rgba(255,180,80,.8)); }
+  .ovd { fill: #fff1cf; filter: drop-shadow(0 0 8px rgba(255,190,90,1)); }
+  .hopp { stroke: rgba(242,182,92,.5); stroke-width: 2.5; fill: none; stroke-dasharray: 6 8; }
+  .hopd { fill: rgba(255,226,173,.8); }
+  .tg { position: absolute; left: 0; top: 0; opacity: 0; font-size: 24px; color: rgba(255,226,173,.8); white-space: nowrap; text-shadow: 0 2px 10px rgba(0,0,0,.9); }
+  .floor .sep { color: rgba(244,239,230,.4); }
+  .floor .it { white-space: nowrap; }
+  .floor.lit .it.v { color: var(--amber); font-weight: 700; }
+  .floor.endmode .it:not(.tg), .floor.endmode .sep { display: none; }
+  .floor.endmode .it.tg { color: #ffe2ad; font-weight: 700; }
+  .floor.endmode .it.v { display: none; }
+  .rel { position: absolute; left: 0; top: 0; opacity: 0; font-size: 34px; font-weight: 500; color: #ffe2ad; padding: 6px 14px; background: rgba(10,8,6,.62); border: 1px solid rgba(242,182,92,.55); border-radius: 8px; white-space: nowrap; }
+  #leaders { position: absolute; inset: 0; width: 1920px; height: 1080px; }
+  .relp { stroke: rgba(255,200,110,.95); stroke-width: 4; fill: none; filter: drop-shadow(0 0 6px rgba(255,180,80,.8)); }
+  #recall { opacity: 0; }
+  #rq { position: absolute; left: 200px; right: 200px; top: 96px; text-align: center; font-size: 50px; font-weight: 700; line-height: 1.4; text-shadow: 0 2px 18px rgba(0,0,0,.9); transform-origin: 50% 0; padding: 20px 30px; background: rgba(8,8,12,.62); border-radius: 16px; }
+  #rcount { position: absolute; left: 912px; top: 812px; width: 96px; height: 96px; }
+  #rcount svg { position: absolute; inset: 0; transform: rotate(-90deg); }
+  #rcount .track { stroke: rgba(244,239,230,.18); stroke-width: 3; fill: none; }
+  #ring { stroke: rgba(244,239,230,.9); stroke-width: 3; fill: none; stroke-dasharray: 276.46; }
+  #rnum { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font: 600 40px Inter; color: rgba(244,239,230,.92); }
+  #ra { position: absolute; left: 150px; right: 150px; top: 236px; text-align: center; opacity: 0; padding: 26px 34px; background: rgba(8,8,12,.62); border-radius: 14px; }
+  #ra .ans { font-size: 40px; font-weight: 700; line-height: 1.5; color: #fbf7ef; }
+  #ra .src { margin-top: 16px; font-size: 28px; color: rgba(246,226,184,.9); }
+  body.notext .cap, body.notext .cap *, body.notext .floor, body.notext .floor *, body.notext .rel, body.notext .tg, body.notext #rq, body.notext #ra, body.notext #ra *, body.notext #rnum { color: transparent !important; text-shadow: none !important; }
+  body.notext .cap .txt, body.notext .floor .fl span, body.notext .floor .fn, body.notext .pill .pn, body.notext .pill .ps, body.notext .tg, body.notext #rq, body.notext #ra .ans, body.notext #ra .src, body.notext .rel { background: rgba(160,160,160,.32); border-radius: 10px; box-decoration-break: clone; -webkit-box-decoration-break: clone; }
+</style>
+<script type="importmap">
+{ "imports": { "three": "/node_modules/three/build/three.module.js" } }
+</script>
+</head>
+<body>
+<canvas id="gl" width="1600" height="900"></canvas>
+<div id="screens" class="layer"></div>
+<div id="scrim" class="layer"></div>
+<div id="scrimT" class="layer"></div>
+<div id="black" class="layer"></div>
+<svg id="leaders" class="layer"></svg>
+<div id="anchors" class="layer"></div>
+<div id="caps" class="layer"></div>
+<div id="recall" class="layer">
+  <div id="rq"></div>
+  <div id="rcount"><svg viewBox="0 0 96 96"><circle class="track" cx="48" cy="48" r="44"/><circle id="ring" cx="48" cy="48" r="44"/></svg><div id="rnum"></div></div>
+  <div id="ra"></div>
+</div>
+<div id="grade" class="layer"></div>
+<div id="vignette" class="layer"></div>
+<div id="grain" class="layer"></div>
+<script>
+  (function(){ const c=document.createElement('canvas'); c.width=c.height=256; const x=c.getContext('2d'); const d=x.createImageData(256,256); let s=12345; const r=()=>{s=(s*1664525+1013904223)>>>0; return s/4294967296;}; for(let i=0;i<256*256;i++){const v=(r()*255)|0; d.data[i*4]=d.data[i*4+1]=d.data[i*4+2]=v; d.data[i*4+3]=255;} x.putImageData(d,0,0); document.getElementById('grain').style.backgroundImage=`url(${c.toDataURL()})`; })();
+</script>
+<script type="module" src="./film.js"></script>
+</body>
+</html>

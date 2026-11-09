@@ -1,19 +1,22 @@
 "use strict";
-// Video Academy settings (ADR-05, ADR-25, ADR-26): quality, preferred look, narration language and
-// subtitles — saved to engram-quest/videos/settings.json for the video skill to read. Pro looks are
-// visible to free users but disabled; the file's `pro` flag tells the skill which looks it may use.
+// Video Academy settings: only what the video skill actually uses, saved to
+// engram-quest/videos/settings.json (contract.md). Recall film length lives on its own tab.
 
 const I = require("obsidian");
-const { t: c } = require("../i18n");
+const { t: c, interpolate: K } = require("../i18n");
 const data = require("./data");
-const { styleSelect } = require("./new-modal");
+const { findTeacher, canUse, localText } = require("./teachers");
+const { openTeacherPicker, teacherAvatar, localeOf } = require("./teacher-picker");
 
 const QUALITY_TEXT = { high: ["VIDEO_Q_HIGH", "VIDEO_Q_HIGH_DESC"], compact: ["VIDEO_Q_COMPACT", "VIDEO_Q_COMPACT_DESC"] };
 const LANG_TEXT = { follow: "VIDEO_LANG_FOLLOW", "zh-tw": "VIDEO_LANG_ZH", en: "VIDEO_LANG_EN" };
+const VOICE_TEXT = { auto: "VIDEO_VOICE_AUTO", edge: "VIDEO_VOICE_EDGE", gemini: "VIDEO_VOICE_GEMINI", azure: "VIDEO_VOICE_AZURE", custom: "VIDEO_VOICE_CUSTOM" };
+const CARDS_MODULE = "cards";
 
 async function openVideoSettingsModal(hub, t) {
   const adapter = hub.app.vault.adapter;
   const isPro = !!hub.plugin.settings.licenseValid;
+  const locale = localeOf(t);
   let s = await data.readSettings(adapter, isPro);
 
   const modal = new I.Modal(hub.app);
@@ -26,6 +29,27 @@ async function openVideoSettingsModal(hub, t) {
   const render = () => {
     s = data.normalizeSettings(s, isPro);
     form.empty();
+
+    const teacher = findTeacher(s.cast.teacher);
+    const teacherRow = form.createDiv({ cls: "lh-vid-set-row" });
+    teacherRow.createSpan({ cls: "lh-vid-set-label", text: c(t, "VIDEO_TEACHER") });
+    teacherAvatar(teacherRow, t, teacher, s.cast.variants[teacher.id]);
+    const who = teacherRow.createDiv({ cls: "lh-vid-teacher-who" });
+    who.createDiv({ cls: "lh-vid-tcard-name", text: localText(teacher.name, locale) });
+    who.createDiv({ cls: "lh-vid-tcard-title", text: localText(teacher.title, locale) });
+    teacherRow.createEl("button", { cls: "lh-vid-btn", text: c(t, "VIDEO_TEACHER_CHANGE") }).addEventListener("click", () => {
+      openTeacherPicker(hub, t, {
+        selected: teacher.id,
+        variants: s.cast.variants,
+        onPick: (id, variant) => {
+          s.cast.teacher = id;
+          if (variant) s.cast.variants[id] = variant;
+          render();
+        },
+      });
+    });
+    if (!canUse(teacher, isPro)) form.createDiv({ cls: "lh-vid-set-note", text: K(c(t, "VIDEO_TEACHER_NEEDS_PRO"), { name: localText(teacher.name, locale) }) });
+    form.createDiv({ cls: "lh-vid-set-note", text: c(t, "VIDEO_SET_STUDIO") });
 
     const qHead = form.createDiv({ cls: "lh-vid-set-label" });
     qHead.createSpan({ text: c(t, "VIDEO_SET_QUALITY") });
@@ -46,20 +70,23 @@ async function openVideoSettingsModal(hub, t) {
       }
       sel.addEventListener("change", () => onChange(sel.value));
     };
-    const styleRow = form.createDiv({ cls: "lh-vid-set-row" });
-    styleRow.createEl("label", { cls: "lh-vid-set-label", text: c(t, "VIDEO_SET_STYLE"), attr: { for: "lh-vid-set-style" } });
-    const style = styleSelect(styleRow, t, "lh-vid-set-style", s.style, { isPro, userLooks: hub._vLooks || [] });
-    style.addEventListener("change", () => { s.style = style.value; });
-    form.createDiv({ cls: "lh-vid-set-note", text: c(t, "VIDEO_SET_STYLE_HINT") + (isPro ? "" : c(t, "VIDEO_LOOKS_PRO_HINT")) });
     selectRow("VIDEO_SET_LANG", LANG_TEXT, s.narrationLang, (v) => { s.narrationLang = v; });
+    selectRow("VIDEO_SET_VOICE", VOICE_TEXT, s.voice.engine, (v) => { s.voice.engine = v; });
+    form.createDiv({ cls: "lh-vid-set-note", text: c(t, "VIDEO_SET_VOICE_NOTE") });
 
-    const subRow = form.createDiv({ cls: "lh-vid-set-row" });
-    subRow.createSpan({ cls: "lh-vid-set-label", text: c(t, "VIDEO_SET_SUBS") });
-    const subLabel = subRow.createEl("label", { cls: "lh-vid-check" });
-    const box = subLabel.createEl("input", { attr: { type: "checkbox" } });
-    box.checked = s.subtitles;
-    subLabel.createSpan({ text: c(t, "VIDEO_SET_SUBS_DESC") });
-    box.addEventListener("change", () => { s.subtitles = box.checked; });
+    const checkRow = (labelKey, descKey, checked, onChange) => {
+      const row = form.createDiv({ cls: "lh-vid-set-row" });
+      row.createSpan({ cls: "lh-vid-set-label", text: c(t, labelKey) });
+      const label = row.createEl("label", { cls: "lh-vid-check" });
+      const box = label.createEl("input", { attr: { type: "checkbox" } });
+      box.checked = checked;
+      label.createSpan({ text: c(t, descKey) });
+      box.addEventListener("change", () => onChange(box.checked));
+    };
+    checkRow("VIDEO_SET_SUBS", "VIDEO_SET_SUBS_DESC", s.subtitles, (on) => { s.subtitles = on; });
+    checkRow("VIDEO_SET_CARDS", "VIDEO_SET_CARDS_DESC", !s.course.off.includes(CARDS_MODULE), (on) => {
+      s.course.off = on ? s.course.off.filter((x) => x !== CARDS_MODULE) : [...s.course.off, CARDS_MODULE];
+    });
   };
   render();
 
@@ -75,6 +102,7 @@ async function openVideoSettingsModal(hub, t) {
       new I.Notice(c(t, "VIDEO_SET_SAVED"));
     } catch (e) {
       console.error("EngramQuest: video settings save failed", e);
+      new I.Notice(c(t, "VIDEO_SET_SAVE_FAILED"));
       save.disabled = false;
     }
   });

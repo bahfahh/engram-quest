@@ -16,7 +16,11 @@ import {
   saveProgress,
   createRequest,
   updateRequest,
-  setTopicStyle,
+  requeueSeries,
+  readEpisodic,
+  addEpisodicRequest,
+  cancelEpisodicRequest,
+  hasPlayable,
   topicState,
   collectTags,
   GOAL_MAX,
@@ -71,17 +75,20 @@ const metaPath = (slug) => `${VIDEOS_DIR}/${slug}/meta.json`;
 
 describe("normalizeSettings", () => {
   it("fills defaults for missing or invalid values and stamps the licence", () => {
-    expect(normalizeSettings(null, false)).toEqual({ quality: "high", style: "auto", narrationLang: "follow", subtitles: true, pro: false });
-    expect(normalizeSettings({ quality: "ultra", style: "Not a look!", narrationLang: "fr", subtitles: 0 }, true))
-      .toEqual({ quality: "high", style: "auto", narrationLang: "follow", subtitles: false, pro: true });
+    const defaults = { quality: "high", narrationLang: "follow", subtitles: true, episodicLength: "medium", cast: { teacher: "nico", variants: {} }, course: { off: [] }, voice: { engine: "auto" } };
+    expect(normalizeSettings(null, false)).toEqual({ ...defaults, pro: false });
+    expect(normalizeSettings({ quality: "ultra", narrationLang: "fr", subtitles: 0, episodicLength: "epic", voice: { engine: "nope" } }, true))
+      .toEqual({ ...defaults, subtitles: false, pro: true });
   });
 
-  it("keeps any look id as the preferred style — the skill decides whether it may use it", () => {
-    expect(normalizeSettings({ style: "sketchbook" }, false)).toMatchObject({ style: "sketchbook", pro: false });
+  it("keeps fields it doesn't know, at every level", () => {
+    const s = normalizeSettings({ future: 1, cast: { teacher: "luna", variants: { nico: "wine" }, extra: 2 }, course: { off: ["cards", "cards"], note: "x" }, voice: { engine: "edge", speed: 3 } }, false);
+    expect(s).toMatchObject({ future: 1, cast: { teacher: "luna", variants: { nico: "wine" }, extra: 2 }, course: { off: ["cards"], note: "x" }, voice: { engine: "edge", speed: 3 } });
   });
 
-  it("drops retired settings: length (the skill sizes videos) and production mode (ADR-26)", () => {
-    const s = normalizeSettings({ mode: "polished", length: 30 }, true);
+  it("drops retired settings: style (ADR-29), length and production mode", () => {
+    const s = normalizeSettings({ style: "chalk", mode: "polished", length: 30 }, true);
+    expect(s).not.toHaveProperty("style");
     expect(s).not.toHaveProperty("length");
     expect(s).not.toHaveProperty("mode");
   });
@@ -91,9 +98,15 @@ describe("settings file", () => {
   it("round-trips through settings.json, normalised on write", async () => {
     const a = makeAdapter();
     expect(await readSettings(a, false)).toMatchObject({ quality: "high", pro: false });
-    await saveSettings(a, { quality: "compact", style: "chalk" }, true);
-    expect(JSON.parse(a.files[SETTINGS_PATH])).toEqual({ quality: "compact", style: "chalk", narrationLang: "follow", subtitles: true, pro: true });
+    await saveSettings(a, { quality: "compact" }, true);
+    expect(JSON.parse(a.files[SETTINGS_PATH])).toMatchObject({ quality: "compact", narrationLang: "follow", subtitles: true, pro: true });
     expect((await readSettings(a, false)).pro).toBe(false);
+  });
+
+  it("a licence change does not wipe the teacher, modules or voice", async () => {
+    const a = makeAdapter({ [SETTINGS_PATH]: JSON.stringify({ quality: "compact", cast: { teacher: "luna", variants: { nico: "wine" } }, course: { off: ["cards"] }, voice: { engine: "edge" }, pro: true }) });
+    await syncSettingsLicense(a, false);
+    expect(JSON.parse(a.files[SETTINGS_PATH])).toMatchObject({ quality: "compact", cast: { teacher: "luna", variants: { nico: "wine" } }, course: { off: ["cards"] }, voice: { engine: "edge" }, pro: false });
   });
 });
 
@@ -102,6 +115,25 @@ describe("normalizeTopic", () => {
     const m = normalizeTopic({ title: "x", status: "ready", videos: [{ id: "v", file: null }] });
     expect(m.status).toBe("pending");
     expect(normalizeTopic(topicMeta()).status).toBe("ready");
+  });
+
+  it("recognises the four series statuses and keeps the failure reason", () => {
+    expect(normalizeTopic(topicMeta({ status: "making", videos: [] })).status).toBe("making");
+    expect(normalizeTopic(topicMeta({ status: "failed", error: "算圖失敗", videos: [] }))).toMatchObject({ status: "failed", error: "算圖失敗" });
+    expect(normalizeTopic(topicMeta({ status: "made-up" })).status).toBe("ready");
+    expect(hasPlayable(normalizeTopic(topicMeta({ status: "making" })))).toBe(true);
+    expect(hasPlayable(normalizeTopic(topicMeta({ status: "failed", videos: [] })))).toBe(false);
+  });
+
+  it("keeps the fields the plugin shows and tolerates their absence", () => {
+    const m = normalizeTopic(topicMeta({
+      kind: "episodic", cast: { teacher: "luna" }, requests: [{ id: "r1", period: "2026-11", length: "short", status: "pending" }, { no: "id" }],
+      videos: [{ id: "v", file: "v.mp4", cast: { teacher: "iris", skin: "glass" }, cards: "engram-review/ai-cards/a.md", credits: "CC BY", period: "2026-10", length: "long", createdAt: "x",
+        topics: [{ title: "A", from: 4, to: 9 }, { title: "bad" }], notTaken: ["B"] }],
+    }));
+    expect(m).toMatchObject({ kind: "episodic", cast: { teacher: "luna" }, requests: [{ id: "r1", period: "2026-11", length: "short", status: "pending" }] });
+    expect(m.videos[0]).toMatchObject({ cast: { teacher: "iris", skin: "glass" }, cards: "engram-review/ai-cards/a.md", credits: "CC BY", period: "2026-10", length: "long", topics: [{ title: "A", from: 4, to: 9 }], notTaken: ["B"] });
+    expect(normalizeTopic(topicMeta()).videos[0]).toMatchObject({ cast: null, cards: null, credits: "", period: null, length: null, topics: [], notTaken: [] });
   });
 
   it("keeps the request and defaults its source to notes", () => {
@@ -150,6 +182,11 @@ describe("listTopics / continueWatching", () => {
     expect(topics.map((t) => t.slug)).toEqual(["fav", "new", "old"]);
     const cw = continueWatching(topics);
     expect(cw).toMatchObject({ slug: "old", video: { id: "vid-2" }, progress: { position: 50 } });
+  });
+
+  it("leaves episodic recall films out of the teaching shelf", async () => {
+    const a = makeAdapter({ [metaPath("t")]: JSON.stringify(topicMeta()), [metaPath("episodic-recall")]: JSON.stringify(topicMeta({ kind: "episodic" })) });
+    expect((await listTopics(a)).map((t) => t.slug)).toEqual(["t"]);
   });
 
   it("returns nothing when the videos folder is missing", async () => {
@@ -210,19 +247,35 @@ describe("continueWatching threshold", () => {
   });
 });
 
-describe("series request: goal, detail, style", () => {
-  it("stores the goal as the name, keeps detail, and defaults the style to auto", async () => {
+describe("series request: goal, detail, teacher", () => {
+  it("stores the goal as the name and keeps detail", async () => {
     const a = makeAdapter();
     const { slug, meta } = await createRequest(a, { text: "  架設網站 ", detail: " 從零開始，想用 Obsidian 發布 " });
-    expect(meta).toMatchObject({ title: "架設網站", style: "auto", status: "pending" });
+    expect(meta).toMatchObject({ title: "架設網站", status: "pending", cast: null });
     expect(meta.request).toMatchObject({ text: "架設網站", detail: "從零開始，想用 Obsidian 發布" });
-    expect(JSON.parse(a.files[metaPath(slug)]).style).toBe("auto");
+    expect(JSON.parse(a.files[metaPath(slug)])).not.toHaveProperty("style");
   });
 
-  it("caps the goal length so it stays a name, and drops styles that aren't look ids", async () => {
-    const { meta } = await createRequest(makeAdapter(), { text: "x".repeat(GOAL_MAX + 20), style: "Neon Glow!" });
+  it("caps the goal length so it stays a name", async () => {
+    const { meta } = await createRequest(makeAdapter(), { text: "x".repeat(GOAL_MAX + 20) });
     expect(meta.title).toHaveLength(GOAL_MAX);
-    expect(meta.style).toBe("auto");
+  });
+
+  it("records a series' own teacher", async () => {
+    const a = makeAdapter();
+    const { slug, meta } = await createRequest(a, { text: "SEO", teacher: "luna" });
+    expect(meta.cast).toEqual({ teacher: "luna" });
+    expect(JSON.parse(a.files[metaPath(slug)]).cast).toEqual({ teacher: "luna" });
+    expect((await updateRequest(a, slug, { text: "SEO", teacher: "iris" })).cast).toEqual({ teacher: "iris" });
+    expect((await updateRequest(a, slug, { text: "SEO" })).cast).toEqual({ teacher: "iris" });
+    expect((await updateRequest(a, slug, { text: "SEO", teacher: "" })).cast).toBeNull();
+  });
+
+  it("an old series' style stays in the file untouched", async () => {
+    const a = makeAdapter({ [metaPath("t")]: JSON.stringify({ title: "x", status: "pending", style: "chalk", videos: [] }) });
+    await updateRequest(a, "t", { text: "y" });
+    await saveProgress(a, "t", "v", { position: 1 });
+    expect(JSON.parse(a.files[metaPath("t")]).style).toBe("chalk");
   });
 
   it("updateRequest edits a pending series in place and keeps plugin/skill fields", async () => {
@@ -230,8 +283,8 @@ describe("series request: goal, detail, style", () => {
     const { slug } = await createRequest(a, { text: "SEO", refs: ["a.md"] });
     const raw = JSON.parse(a.files[metaPath(slug)]);
     a.files[metaPath(slug)] = JSON.stringify({ ...raw, note: "no notes found" });
-    const meta = await updateRequest(a, slug, { text: "SEO 教學", detail: "技術 SEO", style: "system", refs: ["b.md"] });
-    expect(meta).toMatchObject({ title: "SEO 教學", style: "system", note: "no notes found" });
+    const meta = await updateRequest(a, slug, { text: "SEO 教學", detail: "技術 SEO", refs: ["b.md"] });
+    expect(meta).toMatchObject({ title: "SEO 教學", note: "no notes found" });
     expect(meta.request).toMatchObject({ text: "SEO 教學", detail: "技術 SEO", refs: ["b.md"] });
     expect(meta.request.createdAt).toBe(raw.request.createdAt);
   });
@@ -243,20 +296,6 @@ describe("series request: goal, detail, style", () => {
     a.files[metaPath(slug)] = JSON.stringify({ ...raw, title: "SEO 入門（AI 命名）" });
     expect(await updateRequest(a, slug, { text: "SEO 2" }, opened)).toBeNull();
     expect(JSON.parse(a.files[metaPath(slug)]).title).toBe("SEO 入門（AI 命名）");
-  });
-
-  it("updateRequest keeps the series style unless the form sends a new one", async () => {
-    const a = makeAdapter();
-    const { slug } = await createRequest(a, { text: "SEO" });
-    const raw = JSON.parse(a.files[metaPath(slug)]);
-    // A look this device doesn't know (e.g. an own look synced from elsewhere) — the form can't show it.
-    a.files[metaPath(slug)] = JSON.stringify({ ...raw, style: "my-neon" });
-    const opened = normalizeTopic(JSON.parse(a.files[metaPath(slug)]));
-    expect(opened.style).toBe("my-neon");
-    await updateRequest(a, slug, { text: "SEO 教學" }, opened);
-    expect(JSON.parse(a.files[metaPath(slug)]).style).toBe("my-neon");
-    await updateRequest(a, slug, { text: "SEO 教學", style: "chalk" }, normalizeTopic(JSON.parse(a.files[metaPath(slug)])));
-    expect(JSON.parse(a.files[metaPath(slug)]).style).toBe("chalk");
   });
 
   it("updateRequest needs the file itself to say pending, not just have no videos yet", async () => {
@@ -271,12 +310,51 @@ describe("series request: goal, detail, style", () => {
     expect(await updateRequest(a, "gone", { text: "new" })).toBeNull();
   });
 
-  it("setTopicStyle writes a valid style and rejects others", async () => {
-    const a = makeAdapter({ [metaPath("t")]: JSON.stringify(topicMeta()) });
-    expect(await setTopicStyle(a, "t", "drawn")).toBe(true);
-    expect(normalizeTopic(JSON.parse(a.files[metaPath("t")])).style).toBe("drawn");
-    await expect(setTopicStyle(a, "t", "Neon Glow!")).rejects.toThrow();
-    expect(await setTopicStyle(a, "gone", "fast")).toBe(false);
+  it("requeueSeries returns a failed or stuck series to the queue and clears the reason", async () => {
+    const a = makeAdapter({ [metaPath("f")]: JSON.stringify({ title: "x", status: "failed", error: "e", videos: [], extra: 1 }), [metaPath("r")]: JSON.stringify(topicMeta()) });
+    expect(await requeueSeries(a, "f")).toBe(true);
+    const raw = JSON.parse(a.files[metaPath("f")]);
+    expect(raw).toMatchObject({ status: "pending", extra: 1 });
+    expect(raw).not.toHaveProperty("error");
+    expect(await requeueSeries(a, "r")).toBe(false);
+    expect(await requeueSeries(a, "gone")).toBe(false);
+  });
+});
+
+describe("episodic recall", () => {
+  const path = metaPath("episodic-recall");
+
+  it("reads nothing when no film has been made or requested", async () => {
+    expect(await readEpisodic(makeAdapter())).toBeNull();
+  });
+
+  it("adds a pending request to a new series marked episodic", async () => {
+    const a = makeAdapter();
+    const r = await addEpisodicRequest(a, { period: "2026-11", length: "short" });
+    expect(r).toMatchObject({ period: "2026-11", length: "short", status: "pending" });
+    expect(JSON.parse(a.files[path])).toMatchObject({ kind: "episodic", requests: [{ period: "2026-11", length: "short", status: "pending" }] });
+    expect((await readEpisodic(a)).meta.requests).toHaveLength(1);
+  });
+
+  it("keeps every other field when adding and cancelling a request", async () => {
+    const before = topicMeta({ kind: "episodic", notes: "keep", requests: [{ id: "a", period: "2026-10", length: "long", status: "done" }], progress: { "vid-1": { position: 9 } } });
+    const a = makeAdapter({ [path]: JSON.stringify(before) });
+    const r = await addEpisodicRequest(a, { period: "2026-08..2026-09", length: "bogus" });
+    expect(r.length).toBe("medium");
+    expect(JSON.parse(a.files[path]).requests).toHaveLength(2);
+    expect(await cancelEpisodicRequest(a, r.id)).toBe(true);
+    expect(JSON.parse(a.files[path])).toEqual(before);
+    expect(await cancelEpisodicRequest(a, "nope")).toBe(false);
+  });
+
+  it("rejects a malformed period", async () => {
+    await expect(addEpisodicRequest(makeAdapter(), { period: "last month" })).rejects.toThrow();
+  });
+
+  it("progress saves keep the episodic fields", async () => {
+    const a = makeAdapter({ [path]: JSON.stringify(topicMeta({ kind: "episodic", requests: [{ id: "a" }] })) });
+    await saveProgress(a, "episodic-recall", "vid-1", { position: 12 });
+    expect(JSON.parse(a.files[path])).toMatchObject({ kind: "episodic", requests: [{ id: "a" }] });
   });
 });
 
@@ -305,10 +383,10 @@ describe("tags", () => {
 
 describe("syncSettingsLicense", () => {
   it("keeps settings.json's pro flag in step with the licence, writing only on a change", async () => {
-    const a = makeAdapter({ [SETTINGS_PATH]: JSON.stringify({ quality: "compact", style: "chalk", pro: false }) });
+    const a = makeAdapter({ [SETTINGS_PATH]: JSON.stringify({ quality: "compact", pro: false }) });
     expect(await syncSettingsLicense(a, false)).toBe(false);
     expect(await syncSettingsLicense(a, true)).toBe(true);
-    expect(JSON.parse(a.files[SETTINGS_PATH])).toMatchObject({ quality: "compact", style: "chalk", pro: true });
+    expect(JSON.parse(a.files[SETTINGS_PATH])).toMatchObject({ quality: "compact", pro: true });
     expect(await syncSettingsLicense(a, true)).toBe(false);
     expect(await syncSettingsLicense(a, false)).toBe(true);
     expect(JSON.parse(a.files[SETTINGS_PATH]).pro).toBe(false);
@@ -320,6 +398,34 @@ describe("syncSettingsLicense", () => {
     expect(free.files[SETTINGS_PATH]).toBeUndefined();
     const pro = makeAdapter();
     expect(await syncSettingsLicense(pro, true)).toBe(true);
-    expect(JSON.parse(pro.files[SETTINGS_PATH])).toMatchObject({ style: "auto", pro: true });
+    expect(JSON.parse(pro.files[SETTINGS_PATH])).toMatchObject({ quality: "high", pro: true });
+  });
+});
+
+describe("files that exist but can't be read are never overwritten", () => {
+  const damaged = "<<<<<<< conflict";
+  const adapterWith = (path) => {
+    const files = { [path]: damaged };
+    return {
+      files,
+      exists: async (p) => p in files,
+      read: async (p) => files[p],
+      write: async (p, content) => { files[p] = content; },
+      mkdir: async () => {},
+    };
+  };
+
+  it("keeps a damaged recall series when a new film is requested", async () => {
+    const path = "engram-quest/videos/episodic-recall/meta.json";
+    const adapter = adapterWith(path);
+    await expect(addEpisodicRequest(adapter, { period: "2026-10", length: "short" })).rejects.toThrow();
+    expect(adapter.files[path]).toBe(damaged);
+  });
+
+  it("keeps damaged settings when the licence state or a save would rewrite them", async () => {
+    const adapter = adapterWith(SETTINGS_PATH);
+    await expect(syncSettingsLicense(adapter, true)).rejects.toThrow();
+    await expect(saveSettings(adapter, {}, true)).rejects.toThrow();
+    expect(adapter.files[SETTINGS_PATH]).toBe(damaged);
   });
 });

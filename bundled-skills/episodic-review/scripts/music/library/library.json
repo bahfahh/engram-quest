@@ -1,0 +1,22 @@
+{
+ "note": "真的曲子：file 是相對於 library/ 的路徑；moods 用 music_gen 的 mood 名稱；tags 含 \"course\" 的是教學片用，回顧片不選（pick_music.py --allow-course 才會選）。只放授權允許再散布、商用的曲子，credit 欄位直接貼到影片 credits。",
+ "tracks": [
+  {
+   "file": "../../Morning.mp3",
+   "title": "Morning",
+   "artist": "Kevin MacLeod",
+   "moods": [
+    "warm",
+    "bright"
+   ],
+   "tags": [
+    "course"
+   ],
+   "license": "CC BY 4.0",
+   "license_url": "https://creativecommons.org/licenses/by/4.0/",
+   "credit": "\"Morning\" Kevin MacLeod (incompetech.com), Licensed under Creative Commons: By Attribution 4.0 License, http://creativecommons.org/licenses/by/4.0/",
+   "source": "studio/music/Morning.mp3（使用者 2026-10-30 選定的課程片頭片尾曲；ID3: title=Morning, artist=Kevin MacLeod）",
+   "note": "課程（教學片）專用，回顧片不選，避免和課程重複"
+  }
+ ]
+}

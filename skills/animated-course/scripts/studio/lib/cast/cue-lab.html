@@ -1,0 +1,57 @@
+<!doctype html><html><head><meta charset="utf-8">
+<link rel="stylesheet" href="/lib/kit/kit.css">
+<script type="importmap">{"imports":{"three":"/node_modules/three/build/three.module.js","three/addons/":"/node_modules/three/examples/jsm/"}}</script>
+</head><body><script type="module">
+// Cue test page: cue-lab.html?style=<skin id | clay-snackshop> — the teacher points and looks at four targets in turn,
+// the student follows with the eyes, each target lights on its word. Copy into a project folder to render (CAST.md "Cues").
+//  0–1 idle · 1 high target A (far above the arm: must become a look + warning) · 3 target B at arm height (points) · 5 near target C (look only, no hand) · 6.6 a target LEFT of the teacher (must become a look + warning)
+import * as THREE from 'three';
+import { makeStage } from '/lib/cast/stage.js';
+import { makeCast } from '/lib/cast/classroom.js';
+import { cueTrack } from '/lib/cast/cue.js';
+const q = new URLSearchParams(location.search), id = q.get('style') || 'glossy-bot';
+const st = await makeStage({ card: false });
+let cast;
+if (id === 'clay-snackshop') {
+  // the clay objects carry their own root scale; put each in a group so st.place() can scale it
+  const c = await makeCast('clay-snackshop');
+  const box = ch => { const g = new THREE.Group(); g.add(ch.root); return { root: g, height: ch.height, pose: ch.poseNative }; };
+  cast = { teacher: box(c.teacher), student: box(c.student), embodiment: null };
+} else {
+  cast = await (await import(`/lib/cast/skins/${id}.js`)).create(st.env, { variant: q.get('variant') });
+}
+st.adopt(cast);
+const TG = [
+  { id: 'A', label: '預算', x: 960, y: 250, at: 1.0 },
+  { id: 'B', label: '學習期', x: 1180, y: 700, at: 3.0 },
+  { id: 'C', label: '分母', x: 700, y: 860, at: 5.0, point: false },
+  { id: 'L', label: '左邊', x: 120, y: 300, at: 6.6 },
+];
+const els = TG.map(g => {
+  const e = document.createElement('div');
+  e.style.cssText = `position:absolute;left:${g.x - 110}px;top:${g.y - 48}px;width:220px;height:96px;border-radius:18px;background:#fff;border:4px solid #C9CED6;display:flex;align-items:center;justify-content:center;font:800 38px "Noto Sans TC",sans-serif;color:#1C1E21;z-index:20`;
+  e.textContent = `${g.id} ${g.label}`; st.frame.append(e); return e;
+});
+const cues = cueTrack(null, TG.map((g, i) => ({ at: g.at, hold: 1.2, target: els[i], point: g.point, label: g.label })));
+const LAY = { teacher: { x: 330, y: 960, px: 400, skin: id }, student: { x: 1640, y: 960, px: 300, skin: id } };
+const tag = document.createElement('div');
+tag.style.cssText = 'position:absolute;left:40px;top:28px;z-index:50;font:700 30px "Noto Sans TC",sans-serif;color:#1C1E21;background:rgba(255,255,255,.85);padding:10px 20px;border-radius:14px';
+tag.textContent = `cue test · ${id}`; st.frame.append(tag);
+window.DURATION = 8.4;
+window.CUES = cues.report;
+const warn = cues.check('teacher', LAY.teacher);
+const wbox = document.createElement('div');
+wbox.style.cssText = 'position:absolute;left:40px;bottom:30px;width:1100px;z-index:50;font:500 20px "Noto Sans TC",sans-serif;color:#9A3412;background:rgba(255,247,237,.92);padding:8px 14px;border-radius:10px';
+wbox.textContent = warn.length ? '警告：' + warn.join(' / ') : '沒有警告'; st.frame.append(wbox);
+window.renderAt = t => {
+  TG.forEach((g, i) => { const on = cues.cues[i].start <= t && t < cues.cues[i].end + 0.2; els[i].style.borderColor = on ? '#E5484D' : '#C9CED6'; els[i].style.boxShadow = on ? '0 0 0 10px rgba(229,72,77,.18)' : 'none'; });
+  const base = () => ({ t, blink: 0, lookX: 0, lookY: 0, talk: 0, armL: 0, armR: 0, point: 0, wave: 0, hop: 0, squash: 0, tilt: 0, turn: 0, state: 'idle', stateK: 0 });
+  const tp = cues.apply('teacher', base(), t, LAY.teacher), sp = cues.apply('student', base(), t, LAY.student);
+  tp.talk = cues.active('teacher', t) ? 0.4 + 0.3 * Math.sin(t * 15) : 0;
+  st.place(cast.teacher, LAY.teacher.x, LAY.teacher.y, LAY.teacher.px); cast.teacher.pose(tp);
+  st.place(cast.student, LAY.student.x, LAY.student.y, LAY.student.px); cast.student.pose(sp);
+  if (cast.embodiment) st.place(cast.embodiment, 0, 0, 1, { visible: false });
+  st.render();
+};
+window.studioReady = document.fonts.ready;
+</script></body></html>

@@ -1,0 +1,34 @@
+{
+  "version": 1,
+  "about": "Parts of a course that are ON by default (the full version) and that the learner may turn off in the plugin (engram-quest/videos/settings.json -> course.off: [ids]). Subtraction only: nothing here can be added beyond the default, and the skeleton (reference/04-skeleton.md) is not a module and cannot be turned off. resolve.cjs prints the result as `modules`. Rules: reference/12-modules.md.",
+  "modules": [
+    {
+      "id": "cards",
+      "status": "needs rework",
+      "name": {
+        "zh-tw": "複習卡",
+        "en": "Review cards"
+      },
+      "does": {
+        "zh-tw": "每段收尾的那張圖自動變成一張複習卡，放進 EngramQuest 的複習排程",
+        "en": "Each segment's recap picture becomes a review card in EngramQuest's spaced-repetition deck"
+      },
+      "cost": {
+        "zh-tw": "每課 3～4 張卡；影片本身不變",
+        "en": "3-4 cards per lesson; the film itself does not change"
+      },
+      "where": "reference/12-modules.md §3, scripts/deliver.py"
+    }
+  ],
+  "rejected": [
+    {
+      "id": "transfer",
+      "name": {
+        "zh-tw": "換個地方",
+        "en": "Somewhere else"
+      },
+      "when": "2026-11-06",
+      "why": "User review of experiment 17: an analogy at the end adds nothing and AI analogies are weak."
+    }
+  ]
+}

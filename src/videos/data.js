@@ -4,23 +4,26 @@
 // plus the mp4 / vtt / poster files the video skill renders. settings.json in the same root holds
 // the generation settings the skill reads. The plugin never runs AI: "new topic" only writes a
 // pending topic the skill picks up later. Pure of Obsidian UI — every function takes a vault
-// adapter so the logic is unit-testable. Contract: doc/開發計劃/影片學院/skills.md §4.
+// adapter so the logic is unit-testable. Contract: doc/開發計劃/影片學院/contract.md.
 
 const { safeSlugPart, trashPath } = require("../lessons/data");
-const { isLookId, AUTO } = require("./looks");
 
 const VIDEOS_DIR = "engram-quest/videos";
 const SETTINGS_PATH = `${VIDEOS_DIR}/settings.json`;
+const EPISODIC_SLUG = "episodic-recall";
 
-// Encode quality the skill reads (ADR-25): "high" keeps a fixed visual quality and lets the file size
-// follow the content; "compact" squeezes each video under 5 MB (Obsidian Sync Standard per-file cap).
-// Length is not a setting: the skill sizes each video to its learning objectives.
+// Delivery quality the skill reads (ADR-32): "high" is 1080p, "compact" a 720p copy.
+// Teaching-video length is not a setting: the skill sizes each video to its learning objectives.
 const QUALITIES = ["high", "compact"];
 const NARRATION_LANGS = ["follow", "zh-tw", "en"];
-const DEFAULT_SETTINGS = { quality: "high", style: AUTO, narrationLang: "follow", subtitles: true };
-// `style` (global preference) and a series' `style` hold a look id from looks.js, or "auto" to let
-// the skill match a look to the content. Unknown ids read as "auto" — the skill does the same.
+const VOICE_ENGINES = ["auto", "edge", "gemini", "azure", "custom"];
+const EPISODIC_LENGTHS = ["short", "medium", "long"];
+const SERIES_STATUSES = ["pending", "making", "ready", "failed"];
+const DEFAULT_TEACHER = "nico";
+const DEFAULT_SETTINGS = { quality: "high", narrationLang: "follow", subtitles: true, episodicLength: "medium" };
 const GOAL_MAX = 40;
+const PERIOD_RE = /^\d{4}-\d{2}(\.\.\d{4}-\d{2})?$/;
+const isObject = (x) => !!x && typeof x === "object" && !Array.isArray(x);
 
 async function readJson(adapter, path) {
   try {
@@ -31,16 +34,33 @@ async function readJson(adapter, path) {
 }
 
 /**
- * Clamp raw settings to valid values and stamp the licence state: `pro` tells the skill whether
- * Pro looks may be used (ADR-26). Fields the plugin no longer offers (`length`, `mode`) are dropped.
+ * A file's JSON, or null when it doesn't exist. Throws when it exists but can't be read, so a write
+ * built on the result never replaces data that merely failed to load (a sync conflict, a locked file).
+ */
+async function readExisting(adapter, path) {
+  if (!(await adapter.exists(path))) return null;
+  return JSON.parse(await adapter.read(path));
+}
+
+/**
+ * Clamp raw settings to valid values and stamp the licence state: `pro` tells the skill which
+ * teachers it may use. Fields the plugin doesn't know are kept, so a save never wipes what the skill
+ * or a newer version added; only retired fields (`style`, `length`, `mode`) are dropped.
  */
 function normalizeSettings(raw, isPro) {
-  const s = raw && typeof raw === "object" ? raw : {};
+  const { style: _style, length: _length, mode: _mode, ...rest } = isObject(raw) ? raw : {};
+  const cast = isObject(rest.cast) ? rest.cast : {};
+  const course = isObject(rest.course) ? rest.course : {};
+  const voice = isObject(rest.voice) ? rest.voice : {};
   return {
-    quality: QUALITIES.includes(s.quality) ? s.quality : DEFAULT_SETTINGS.quality,
-    style: isLookId(s.style) ? s.style : DEFAULT_SETTINGS.style,
-    narrationLang: NARRATION_LANGS.includes(s.narrationLang) ? s.narrationLang : DEFAULT_SETTINGS.narrationLang,
-    subtitles: s.subtitles === undefined ? DEFAULT_SETTINGS.subtitles : !!s.subtitles,
+    ...rest,
+    quality: QUALITIES.includes(rest.quality) ? rest.quality : DEFAULT_SETTINGS.quality,
+    narrationLang: NARRATION_LANGS.includes(rest.narrationLang) ? rest.narrationLang : DEFAULT_SETTINGS.narrationLang,
+    subtitles: rest.subtitles === undefined ? DEFAULT_SETTINGS.subtitles : !!rest.subtitles,
+    episodicLength: EPISODIC_LENGTHS.includes(rest.episodicLength) ? rest.episodicLength : DEFAULT_SETTINGS.episodicLength,
+    cast: { ...cast, teacher: typeof cast.teacher === "string" && cast.teacher ? cast.teacher : DEFAULT_TEACHER, variants: isObject(cast.variants) ? cast.variants : {} },
+    course: { ...course, off: Array.isArray(course.off) ? [...new Set(course.off.map(String))] : [] },
+    voice: { ...voice, engine: VOICE_ENGINES.includes(voice.engine) ? voice.engine : "auto" },
     pro: !!isPro,
   };
 }
@@ -51,17 +71,18 @@ async function readSettings(adapter, isPro) {
 
 /**
  * Keep settings.json's `pro` flag in step with the licence, since the skill reads the raw file to
- * decide whether Pro looks may be used. Writes only on a change; a free user with no file needs
+ * decide which teachers it may use. Writes only on a change; a free user with no file needs
  * none (the skill's defaults are already free).
  */
 async function syncSettingsLicense(adapter, isPro) {
-  const raw = await readJson(adapter, SETTINGS_PATH);
+  const raw = await readExisting(adapter, SETTINGS_PATH);
   if (!raw ? !isPro : raw.pro === !!isPro) return false;
   await saveSettings(adapter, raw, isPro);
   return true;
 }
 
 async function saveSettings(adapter, settings, isPro) {
+  await readExisting(adapter, SETTINGS_PATH);
   const next = normalizeSettings(settings, isPro);
   await adapter.mkdir(VIDEOS_DIR).catch(() => {});
   await adapter.write(SETTINGS_PATH, JSON.stringify(next, null, 2));
@@ -81,14 +102,23 @@ function normalizeTopic(meta) {
         duration: Number(v.duration) > 0 ? Number(v.duration) : null,
         style: String(v.style || ""),
         source: v.source === "import" ? "import" : "skill",
+        cast: isObject(v.cast) && v.cast.teacher ? { teacher: String(v.cast.teacher), skin: v.cast.skin ? String(v.cast.skin) : null, variant: v.cast.variant ? String(v.cast.variant) : null } : null,
+        cards: typeof v.cards === "string" && v.cards ? v.cards : null,
+        credits: String(v.credits || ""),
+        period: v.period ? String(v.period) : null,
+        length: EPISODIC_LENGTHS.includes(v.length) ? v.length : null,
+        createdAt: v.createdAt || null,
+        topics: Array.isArray(v.topics) ? v.topics.filter((x) => x && x.title && Number.isFinite(Number(x.from))).map((x) => ({ title: String(x.title), from: Number(x.from), to: Number.isFinite(Number(x.to)) ? Number(x.to) : null })) : [],
+        notTaken: Array.isArray(v.notTaken) ? v.notTaken.map(String).filter(Boolean) : [],
       }))
     : [];
   const req = meta.request && typeof meta.request === "object" ? meta.request : null;
   return {
     title: String(meta.title || (req && req.text) || ""),
-    // A topic with no playable video yet is pending no matter what the file claims.
-    status: meta.status === "pending" || !videos.some((v) => v.file) ? "pending" : "ready",
-    style: isLookId(meta.style) ? meta.style : AUTO,
+    status: seriesStatus(meta.status, videos),
+    error: String(meta.error || ""),
+    kind: String(meta.kind || ""),
+    cast: isObject(meta.cast) && meta.cast.teacher ? { teacher: String(meta.cast.teacher) } : null,
     request: req
       ? {
           text: String(req.text || ""),
@@ -105,8 +135,33 @@ function normalizeTopic(meta) {
     starred: !!meta.starred,
     createdAt: meta.createdAt || (req && req.createdAt) || null,
     videos,
+    requests: Array.isArray(meta.requests) ? meta.requests.filter((r) => r && r.id).map(normalizeEpisodicRequest) : [],
     progress: meta.progress && typeof meta.progress === "object" ? meta.progress : {},
   };
+}
+
+/** A "ready" (or unrecognised) status with no playable video yet still reads as pending. */
+function seriesStatus(status, videos) {
+  if (SERIES_STATUSES.includes(status) && status !== "ready") return status;
+  return videos.some((v) => v.file) ? "ready" : "pending";
+}
+
+function normalizeEpisodicRequest(r) {
+  return {
+    id: String(r.id),
+    period: String(r.period || ""),
+    length: EPISODIC_LENGTHS.includes(r.length) ? r.length : "medium",
+    status: String(r.status || "pending"),
+    createdAt: r.createdAt || null,
+    videoId: r.videoId ? String(r.videoId) : null,
+    doneAt: r.doneAt || null,
+    note: String(r.note || ""),
+  };
+}
+
+/** Whether the series has something to play: an unfinished, failed or requeued series may already have videos. */
+function hasPlayable(meta) {
+  return meta.videos.some((v) => v.file);
 }
 
 /** Progress for one video — always a full object. */
@@ -127,7 +182,7 @@ function topicProgress(meta) {
 
 /** Shelf filter bucket: "pending" | "new" (nothing watched) | "watching" | "done" (all watched). */
 function topicState(meta) {
-  if (meta.status === "pending") return "pending";
+  if (!hasPlayable(meta)) return "pending";
   const { completed, total } = topicProgress(meta);
   if (total && completed === total) return "done";
   const touched = meta.videos.some((v) => {
@@ -155,7 +210,10 @@ function topicActivity(meta) {
   return latest;
 }
 
-/** Scan topic folders. Returns [{ slug, meta }]: starred first, then most recent activity. */
+/**
+ * Scan the teaching-video series. Returns [{ slug, meta }]: starred first, then most recent activity.
+ * Episodic recall films live in the Memory category (ADR-27) and are read with readEpisodic.
+ */
 async function listTopics(adapter) {
   let listing = null;
   try {
@@ -172,7 +230,7 @@ async function listTopics(adapter) {
       return meta ? { slug, meta } : null;
     })
   );
-  const topics = loaded.filter(Boolean);
+  const topics = loaded.filter((x) => x && x.meta.kind !== "episodic");
   topics.sort((a, b) => {
     if (a.meta.starred !== b.meta.starred) return a.meta.starred ? -1 : 1;
     return topicActivity(b.meta).localeCompare(topicActivity(a.meta));
@@ -221,14 +279,13 @@ async function saveProgress(adapter, slug, videoId, patch = {}) {
  * `detail` is optional extra context. How to split it into videos is the skill's call.
  * `source` is "notes" (AI picks relevant notes, optionally narrowed to `refs`) or "general".
  */
-function cleanRequest({ text, detail = "", source = "notes", refs = [], style = AUTO }) {
+function cleanRequest({ text, detail = "", source = "notes", refs = [] }) {
   // Cut by code point so an emoji is never split in half.
   const goal = Array.from(String(text || "").trim().replace(/\s+/g, " ")).slice(0, GOAL_MAX).join("");
   if (!goal) throw new Error("empty request");
   const useNotes = source !== "general";
   return {
     goal,
-    style: isLookId(style) ? style : AUTO,
     request: {
       text: goal,
       detail: String(detail || "").trim(),
@@ -240,20 +297,20 @@ function cleanRequest({ text, detail = "", source = "notes", refs = [], style = 
 
 /** Record a learner's request as a pending series the video skill picks up on its next run. */
 async function createRequest(adapter, input) {
-  const { goal, style, request } = cleanRequest(input);
+  const { goal, request } = cleanRequest(input);
   let slug = safeSlugPart(goal, `topic-${Date.now()}`);
   if (await adapter.exists(`${VIDEOS_DIR}/${slug}/meta.json`)) slug = `${slug}-${Date.now()}`;
   const now = new Date().toISOString();
   const meta = {
     title: goal,
     status: "pending",
-    style,
     request: { ...request, createdAt: now },
     starred: false,
     createdAt: now,
     videos: [],
     progress: {},
   };
+  if (input.teacher) meta.cast = { teacher: String(input.teacher) };
   await adapter.mkdir(`${VIDEOS_DIR}/${slug}`).catch(() => {});
   await adapter.write(`${VIDEOS_DIR}/${slug}/meta.json`, JSON.stringify(meta, null, 2));
   return { slug, meta: normalizeTopic(meta) };
@@ -261,34 +318,64 @@ async function createRequest(adapter, input) {
 
 /**
  * Edit a still-pending series (read-merge-write; the slug stays). `base` is the normalised meta the
- * form was opened with: if the file's title or style has changed since (the skill got there first),
- * nothing is written. The style is only written when the user changed it, so a skill-set value the
- * form can't show survives. Returns the normalised meta, or null when the series is gone, no
- * longer pending, or changed underneath the form.
+ * form was opened with: if the file's title has changed since (the skill got there first), nothing
+ * is written. `input.teacher` is only applied when present ("" clears the series' own teacher).
+ * Returns the normalised meta, or null when the series is gone, no longer pending, or changed
+ * underneath the form.
  */
 async function updateRequest(adapter, slug, input, base) {
   const path = `${VIDEOS_DIR}/${slug}/meta.json`;
   const raw = await readJson(adapter, path);
   if (!raw || typeof raw !== "object" || raw.status !== "pending") return null;
   const now = normalizeTopic(raw);
-  if (now.status !== "pending" || (base && (now.title !== base.title || now.style !== base.style))) return null;
-  const { goal, style, request } = cleanRequest(input);
+  if (now.status !== "pending" || (base && now.title !== base.title)) return null;
+  const { goal, request } = cleanRequest(input);
   const prev = raw.request && typeof raw.request === "object" ? raw.request : {};
   raw.title = goal;
-  // `style` absent = the learner didn't touch the menu; keep whatever the series holds.
-  if (input.style !== undefined && (!base || style !== base.style)) raw.style = style;
   raw.request = { ...prev, ...request };
+  if (input.teacher === "") delete raw.cast;
+  else if (input.teacher) raw.cast = { ...(isObject(raw.cast) ? raw.cast : {}), teacher: String(input.teacher) };
   await adapter.write(path, JSON.stringify(raw, null, 2));
   return normalizeTopic(raw);
 }
 
-/** Set a series' style for the videos the skill makes next ("auto" = let the skill decide). */
-async function setTopicStyle(adapter, slug, style) {
-  if (!isLookId(style)) throw new Error(`invalid style: ${style}`);
+/** Put a failed or stuck series back in the queue so the next skill run picks it up. */
+async function requeueSeries(adapter, slug) {
   const path = `${VIDEOS_DIR}/${slug}/meta.json`;
   const raw = await readJson(adapter, path);
-  if (!raw || typeof raw !== "object") return false;
-  raw.style = style;
+  if (!isObject(raw) || (raw.status !== "failed" && raw.status !== "making")) return false;
+  raw.status = "pending";
+  delete raw.error;
+  await adapter.write(path, JSON.stringify(raw, null, 2));
+  return true;
+}
+
+/** The one episodic recall series, or null when none has been made or requested yet. */
+async function readEpisodic(adapter) {
+  const meta = normalizeTopic(await readJson(adapter, `${VIDEOS_DIR}/${EPISODIC_SLUG}/meta.json`));
+  return meta ? { slug: EPISODIC_SLUG, meta } : null;
+}
+
+/** Record a pending "make a new recall film" request; the skill marks it done when delivering. */
+async function addEpisodicRequest(adapter, { period, length }) {
+  if (!PERIOD_RE.test(String(period || ""))) throw new Error(`invalid period: ${period}`);
+  const path = `${VIDEOS_DIR}/${EPISODIC_SLUG}/meta.json`;
+  const found = await readExisting(adapter, path);
+  const raw = isObject(found) ? found : { title: "Episodic Recall", status: "ready", kind: "episodic", videos: [], progress: {} };
+  const now = new Date();
+  const request = { id: `req-${now.getTime()}`, period, length: EPISODIC_LENGTHS.includes(length) ? length : DEFAULT_SETTINGS.episodicLength, status: "pending", createdAt: now.toISOString() };
+  raw.requests = [...(Array.isArray(raw.requests) ? raw.requests : []), request];
+  await adapter.mkdir(`${VIDEOS_DIR}/${EPISODIC_SLUG}`).catch(() => {});
+  await adapter.write(path, JSON.stringify(raw, null, 2));
+  return normalizeEpisodicRequest(request);
+}
+
+/** Remove one request, leaving every other field of the series as it was. */
+async function cancelEpisodicRequest(adapter, id) {
+  const path = `${VIDEOS_DIR}/${EPISODIC_SLUG}/meta.json`;
+  const raw = await readJson(adapter, path);
+  if (!isObject(raw) || !Array.isArray(raw.requests) || !raw.requests.some((r) => r && r.id === id)) return false;
+  raw.requests = raw.requests.filter((r) => !r || r.id !== id);
   await adapter.write(path, JSON.stringify(raw, null, 2));
   return true;
 }
@@ -322,8 +409,12 @@ async function deleteTopic(adapter, slug) {
 module.exports = {
   VIDEOS_DIR,
   SETTINGS_PATH,
+  EPISODIC_SLUG,
   QUALITIES,
   NARRATION_LANGS,
+  VOICE_ENGINES,
+  EPISODIC_LENGTHS,
+  DEFAULT_TEACHER,
   DEFAULT_SETTINGS,
   GOAL_MAX,
   normalizeSettings,
@@ -331,6 +422,7 @@ module.exports = {
   saveSettings,
   syncSettingsLicense,
   normalizeTopic,
+  hasPlayable,
   videoProgress,
   topicProgress,
   topicState,
@@ -340,6 +432,9 @@ module.exports = {
   saveProgress,
   createRequest,
   updateRequest,
-  setTopicStyle,
+  requeueSeries,
+  readEpisodic,
+  addEpisodicRequest,
+  cancelEpisodicRequest,
   deleteTopic,
 };

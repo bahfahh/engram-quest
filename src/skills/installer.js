@@ -1,10 +1,12 @@
 "use strict";
 let EMBEDDED = {};
 try { EMBEDDED = require("./embedded-skills"); } catch (_) { /* generated file missing in test */ }
+const VIDEO_MODULES = require("./video-modules.json");
 
 function createInstaller(embeddedOverride) {
   const embedded = embeddedOverride !== undefined ? embeddedOverride : EMBEDDED;
   const INSTALLER_VERSION = "2026-06-10";
+  const PACK_MARKER = ".engram-pack";
   const MODULES = [
     {
       id: "quest-map",
@@ -37,6 +39,19 @@ function createInstaller(embeddedOverride) {
       title: "Deep Dive (Pro)",
       summary: "Generate plain-language visual deep-dive pages for flashcards that are too hard, badly worded, or missing context. Pro feature.",
       pro: true
+    },
+    {
+      id: "animated-course",
+      title: "Animated Course",
+      summary: "Make animated teaching videos for the Video Academy. Claude Code only.",
+      claudeOnly: true
+    },
+    {
+      id: "episodic-review",
+      title: "Episodic Review (Pro)",
+      summary: "Turn a period of your notes into a recall film for the Memory tab. Claude Code only. Pro feature.",
+      pro: true,
+      claudeOnly: true
     }
   ];
   const TOOL_TARGETS = {
@@ -128,11 +143,24 @@ function createInstaller(embeddedOverride) {
       { source: "explainer/references/html-recipe.md", target: "references/html-recipe.md" },
       { source: "explainer/references/visual-ip.md", target: "references/visual-ip.md" },
       { source: "explainer/references/obsidian-cli.md", target: "references/obsidian-cli.md" },
+      { source: "explainer/references/examples.md", target: "references/examples.md" },
+      { source: "explainer/references/insight-composition.md", target: "references/insight-composition.md" },
+      { source: "explainer/references/review-examples.md", target: "references/review-examples.md" },
+      { source: "explainer/references/examples/deep-dive-azure.html", target: "references/examples/deep-dive-azure.html" },
+      { source: "explainer/references/examples/deep-dive-recall.html", target: "references/examples/deep-dive-recall.html" },
       { source: "explainer/assets/examples/explainer-too-hard.html", target: "assets/examples/explainer-too-hard.html" },
       { source: "explainer/assets/examples/explainer-no-context.html", target: "assets/examples/explainer-no-context.html" },
       { source: "explainer/assets/examples/explainer-poor-description.html", target: "assets/examples/explainer-poor-description.html" }
     ]
   };
+
+  for (const [id, video] of Object.entries(VIDEO_MODULES)) {
+    MODULE_ASSETS[id] = video.files.map((file) => ({
+      source: `${id}/${file === "SKILL.md" ? "skills.md" : file}`,
+      target: file,
+      pro: video.pro.includes(file)
+    }));
+  }
 
   function joinPath() {
     return Array.from(arguments).filter(Boolean).join("/").replace(/\/+/g, "/");
@@ -143,19 +171,24 @@ function createInstaller(embeddedOverride) {
     return adapter.read(joinPath(bundledSkillsRoot, relativePath));
   }
 
-  async function buildSkillEntries(toolTarget, adapter, bundledSkillsRoot, modules) {
+  async function buildSkillEntries(toolTarget, adapter, bundledSkillsRoot, modules, isPro) {
     const entries = [];
     for (const moduleDefinition of modules) {
       const targetRoot = joinPath(toolTarget.baseDir, `engram-quest-${moduleDefinition.id}`);
       for (const asset of MODULE_ASSETS[moduleDefinition.id] || []) {
+        if (asset.pro && !isPro) continue;
         let content = await readBundledSkill(adapter, bundledSkillsRoot, asset.source);
         if (asset.target === "SKILL.md") {
           // Rewrite `bash scripts/` → `bash {targetRoot}/scripts/` so the path resolves
           // correctly when CWD is the vault root (not the skill directory).
-          content = content.replace(/\bbash scripts\//g, `bash ${targetRoot}/scripts/`);
+          content = content.replace(/\b(bash|node|python3) scripts\//g, `$1 ${targetRoot}/scripts/`);
         }
         entries.push({ path: joinPath(targetRoot, asset.target), content });
       }
+      // The marker holds the pack's hash: comparing it tells whether the binaries are current
+      // without reading them, and it is written only after they have all landed.
+      const video = VIDEO_MODULES[moduleDefinition.id];
+      if (video) entries.push({ path: joinPath(targetRoot, PACK_MARKER), content: video.pack.sha256, pack: video.pack });
     }
     return entries;
   }
@@ -186,17 +219,31 @@ function createInstaller(embeddedOverride) {
     const toolTarget = TOOL_TARGETS[toolId];
     if (!toolTarget || !adapter) return [];
     const bundledSkillsRoot = configDir + "/plugins/engram-quest/bundled-skills";
-    const modules = isPro ? MODULES : MODULES.filter(m => !m.pro);
+    const modules = MODULES.filter(m => (isPro || !m.pro) && (toolId === "claude" || !m.claudeOnly));
     return toolTarget.kind === "rules"
       ? buildCursorRuleEntries(toolTarget, adapter, bundledSkillsRoot, modules)
-      : buildSkillEntries(toolTarget, adapter, bundledSkillsRoot, modules);
+      : buildSkillEntries(toolTarget, adapter, bundledSkillsRoot, modules, isPro);
+  }
+
+  /** Paths of the Pro video content that must not stay on disk once a licence has ended (ADR-30). */
+  function getProPaths(toolId) {
+    const toolTarget = TOOL_TARGETS[toolId];
+    if (!toolTarget || toolId !== "claude") return [];
+    const paths = [];
+    for (const [id, video] of Object.entries(VIDEO_MODULES)) {
+      const root = joinPath(toolTarget.baseDir, `engram-quest-${id}`);
+      if (MODULES.find(m => m.id === id).pro) paths.push(root);
+      else paths.push(...video.pro.map(file => joinPath(root, file)));
+    }
+    return paths;
   }
 
   return {
     INSTALLER_VERSION,
     MODULES,
     TOOL_TARGETS,
-    getInstallEntries
+    getInstallEntries,
+    getProPaths
   };
 }
 

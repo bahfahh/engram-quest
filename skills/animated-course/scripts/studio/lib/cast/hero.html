@@ -1,0 +1,39 @@
+<!doctype html><html><head><meta charset="utf-8">
+<link rel="stylesheet" href="/lib/kit/kit.css">
+<script type="importmap">{"imports":{"three":"/node_modules/three/build/three.module.js","three/addons/":"/node_modules/three/examples/jsm/"}}</script>
+</head><body><script type="module">
+// Portrait of one role of a skin (copy into a project folder to render). hero.html?style=glossy-owl&role=teacher&pose=idle|think|point|wave|aha|doubt&turn=0.6&px=800
+import * as THREE from 'three';
+import { makeStage } from '/lib/cast/stage.js';
+const Q = new URLSearchParams(location.search);
+const id = Q.get('style') || 'glossy-owl', role = Q.get('role') || 'teacher', pose = Q.get('pose') || 'idle';
+const mod = await import(`/lib/cast/skins/${id}.js`);
+const st = await makeStage({ card: false });
+const cast = await mod.create(st.env, { variant: new URLSearchParams(location.search).get('variant') });
+st.adopt(cast);
+const ch = cast[role];
+for (const k of ['teacher', 'student', 'embodiment']) if (k !== role) st.place(cast[k], -2000, 0, 10, { visible: false });
+// stats
+let tris = 0, perS = '';
+try { const per = {}, big = []; for (const k of ['teacher', 'student', 'embodiment']) { per[k] = 0; cast[k].root.traverse(o => { if (o.isMesh) { const g = o.geometry; const n = (g.index ? g.index.count : g.attributes.position.count) / 3; tris += n; per[k] += n; if (k === role) big.push([n, g.type]); } }); }
+big.sort((a, b) => b[0] - a[0]); perS = JSON.stringify(per) + ' top:' + big.slice(0, 12).map(b => b[1].replace('Geometry','') + ':' + b[0]).join(' '); } catch (e) {}
+// (2D skins have no root: stats are skipped) // was: JSON.stringify(per) + ' top:' + big.slice(0, 12).map(b => b[1].replace('Geometry','') + ':' + b[0]).join(' ');
+const turn = +(Q.get('turn') ?? 0.6), px = +(Q.get('px') ?? 800), fx = +(Q.get('x') ?? 960), fy = +(Q.get('y') ?? 1000);
+window.DURATION = 6;
+window.renderAt = t => {
+  const s = { t, blink: 0, lookX: +(Q.get('lookX') ?? 0), lookY: +(Q.get('lookY') ?? 0), talk: +(Q.get('talk') ?? 0), armL: 0, armR: 0, point: 0, wave: 0, hop: 0, squash: 0, tilt: 0, turn, state: 'idle', stateK: 0 };
+  if (pose === 'think') { s.state = 'think'; s.stateK = 1; s.armR = 0.45; }
+  if (pose === 'aha') { s.state = 'aha'; s.stateK = 1; }
+  if (pose === 'doubt') { s.state = 'doubt'; s.stateK = 1; }
+  if (pose === 'point') { s.point = 1; s.lookX = 0.8; s.talk = 0.5; }
+  if (pose === 'wave') { s.wave = 1; s.armR = 1; s.state = 'aha'; s.stateK = 1; }
+  if (pose === 'up') { s.armL = 1; s.armR = 1; }
+  st.place(ch, fx, fy, px); ch.pose(s);
+  st.render();
+};
+window.renderAt(0);
+try { const box = new THREE.Box3().setFromObject(ch.root);
+console.error(`STATS tris=${Math.round(tris)} ${perS} heightProp=${ch.height} measuredTop=${((box.max.y - ch.root.position.y) / ch.root.scale.y).toFixed(3)} bottom=${((box.min.y - ch.root.position.y) / ch.root.scale.y).toFixed(3)}`);
+} catch (e) {}
+window.studioReady = document.fonts.ready;
+</script></body></html>

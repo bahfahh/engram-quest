@@ -1,0 +1,217 @@
+{
+  "teachers": [
+    {
+      "id": "luna",
+      "tier": "pro",
+      "skin": "glossy-owl",
+      "name": {
+        "zh-tw": "Luna",
+        "en": "Luna"
+      },
+      "title": {
+        "zh-tw": "融會貫通",
+        "en": "Connect the dots"
+      },
+      "effect": {
+        "zh-tw": "從你已經懂的講起，新觀念自然接上去：用你知道的推出新的，或拿來對比。",
+        "en": "Starts from what you already understand; the new idea grows out of it or is set against it."
+      },
+      "fitsIf": {
+        "zh-tw": "你學過不少，想讓新東西跟已經會的串起來",
+        "en": "You have learned a lot and want new ideas to connect to it"
+      },
+      "sample": {
+        "zh-tw": "容器你已經會了，程式連同執行環境，打包成一個單位。Kubernetes 只往上多走一步。Docker 管一個容器，Kubernetes 管一整群。"
+      }
+    },
+    {
+      "id": "nico",
+      "tier": "free",
+      "default": true,
+      "skin": "glossy-bot",
+      "name": {
+        "zh-tw": "Nico",
+        "en": "Nico"
+      },
+      "title": {
+        "zh-tw": "實戰演練",
+        "en": "Learn by doing"
+      },
+      "effect": {
+        "zh-tw": "把你直接放進真實情境：真的介面、真的數字、真實案例，在畫面上做一次給你看，再換你。",
+        "en": "Drops you into a real situation with the real interface and numbers, shows it once, then hands it to you."
+      },
+      "fitsIf": {
+        "zh-tw": "你想看完就會用，不想只聽理論",
+        "en": "You want to use it right after watching"
+      },
+      "sample": {
+        "zh-tw": "明天的流量是平常的十倍。打開設定檔，replicas 從 2 改成 20。存檔。多出來的十八個容器，系統自動補上。"
+      }
+    },
+    {
+      "id": "iris",
+      "tier": "pro",
+      "skin": "glass",
+      "name": {
+        "zh-tw": "Iris",
+        "en": "Iris"
+      },
+      "title": {
+        "zh-tw": "多維思考",
+        "en": "Think in dimensions"
+      },
+      "effect": {
+        "zh-tw": "先用最直接的方式把概念講通，懂了才開始問。每段只問一題，每題換一個角度。",
+        "en": "Makes the idea clear first, then asks one question per segment, each from a different angle."
+      },
+      "fitsIf": {
+        "zh-tw": "你不只想知道是什麼，還想知道什麼時候不成立",
+        "en": "You also want to know when it stops being true"
+      },
+      "sample": {
+        "zh-tw": "Kubernetes 只做一件事，你宣告要幾個，它就維持幾個。掛一個，補一個。那如果它掛掉，是因為程式本身有 bug 呢？"
+      }
+    },
+    {
+      "id": "alden",
+      "tier": "pro",
+      "skin": "porcelain",
+      "name": {
+        "zh-tw": "Alden",
+        "en": "Alden"
+      },
+      "title": {
+        "zh-tw": "耐心引導",
+        "en": "Patient guide"
+      },
+      "effect": {
+        "zh-tw": "先問你怎麼想，給一個提示讓你自己接上，懂了再往下走；答錯也沒關係。",
+        "en": "Asks what you think first, gives one hint so you take the step yourself, then moves on; a wrong guess is fine."
+      },
+      "fitsIf": {
+        "zh-tw": "你怕跟不上，希望有人一步一步陪你想",
+        "en": "You worry about falling behind and want someone to think it through with you"
+      },
+      "sample": {
+        "zh-tw": "你可能會想，伺服器半夜掛了，總得有人爬起來重開吧。這個想法很合理，以前大家也真的是這樣做。那如果你事先寫好，隨時都要有三台在跑呢？對，掛了一台，Kubernetes 就自己再補一台。所以你可以安心睡覺，這大概是它最受歡迎的功能。"
+      }
+    },
+    {
+      "id": "nova",
+      "tier": "pro",
+      "skin": "glossy-nova",
+      "name": {
+        "zh-tw": "Nova",
+        "en": "Nova"
+      },
+      "title": {
+        "zh-tw": "直白熱血",
+        "en": "Straight talk"
+      },
+      "effect": {
+        "zh-tw": "一開口就把你丟進場景，節奏快、用字準，最後一句點出這件事對你的意義。",
+        "en": "Pulls you in with a question, fast and plain, and shows right away why it matters to you."
+      },
+      "fitsIf": {
+        "zh-tw": "你容易分心，需要先知道學這個幹嘛",
+        "en": "You need to know why before you can focus"
+      },
+      "sample": {
+        "zh-tw": "凌晨三點伺服器掛了。以前你得爬起來重開。現在 Kubernetes 會先發現，再自己補上。你的工作從救火變成定規則。"
+      }
+    },
+    {
+      "id": "bao",
+      "tier": "pro",
+      "hidden": true,
+      "skin": "clay-snackshop",
+      "name": {
+        "zh-tw": "包老師",
+        "en": "Professor Bao"
+      },
+      "title": {
+        "zh-tw": "生活比喻",
+        "en": "Everyday analogies"
+      },
+      "effect": {
+        "zh-tw": "每個機制先對一個生活裡的比喻，再把比喻和概念對起來。",
+        "en": "Every mechanism first gets an everyday analogy, then the analogy is mapped back."
+      },
+      "fitsIf": {
+        "zh-tw": "你第一次接觸這個主題，怕太艱深",
+        "en": "You are new to the topic"
+      },
+      "sample": {
+        "zh-tw": "把它想成夜市的管理員。哪一攤收了，他立刻補上一攤。客人看到的永遠是滿的。"
+      }
+    }
+  ],
+  "skins": [
+    {
+      "id": "clay-snackshop",
+      "status": "approved"
+    },
+    {
+      "id": "glossy-owl",
+      "status": "trial"
+    },
+    {
+      "id": "glossy-bot",
+      "status": "trial",
+      "variants": [
+        {
+          "id": "classic",
+          "name": {
+            "zh-tw": "經典藍金",
+            "en": "Navy & gold"
+          },
+          "swatch": [
+            "#1d2844",
+            "#c9a35e",
+            "#ec7f10"
+          ],
+          "portrait": "assets/portraits/nico.jpg"
+        },
+        {
+          "id": "wine",
+          "name": {
+            "zh-tw": "酒紅",
+            "en": "Wine"
+          },
+          "swatch": [
+            "#7a1838",
+            "#d8b26a",
+            "#e39a00"
+          ],
+          "portrait": "assets/portraits/nico-wine.jpg"
+        },
+        {
+          "id": "grape",
+          "name": {
+            "zh-tw": "葡萄紫",
+            "en": "Grape"
+          },
+          "swatch": [
+            "#4b2a6e",
+            "#d6b46c",
+            "#e8628f"
+          ],
+          "portrait": "assets/portraits/nico-grape.jpg"
+        }
+      ]
+    },
+    {
+      "id": "glossy-nova",
+      "status": "trial"
+    },
+    {
+      "id": "glass",
+      "status": "trial"
+    },
+    {
+      "id": "porcelain",
+      "status": "approved"
+    }
+  ]
+}

@@ -2,12 +2,14 @@
 const I = require("obsidian");
 const { t: c } = require("../i18n");
 const { SkillsInstallModal: de, isInstallerAvailable: me } = require("./skills");
+const { renderLicenseSettings } = require("../license/settings");
 
 var pe = class extends I.PluginSettingTab {
   constructor(e, t) { super(e, t); this.plugin = t; }
   display() {
     let { containerEl: e } = this, t = this.plugin.settings;
     e.empty();
+    renderLicenseSettings(e, this.plugin, () => this.display());
 
     // Support row — top of settings tab
     const _support = e.createEl("div", { attr: { style: "display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;margin:0 0 18px;" } });

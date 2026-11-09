@@ -115,12 +115,12 @@ Tell the AI what you want to learn — it builds a course of interactive HTML le
 
 ### 🎬 Video Academy — One Sentence, Short Video Lessons (preview)
 
-Say what you want to learn or review — "my coding workflow", "SEO" — and the AI turns it into short video lessons (about 1–3 minutes each, sized to what each one teaches).
+Say what you want to learn or review — "my coding workflow", "SEO" — and the AI turns it into short video lessons, each sized to what it teaches.
 
 - **Just say the goal** — "build a website", "learn functions"; add detail if you like. The AI decides which of your notes to use (drop notes in to narrow it down, or choose *Don't use my notes*), whether it's a lesson or a review, and how many videos to make
 - **Shelf → player** — browse series as cards (filter by watching / not started / finished / to be generated, by tags the AI assigns such as "Software", and search once you have many), open one to watch with a playlist; your position is saved so you resume where you stopped
-- **Style per series** — each series can pin a video style, or leave it to the AI (default); series still waiting to be generated can be edited. Editorial and Isometric blueprint are free; Pro adds more tested styles and styles of your own
-- **Set it once** — quality (*High quality*, or *Space saver* that keeps each video under 5 MB for Obsidian Sync Standard), preferred style, narration language and subtitles live in *Video settings*. Every video follows the same teaching process, free or Pro
+- **Choose your teacher** — each teacher teaches in a different way, and you can see and hear them first. Nico is free; the other teachers and giving one series its own teacher need Pro. Series still waiting to be made can be edited
+- **Set it once** — teacher, quality (*High quality* is 1080p, *Space saver* is 720p), narration language, voice engine, subtitles and review cards live in *Video settings*. Every video is shot in the Engram studio, and the AI picks a light or dark set to suit the content
 - Videos live in `engram-quest/videos/` inside your vault. On desktop, the folder button next to *Mark as watched* shows the video file in your system file explorer. To watch on your phone, make sure your sync tool also syncs the mp4 files there — don't exclude them (with git, every video stays in the history; that is your trade-off to make)
 
 > Preview: the Hub tab, player and settings are in place; the video-generating skill ships separately.
@@ -360,12 +360,12 @@ Anki 解決「何時複習」。EngramQuest 解決「如何真正記住」 — �
 
 ### 🎬 影片學院 — 一句話，做成教學短片（預覽）
 
-說一句想學或想複習什麼，例如「我的 coding 流程」「SEO」，AI 就把它做成教學短片，每支約 1–3 分鐘，依要教的內容決定。
+說一句想學或想複習什麼，例如「我的 coding 流程」「SEO」，AI 就把它做成教學短片，長度依要教的內容決定。
 
 - **說目標就好** — 例如「架設網站」「學會函數」，想補充再補充。要用哪些筆記、是教學還是複習、拆成幾支，都由 AI 判斷（也可以拖入筆記指定範圍，或選「不使用筆記」）
 - **書架 → 播放器** — 系列以卡片呈現（可篩選觀看中／未開始／已看完／待生成、依 AI 分好的標籤如「軟體」篩選，系列多了可搜尋），點進去邊看邊切換播放清單；看到哪裡都會記住，下次從上次的位置續播
-- **每個系列可選風格** — 可自己指定影片風格，或交給 AI 判斷（預設）；還在待生成的系列可以編輯。極簡編輯、等角藍圖免費；Pro 多了更多實測過的風格，也能建立自己的風格
-- **設一次就好** — 畫質（高畫質，或每支壓在 5 MB 內、適合 Obsidian Sync 基本方案的「省空間」）、偏好風格、旁白語言、字幕都在「影片設定」。不論免費或 Pro，每支影片都走同一套教學流程
+- **選你的老師** — 每位老師教法不同，可以先看、先聽。Nico 免費；其他老師和替單一系列指定老師需要 Pro。還在待製作的系列可以編輯
+- **設一次就好** — 老師、畫質（高畫質 1080p，省空間 720p）、旁白語言、配音引擎、字幕、複習卡都在「影片設定」。畫面都在 Engram 攝影棚，AI 依內容選明棚或暗棚
 - 影片存在 vault 的 `engram-quest/videos/`。桌面版可按「標記已看完」旁的資料夾按鈕，直接在系統檔案總管中找到影片檔。想在手機上看，同步工具也要同步這裡的 mp4，不要排除（用 git 的話，每支影片都會留在 git 歷史裡，這個取捨由你決定）
 
 > 預覽版：Hub 分頁、播放器與設定已完成；生成影片的 skill 會另外推出。
@@ -493,3 +493,34 @@ EngramQuest 建立在認知科學的四根支柱上：
 *Built for lifelong learners. Made with ❤️*
 
 </div>
+
+## Pro: four ways to learn
+
+**US$11.99 one-time purchase. Future Pro feature updates included.** All existing free features stay available without upgrading. Applicable taxes appear at checkout.
+
+| Pro feature | What it adds | Availability |
+| --- | --- | --- |
+| Memory anchors · Synapse | Connect review cards to related knowledge you have mastered | Available; the skill prepares matching anchors |
+| Deep dive | Queue difficult cards, generate illustrated explanations with the skill, and read them in the Hub | Available |
+| Time-boxed review | Choose 5 / 10 / 15 minutes to review priority cards | Available |
+| More teachers and recall films | Teachers who each teach in their own way, a teacher per series, and recall films made from your notes | In research; films are made with Claude Code |
+
+Video Academy management, Nico, and watching any video, including recall films you already have, remain free. Open **Pro** in the Hub header or **Settings → EngramQuest → Explore Pro** for the illustrated overview. It opens only when selected; no automatic upgrade popup. Separate light and dark illustrations follow the Obsidian theme. Copy your key from Polar and activate it in Settings, then reopen the Hub.
+
+
+**Disclosures.** Pro is an optional one-time payment (US$11.99, through Polar). The plugin uses the network for two things: license validation with Polar (api.polar.sh; sandbox-api.polar.sh for local tests), which sends the key and organization/benefit identifiers and never note content, and downloading the video assets from this project's GitHub Releases when you install the video skills. Hosted checkout and the customer portal are operated by Polar. The key and a bounded success cache stay in plugin data.json; a successful validation allows up to fourteen days offline, and plugin updates trigger an online recheck. Removing the local license preserves learning data. Installing skills writes files to your vault's `.claude/skills/` (and the matching folders for other AI tools). This development build uses sandbox and accepts only test keys.
+
+### Pro：四種學習方式
+
+**US$11.99 一次買斷，後續 Pro 功能更新皆包含。** 不升級，也能繼續正常使用既有免費功能。適用稅額於結帳顯示。
+
+| Pro 功能 | 提供什麼 | 狀態 |
+| --- | --- | --- |
+| 記憶錨點 · Synapse | 複習時連結已掌握的相關卡片，幫助回想 | 已提供；需先由 skill 配對錨點 |
+| 深入解析 | 難卡加入佇列，由 skill 生成白話圖解，再回到 Hub 閱讀 | 已提供 |
+| 限時複習 | 選擇 5／10／15 分鐘，優先挑出需要複習的卡片 | 已提供 |
+| 更多老師與情境回顧片 | 教法各不相同的老師、替系列指定老師，以及把筆記做成回顧片 | 研究中；影片用 Claude Code 製作 |
+
+影片學院的管理、Nico，以及觀看任何影片（包括已經做好的回顧片）都維持免費。從 **Hub 頂部 Pro** 或 **設定 → EngramQuest → 看看 Pro** 開啟圖解介紹，不會自動彈出；淺色、深色使用獨立圖片，跟隨 Obsidian 主題。付款後從 Polar 複製 key，在設定啟用，再重新開啟 Hub。
+
+**揭露事項。** Pro 是選購的一次性付款（US$11.99，透過 Polar）。插件只在兩件事用到網路：向 Polar 驗證授權（只傳送 key 與組織／Benefit 識別碼，不傳送筆記內容），以及安裝影片 skill 時從本專案的 GitHub Releases 下載影片素材。key 與成功快取存於 plugin data.json；成功驗證後最多有 14 天離線緩衝，更新後重新連線驗證。移除本機授權保留學習資料。安裝 skill 會寫入 vault 的 `.claude/skills/`（以及其他 AI 工具對應的資料夾）。目前開發版本使用 sandbox，只接受測試 key。

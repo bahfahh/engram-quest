@@ -1,0 +1,67 @@
+/* 圖解重點（keypoint.js）。<link rel="stylesheet" href="/lib/kit/keypoint.css">，放在 kit.css 後面。 */
+.kp-wash { position: absolute; inset: 0; background: rgba(244,242,238,.80); z-index: 52; visibility: hidden; pointer-events: none; }
+.kp-card { position: absolute; left: 50%; top: 112px; width: 1640px; height: 800px; margin-left: -820px; box-sizing: border-box;
+  background: #fff; border-radius: 40px; z-index: 53; visibility: hidden;
+  box-shadow: 0 2px 6px rgba(28,30,33,.05), 0 30px 80px rgba(28,30,33,.16);
+  display: flex; flex-direction: column; align-items: center; padding: 44px 60px 52px; font-family: var(--font); color: var(--ink); }
+.kp-head { display: flex; align-items: center; gap: 22px; height: 56px; flex: none; }
+.kp-pill { font: 700 30px/1 var(--font-tc); letter-spacing: .14em; color: #1C1E21; background: #EFF0F2; border-radius: 999px; padding: 13px 26px 13px 30px; white-space: nowrap; }
+.kp-dots { display: flex; gap: 10px; align-items: center; }
+.kp-dots i { display: block; width: 14px; height: 14px; border-radius: 7px; background: #D9DBDF; }
+.kp-dots i.done { background: #8A8D91; }
+.kp-dots i.cur { width: 34px; background: #1C1E21; }
+.kp-sub { font: 500 30px var(--font-tc); color: #65676B; margin-top: 14px; flex: none; white-space: nowrap; }
+.kp-figwrap { flex: 1; width: 100%; display: flex; align-items: center; justify-content: center; min-height: 0; }
+.kp-fig { position: relative; flex: none; }
+.kp-fig > svg.kp-lines { position: absolute; left: 0; top: 0; overflow: visible; pointer-events: none; z-index: 1; }
+.kp-key { font: 700 76px/1.15 var(--font-tc); letter-spacing: .03em; color: #1C1E21; white-space: nowrap; flex: none; text-align: center; }
+/* English (opts.lang 'en' or K.setLang('en')) */
+.kp-en .kp-pill { font: 700 27px/1 Inter, var(--font-tc); letter-spacing: .08em; text-transform: uppercase; }
+.kp-en .kp-sub { font-family: Inter, var(--font-tc); }
+.kp-en .kp-key { font-family: Inter, var(--font-tc); letter-spacing: -.01em; }
+.kp-en .kp-glabel { letter-spacing: .06em; }
+.kp-key b { font-weight: 700; color: inherit; background-image: linear-gradient(transparent 58%, var(--kp-mark, #FFE27A) 58%, var(--kp-mark, #FFE27A) 92%, transparent 92%);
+  background-repeat: no-repeat; background-size: calc(var(--m, 1) * 100%) 100%; padding: 0 .06em; }
+
+/* figure helpers (positions in figure px; anchor = centre) */
+.kp-at { position: absolute; left: 0; top: 0; transform: translate(-50%, -50%); z-index: 2; }
+.kp-node { display: flex; flex-direction: column; align-items: center; gap: 14px; }
+.kp-tile { width: 128px; height: 128px; border-radius: 34px; display: flex; align-items: center; justify-content: center; background: color-mix(in srgb, var(--c) 13%, white); color: var(--c); }
+.kp-tile.circle { border-radius: 50%; }
+.kp-tile.solid { background: var(--c); color: #fff; }
+.kp-node.s .kp-tile { width: 96px; height: 96px; border-radius: 26px; }
+.kp-node.l .kp-tile { width: 168px; height: 168px; border-radius: 44px; }
+.kp-node .lb { font: 700 36px/1.15 var(--font); color: #1C1E21; white-space: nowrap; text-align: center; }
+.kp-node .sb { font: 500 26px/1.2 var(--font); color: #65676B; white-space: nowrap; text-align: center; margin-top: -6px; }
+.kp-text { font: 700 40px/1.2 var(--font); color: #1C1E21; white-space: nowrap; }
+.kp-glabel { position: absolute; left: 32px; top: 0; transform: translateY(-50%); background: #fff; padding: 2px 14px; font: 700 24px/1.2 var(--font); letter-spacing: .16em; color: var(--c); white-space: nowrap; z-index: 2; }
+.kp-group { position: absolute; z-index: 0; }
+.kp-albl { font: 700 28px/1 var(--font); color: var(--c); background: #fff; border: 3px solid color-mix(in srgb, var(--c) 30%, white); border-radius: 999px; padding: 9px 18px; white-space: nowrap; }
+.kp-badge { width: 64px; height: 64px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: var(--c); color: #fff; font: 800 40px/1 Inter, var(--font-tc); box-shadow: 0 4px 12px rgba(28,30,33,.15); }
+.kp-badge.ghost { background: #fff; color: var(--c); border: 4px solid var(--c); box-sizing: border-box; box-shadow: none; }
+/* mini UI card (e.g. an ad set) */
+.kp-mini { background: #fff; border: 2px solid #E4E6EB; border-radius: 24px; box-shadow: 0 2px 4px rgba(28,30,33,.05), 0 10px 26px rgba(28,30,33,.08); overflow: hidden; }
+.kp-mini .hd { display: flex; align-items: center; gap: 12px; padding: 18px 24px 16px; font: 700 30px/1.1 var(--font); color: #1C1E21; border-bottom: 2px solid #EEF0F2; }
+.kp-mini .hd .k-icon { color: var(--c, #65676B); }
+.kp-mini .row { display: flex; align-items: center; gap: 14px; padding: 0 24px; height: 62px; font: 600 28px/1 var(--font); color: #1C1E21; position: relative; }
+.kp-mini .row + .row { border-top: 1px solid #F0F1F3; }
+.kp-mini .row .k-icon { color: #8A8D91; }
+.kp-mini .row .v { margin-left: auto; color: #65676B; font-weight: 600; white-space: nowrap; }
+.kp-mini .row .l { white-space: nowrap; }
+.kp-mini .row .tint { position: absolute; inset: 0; background: color-mix(in srgb, var(--rc) 14%, white); opacity: var(--k, 1); }
+.kp-mini .row .bar { position: absolute; left: 0; top: 0; bottom: 0; width: 8px; background: var(--rc); opacity: var(--k, 1); }
+.kp-mini .row > *:not(.tint):not(.bar) { position: relative; }
+.kp-mini .row.hot .v, .kp-mini .row.hot .l { color: color-mix(in srgb, var(--rc) 82%, black); }
+.kp-mini .row.hot .k-icon { color: var(--rc); }
+/* two-column compare */
+.kp-cmp { display: flex; align-items: stretch; gap: 0; }
+.kp-col { display: flex; flex-direction: column; align-items: center; gap: 26px; padding: 0 40px; }
+.kp-col { gap: 18px; }
+.kp-col .kp-tile { margin-bottom: 8px; }
+.kp-col .ct { font: 700 44px/1.1 var(--font); color: var(--c); white-space: nowrap; }
+.kp-col .cs { font: 500 28px/1.2 var(--font); color: #65676B; white-space: nowrap; margin-top: -6px; }
+.kp-col .its { display: flex; flex-direction: column; align-items: flex-start; gap: 14px; margin-top: 8px; }
+.kp-col .it { display: flex; align-items: center; gap: 14px; font: 600 32px/1.2 var(--font); color: #1C1E21; white-space: nowrap; }
+.kp-col .it .k-icon { color: var(--c); }
+.kp-vs { align-self: center; flex: none; width: 2px; background: #E4E6EB; position: relative; height: 100%; min-height: 260px; }
+.kp-vs span { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); background: #fff; font: 800 30px/1 Inter; color: #A8ABB0; padding: 10px 0; letter-spacing: .06em; }

@@ -9,6 +9,7 @@ const { saveTagSourceCard, saveInlineCard, deleteTagSourceCard, applyFormatToCar
 const { registerSelectionCopy } = require("../ui/selection-copy");
 const { normalizeMarkdown } = require("../ui/markdown");
 const { addToQueue, readQueue, isQueued } = require("../explainer/data");
+const { addRewatchButton } = require("../videos/rewatch");
 const W_ref = { get locale() { try { return I.moment && I.moment.locale && I.moment.locale(); } catch(e) { return "en"; } } };
 function L(s) { return _getLocale(s, W_ref.locale); }
 
@@ -259,7 +260,7 @@ var Q=class extends I.Modal{
     super(e);
     this.cards=t; this.deckName=r; this.plugin=s;
     this.idx=0; this.hintLevel=0; this.answerShown=false;
-    this.onBack=l||null; this.browseOnly=!!a.browseOnly;
+    this.onBack=l||null; this.browseOnly=!!a.browseOnly; this.noResume=!!a.noResume;
     this._rating_locked=false; // Task 4: lock flag
     this.synapseOpen=false;
     this._synapseStatus=null;
@@ -274,8 +275,7 @@ var Q=class extends I.Modal{
   onOpen(){
     ensureReviewMobilePatch();
     // Save initial progress on open
-    this.plugin.settings._reviewProgress={deck:this.deckName,idx:this.idx};
-    this.plugin.saveData(this.plugin.settings);
+    this._saveResumePoint();
     this._preSessionEvalCtx = buildEvalContext(this.plugin.settings._stats);
     const _isDark=activeDocument.body.classList.contains("theme-dark");const _bgPrimary=_isDark?"#1e1e2e":"#ffffff";const _bgSecondary=_isDark?"#252538":"#f3f4f6";const _textNormal=_isDark?"#e2e8f0":"#1f2937";const _textMuted=_isDark?"#94a3b8":"#6b7280";
     this.modalEl.addClass("lh-hub");
@@ -336,16 +336,24 @@ var Q=class extends I.Modal{
     this.hintLevel=0; this.answerShown=false; this._rating_locked=false;
     this.synapseOpen=false; this._synapseExpandedAnchorIdx=-1;
     // Save progress
+    this._saveResumePoint();
+    this._renderCardContent(this.cards[this.idx]);
+  }
+
+  // The Hub's resume banner names a real deck; a partial session (one video's cards) must neither set nor clear it.
+  _saveResumePoint(){
+    if(this.noResume)return;
     this.plugin.settings._reviewProgress={deck:this.deckName,idx:this.idx};
     this.plugin.saveData(this.plugin.settings);
-    this._renderCardContent(this.cards[this.idx]);
   }
 
   // Task 6: completion screen
   _renderComplete(){
     let t=this.plugin.settings;
-    delete this.plugin.settings._reviewProgress;
-    this.plugin.saveData(this.plugin.settings);
+    if(!this.noResume){
+      delete this.plugin.settings._reviewProgress;
+      this.plugin.saveData(this.plugin.settings);
+    }
 
     const _postCtx = buildEvalContext(this.plugin.settings._stats);
     const _preCtx  = this._preSessionEvalCtx || {};
@@ -620,6 +628,7 @@ var Q=class extends I.Modal{
 
     // Footer buttons
     if(this.answerShown){
+      addRewatchButton(this.contentEl,this.app,t,e);
       if(this.browseOnly){
         let p=this.contentEl.createEl("div",{attr:{class:"lh-browse-row"}});
         p.createEl("button",{text:c(t,"BACK_TO_QUESTION"),attr:{class:"lh-browse-btn"}}).addEventListener("click",()=>{this.answerShown=false;this._renderCardContent(e);});

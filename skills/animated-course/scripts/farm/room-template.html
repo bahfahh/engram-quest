@@ -1,0 +1,166 @@
+<title>__TITLE__</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Layout: the player is the preview pane, the lessons sit in a list beside it; one column on phones. */
+:root {
+  --bg: #eceff3;
+  --surface: #ffffff;
+  --ink: #1c1e21;
+  --muted: #5d6470;
+  --line: #d5dbe3;
+  --meta: #1877f2;
+  --a: #0f9d8f;
+  --b: #f2780c;
+  --screen: #10151c;
+  --font-display: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", system-ui, sans-serif;
+  --font-body: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", system-ui, sans-serif;
+  --font-data: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #12161c; --surface: #1a2028; --ink: #e6e9ee; --muted: #9aa4b2; --line: #2c3540;
+    --meta: #4a9dff; --a: #35c2b3; --b: #ff9a45; --screen: #05080c; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #12161c; --surface: #1a2028; --ink: #e6e9ee; --muted: #9aa4b2; --line: #2c3540;
+  --meta: #4a9dff; --a: #35c2b3; --b: #ff9a45; --screen: #05080c; color-scheme: dark;
+}
+body {
+  background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 15px; line-height: 1.65;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 20px 40px;
+}
+.wrap { max-width: 1240px; margin: 0 auto; display: grid; gap: 18px; }
+header { display: grid; gap: 6px; }
+.eyebrow { font-family: var(--font-data); font-size: 12px; letter-spacing: .08em; color: var(--meta); text-transform: uppercase; }
+h1 { font-family: var(--font-display); font-weight: 900; font-size: clamp(26px, 4vw, 36px); line-height: 1.2; margin: 0; text-wrap: balance; }
+.lede { margin: 0; color: var(--muted); max-width: 66ch; }
+.room { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 18px; align-items: start; }
+@media (max-width: 960px) { .room { grid-template-columns: minmax(0, 1fr); } }
+.stage { display: grid; gap: 14px; min-width: 0; }
+.screen { aspect-ratio: 16 / 9; max-width: 100%; background: var(--screen); border-radius: 10px; overflow: hidden; }
+.screen video { width: 100%; height: 100%; display: block; background: var(--screen); }
+.info { display: grid; gap: 12px; min-width: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px; }
+.info .no { font-family: var(--font-data); font-size: 12px; color: var(--meta); letter-spacing: .06em; }
+.info h2 { font-family: var(--font-display); font-weight: 700; font-size: 22px; line-height: 1.35; margin: 0; text-wrap: balance; }
+.core { margin: 0; color: var(--ink); }
+.core small { display: block; color: var(--muted); font-size: 12px; letter-spacing: .06em; margin-bottom: 2px; }
+.chapters { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.chapters button {
+  display: inline-flex; gap: 8px; align-items: baseline; font: inherit; font-size: 14px; color: inherit;
+  background: transparent; border: 1px solid var(--line); border-radius: 999px; padding: 4px 12px; cursor: pointer;
+}
+.chapters button:hover { border-color: var(--meta); }
+.chapters .t { font-family: var(--font-data); font-size: 12px; color: var(--meta); font-variant-numeric: tabular-nums; }
+.reel { display: grid; gap: 0; margin: 0; padding: 0; list-style: none; min-width: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+.reel li + li { border-top: 1px solid var(--line); }
+.reel button {
+  display: grid; grid-template-columns: 104px minmax(0, 1fr); gap: 12px; align-items: center; width: 100%;
+  text-align: left; font: inherit; color: inherit; background: transparent; border: 0; padding: 10px 12px; cursor: pointer;
+  border-left: 3px solid transparent;
+}
+.reel button:hover { background: color-mix(in srgb, var(--meta) 6%, transparent); }
+.reel button[aria-current="true"] { border-left-color: var(--meta); background: color-mix(in srgb, var(--meta) 10%, transparent); }
+.chapters button:focus-visible, .reel button:focus-visible { outline: 2px solid var(--meta); outline-offset: 2px; }
+.thumb { aspect-ratio: 16 / 9; border-radius: 5px; overflow: hidden; background: var(--screen); }
+.thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.reel .name { font-weight: 500; line-height: 1.4; display: block; font-size: 14px; }
+.reel .sub { color: var(--muted); font-size: 12px; display: block; font-family: var(--font-data); font-variant-numeric: tabular-nums; }
+footer { color: var(--muted); font-size: 13px; display: grid; gap: 4px; }
+footer code { font-family: var(--font-data); font-size: 12px; }
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <span class="eyebrow">__EYEBROW__</span>
+    <h1>__TITLE__</h1>
+    <p class="lede">__LEDE__</p>
+  </header>
+
+  <div class="room">
+    <section class="stage" aria-live="polite">
+      <div class="screen" id="screen"></div>
+      <div class="info" id="info"></div>
+    </section>
+    <ul class="reel" id="reel" aria-label="Films"></ul>
+  </div>
+
+  <footer>__FOOTER__</footer>
+</div>
+
+<script>
+const FILMS = __FILMS__;
+const L = __LABELS__;  // UI labels: {core, why, avoid, chapters, opening}
+
+const $ = (id) => document.getElementById(id);
+const fmt = (s) => { const m = Math.floor(s / 60), r = Math.floor(s % 60); return m + ":" + String(r).padStart(2, "0"); };
+let video = null;
+
+function el(tag, props = {}, ...kids) {
+  const n = document.createElement(tag);
+  for (const [k, v] of Object.entries(props)) {
+    if (k === "class") n.className = v; else if (k === "text") n.textContent = v; else n.setAttribute(k, v);
+  }
+  for (const c of kids) if (c) n.append(c);
+  return n;
+}
+
+function show(id) {
+  const f = FILMS.find((x) => x.id === id) || FILMS[0];
+  const screen = $("screen");
+  screen.replaceChildren();
+  video = el("video", { controls: "", playsinline: "", preload: "metadata", poster: f.poster });
+  video.append(el("source", { src: f.src, type: "video/mp4" }));
+  screen.append(video);
+  // Subtitles ship as .txt (artifact hosting); hand the player a text/vtt blob.
+  const v = video;
+  fetch(f.vtt).then((r) => r.text()).then((txt) => {
+    if (video !== v) return;
+    const tr = el("track", { kind: "subtitles", srclang: f.lang, label: f.sublabel });
+    tr.default = true;
+    tr.src = URL.createObjectURL(new Blob([txt], { type: "text/vtt" }));
+    v.append(tr);
+    tr.addEventListener("load", () => { if (v.textTracks[0]) v.textTracks[0].mode = "showing"; });
+  }).catch(() => {});
+
+  const chapters = el("ul", { class: "chapters", "aria-label": L.chapters });
+  const list = f.chapters[0] && f.chapters[0].t > 0 ? [{ t: 0, label: L.opening }, ...f.chapters] : f.chapters;
+  for (const c of list) {
+    const b = el("button", { type: "button" }, el("span", { class: "t", text: fmt(c.t) }), el("span", { text: c.label }));
+    b.addEventListener("click", () => { if (!video) return; video.currentTime = c.t; video.play().catch(() => {}); });
+    chapters.append(el("li", {}, b));
+  }
+  // replaceChildren() turns null into the text "null": drop the empty optional fields first
+  $("info").replaceChildren(...[
+    el("span", { class: "no", text: f.no + "・" + fmt(f.len) }),
+    el("h2", { text: f.title }),
+    f.core ? el("p", { class: "core" }, el("small", { text: L.core }), f.core) : null,
+    f.why ? el("p", { class: "core" }, el("small", { text: L.why }), f.why) : null,
+    f.avoid ? el("p", { class: "core" }, el("small", { text: L.avoid }), f.avoid) : null,
+    chapters,
+  ].filter(Boolean));
+  document.querySelectorAll(".reel button").forEach((b) => b.setAttribute("aria-current", String(b.dataset.id === f.id)));
+}
+
+function buildReel() {
+  const reel = $("reel");
+  for (const f of FILMS) {
+    const b = el("button", { type: "button", "data-id": f.id },
+      el("span", { class: "thumb" }, el("img", { src: f.poster, alt: "", loading: "lazy" })),
+      el("span", {},
+        el("span", { class: "name", text: f.title }),
+        el("span", { class: "sub", text: f.no + "・" + fmt(f.len) })));
+    b.addEventListener("click", () => { location.hash = f.id; });
+    reel.append(el("li", {}, b));
+  }
+}
+
+buildReel();
+show(location.hash.slice(1));
+window.addEventListener("hashchange", () => show(location.hash.slice(1)));
+</script>

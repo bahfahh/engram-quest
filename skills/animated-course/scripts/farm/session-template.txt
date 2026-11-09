@@ -1,0 +1,28 @@
+Cloud render session — ONE per lesson. Fill in <...>; keep the prompt mechanical.
+
+create_session:
+  source_url      <repo URL>
+  source_revision <working branch that contains <archive-dir>/<id>/src and parts-<id>.json>
+  outcome_branch  <working branch>-render-<id>
+  clone_depth     1
+  model           a fast, inexpensive model is enough (the job is mechanical)
+  title           "Render: <id>"
+  tags            ["animated-course-render"]
+
+prompt:
+This is a mechanical render job for a whole video another session prepared. Make no creative or content changes.
+
+1. In the repo root, run this as a background command (Bash with run_in_background: true, timeout 7200000):
+   bash ".claude/skills/engram-quest-animated-course/scripts/farm/farm.sh" "<archive-dir>" <id> "<archive-dir>/parts-<id>.json" <poster-seconds>
+   It sets up a render studio in /tmp/studio (npm install; headless Chromium is already on this machine), renders every part
+   of the video several at a time, and commits and pushes each finished part by itself. Wait for its completion notification;
+   do not poll with sleep.
+2. If it ends with "INCOMPLETE" or "npm install failed": read the FAILED part's log it names, fix only environment problems
+   (missing package, etc.), and run the same command again (finished parts are skipped). Do not edit scene files, render.cjs
+   or compose.py.
+3. When it prints "ALL DONE", reply with one line: that line and the last pushed commit hash.
+
+Host, afterwards:
+  - STUDIO=<studio> bash land.sh "<archive-dir>" <id> "<archive-dir>/parts-<id>.json" <outcome_branch>   (repeat until nothing is missing)
+  - STUDIO=<studio> python3 joincheck.py <id> "<archive-dir>/parts-<id>.json"
+  - archive_session right away. Delete the render branch only after the user agrees.

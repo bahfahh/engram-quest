@@ -1,0 +1,739 @@
+{
+ "version": 1,
+ "about": "Default teacher registry of the engram-animated-course skill. When the EngramQuest plugin writes engram-quest/videos/cast.json, that file wins; this one is the fallback. Teachers differ only in how each beat is said; the beats themselves (reference/04-skeleton.md) never change. See reference/11-teachers.md. Voice a teacher line by line: one sentence per script.json line, gaps = pace.defaultPause (reference/07-voice-and-language.md §1b); sampleScript is the preview in that form.",
+ "beats": {
+  "hook": {
+   "from-what-you-know": "Open from a concept the learner already knows (found in their notes or review cards), said naturally as shared knowledge (\"Remember containers?\"). Never mention notes, note titles or dates: the notes may be AI-written.",
+   "drop-into-scenario": "Put the learner inside a real situation in second person (\"Tomorrow your site gets 10x traffic\").",
+   "plain-first": "State the lesson's question plainly, no build-up.",
+   "story-opening": "Someone meets a real problem; one or two sentences of story.",
+   "stakes-for-you": "Open on a vivid moment that shows what this saves or costs the learner, in a few words (\"3 a.m., the server is down.\").",
+   "everyday-scene": "A scene from daily life that has the same structure.",
+   "their-question": "Open with the question the learner would really ask, in their own words, and take it seriously (\"You may be wondering ...\"); no stakes, no story, no build-up."
+  },
+  "explain": {
+   "derive-or-contrast": "Derive the new concept from a known one, or set them side by side and name the one difference.",
+   "live-demo-real-ui": "Do it on the real interface with real numbers; the student acts and sees the consequence.",
+   "plain-then-one-dimension": "Make the concept clear first; then let the explanation lead straight into one more angle (cause, boundary, counter-example, cost, another role, scale x10) with a guiding question (\"But if ... what happens?\"). Never announce the step (no \"first, plainly\", no \"now another angle\").",
+   "problem-story": "Problem, attempt, failure, turn; the concept is the turn.",
+   "plain-restate": "Every term is restated in one plain sentence right after it appears.",
+   "analogy-map": "One everyday analogy per mechanism, then map each part back to the real thing.",
+   "hint-then-confirm": "Give one hint (a fact, a picture or a comparison) and let the student take the step; then confirm it in one plain, whole sentence. A half-right step is taken up and completed, never brushed aside. Never announce the method."
+  },
+  "pause": {
+   "recall-first": "Ask the learner to recall the old concept without hints, then connect.",
+   "your-move": "\"Your turn: what do you click next?\"",
+   "socratic-one-dimension": "One Socratic question from one angle, asked as a guide leading the learner on, flowing from the last sentence; label the angle on screen, not in the narration.",
+   "what-would-they-do": "\"If you were them, what would you do next?\"",
+   "what-would-you-do": "\"If this were your shop, what would you do?\"",
+   "in-the-analogy": "Ask the question inside the analogy (\"What happens at the night market?\").",
+   "take-your-time": "One question, then real silence (about 2 s): the student's guess is welcome, a wrong one is met kindly (\"That's how most people see it at first\"), then the answer."
+  },
+  "recap": {
+   "link-to-old-cards": "The recap image shows the new concept linked to the old one; the new card links to the old card.",
+   "next-action": "One action the learner can take tomorrow.",
+   "dimension-map": "The concept seen from the angles used, one small panel each.",
+   "story-ending": "How the story ended; the ending is the concept.",
+   "takeaway": "One plain sentence to keep, plus the next step.",
+   "analogy-match": "Analogy and real thing side by side, parts matched.",
+   "calm-keep": "One plain sentence to keep. At most two light lines of dry humour in the whole lesson, about the subject, never about the learner."
+  }
+ },
+ "teachers": [
+  {
+   "id": "luna",
+   "tier": "pro",
+   "core": "memory",
+   "skin": "glossy-owl",
+   "name": {
+    "zh-tw": "Luna",
+    "en": "Luna"
+   },
+   "say": {
+    "zh-tw": "露娜"
+   },
+   "title": {
+    "zh-tw": "融會貫通",
+    "en": "Connect the dots"
+   },
+   "effect": {
+    "zh-tw": "從你已經懂的講起，新觀念自然接上去：用你知道的推出新的，或拿來對比。",
+    "en": "Starts from what you already understand; the new idea grows out of it or is set against it."
+   },
+   "fitsIf": {
+    "zh-tw": "你學過不少，想讓新東西跟已經會的串起來",
+    "en": "You have learned a lot and want new ideas to connect to it"
+   },
+   "principles": [
+    "prior-knowledge",
+    "elaboration",
+    "comparison",
+    "retrieval"
+   ],
+   "uses": [
+    "vault-notes",
+    "review-cards"
+   ],
+   "fallback": {
+    "hook": "everyday-scene",
+    "explain": "analogy-map"
+   },
+   "beats": {
+    "hook": "from-what-you-know",
+    "explain": "derive-or-contrast",
+    "pause": "recall-first",
+    "recap": "link-to-old-cards"
+   },
+   "register": {
+    "zh-tw": "沉穩、博學、短句",
+    "en": "calm, well-read, short sentences"
+   },
+   "voice": {
+    "zh-tw": {
+     "name": "zh-TW-HsiaoChenNeural",
+     "rate": "-2%",
+     "pitch": "-4Hz"
+    },
+    "en": {
+     "name": "en-US-AriaNeural",
+     "rate": "-4%",
+     "pitch": "+0Hz"
+    },
+    "gemini": {
+     "voice": "Gacrux",
+     "style": "台灣國語口音。沉穩、博學，句子短而清楚，陳述句尾音不上揚。"
+    }
+   },
+   "sample": {
+    "zh-tw": "容器你已經會了，程式連同執行環境，打包成一個單位。Kubernetes 只往上多走一步。Docker 管一個容器，Kubernetes 管一整群。"
+   },
+   "pace": {
+    "defaultPause": 0.18,
+    "rate": "-2%",
+    "pitch": "-4Hz"
+   },
+   "sampleScript": {
+    "zh-tw": [
+     {
+      "text": "容器你已經會了，程式連同執行環境，打包成一個單位。",
+      "pauseAfter": 0.2
+     },
+     {
+      "text": "Kubernetes只往上多走一步。",
+      "sub": "Kubernetes 只往上多走一步。",
+      "pauseAfter": 0.3
+     },
+     {
+      "text": "Docker管一個容器，Kubernetes管一整群。",
+      "sub": "Docker 管一個容器，Kubernetes 管一整群。",
+      "rate": "-6%"
+     }
+    ]
+   }
+  },
+  {
+   "id": "nico",
+   "tier": "free",
+   "default": true,
+   "core": "practice",
+   "skin": "glossy-bot",
+   "name": {
+    "zh-tw": "Nico",
+    "en": "Nico"
+   },
+   "say": {
+    "zh-tw": "尼可"
+   },
+   "title": {
+    "zh-tw": "實戰演練",
+    "en": "Learn by doing"
+   },
+   "effect": {
+    "zh-tw": "把你直接放進真實情境：真的介面、真的數字、真實案例，在畫面上做一次給你看，再換你。",
+    "en": "Drops you into a real situation with the real interface and numbers, shows it once, then hands it to you."
+   },
+   "fitsIf": {
+    "zh-tw": "你想看完就會用，不想只聽理論",
+    "en": "You want to use it right after watching"
+   },
+   "principles": [
+    "directness",
+    "situated-learning",
+    "worked-example",
+    "immersion"
+   ],
+   "uses": [
+    "learner-project"
+   ],
+   "beats": {
+    "hook": "drop-into-scenario",
+    "explain": "live-demo-real-ui",
+    "pause": "your-move",
+    "recap": "next-action"
+   },
+   "register": {
+    "zh-tw": "俐落、行動派",
+    "en": "brisk, hands-on"
+   },
+   "voice": {
+    "zh-tw": {
+     "name": "zh-TW-YunJheNeural",
+     "rate": "+8%",
+     "pitch": "+0Hz"
+    },
+    "en": {
+     "name": "en-US-BrianMultilingualNeural",
+     "rate": "+4%",
+     "pitch": "+0Hz"
+    },
+    "gemini": {
+     "voice": "Iapetus",
+     "style": "台灣國語口音。俐落、行動派，語速偏快，指令清楚。"
+    }
+   },
+   "sample": {
+    "zh-tw": "明天的流量是平常的十倍。打開設定檔，replicas 從 2 改成 20。存檔。多出來的十八個容器，系統自動補上。"
+   },
+   "pace": {
+    "defaultPause": 0.14,
+    "rate": "+8%",
+    "pitch": "+0Hz"
+   },
+   "sampleScript": {
+    "zh-tw": [
+     {
+      "text": "明天的流量是平常的十倍。",
+      "pauseAfter": 0.16
+     },
+     {
+      "text": "打開設定檔，replicas從2改成20。",
+      "sub": "打開設定檔，replicas 從 2 改成 20。",
+      "pauseAfter": 0.12
+     },
+     {
+      "text": "存檔。",
+      "pauseAfter": 0.3
+     },
+     {
+      "text": "多出來的十八個容器，系統自動補上。",
+      "rate": "+2%"
+     }
+    ]
+   }
+  },
+  {
+   "id": "iris",
+   "tier": "pro",
+   "core": "thinking",
+   "skin": "glass",
+   "name": {
+    "zh-tw": "Iris",
+    "en": "Iris"
+   },
+   "say": {
+    "zh-tw": "艾瑞絲"
+   },
+   "title": {
+    "zh-tw": "多維思考",
+    "en": "Think in dimensions"
+   },
+   "effect": {
+    "zh-tw": "先用最直接的方式把概念講通，懂了才開始問。每段只問一題，每題換一個角度。",
+    "en": "Makes the idea clear first, then asks one question per segment, each from a different angle."
+   },
+   "fitsIf": {
+    "zh-tw": "你不只想知道是什麼，還想知道什麼時候不成立",
+    "en": "You also want to know when it stops being true"
+   },
+   "principles": [
+    "elaborative-interrogation",
+    "socratic-questioning",
+    "cognitive-flexibility",
+    "understand-before-challenge"
+   ],
+   "dimensions": [
+    "cause",
+    "boundary",
+    "counter-example",
+    "cost",
+    "another-role",
+    "scale-x10"
+   ],
+   "limits": {
+    "questionsPerSegment": 1,
+    "questionsPerLesson": 3
+   },
+   "beats": {
+    "hook": "plain-first",
+    "explain": "plain-then-one-dimension",
+    "pause": "socratic-one-dimension",
+    "recap": "dimension-map"
+   },
+   "register": {
+    "zh-tw": "冷靜、清楚、溫和地好奇",
+    "en": "calm, clear, gently curious"
+   },
+   "voice": {
+    "zh-tw": {
+     "name": "zh-TW-HsiaoChenNeural",
+     "rate": "+2%",
+     "pitch": "-2Hz"
+    },
+    "en": {
+     "name": "en-US-JennyNeural",
+     "rate": "+0%",
+     "pitch": "+0Hz"
+    },
+    "gemini": {
+     "voice": "Erinome",
+     "style": "台灣國語口音。冷靜、清楚，提問時溫和地引導，不宣布步驟。"
+    }
+   },
+   "sample": {
+    "zh-tw": "Kubernetes 只做一件事，你宣告要幾個，它就維持幾個。掛一個，補一個。那如果它掛掉，是因為程式本身有 bug 呢？"
+   },
+   "pace": {
+    "defaultPause": 0.16,
+    "rate": "+2%",
+    "pitch": "-2Hz"
+   },
+   "sampleScript": {
+    "zh-tw": [
+     {
+      "text": "Kubernetes只做一件事，你宣告要幾個，它就維持幾個。",
+      "sub": "Kubernetes 只做一件事，你宣告要幾個，它就維持幾個。",
+      "pauseAfter": 0.14
+     },
+     {
+      "text": "掛一個，補一個。",
+      "pauseAfter": 0.3
+     },
+     {
+      "text": "那如果它掛掉，是因為程式本身有bug呢？",
+      "sub": "那如果它掛掉，是因為程式本身有 bug 呢？",
+      "rate": "-4%",
+      "pitch": "+2Hz"
+     }
+    ]
+   }
+  },
+  {
+   "id": "alden",
+   "tier": "pro",
+   "skin": "porcelain",
+   "name": {
+    "zh-tw": "Alden",
+    "en": "Alden"
+   },
+   "say": {
+    "zh-tw": "奧登"
+   },
+   "title": {
+    "zh-tw": "耐心引導",
+    "en": "Patient guide"
+   },
+   "effect": {
+    "zh-tw": "先問你怎麼想，給一個提示讓你自己接上，懂了再往下走；答錯也沒關係。",
+    "en": "Asks what you think first, gives one hint so you take the step yourself, then moves on; a wrong guess is fine."
+   },
+   "fitsIf": {
+    "zh-tw": "你怕跟不上，希望有人一步一步陪你想",
+    "en": "You worry about falling behind and want someone to think it through with you"
+   },
+   "principles": [
+    "scaffolding",
+    "guided-discovery",
+    "generation",
+    "psychological-safety"
+   ],
+   "beats": {
+    "hook": "their-question",
+    "explain": "hint-then-confirm",
+    "pause": "take-your-time",
+    "recap": "calm-keep"
+   },
+   "register": {
+    "zh-tw": "從容、溫和；知道很多但不急著表現；句子完整、不趕；學生答錯先接住再補正；偶爾一句淡淡的幽默（一課最多兩句）",
+    "en": "calm and warm; knows a lot and does not show off; whole sentences, never rushed; takes up a wrong guess before correcting it; now and then a line of dry humour (two per lesson at most)"
+   },
+   "voice": {
+    "zh-tw": {
+     "name": "fr-FR-VivienneMultilingualNeural",
+     "rate": "-6%",
+     "pitch": "+0Hz"
+    },
+    "en": {
+     "name": "en-US-MichelleNeural",
+     "rate": "-4%",
+     "pitch": "+0Hz"
+    },
+    "gemini": {
+     "voice": "Sulafat",
+     "style": "台灣國語口音。溫暖、有學問的引導者，從容、帶一點笑意，不急，陳述句尾音不上揚。"
+    }
+   },
+   "sample": {
+    "zh-tw": "你可能會想，伺服器半夜掛了，總得有人爬起來重開吧。這個想法很合理，以前大家也真的是這樣做。那如果你事先寫好，隨時都要有三台在跑呢？對，掛了一台，Kubernetes 就自己再補一台。所以你可以安心睡覺，這大概是它最受歡迎的功能。"
+   },
+   "pace": {
+    "defaultPause": 0.24,
+    "rate": "-6%",
+    "pitch": "+0Hz"
+   },
+   "sampleScript": {
+    "zh-tw": [
+     {
+      "text": "你可能會想，伺服器半夜掛了，總得有人爬起來重開吧。",
+      "pauseAfter": 0.3
+     },
+     {
+      "text": "這個想法很合理，以前大家也真的是這樣做。",
+      "pauseAfter": 0.35
+     },
+     {
+      "text": "那如果你事先寫好，隨時都要有三台在跑呢？",
+      "pauseAfter": 1.6
+     },
+     {
+      "text": "對，掛了一台，Kubernetes就自己再補一台。",
+      "sub": "對，掛了一台，Kubernetes 就自己再補一台。",
+      "pauseAfter": 0.45
+     },
+     {
+      "text": "所以你可以安心睡覺，這大概是它最受歡迎的功能。",
+      "rate": "-8%"
+     }
+    ]
+   },
+   "voiceNote": {
+    "zh-tw": "8 個候選中選了 Vivienne（多語聲音念中文，不是台灣口音；例外於「中文只用台灣聲音」）。"
+   }
+  },
+  {
+   "id": "nova",
+   "tier": "pro",
+   "skin": "glossy-nova",
+   "name": {
+    "zh-tw": "Nova",
+    "en": "Nova"
+   },
+   "say": {
+    "zh-tw": "諾娃"
+   },
+   "title": {
+    "zh-tw": "直白熱血",
+    "en": "Straight talk"
+   },
+   "effect": {
+    "zh-tw": "一開口就把你丟進場景，節奏快、用字準，最後一句點出這件事對你的意義。",
+    "en": "Pulls you in with a question, fast and plain, and shows right away why it matters to you."
+   },
+   "fitsIf": {
+    "zh-tw": "你容易分心，需要先知道學這個幹嘛",
+    "en": "You need to know why before you can focus"
+   },
+   "principles": [
+    "utility-value",
+    "motivation"
+   ],
+   "beats": {
+    "hook": "stakes-for-you",
+    "explain": "plain-restate",
+    "pause": "what-would-you-do",
+    "recap": "takeaway"
+   },
+   "register": {
+    "zh-tw": "快、有衝勁、用字精準；短句、場景開場、最後一句點出重點",
+    "en": "quick and punchy, precise; short lines, open on a scene, land the point last"
+   },
+   "voice": {
+    "zh-tw": {
+     "name": "zh-TW-HsiaoChenNeural",
+     "rate": "-5%",
+     "pitch": "+0Hz"
+    },
+    "en": {
+     "name": "en-US-EmmaMultilingualNeural",
+     "rate": "+8%",
+     "pitch": "+0Hz"
+    },
+    "gemini": {
+     "voice": "Laomedeia",
+     "style": "台灣國語口音。快、有衝勁、直白，像補教名師，陳述句尾音不上揚。"
+    }
+   },
+   "sample": {
+    "zh-tw": "凌晨三點伺服器掛了。以前你得爬起來重開。現在 Kubernetes 會先發現，再自己補上。你的工作從救火變成定規則。"
+   },
+   "pace": {
+    "defaultPause": 0.1,
+    "rate": "-5%",
+    "pitch": "+0Hz"
+   },
+   "sampleScript": {
+    "zh-tw": [
+     {
+      "text": "凌晨三點伺服器掛了。",
+      "pauseAfter": 0.12
+     },
+     {
+      "text": "以前你得爬起來重開。",
+      "pauseAfter": 0.12
+     },
+     {
+      "text": "現在Kubernetes會先發現，再自己補上。",
+      "sub": "現在 Kubernetes 會先發現，再自己補上。",
+      "pauseAfter": 0.3
+     },
+     {
+      "text": "你的工作從救火變成定規則。",
+      "rate": "-9%"
+     }
+    ]
+   }
+  },
+  {
+   "id": "bao",
+   "hidden": true,
+   "tier": "pro",
+   "skin": "clay-snackshop",
+   "name": {
+    "zh-tw": "包老師",
+    "en": "Professor Bao"
+   },
+   "say": {
+    "zh-tw": "包老師"
+   },
+   "title": {
+    "zh-tw": "生活比喻",
+    "en": "Everyday analogies"
+   },
+   "effect": {
+    "zh-tw": "每個機制先對一個生活裡的比喻，再把比喻和概念對起來。",
+    "en": "Every mechanism first gets an everyday analogy, then the analogy is mapped back."
+   },
+   "fitsIf": {
+    "zh-tw": "你第一次接觸這個主題，怕太艱深",
+    "en": "You are new to the topic"
+   },
+   "principles": [
+    "analogy",
+    "prior-knowledge-everyday"
+   ],
+   "beats": {
+    "hook": "everyday-scene",
+    "explain": "analogy-map",
+    "pause": "in-the-analogy",
+    "recap": "analogy-match"
+   },
+   "register": {
+    "zh-tw": "親切、溫暖",
+    "en": "friendly, warm"
+   },
+   "voice": {
+    "zh-tw": {
+     "name": "zh-TW-YunJheNeural",
+     "rate": "+4%",
+     "pitch": "+2Hz"
+    },
+    "en": {
+     "name": "en-US-AndrewMultilingualNeural",
+     "rate": "+0%",
+     "pitch": "+0Hz"
+    },
+    "gemini": {
+     "voice": "Achird",
+     "style": "台灣國語口音。親切、溫暖，像在跟朋友解釋。"
+    }
+   },
+   "sample": {
+    "zh-tw": "把它想成夜市的管理員。哪一攤收了，他立刻補上一攤。客人看到的永遠是滿的。"
+   },
+   "pace": {
+    "defaultPause": 0.18,
+    "rate": "+4%",
+    "pitch": "+2Hz"
+   },
+   "sampleScript": {
+    "zh-tw": [
+     {
+      "text": "把它想成夜市的管理員。",
+      "pauseAfter": 0.16
+     },
+     {
+      "text": "哪一攤收了，他立刻補上一攤。",
+      "pauseAfter": 0.3
+     },
+     {
+      "text": "客人看到的永遠是滿的。",
+      "rate": "-2%"
+     }
+    ]
+   }
+  }
+ ],
+ "skins": [
+  {
+   "id": "clay-snackshop",
+   "kind": "3d",
+   "file": "/lib/classroom/cast.js",
+   "contract": "classroom",
+   "name": {
+    "zh-tw": "黏土小吃店"
+   },
+   "status": "approved",
+   "look": {
+    "zh-tw": "黏土小籠包老師戴紅領結；學生芋圓（紫色芋頭）",
+    "en": "Clay soup-dumpling teacher with a red bow tie; taro student 芋圓"
+   },
+   "portrait": "assets/portraits/bao.jpg"
+  },
+  {
+   "id": "glossy-owl",
+   "kind": "3d",
+   "file": "/lib/cast/skins/glossy-owl.js",
+   "name": {
+    "zh-tw": "貓頭鷹"
+   },
+   "status": "trial",
+   "version": 2,
+   "updated": "2026-11-02",
+   "look": {
+    "zh-tw": "暖棕貓頭鷹戴紫框眼鏡、拿鉛筆、胸前書本徽章；學生小兔；化身青色螢火蟲",
+    "en": "Warm brown owl with purple glasses, a pencil and a book emblem; bunny student; teal firefly embodiment"
+   },
+   "portrait": "assets/portraits/luna.jpg"
+  },
+  {
+   "id": "glossy-bot",
+   "kind": "3d",
+   "file": "/lib/cast/skins/glossy-bot.js",
+   "name": {
+    "zh-tw": "白色機器人"
+   },
+   "status": "trial",
+   "version": 2,
+   "updated": "2026-11-02",
+   "design": "assets/cast-designs/glossy-bot.jpg",
+   "look": {
+    "zh-tw": "白色大頭機器人，深藍金邊背心、藍光耳環、教鞭和平板；學生芋圓矮圓、橘耳罩和橘書包；燈號：藍＝想、綠＝懂了、橘紅＝疑問",
+    "en": "Big-headed white robot in a navy vest with gold trim, blue ear rings, pointer and tablet; student 芋圓 shorter and rounder with orange ear cups and backpack; lamp blue = think, green = aha, orange-red = doubt"
+   },
+   "portrait": "assets/portraits/nico.jpg",
+   "variants": [
+    {
+     "id": "classic",
+     "name": {
+      "zh-tw": "經典藍金",
+      "en": "Navy & gold"
+     },
+     "swatch": [
+      "#1d2844",
+      "#c9a35e",
+      "#ec7f10"
+     ],
+     "portrait": "assets/portraits/nico.jpg"
+    },
+    {
+     "id": "wine",
+     "name": {
+      "zh-tw": "酒紅",
+      "en": "Wine"
+     },
+     "swatch": [
+      "#7a1838",
+      "#d8b26a",
+      "#e39a00"
+     ],
+     "portrait": "assets/portraits/nico-wine.jpg"
+    },
+    {
+     "id": "grape",
+     "name": {
+      "zh-tw": "葡萄紫",
+      "en": "Grape"
+     },
+     "swatch": [
+      "#4b2a6e",
+      "#d6b46c",
+      "#e8628f"
+     ],
+     "portrait": "assets/portraits/nico-grape.jpg"
+    }
+   ]
+  },
+  {
+   "id": "glossy-nova",
+   "kind": "3d",
+   "file": "/lib/cast/skins/glossy-nova.js",
+   "name": {
+    "zh-tw": "星星機器人"
+   },
+   "status": "trial",
+   "version": 1,
+   "updated": "2026-11-03",
+   "design": "assets/cast-designs/nova.jpg",
+   "look": {
+    "zh-tw": "珍珠白蛋形機器人，淡紫和粉紅色塊、大黑面罩配淡紫邊、青色自信瞇眼、頭頂桃紅四角星、發光教鞭；學生是黃色邊框的圓機器人、兩顆芽燈、拿筆記本；化身是有臉的桃紅星星；星星和肚子燈：想＝藍、懂了＝綠＋眨眼比讚、疑問＝橘紅＋「?」",
+    "en": "Pearl-white gumdrop robot with lilac and pink panels, a big dark visor with a lilac rim, confident cyan eyes, a magenta four-point star on top and a glowing wand; student a rounder robot with a yellow rim, two bud lights and a notebook; embodiment a magenta star with a face; star and belly slot: think blue, aha green + wink and thumbs-up, doubt orange-red + \"?\""
+   },
+   "portrait": "assets/portraits/nova.jpg"
+  },
+  {
+   "id": "glass",
+   "kind": "3d",
+   "file": "/lib/cast/skins/glass.js",
+   "name": {
+    "zh-tw": "玻璃"
+   },
+   "status": "trial",
+   "version": 3,
+   "updated": "2026-11-02",
+   "design": "assets/cast-designs/glass-ink.jpg",
+   "look": {
+    "zh-tw": "冰藍玻璃機器人，黑色面罩、青光眼睛、體內軌道核心；學生淡紫玻璃球；化身薄荷水晶；核心：想＝藍色轉快、懂了＝金光、疑問＝暗閃",
+    "en": "Ice-blue glass robot with a black visor, cyan eyes and an orbital core; lilac glass-ball student; mint crystal embodiment; core: think = blue spinning faster, aha = gold pulse, doubt = dim flicker"
+   },
+   "portrait": "assets/portraits/iris.jpg"
+  },
+  {
+   "id": "porcelain",
+   "kind": "3d",
+   "file": "/lib/cast/skins/porcelain.js",
+   "name": {
+    "zh-tw": "書頁精靈"
+   },
+   "status": "approved",
+   "version": 3,
+   "updated": "2026-11-04",
+   "design": "assets/cast-designs/porcelain.jpg",
+   "look": {
+    "zh-tw": "老師是深藍書頁精靈：尖頂兜帽像書頁一層層包住發暖光的臉（杏仁形琥珀色眼睛、細眉、淺笑，偶爾眼裡閃光）、青綠內襯和金色滾邊、鼠尾草青綠斜帶、胸口透出暖光（＝狀態燈）、鐘形袖和發光的手，指東西時掌心朝上遞過去；化身是小小的白金瓷導師機器人（深藍面罩、暖金眼、鼠尾草綠圍巾、霧金底座、胸前寶石燈）；學生是戴杏橘針織帽的圓滾滾小白瓷機器人（帽頂毛球是燈）、抱筆記本；想＝藍、懂了＝綠（老師瞇眼笑）、疑問＝橘紅＋「?」",
+    "en": "Teacher: a deep-blue book-page spirit — a pointed hood folded like pages round a warm glowing face (amber almond eyes, thin brows, a small smile, an occasional twinkle), teal lining and gold piping, a teal sash, warm light at the chest (the state light), bell sleeves and glowing hands; points with an open palm offered upward. Embodiment: a small white-and-gold porcelain tutor-bot (navy visor, warm gold eyes, sage scarf, gold base, chest gem). Student: a round little porcelain bot in an apricot knit cap (the pompom is the light) with a notebook. Think blue, aha green (the teacher laughs with closed eyes), doubt orange-red + \"?\""
+   },
+   "portrait": "assets/portraits/alden.jpg"
+  }
+ ],
+ "studentVoices": {
+  "zh-tw": {
+   "name": "zh-TW-HsiaoYuNeural",
+   "rate": "+8%",
+   "pitch": "+20Hz"
+  },
+  "en": {
+   "name": "en-US-AvaMultilingualNeural",
+   "rate": "+6%",
+   "pitch": "+10Hz"
+  },
+  "gemini": {
+   "voice": "Leda",
+   "style": "台灣國語口音。年輕、好奇的學生，語氣自然。"
+  }
+ },
+ "voicePolicy": {
+  "zh-tw": "Taiwan voices first. Student = HsiaoYu (reserved). Female teachers = HsiaoChen, male teachers = YunJhe; teachers sharing a voice differ by rate, pitch, pace and wording (one teacher per film). Exception chosen by the user: Alden speaks with fr-FR-VivienneMultilingualNeural (a multilingual voice reading Chinese; not a Taiwan accent).",
+  "en": "US voices. Student = Ava (reserved). Each teacher has its own voice.",
+  "other": "Add a voice block per language (teacher and studentVoices) from edge-tts --list-voices; test with ASR and re-measure punctuation pauses before use.",
+  "engines": "edge-tts by default. voice.py uses an AI voice automatically when one is configured (GEMINI_API_KEY, AZURE_SPEECH_KEY+AZURE_SPEECH_REGION, or TTS_CUSTOM_CMD) and falls back to edge-tts for the whole narration if it fails. voice.gemini presets (voice + style) are untested defaults: check gender and Taiwan accent by ear before relying on them. Azure uses the same voice names as edge-tts."
+ }
+}

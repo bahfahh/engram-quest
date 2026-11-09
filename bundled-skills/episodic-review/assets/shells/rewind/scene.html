@@ -1,0 +1,370 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<title>Film</title>
+<link rel="stylesheet" href="/node_modules/@fontsource/noto-sans-tc/400.css">
+<link rel="stylesheet" href="/node_modules/@fontsource/noto-sans-tc/500.css">
+<link rel="stylesheet" href="/node_modules/@fontsource/noto-sans-tc/700.css">
+<link rel="stylesheet" href="/node_modules/@fontsource/lxgw-wenkai-tc/400.css">
+<link rel="stylesheet" href="/node_modules/@fontsource/lxgw-wenkai-tc/700.css">
+<link rel="stylesheet" href="/node_modules/@fontsource/inter/500.css">
+<link rel="stylesheet" href="/node_modules/@fontsource/inter/700.css">
+<script type="importmap">{ "imports": { "three": "/node_modules/three/build/three.module.js" } }</script>
+<style>
+  html, body { margin: 0; padding: 0; background: #000; overflow: hidden; }
+  #stage { position: relative; width: 1920px; height: 1080px; overflow: hidden; background: #000; font-family: "Noto Sans TC", sans-serif; color: #f4efe6; }
+  canvas#gl { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; display: block; }
+  .layer { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+  #dark { background: #000; opacity: 0; }
+  #hud .h { position: absolute; opacity: 0; text-shadow: 0 2px 14px rgba(0,0,0,0.65), 0 1px 3px rgba(0,0,0,0.7); white-space: nowrap; }
+  #card { position: absolute; inset: 0; background: #050608; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  #card .l1 { font-size: 50px; font-weight: 500; color: #f4efe6; }
+  #card .l2 { font-size: 40px; font-weight: 500; color: #cfe0f2; margin-top: 46px; letter-spacing: 0.04em; }
+  .t1 { font-family: "LXGW WenKai TC"; font-size: 108px; font-weight: 700; letter-spacing: 0.08em; }
+  .t2 { font-size: 36px; color: #e6e1d6; margin-top: 8px; }
+  .pinT { font-size: 38px; font-weight: 700; color: #fff4dc; display: flex; align-items: center; gap: 12px; }
+  .pinT b { display: inline-block; width: 46px; height: 46px; border-radius: 50%; border: 4px solid #ffd9a0; color: #ffd9a0; font: 700 28px Inter; text-align: center; line-height: 38px; box-sizing: border-box; }
+  #ticker { left: 0; right: 0; top: 70px; text-align: center; }
+  #ticker .td { font-size: 92px; font-weight: 700; letter-spacing: 0.04em; font-variant-numeric: tabular-nums; }
+  #ticker .tl { font-size: 32px; letter-spacing: 0.4em; color: #e9c98f; margin-top: 4px; }
+  .ring { position: absolute; width: 112px; height: 112px; opacity: 0; }
+  .ring svg { width: 112px; height: 112px; transform: rotate(-90deg); }
+  .ring .num { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-family: Inter, sans-serif; font-size: 46px; font-weight: 500; color: #e9eef6; }
+  .qz { left: 210px; width: 1500px; text-align: center; white-space: normal !important; }
+  .qz .k { font-size: 32px; letter-spacing: 0.35em; color: #9fb4cc; margin-bottom: 24px; }
+  .qz .q { font-size: 60px; font-weight: 700; line-height: 1.45; color: #fffaf0; }
+  .qz .a { font-size: 52px; font-weight: 700; line-height: 1.5; color: #ffe2b0; }
+  .endl { white-space: normal !important; line-height: 1.4; font-size: 34px; font-weight: 700; color: #ffe2a8; background: rgba(12,14,20,0.62); padding: 6px 16px; border-radius: 6px; border: 2px solid rgba(255,214,140,0.6); }
+  #grade { background: radial-gradient(ellipse at 50% 50%, rgba(0,0,0,0) 52%, rgba(10,6,2,0.42) 100%); }
+  #tint { mix-blend-mode: soft-light; opacity: 0.35; }
+  #grain { opacity: 0.075; mix-blend-mode: overlay; background-size: 256px 256px; }
+</style>
+<style id="demoCss"></style>
+</head>
+<body>
+<div id="stage">
+  <canvas id="gl" width="1600" height="900"></canvas>
+  <div id="paper" class="layer"></div>
+  <div id="dark" class="layer"></div>
+  <div id="screens" class="layer"></div>
+  <svg id="lines" class="layer" width="1920" height="1080" viewBox="0 0 1920 1080"></svg>
+  <div id="void" class="layer" style="background:#000;opacity:0"></div>
+  <div id="hud" class="layer"></div>
+  <div id="tint" class="layer"></div>
+  <div id="grade" class="layer"></div>
+  <div id="grain" class="layer"></div>
+</div>
+<script type="module">
+import * as THREE from 'three';
+import { build, sstep, clamp, lerp, ease } from './world.js';
+import { DURATION, SEG, B1, B2, B3, QZ, TXT, UI, tx, plain } from './content.js';
+const br = s => s.replace(/\n/g, '<br>');
+import * as D from './demos.js';
+
+window.DURATION = DURATION;
+const $ = s => document.querySelector(s);
+const QS = new URLSearchParams(location.search);
+const NOTEXT = QS.get('notext') === '1';
+$('#demoCss').textContent = D.CSS;
+const fade = D.fade, ek = (t, a, b) => ease(clamp((t - a) / (b - a)));
+const V = (x, y, z) => new THREE.Vector3(x, y, z);
+
+/* ============================================================ fonts ============================================================ */
+const allText = TXT.map(o => o.text).join('') + Object.values(UI).join('') + '0123456789一三上了交住倒做價內兩則參坪型好容尾帶建快成戶房數日月樓比沒浴片秒站第考萬衛規議較轉週頭';
+await document.fonts.ready;
+for (const w of ['400', '500', '700']) await document.fonts.load(`${w} 40px "Noto Sans TC"`, allText);
+for (const w of ['400', '700']) await document.fonts.load(`${w} 40px "LXGW WenKai TC"`, allText);
+for (const w of ['500', '700']) await document.fonts.load(`${w} 40px Inter`, '0123456789.,:/−–✓✗ABL');
+await document.fonts.ready;
+
+/* ============================================================ world ============================================================ */
+const W = build($('#gl'));
+const { ST, cabins, signs, board, FY, trackPos, trackNormal, dayOfS } = W;
+const P = (pos, tgt, fov = 46) => ({ pos, tgt, fov });
+const mix = (A, B, k) => ({ pos: A.pos.clone().lerp(B.pos, k), tgt: A.tgt.clone().lerp(B.tgt, k), fov: lerp(A.fov, B.fov, k) });
+const up = (v, y) => v.clone().setY(v.y + y);
+const trainFwd = s => P(up(trackPos(s), 2.5), up(trackPos(s + 14), 1.9), 58);
+const trainBack = s => P(up(trackPos(s), 2.5), up(trackPos(s - 14), 1.9), 58);
+function monotone(xs, ys) {
+  const n = xs.length, d = [], m = new Array(n).fill(0);
+  for (let i = 0; i < n - 1; i++) d.push((ys[i + 1] - ys[i]) / (xs[i + 1] - xs[i]));
+  m[0] = d[0]; m[n - 1] = d[n - 2];
+  for (let i = 1; i < n - 1; i++) m[i] = d[i - 1] * d[i] <= 0 ? 0 : (d[i - 1] + d[i]) / 2;
+  for (let i = 0; i < n - 1; i++) { if (d[i] === 0) { m[i] = m[i + 1] = 0; continue; } const a = m[i] / d[i], b = m[i + 1] / d[i], s = a * a + b * b; if (s > 9) { const t = 3 / Math.sqrt(s); m[i] = t * a * d[i]; m[i + 1] = t * b * d[i]; } }
+  return x => { if (x <= xs[0]) return ys[0]; if (x >= xs[n - 1]) return ys[n - 1]; let i = 0; while (x > xs[i + 1]) i++;
+    const hh = xs[i + 1] - xs[i], t = (x - xs[i]) / hh, t2 = t * t, t3 = t2 * t;
+    return (2 * t3 - 3 * t2 + 1) * ys[i] + (t3 - 2 * t2 + t) * hh * m[i] + (-2 * t3 + 3 * t2) * ys[i + 1] + (t3 - t2) * hh * m[i + 1]; };
+}
+const S1s = ST.s1.s, S2s = ST.s2.s, S3s = ST.s3.s;
+
+/* ---------- station camera poses (in each cabin's local frame) ---------- */
+const POSE = {};
+for (const k of ['s1', 's2', 's3']) {
+  const c = cabins[k], L = c.L, sc = c.screens[0];
+  const noteC = c.note.reduce((a, v) => a.add(v), V(0, 0, 0)).multiplyScalar(0.25);
+  const nl = c.g.worldToLocal(noteC.clone());
+  const desk = (s) => { const lc = c.g.worldToLocal(s.center.clone()); const d = s.w / 0.72 / 1.294; return P(L(lc.x, lc.y - 0.12, -5.05 + d), L(lc.x, lc.y, -5.05), 40); };
+  POSE[k] = {
+    SIGN: P(up(trackPos(ST[k].s), 2.7), signs[k].center.clone(), 42),
+    EXT: P(L(-5.5, 11, 18.5), L(0.4, 3.4, -2), 46),
+    IN: P(L(1.1, FY + 2.55, 2.6), L(0.3, FY + 2.45, -5), 50),
+    Q: P(L(nl.x + 0.95, nl.y - 0.05, -5.66 + 2.75), L(nl.x + 0.95, nl.y - 0.1, -5.66), 40),
+    DESK: desk(sc),
+    CORK: P(L(6.0, FY + 3.4, -5.6 + 4.3), L(6.0, FY + 3.4, -5.6), 40),
+    WIDE: P(L(1.4, FY + 2.6, 2.4), L(0.8, FY + 2.5, -5.2), 50),
+  };
+}
+POSE.s1.DESKR = (() => { const c = cabins.s1, s = c.screens[1]; const lc = c.g.worldToLocal(s.center.clone()); const d = s.w / 0.74 / 1.294; return P(c.L(lc.x, lc.y, -5.05 + d), c.L(lc.x, lc.y, -5.05), 40); })();
+POSE.s1.DESK2 = (() => { const c = cabins.s1; const a = c.g.worldToLocal(c.screens[0].center.clone()), b = c.g.worldToLocal(c.screens[1].center.clone()); const cx = (a.x + b.x) / 2, cy = a.y; const span = (b.x - a.x) + 2.1; const d = span / 0.93 / 1.294; return P(c.L(cx, cy - 0.02, -5.05 + d), c.L(cx, cy - 0.02, -5.05), 40); })();
+POSE.s1.PRINT = P(cabins.s1.L(6.0, FY + 4.12, -5.6 + 2.62), cabins.s1.L(6.0, FY + 4.12, -5.6), 40);
+POSE.s2.ZOOM = (() => { const c = cabins.s2; const lc = c.g.worldToLocal(c.screens[0].center.clone()); return P(c.L(lc.x + 0.05, lc.y - 0.28, -5.05 + 1.9), c.L(lc.x + 0.05, lc.y - 0.28, -5.05), 40); })();
+POSE.s2.DESKL = P(cabins.s2.L(-1.25, FY + 3.15, -2.55), cabins.s2.L(-1.95, FY + 1.62, -4.3), 44);
+const drift = (A, dz, t, t0, t1) => { const k = clamp((t - t0) / (t1 - t0)); const d = A.tgt.clone().sub(A.pos).normalize().multiplyScalar(dz * k); return P(A.pos.clone().add(d), A.tgt.clone(), A.fov); };
+
+/* ---------- overview, board, travel ---------- */
+const P0 = trackPos(0);
+const OV_A = P(V(P0.x + 230, 112, P0.z + 10), up(trackPos(230), -10).add(V(-70, 0, 0)), 50);
+const OV_B = P(V(P0.x + 255, 128, P0.z - 40), up(trackPos(250), -14).add(V(-80, 0, 0)), 50);
+const OV_END = P(V(P0.x + 285, 150, P0.z - 30), up(trackPos(240), -14).add(V(-80, 0, 0)), 50);
+const BD = P(board.L(-0.3, 3.75, 6.0), board.L(0, 3.85, 0), 40), BD2 = P(board.L(0.25, 3.8, 5.7), board.L(0, 3.85, 0), 40);
+const BD_IN = P(board.L(-3, 7, 18), board.L(0, 3.5, 0), 46);
+const sRW = monotone([SEG.rw[0] + 2.2, SEG.rw[0] + 4, SEG.rw[1] - 3, SEG.rw[1] - 0.6], [-1, 12, S1s - 30, S1s - 0.4]);
+const sFF1 = monotone([SEG.ff1[0] + 2, SEG.ff1[0] + 3.5, SEG.ff1[1] - 1.6, SEG.ff1[1]], [S1s, S1s - 12, S2s + 14, S2s + 0.3]);
+const sFF2 = monotone([SEG.ff2[0] + 2, SEG.ff2[0] + 3.5, SEG.ff2[1] - 1.4, SEG.ff2[1]], [S2s, S2s - 6, S3s + 8, S3s + 0.3]);
+
+const seg = (t0, t1, A, B, e = ease) => ({ t0, t1, A, B, e });
+const id = k => k;
+const SEQ = []; const add = (...a) => SEQ.push(seg(...a));
+add(0, SEG.ov[0], OV_A, OV_A); add(SEG.ov[0], SEG.ov[1], OV_A, OV_B);
+add(SEG.desc[0], SEG.desc[1] + 1.5, OV_B, BD_IN); add(SEG.desc[1] + 1.5, SEG.tt[0] + 3, BD_IN, BD); add(SEG.tt[0] + 3, SEG.tt[1], BD, BD2, id);
+add(SEG.rw[0], SEG.rw[0] + 2.2, BD2, t => trainFwd(sRW(t))); add(SEG.rw[0] + 2.2, SEG.rw[1], t => trainFwd(sRW(t)), t => trainFwd(sRW(t)), id);
+// a station visit, shared shape
+function visit(k, B, arriveCam, extra) {
+  const p = POSE[k];
+  add(B.arr, B.arr + 1.4, arriveCam, p.SIGN); add(B.arr + 1.4, B.arr + 6.0, p.SIGN, drift(p.SIGN, 0.8, 1, 0, 1), id);
+  add(B.arr + 6.0, B.arr + 7.6, drift(p.SIGN, 0.8, 1, 0, 1), p.EXT); add(B.arr + 7.6, B.q - 0.4, p.EXT, p.IN); add(B.q - 0.4, B.q + 0.8, p.IN, p.Q); add(B.q + 0.8, B.q + 5.5, p.Q, drift(p.Q, 0.15, 1, 0, 1), id); /* reach the question note early and keep it in focus until the next beat */
+  extra(p);
+}
+visit('s1', B1, trainFwd(S1s - 0.4), p => {
+  add(B1.five, B1.five + 1.5, drift(p.Q, 0.15, 1, 0, 1), p.DESKR); add(B1.five + 1.5, B1.cork, p.DESKR, drift(p.DESKR, 0.2, 1, 0, 1), id);
+  add(B1.cork, B1.cork + 1.8, drift(p.DESKR, 0.2, 1, 0, 1), p.PRINT); add(B1.cork + 1.8, B1.ugly, p.PRINT, drift(p.PRINT, 0.15, 1, 0, 1), id);
+  add(B1.ugly, B1.ugly + 1.6, drift(p.PRINT, 0.15, 1, 0, 1), p.DESKR); add(B1.ugly + 1.6, B1.r1, p.DESKR, drift(p.DESKR, 0.18, 1, 0, 1), id);
+  add(B1.r1, B1.r1 + 1.6, drift(p.DESKR, 0.18, 1, 0, 1), p.DESK2); add(B1.r1 + 1.6, B1.wrap, p.DESK2, drift(p.DESK2, 0.25, 1, 0, 1), id);
+  add(B1.wrap, B1.wrap + 1.6, drift(p.DESK2, 0.25, 1, 0, 1), p.CORK); add(B1.wrap + 1.6, B1.out, p.CORK, drift(p.CORK, 0.15, 1, 0, 1), id);
+});
+add(SEG.ff1[0], SEG.ff1[0] + 1.1, drift(POSE.s1.CORK, 0.15, 1, 0, 1), POSE.s1.EXT); add(SEG.ff1[0] + 1.1, SEG.ff1[0] + 2, POSE.s1.EXT, trainBack(S1s)); /* leave through the open front: a straight move went through the wall */ add(SEG.ff1[0] + 2, SEG.ff1[1], t => trainBack(sFF1(t)), t => trainBack(sFF1(t)), id);
+visit('s2', B2, trainBack(S2s + 0.3), p => {
+  add(B2.cse, B2.cse + 1.5, drift(p.Q, 0.15, 1, 0, 1), p.DESK); add(B2.cse + 1.5, B2.cse + 9, p.DESK, p.DESK, id);
+  add(B2.cse + 9, B2.cse + 10.6, p.DESK, p.ZOOM); add(B2.cse + 10.6, B2.rows - 1.4, p.ZOOM, p.ZOOM, id); add(B2.rows - 1.4, B2.rows + 0.4, p.ZOOM, p.DESK);
+  add(B2.rows + 0.4, B2.own, p.DESK, drift(p.DESK, 0.3, 1, 0, 1), id);
+  add(B2.own, B2.own + 1.2, drift(p.DESK, 0.3, 1, 0, 1), p.DESKL); add(B2.own + 1.2, B2.own + 2.4, p.DESKL, p.DESKL, id); add(B2.own + 2.4, B2.own + 3.8, p.DESKL, p.DESK); add(B2.own + 3.8, B2.wrap, p.DESK, drift(p.DESK, 0.2, 1, 0, 1), id);
+  add(B2.wrap, B2.wrap + 1.6, drift(p.DESK, 0.2, 1, 0, 1), p.CORK); add(B2.wrap + 1.6, B2.out, p.CORK, drift(p.CORK, 0.15, 1, 0, 1), id);
+});
+add(SEG.ff2[0], SEG.ff2[0] + 1.1, drift(POSE.s2.CORK, 0.15, 1, 0, 1), POSE.s2.EXT); add(SEG.ff2[0] + 1.1, SEG.ff2[0] + 2, POSE.s2.EXT, trainBack(S2s)); /* leave through the open front */ add(SEG.ff2[0] + 2, SEG.ff2[1], t => trainBack(sFF2(t)), t => trainBack(sFF2(t)), id);
+visit('s3', B3, trainBack(S3s + 0.3), p => {
+  add(B3.v1, B3.v1 + 1.5, drift(p.Q, 0.15, 1, 0, 1), p.DESK); add(B3.v1 + 1.5, B3.wrap, p.DESK, drift(p.DESK, 0.35, 1, 0, 1), id);
+  add(B3.wrap, B3.wrap + 1.6, drift(p.DESK, 0.35, 1, 0, 1), p.CORK); add(B3.wrap + 1.6, B3.out, p.CORK, drift(p.CORK, 0.15, 1, 0, 1), id);
+});
+add(SEG.qz[0], SEG.qz[1], drift(POSE.s3.CORK, 0.15, 1, 0, 1), POSE.s3.WIDE, id);
+add(SEG.end[0], DURATION + 1, OV_B, OV_END, k => ease(k));
+const ev = (A, t) => (typeof A === 'function' ? A(t) : A);
+function camAt(t) {
+  let sg = SEQ[SEQ.length - 1]; for (const s of SEQ) if (t >= s.t0 && t < s.t1) { sg = s; break; }
+  return mix(ev(sg.A, t), ev(sg.B, t), sg.e(clamp((t - sg.t0) / (sg.t1 - sg.t0))));
+}
+// depth of field and focus target follow the same beats
+function focusAt(t) {
+  const st = t < SEG.s1[0] ? null : t < SEG.ff1[0] + 1 ? 's1' : t < SEG.s2[0] - 1 ? null : t < SEG.ff2[0] + 1 ? 's2' : t < SEG.s3[0] - 1 ? null : t < SEG.qz[0] + 2 ? 's3' : null;
+  if (!st) return { st, on: null, dof: 0 };
+  const B = { s1: B1, s2: B2, s3: B3 }[st];
+  const inside = sstep(B.q - 1.6, B.q, t) * (1 - sstep(B.out, B.out + 1.5, t));
+  let on = 'screen';
+  if (t < B.q + 5.6) on = 'note'; // the question note stays sharp for its whole beat (was q+1.2: only ~2 s readable)
+  if (st === 's1' && t >= B1.cork + 0.8 && t < B1.ugly + 0.8) on = 'cork';
+  if (t >= B.wrap + 0.8) on = 'cork';
+  if (st === 's2' && t >= B2.own + 0.6 && t < B2.own + 3.2) on = 'desk';
+  return { st, on, dof: 3.6 * inside };
+}
+
+/* ============================================================ world clock (leaves fly back up while rewinding) ============================================================ */
+const RATE = t => { let r = 1; const band = (a, b, v, f = 0.6) => { const w = sstep(a - f, a + f, t) * (1 - sstep(b - f, b + f, t)); r = lerp(r, v, w); };
+  band(SEG.rw[0] + 1.5, SEG.rw[1] - 0.6, -6); band(SEG.ff1[0] + 2, SEG.ff1[1] - 0.4, 4); band(SEG.ff2[0] + 2, SEG.ff2[1] - 0.4, 4);
+  for (const B of [B1, B2, B3]) band(B.cd[0] - 4, B.cd[1], 0.15, 0.4); return r; };
+const WT = new Float32Array(Math.ceil(DURATION * 100) + 2); { let w = 0; for (let i = 0; i < WT.length; i++) { WT[i] = w; w += RATE(i / 100) / 100; } }
+const Wclock = t => { const x = clamp(t, 0, DURATION) * 100, i = Math.floor(x); return lerp(WT[i], WT[Math.min(i + 1, WT.length - 1)], x - i); };
+
+/* ============================================================ sky, sun, lights ============================================================ */
+function skyAt(t) {
+  const K = [[0, 'night'], [SEG.rw[0] + 2, 'night'], [SEG.rw[0] + 6.5, 'dusk'], [SEG.rw[1] - 1.5, 'golden'], [SEG.ff1[0] + 2, 'golden'], [SEG.ff1[1] - 1, 'dusk'], [B2.rec - 4, 'dusk'], [B2.own + 6, 'blue'], [SEG.ff2[0] + 2, 'blue'], [SEG.ff2[1] - 1, 'night'], [SEG.qz[0] + 0.3, 'night'], [SEG.qz[0] + 1.8, 'void'], [SEG.end[0], 'void'], [SEG.end[0] + 1.8, 'night'], [DURATION + 1, 'night']];
+  for (let i = 0; i < K.length - 1; i++) if (t >= K[i][0] && t < K[i + 1][0]) return { a: K[i][1], b: K[i + 1][1], k: sstep(K[i][0], K[i + 1][0], t) };
+  return { a: 'night', b: 'night', k: 0 };
+}
+const localDir = (k, x, y, z) => { const g = cabins[k].g; return g.localToWorld(V(x, y, z)).sub(g.position).normalize(); };
+const SUN = { s1: localDir('s1', 0.3, 0.34, -1), s2: localDir('s2', 0.5, 0.13, -1), s3: localDir('s3', -0.35, 0.58, -1), ov: V(-0.35, 0.55, -0.75).normalize() };
+const LIGHT = { s1: { lampI: 4, lampG: 0.2, screenI: 2.5, shaft: 0.42, sun: 1.5 }, s2: { lampI: 16, lampG: 0.8, screenI: 4, shaft: 0.16, sun: 2.4 }, s3: { lampI: 18, lampG: 0.9, screenI: 6, shaft: 0.14, sun: 1.3 } };
+const recallDark = t => Math.max(fade(t, B1.rec, B1.rev, 0.9, 0.9), fade(t, B2.rec, B2.rev + 0.3, 0.9, 0.9), fade(t, B3.rec + 3.2, B3.rev, 0.9, 0.9));
+
+/* ============================================================ overlays ============================================================ */
+const paperL = $('#paper'), screenL = $('#screens');
+const SURF = [];
+const addSurf = (obj, layer, quad, kind, st, extra = {}) => { layer.appendChild(obj.el); SURF.push({ ...obj, quad, kind, st, ...extra }); return obj; };
+for (const k of ['s1', 's2', 's3']) { addSurf(D.buildSign(k), paperL, signs[k].quad, 'sign', k); addSurf(D.buildNote(k), paperL, cabins[k].note, 'note', k); }
+addSurf(D.buildBoard(), paperL, board.quad, 'board', 'end');
+addSurf(D.buildCork('s1'), paperL, cabins.s1.cork, 'cork', 's1'); addSurf(D.buildCork('s2'), paperL, cabins.s2.cork, 'cork', 's2'); addSurf(D.buildCork('s3'), paperL, cabins.s3.cork, 'cork', 's3');
+const sL = addSurf(D.buildS1L(), screenL, cabins.s1.screens[0].quad, 'screen', 's1');
+const sR = addSurf(D.buildS1R(), screenL, cabins.s1.screens[1].quad, 'screen', 's1', { main: true });
+const s2 = addSurf(D.buildS2(), screenL, cabins.s2.screens[0].quad, 'screen', 's2', { main: true });
+const s3 = addSurf(D.buildS3(), screenL, cabins.s3.screens[0].quad, 'screen', 's3', { main: true });
+function solve8(A, b) { const n = 8; for (let i = 0; i < n; i++) { let p = i; for (let r = i + 1; r < n; r++) if (Math.abs(A[r][i]) > Math.abs(A[p][i])) p = r; [A[i], A[p]] = [A[p], A[i]]; [b[i], b[p]] = [b[p], b[i]];
+  for (let r = i + 1; r < n; r++) { const f = A[r][i] / A[i][i]; for (let c = i; c < n; c++) A[r][c] -= f * A[i][c]; b[r] -= f * b[i]; } }
+  const x = new Array(n); for (let i = n - 1; i >= 0; i--) { let s = b[i]; for (let c = i + 1; c < n; c++) s -= A[i][c] * x[c]; x[i] = s / A[i][i]; } return x; }
+function homography(w, hh, Pq) { const src = [[0, 0], [w, 0], [w, hh], [0, hh]]; const A = [], b = [];
+  for (let i = 0; i < 4; i++) { const [x, y] = src[i], [u, v] = Pq[i]; A.push([x, y, 1, 0, 0, 0, -u * x, -u * y]); b.push(u); A.push([0, 0, 0, x, y, 1, -v * x, -v * y]); b.push(v); }
+  const [a, bb, c, d, e, f, g, hh2] = solve8(A, b); return `matrix3d(${a},${d},0,${g},${bb},${e},0,${hh2},0,0,1,0,${c},${f},0,1)`; }
+const _v = new THREE.Vector3();
+const projQuad = (q) => { const out = []; for (const p of q) { _v.copy(p).project(W.camera); if (_v.z > 1 || _v.z < -1) return null; out.push([(_v.x * 0.5 + 0.5) * 1920, (-_v.y * 0.5 + 0.5) * 1080]); } return out; };
+const projPt = (p) => { _v.copy(p).project(W.camera); return [(_v.x * 0.5 + 0.5) * 1920, (-_v.y * 0.5 + 0.5) * 1080, _v.z]; };
+const TINT = { s1: 'brightness(1.02) sepia(0.10) saturate(1.05)', s2: 'brightness(0.9) sepia(0.16)', s3: 'brightness(0.82) sepia(0.08) hue-rotate(-6deg)', end: 'brightness(0.96)' };
+
+/* ============================================================ HUD ============================================================ */
+const hud = $('#hud');
+const H = (cls, css, html) => { const e = document.createElement('div'); e.className = 'h ' + cls; e.style.cssText = css; e.innerHTML = html; hud.appendChild(e); return e; };
+const HT = (idk, cls, css, html) => { const e = H(cls, css, html ?? tx(idk).text); e.dataset.tid = idk; return { e, o: tx(idk) }; };
+const card = H('', 'inset:0;opacity:1', `<div id="card"><div class="l1">${NOTEXT ? '' : br(tx('card1').text)}</div><div class="l2">${NOTEXT ? '' : br(tx('card2').text)}</div></div>`);
+const title = H('', 'left:110px;top:86px', `<div class="t1">${tx('title').text}</div><div class="t2">${tx('subtitle').text}</div>`);
+const pins = [['pin1', 's1', 1], ['pin2', 's2', 2], ['pin3', 's3', 3]].map(([idk, k, n]) => { const o = tx(idk); const [d, nm] = o.text.split('　'); const e = H('pinT', '', `<b>${n}</b><span>${d}</span><span>${nm}</span>`); e.dataset.tid = idk; return { o, k, e }; });
+const pinSvg = $('#lines'); const pinLn = pins.map(() => { const l = document.createElementNS('http://www.w3.org/2000/svg', 'line'); l.setAttribute('stroke', 'rgba(255,240,215,0.75)'); l.setAttribute('stroke-width', '2'); pinSvg.appendChild(l); return l; });
+const ticker = H('', '', `<div class="td">${UI.date.replace('{d}', 31)}</div><div class="tl">${UI.rewind}</div>`); ticker.id = 'ticker';
+const ring = (() => { const e = document.createElement('div'); e.className = 'ring'; e.innerHTML = '<svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="52" fill="none" stroke="rgba(255,255,255,0.16)" stroke-width="6"/><circle class="arc" cx="60" cy="60" r="52" fill="none" stroke="#e9c98f" stroke-width="6" stroke-linecap="round" stroke-dasharray="326.7" stroke-dashoffset="0"/></svg><div class="num"></div>'; hud.appendChild(e); return e; })();
+const qz0 = HT('qz0', 'qz', 'top:470px', `<div class="q" style="font-size:56px">${br(tx('qz0').text)}</div>`);
+const QZT = QZ.map((q, i) => ({ q, Q: HT(`qz${i + 1}q`, 'qz', 'top:330px', `<div class="k">${UI.quizLabel.replace('{n}', i + 1).replace('{of}', QZ.length)}</div><div class="q">${br(tx(`qz${i + 1}q`).text)}</div>`), A: HT(`qz${i + 1}a`, 'qz', 'top:330px', `<div class="k">${UI.quizLabel.replace('{n}', i + 1).replace('{of}', QZ.length)}</div><div class="a">${br(tx(`qz${i + 1}a`).text)}</div>`) }));
+const endT = HT('end_t', '', 'left:110px;top:86px', `<div class="t1">${tx('end_t').text}</div>`);
+const endL = ['end_l1', 'end_l2'].map(idk => HT(idk, 'endl', '', br(tx(idk).text)));
+const goldSvg = $('#lines'); const gold = [0, 1].map(() => { const p = document.createElementNS('http://www.w3.org/2000/svg', 'path'); p.setAttribute('fill', 'none'); p.setAttribute('stroke', '#ffd27a'); p.setAttribute('stroke-width', '4'); p.setAttribute('stroke-linecap', 'round'); p.style.filter = 'drop-shadow(0 0 6px rgba(255,200,110,0.9))'; goldSvg.appendChild(p); return p; });
+const HTXT = [qz0, ...QZT.flatMap(o => [o.Q, o.A]), endT, ...endL];
+// grain (seeded noise tile)
+{ const c = document.createElement('canvas'); c.width = c.height = 256; const g = c.getContext('2d'); const im = g.createImageData(256, 256); let r = 12345; for (let i = 0; i < im.data.length; i += 4) { r = (r * 1103515245 + 12345) & 0x7fffffff; const v = r % 256; im.data[i] = im.data[i + 1] = im.data[i + 2] = v; im.data[i + 3] = 255; } g.putImageData(im, 0, 0); $('#grain').style.backgroundImage = `url(${c.toDataURL()})`; }
+const TINTC = t => t < SEG.rw[1] ? 'rgba(90,120,200,1)' : t < SEG.ff1[1] ? 'rgba(255,170,90,1)' : t < SEG.ff2[1] ? 'rgba(230,130,110,1)' : 'rgba(110,130,210,1)';
+
+/* ============================================================ per frame ============================================================ */
+const st0 = k => ({ s1: B1, s2: B2, s3: B3 }[k] || B1);
+const OV_SWEEP = [SEG.ov[0] + 3.0, SEG.ov[0] + 11.0]; // the light runs from the end of the line (s = 0) to 10/1
+const sweepS = t => lerp(0, ST.s1.s + 30, ek(t, OV_SWEEP[0], OV_SWEEP[1]));
+const OVS_HIT = (() => { const o = {}; for (const k of ['s1', 's2', 's3']) { let lo = OV_SWEEP[0], hi = OV_SWEEP[1]; for (let i = 0; i < 40; i++) { const m = (lo + hi) / 2; if (sweepS(m) < ST[k].s) lo = m; else hi = m; } o[k] = lo; } return o; })();
+const visitK = t => (t >= SEG.s1[0] - 1 && t < SEG.ff1[0] + 2.2 ? 's1' : t >= SEG.ff1[1] - 1 && t < SEG.ff2[0] + 2.2 ? 's2' : t >= SEG.ff2[1] - 1 && t < SEG.qz[0] + 2 ? 's3' : null);
+const fmtDay = d => UI.date.replace('{d}', Math.max(1, Math.min(31, Math.round(d))));
+const orbOf = (t, a, b, sA, sB) => { if (t < a - 0.2 || t > b + 1) return null; const k = clamp((t - a) / (b - a)); return { s: lerp(sA, sB, 1 - Math.pow(1 - k, 2.2)), tail: 30, amp: sstep(a - 0.2, a + 0.3, t) * (1 - sstep(b, b + 0.9, t)) * (1 - 0.8 * sstep(b - 1.0, b - 0.1, t)) * 1.4, dir: 1 }; }; // dims as the camera catches up with it at the station (it whited out the frame)
+
+window.renderAt = (t) => {
+  const cam = camAt(t); const fk = focusAt(t); const vk = visitK(t);
+  const st = vk ? ST[vk] : null; const Lk = vk ? LIGHT[vk] : null;
+  const dark = recallDark(t);
+  const inside = vk ? fade(t, { s1: B1, s2: B2, s3: B3 }[vk].q - 1.4, { s1: B1, s2: B2, s3: B3 }[vk].out + 1.6, 1, 1) : 0;
+  const voidK = sstep(SEG.qz[0] + 0.3, SEG.qz[0] + 1.8, t) * (1 - sstep(SEG.end[0], SEG.end[0] + 1.8, t));
+  const lampsOn = (s, d) => {
+    if (t >= SEG.end[0]) return 0.25 + 0.75 * sstep(0, 0.5, t - (SEG.end[0] + 2 + (1 - (d - 1) / 31) * 6));
+    let v = t < SEG.rw[1] ? 0.35 : 0.0;
+    for (const [a, b, sA, sB] of [[SEG.ff1[0] + 2, SEG.ff1[1] - 0.4, S1s, S2s], [SEG.ff2[0] + 2, SEG.ff2[1] - 0.4, S2s, S3s]]) { if (t >= a && t < b + 8) { const so = lerp(sA, sB, 1 - Math.pow(1 - clamp((t - a) / (b - a)), 2.2)); if (s <= sA + 4 && s >= so - 2 && s >= sB - 4) v = Math.max(v, 1 - sstep(b + 4, b + 8, t)); } }
+    return v * (1 - voidK); };
+  const pulses = [orbOf(t, SEG.ff1[0] + 2, SEG.ff1[1] - 0.4, S1s, S2s), orbOf(t, SEG.ff2[0] + 2, SEG.ff2[1] - 0.4, S2s, S3s)].filter(Boolean).map(p => ({ ...p, dir: -1 }));
+  if (t > OV_SWEEP[0] - 0.3 && t < OV_SWEEP[1] + 1.2) pulses.push({ s: sweepS(t), tail: 60, amp: 2.0 * sstep(OV_SWEEP[0] - 0.3, OV_SWEEP[0] + 0.4, t) * (1 - sstep(OV_SWEEP[1], OV_SWEEP[1] + 1.2, t)), dir: 1 });
+  const flash = { s2: sstep(SEG.ff1[1] - 0.55, SEG.ff1[1] - 0.4, t) * (1 - sstep(SEG.ff1[1] - 0.3, SEG.ff1[1] + 1.2, t)), s3: sstep(SEG.ff2[1] - 0.55, SEG.ff2[1] - 0.4, t) * (1 - sstep(SEG.ff2[1] - 0.3, SEG.ff2[1] + 1.2, t)) };
+  const ovOff = 1 - sstep(SEG.desc[0], SEG.desc[1], t), endOn = sstep(SEG.end[0] + 1, SEG.end[0] + 3, t);
+  const ovHit = k => sstep(OVS_HIT[k], OVS_HIT[k] + 0.6, t);
+  const beaconOv = Math.max(ovOff, endOn);
+  const beacon = { s1: Math.max(ovOff * ovHit('s1'), endOn), s2: Math.max(ovOff * ovHit('s2'), endOn), s3: Math.max(ovOff * ovHit('s3'), endOn) };
+  const sunDir = vk ? SUN[vk] : SUN.ov;
+  const focus = vk ? st.center.clone().setY(2) : cam.pos.clone().setY(0).add(cam.tgt.clone().sub(cam.pos).setY(0).normalize().multiplyScalar(20));
+  const lightMul = 1 - 0.88 * dark;
+  $('#void').style.opacity = voidK;
+  { const dof0 = fk.dof; W.setScale(dof0 > 1.4 && QS.get('fullres') !== '1' ? 0.5 : 1); }
+  W.render({
+    blackout: voidK > 0.995, t, cam, sky: skyAt(t), sunDir, focus, focusKey: vk ?? (t < SEG.rw[0] + 1 ? 'end' : null), W: Wclock(t),
+    wLeaves: (1 - voidK) * (vk ? 0.35 * (1 - inside * 0.6) : 0.85),
+    interior: vk ? { [vk]: inside } : {}, shaftK: vk ? { [vk]: Lk.shaft * lightMul } : {},
+    lampGlow: vk ? { [vk]: Lk.lampG * (1 - 0.8 * dark) } : {}, screenGlow: vk ? { [vk]: 1 } : {},
+    lampI: vk ? Lk.lampI * lightMul : (t < SEG.rw[0] + 1 ? 9 : 0), screenI: vk ? Lk.screenI : 0,
+    showCabin: k => !vk || inside < 0.95 || k === vk, boardLamp: 1 - voidK,
+    sunMul: vk ? lerp(lerp(1, Lk.sun, inside), 0.25, dark) : 1, hemiMul: vk ? lerp(1, 0.3, dark) : 1,
+    backdrop: vk ? { [vk]: (t > st0(vk).q - 1.8 && t < st0(vk).out + 0.85) ? 1 : 0 } : {}, /* gone before the camera leaves the cabin: the painted plane stood in the open */ expMul: 1 + 0.22 * inside,
+    lampOn: lampsOn, beacon, pulses, flash, poolK: beaconOv * 0.6,
+    fogMul: t < SEG.desc[1] || t > SEG.end[0] ? 0.6 : 1,
+    bandK: Math.max(0.55 * sstep(OV_SWEEP[0] + 1, OV_SWEEP[1] + 1, t) * (1 - sstep(SEG.ov[1] - 2, SEG.desc[1], t)), 0.8 * sstep(SEG.end[0] + 2, SEG.end[0] + 6, t)),
+    gateK: Math.max(fade(t, SEG.ov[0] + 1.5, SEG.ov[1], 1, 1), fade(t, SEG.end[0] + 2, DURATION + 1, 1, 0.01)) * (NOTEXT ? 0 : 1), gateGlow: 1 - voidK,
+  });
+  // depth of field: blur the 3D (and any surface that is not the focus target)
+  const dof = fk.dof; const lowRes = dof > 1.4 && QS.get('fullres') !== '1';
+  W.setScale(lowRes ? 0.5 : 1);
+  const cssBlur = lowRes ? dof * 0.42 : dof;
+  $('#gl').style.filter = cssBlur > 0.05 ? `blur(${cssBlur.toFixed(2)}px)` : 'none';
+  // overlays
+  for (const s of SURF) {
+    const visible = (s.st === 'end' ? t < SEG.rw[0] + 3 : s.st === vk) && voidK < 0.99;
+    let op = 0;
+    if (visible) { if (s.kind === 'sign') op = 1; else if (s.st === 'end') op = 1; else op = sstep(0.15, 0.6, inside) + (s.kind === 'screen' ? 0 : 0); }
+    if (s.kind === 'screen' && visible) op = Math.max(op, 0.0);
+    if (visible && s.kind === 'note') op *= lerp(1, 0.45, sstep(st0(s.st).q + 5.6, st0(s.st).q + 7, t));
+    const q = op > 0.002 ? projQuad(s.quad) : null;
+    if (!q) { s.el.style.display = 'none'; continue; }
+    s.el.style.display = 'block'; s.el.style.opacity = op;
+    s.el.style.transform = homography(s.w, s.h, q);
+    const isFocus = (fk.on === s.kind) || (fk.on === 'screen' && s.kind === 'screen');
+    const pull = s.kind === 'screen' && s.st === vk ? 1 - sstep(st0(s.st).q + 5.6, st0(s.st).q + 6.4, t) : 0; // focus pull from the note to the screens
+    const blur = (s.kind === 'sign' || s.st === 'end') ? 0 : (isFocus ? dof * 0.9 * pull : dof * 0.9);
+    s.update(t);
+    const tint = s.kind === 'screen' ? (s.bright !== undefined ? `brightness(${s.bright.toFixed(3)})` : '') : TINT[s.st] || '';
+    const nb = s.kind === 'note' ? Math.max(blur * sstep(st0(s.st).q + 5.6, st0(s.st).q + 6.4, t), 1.6 * sstep(st0(s.st).q + 5.6, st0(s.st).q + 7, t)) : blur;
+    s.el.style.filter = `${tint} ${nb > 0.05 ? `blur(${nb.toFixed(2)}px)` : ''}`.trim() || 'none';
+  }
+  D.updateTexts(t);
+  // recall: room goes dark except the main screen
+  { let hole = null; const main = SURF.find(s => s.main && s.st === vk); if (main && dark > 0.001) { const q = projQuad(main.quad); if (q) { const xs = q.map(p => p[0]), ys = q.map(p => p[1]); hole = [(Math.min(...xs) + Math.max(...xs)) / 2, (Math.min(...ys) + Math.max(...ys)) / 2, (Math.max(...xs) - Math.min(...xs)) / 2, (Math.max(...ys) - Math.min(...ys)) / 2]; } }
+    const dk = $('#dark'); dk.style.opacity = dark * 0.88;
+    dk.style.background = hole ? `radial-gradient(ellipse ${hole[2] * 1.5}px ${hole[3] * 1.9}px at ${hole[0]}px ${hole[1]}px, rgba(0,0,0,0.15) 60%, rgba(0,0,0,1) 100%)` : '#000';
+    if (vk === 's1') { sL.el.style.opacity = String(Math.min(+sL.el.style.opacity || 0, 1)); } }
+  // HUD: card, overview title and pins, ticker
+  card.style.opacity = 1 - sstep(4.6, 5.6, t); card.style.visibility = t > 5.7 ? 'hidden' : 'visible';
+  const ovO = NOTEXT ? 0 : fade(t, tx('title').t0, tx('title').t1, 1.0, 1.0); title.style.opacity = ovO;
+  pins.forEach((p, i) => { const o = NOTEXT ? 0 : fade(t, p.o.t0, p.o.t1, 0.8, 0.8); const bt = projPt(V(ST[p.k].center.x, 26, ST[p.k].center.z)); const OFF = [[-360, -150], [-140, 150], [-60, -170]][i]; const lx = clamp(bt[0] + OFF[0], 60, 1500), ly = clamp(bt[1] + OFF[1], 360, 980);
+    p.e.style.left = lx + 'px'; p.e.style.top = (ly - 24) + 'px'; p.e.style.opacity = o; const ln = pinLn[i]; ln.setAttribute('x1', bt[0]); ln.setAttribute('y1', bt[1]); const right = bt[0] > lx + p.e.offsetWidth / 2; ln.setAttribute('x2', right ? lx + p.e.offsetWidth + 10 : lx - 10); ln.setAttribute('y2', ly); ln.style.opacity = bt[2] < 1 ? o : 0; });
+  const rwK = fade(t, tx('rw').t0, tx('rw').t1, 0.5, 0.5), ffK = Math.max(fade(t, SEG.ff1[0] + 1.8, SEG.ff1[1] - 0.2, 0.5, 0.5), fade(t, SEG.ff2[0] + 1.8, SEG.ff2[1] - 0.2, 0.5, 0.5));
+  const tk = NOTEXT ? 0 : Math.max(rwK, ffK); ticker.style.opacity = tk;
+  if (tk > 0) { const s = t < SEG.s1[0] ? sRW(t) : t < SEG.s2[0] ? sFF1(t) : sFF2(t); ticker.querySelector('.td').textContent = fmtDay(dayOfS(s)); ticker.querySelector('.tl').textContent = t < SEG.s1[0] ? tx('rw').text : tx('ff').text; }
+  // countdown ring
+  const CDS = [[...B1.cd, 's1'], [...B2.cd, 's2'], [...B3.cd, 's3'], ...QZ.map(q => [...q.cd, null])];
+  let rO = 0; for (const [c0, c1, k] of CDS) if (t >= c0 - 0.3 && t < c1 + 0.3) { rO = fade(t, c0 - 0.3, c1 + 0.3, 0.3, 0.3); const rk = clamp((t - c0) / (c1 - c0)); ring.querySelector('.arc').setAttribute('stroke-dashoffset', String(326.7 * rk)); ring.querySelector('.num').textContent = NOTEXT ? '' : String(Math.max(1, Math.ceil(6 * (1 - rk) - 1e-6)));
+    let x = 904, y = 900; if (k) { const main = SURF.find(s => s.main && s.st === k); const q = main && projQuad(main.quad); if (q) { x = (q[2][0] + q[3][0]) / 2 - 56; y = Math.min(940, Math.max(q[2][1], q[3][1]) + 26); } } else { y = 760; }
+    ring.style.left = x + 'px'; ring.style.top = y + 'px'; }
+  ring.style.opacity = rO;
+  // quiz and ending texts
+  for (const o of HTXT) { const v = NOTEXT ? 0 : fade(t, o.o.t0, o.o.t1, 0.5, 0.45); o.e.style.opacity = v; }
+  // ending: gold lines between stations, each with its relation
+  const endK = sstep(SEG.end[0] + 2, SEG.end[0] + 4, t);
+  const sp = k => projPt(V(ST[k].center.x, 9, ST[k].center.z));
+  const a1 = sp('s1'), a2 = sp('s2'), a3 = sp('s3'), am = projPt(up(trackPos(ST.s1.s * 0.86), 6));
+  const arc = (A, Bp, lift) => `M${A[0]},${A[1]} Q${(A[0] + Bp[0]) / 2},${Math.min(A[1], Bp[1]) - lift} ${Bp[0]},${Bp[1]}`;
+  const prs = [[a1, a2, 190, tx('end_l1').t0], [a2, a3, 90, tx('end_l2').t0]];
+  prs.forEach(([A, Bp, lift, t0], i) => { const k = sstep(t0 - 0.6, t0 + 0.8, t) * endK; gold[i].setAttribute('d', arc(A, Bp, lift)); const len = 2000; gold[i].style.strokeDasharray = `${len}`; gold[i].style.strokeDashoffset = `${len * (1 - k)}`; gold[i].style.opacity = k > 0 ? 1 : 0;
+    const lab = endL[i].e; const apx = (A[0] + Bp[0]) / 2, apy = (A[1] + Bp[1]) / 4 + (Math.min(A[1], Bp[1]) - lift) / 2;
+    if (i === 0) { lab.style.left = (apx - 220) + 'px'; lab.style.top = (apy - 66) + 'px'; } else { lab.style.left = clamp(Math.min(A[0], Bp[0]) - 260, 60, 1300) + 'px'; lab.style.top = (apy - 190) + 'px'; } });
+  // grade: tint per part of the film, grain shifts every frame
+  $('#tint').style.background = TINTC(t);
+  const fr = Math.floor(t * 24); $('#grain').style.backgroundPosition = `${(fr * 73) % 256}px ${(fr * 151) % 256}px`;
+};
+// Ready = every picture decoded (so a chunk that starts mid-film never shows a missing image) and fonts loaded.
+// ?notext=1: pictures are blurred once here on a 2D canvas. A CSS filter on these <img> inside the matrix3d
+// surfaces made SwiftShader drop sibling cards from the composite (missing cork cards in the notext stills).
+window.studioReady = (async () => {
+  const imgs = [...document.querySelectorAll('img')];
+  await Promise.all(imgs.map(i => (i.complete && i.naturalWidth ? Promise.resolve() : i.decode()).catch(() => {})));
+  if (NOTEXT) for (const i of document.querySelectorAll('.sf img')) {
+    try { const w = 420, hh = Math.max(1, Math.round(w * (i.naturalHeight || 1) / (i.naturalWidth || 1)));
+      const c = document.createElement('canvas'); c.width = w; c.height = hh; const g = c.getContext('2d');
+      g.filter = 'blur(11px) saturate(0.85)'; g.drawImage(i, -20, -20, w + 40, hh + 40); i.src = c.toDataURL('image/jpeg', 0.9); await i.decode(); } catch (e) { i.style.opacity = '0.25'; }
+  }
+  if (document.fonts && document.fonts.ready) await document.fonts.ready;
+})();
+</script>
+</body>
+</html>
