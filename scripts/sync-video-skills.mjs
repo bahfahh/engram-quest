@@ -14,7 +14,9 @@ import { OVERLAY_DIR, filmPhrases, imageHash, isRemoved, lineHash, linesToReview
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const vaultRoot = path.resolve(process.env.ENGRAMQUEST_VAULT_ROOT || path.join(repoRoot, '..', 'Obsidian_Note'));
 const SKILLS = [
-  { id: 'animated-course', dir: 'engram-animated-course' },
+  // The vault's development copy is the installed folder's name with `dev-` in front; `name` is what the
+  // published copy is called.
+  { id: 'animated-course', dir: 'dev-engram-quest-animated-course', name: 'engram-quest-animated-course' },
   { id: 'episodic-review', dir: 'engram-episodic-review' },
 ];
 const terms = readPrivateTerms(vaultRoot);
@@ -79,7 +81,7 @@ const approved = readApproved(repoRoot);
 const leaks = [];
 const phrases = new Set();
 const ownerWords = new Set();
-const built = SKILLS.map(({ id, dir }) => {
+const built = SKILLS.map(({ id, dir, name }) => {
   const root = path.join(vaultRoot, '.claude', 'skills', dir);
   if (!fs.existsSync(root)) throw new Error(`Skill not found: ${root}`);
   const overlay = path.join(repoRoot, OVERLAY_DIR, id);
@@ -102,7 +104,8 @@ const built = SKILLS.map(({ id, dir }) => {
     const source = buf.toString('utf8');
     filmPhrases(rel, source).forEach((phrase) => phrases.add(phrase));
     if (!/\.(m?js|cjs|py|html|css|sh)$/i.test(rel)) ownerPhrases(source).forEach((phrase) => ownerWords.add(phrase));
-    const text = rewritePaths(publicText(shapeForPublic(rel, source), rel));
+    let text = rewritePaths(publicText(shapeForPublic(rel, source), rel));
+    if (name && rel === 'SKILL.md') text = text.replace(/^name: .*$/m, `name: ${name}`);
     leaks.push(...findPrivate(text).map((hit) => `${id}/${rel}:${hit.line} ${hit.match}`));
     texts.push({ rel, text });
   }

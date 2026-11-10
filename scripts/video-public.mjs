@@ -71,7 +71,8 @@ export const lineHash = (line) => crypto.createHash('sha256').update(line.trim()
 
 /** Phrases from quotes credited in the source. The same words repeated elsewhere without a credit are still theirs. */
 export function ownerPhrases(source) {
-  return (source.match(new RegExp(`${CREDIT}${QUOTES}`, 'g')) || []).flatMap((quote) => quote.match(PHRASE) || []);
+  // Only what is inside the quotation marks: the sentence that leads up to the credit is the skill's own wording.
+  return [...source.matchAll(new RegExp(`${CREDIT}(${QUOTES})`, 'g'))].flatMap(([, quoted]) => quoted.match(PHRASE) || []);
 }
 
 /** Lines of a published file that a person has to read before it can ship. */
