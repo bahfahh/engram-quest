@@ -119,7 +119,7 @@ function show(id) {
   screen.append(video);
   // Subtitles ship as .txt (artifact hosting); hand the player a text/vtt blob.
   const v = video;
-  fetch(f.vtt).then((r) => r.text()).then((txt) => {
+  if (f.vtt) fetch(f.vtt).then((r) => r.text()).then((txt) => {
     if (video !== v) return;
     const tr = el("track", { kind: "subtitles", srclang: f.lang, label: f.sublabel });
     tr.default = true;

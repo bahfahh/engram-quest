@@ -269,7 +269,7 @@ const foot = AZ.footnote(st.screen, AZ.FOOT_PORTAL);                     // top 
 // after AZ.ready(): cursor keys may use elements (AZ.cursor(f.overlay, f.el, [{ t: 2.4, at: p.btn('開始交換'), click: true }]))
 ```
 Readcheck: every builder marks its titles / values `data-read`; table cells only with `read` (`tableZh({..., read: 'id'})`).
-Code lines that `focus()` dims to 30 % drop out of TEXTS — mark only the lit lines (`AZ.read(ed.line(n).querySelector('.tx'), id)`).
+Code lines that `focus()` dims to 30 % drop out of TEXTS — mark only the lit lines (`AZ.read(ed.line(n).querySelector('.az-tx'), id)`).
 A content area taller than the frame is cut: the alert wizard fits 條件 *or* 動作 + 詳細資料 in one 1080 frame, not all three.
 
 ### 7.6 Screen in studio with both teachers (`projects/ops-kit-demo/studio.html`)

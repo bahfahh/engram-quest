@@ -14,7 +14,7 @@
 | `5a-l08-review-desk.jpg` | Review desk: film strips + 100 viewers going dark in sync; "can't point" vs "47th time" | — |
 | `5b-l08-mindmap-en.jpg` | English chalk mindmap laid out as the lesson's structure (Hook → Body → CTA → scorecard) | — |
 | `6-x17d-silent-aha.jpg` | Experiment 17 D: the rhythm baseline on the old look — 5 s of silence while 81% is struck through and the real 75% appears | The look itself (a workbench UI for a concept lesson) |
-| `7-x17a-iso-factory.jpg` | Experiment 17 A: the stage as one isometric place — stations in reading order, numbered margin labels on leader lines, title block, legend, "illustrative" footnote | The riso-print look (ugly, clashes with the glossy cast); the house style replaces it |
+| `7-x17a-iso-factory.jpg` | Experiment 17 A: the stage as one isometric place — stations in reading order, numbered margin labels on leader lines, title block, legend, "illustrative" footnote | The riso-print look (ugly, clashes with the glossy cast). Learn the structure, not the look: give the stage the look that makes its content clearest (`reference/01-principles.md` §1). The Engram studio version (experiment 19) is only for films the user asks to shoot in the studio |
 | `8-x17b-explode.jpg` | Experiment 17 B: the 3D model stage — the stack explodes into six trays whose thickness is the share; on the classroom's table | Labels only, no text on the 3D cards; heavy render |
 
 ## Focus: the user's own demo (experiment 18c) and the counter-example

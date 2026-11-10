@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
-"""Standard quiet foley for teaching films (numpy only). Status: TRIAL — the user has not reviewed sound effects yet.
+"""Standard quiet foley for teaching films (numpy only). Status: approved (experiment 20 test 10: the effects are acceptable, a bit quieter);
+the level below (−3 dB from x20) was confirmed by the user's volume check.
 
   python3 sfx.py projects/<id>/sfx          -> writes the whole set as 48 kHz mono wavs into that folder
   python3 sfx.py projects/<id>/sfx heartbeat chalk   -> only those
 
 Use them from script.json, anchored to the word the action happens on (voice.py mixes them into narration.wav):
-  "sfx": [{"file": "sfx/card.wav", "line": "A12", "offset": 1.4, "gain": 0.25}]
-Rules (reference/04-skeleton.md §6): only key visible actions get a sound; quiet (gain 0.15–0.35, about 10–12 dB
-under the voice); never a constant bed; nothing in the near-silence before the one-liner or the aha moment, and the
+  "sfx": [{"file": "sfx/card.wav", "line": "A12", "offset": 1.4, "gain": 0.14}]
+Rules (reference/04-skeleton.md §6): only key visible actions get a sound, not every one; quiet (gain 0.11–0.21,
+typically 0.14: about 0.7x the levels of x20, which used 0.16–0.30); never a constant bed; nothing in the near-silence before the one-liner or the aha moment, and the
 first sound after that silence is the important one.
 
 Some recipes (whoosh, thump, ding, pop, heartbeat) are adapted from Lemo-Opuscar's core/audio/sfx.py

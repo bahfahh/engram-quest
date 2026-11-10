@@ -3,12 +3,14 @@
 
   STUDIO=<studio> python3 deliver.py <project-id> "<video title>" --series <vault>/engram-quest/videos/<series> \
       [--series-title "<course title>"] [--tags "tag1,tag2"] [--source engram-quest/lessons/<course>/meta.json] \
-      [--until 9] [--style classroom+real-ui] [--after <previous-id>] [--dry] [--vault <vault root>] [--no-cards]
+      [--until 9] [--solo 3] [--tail 5] [--style classroom+real-ui] [--after <previous-id>] [--dry] [--vault <vault root>] [--no-cards]
 
 final.mp4 + narration.wav -> bgm2.py (encoded to the vault's commit spec: CRF 26, maxrate 1800k, AAC 128k; over --max-mb
 (95) it is re-encoded two-pass, so the delivered file can be committed as is; "Morning" at the opening and ending only, ending -3 dB; first frame held 3 s,
 last frame held 5 s; narration at -16 LUFS) -> <series>/<id>.mp4, <id>.vtt, <id>.jpg + an entry in <series>/meta.json
 (with the music credit). The video is placed after --after, or appended; re-delivering an id replaces its entry in place.
+--solo / --tail: first / last frame holds in seconds (default 3 / 5). A social film whose conflict lands in the first
+seconds can use --solo 0 (experiment 17).
 --dry: use narration_dry.wav (voice only, no sound effects) and deliver as <id>-dry — the B version for A/B listening;
 it gets no meta.json entry (it is for review, not for the library).
 Review cards (module `cards`, on by default; reference/12-modules.md §3): if projects/<id>/cards.json exists and the
@@ -49,7 +51,8 @@ height = ["--height", "720"] if settings.get("quality") == "compact" else []
 out = os.path.join(series, f"{oid}.mp4"); voiced = os.path.join(src, "_voiced.mkv")
 subprocess.run(["nice", "-n", "10", "ffmpeg", "-v", "error", "-y", "-i", os.path.join(src, "final.mp4"), "-i", os.path.join(src, "narration_dry.wav" if dry else "narration.wav"),
                 "-map", "0:v:0", "-map", "1:a:0", "-c:v", "copy", "-c:a", "pcm_s16le", "-shortest", voiced], check=True)
-subprocess.run(["nice", "-n", "10", "python3", os.path.join(HERE, "studio", "bgm2.py"), voiced, MUSIC, out, "--until", until, *height,
+holds = [x for k in ("solo", "tail") if opt(k) is not None for x in ("--" + k, opt(k))]  # first / last frame holds
+subprocess.run(["nice", "-n", "10", "python3", os.path.join(HERE, "studio", "bgm2.py"), voiced, MUSIC, out, "--until", until, *height, *holds,
                 "--vtt", os.path.join(src, "subtitles.vtt"), os.path.join(series, f"{oid}.vtt")], check=True)
 os.remove(voiced)
 # Vault commit spec (AGENTS.md): bgm2 already encodes at CRF 26 / maxrate 1800k / AAC 128k; a file still over 95 MB
@@ -102,7 +105,7 @@ def make_cards():
         out_ = os.path.join(cdir, name)
         subprocess.run(["ffmpeg", "-v", "error", "-y", "-ss", f"{float(t):.3f}", "-i", final, "-frames:v", "1", "-vf", "scale=1280:-2", "-q:v", "3", out_], check=True)
         return rel(out_)
-    hold = 3.0  # bgm2.py holds the first frame for 3 s: delivered time = final.mp4 time + 3
+    hold = float(opt('solo', '3'))  # bgm2.py holds the first frame for --solo s (default 3): delivered time = final.mp4 time + hold
     times = [round(float(c.get("back", c["front"])) + hold, 1) for c in cards]
     body = [f"---\ntags: [{prefix}/videos/{sname}]\nvideo: {rel(out)}\nvideo_times: [{', '.join(str(x) for x in times)}]\n---\nTARGET DECK: videos/{sname}\n"]
     for i, c in enumerate(cards, 1):

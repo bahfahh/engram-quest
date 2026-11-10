@@ -31,6 +31,12 @@ const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
  *  Measured 2026-11-06 from cue-lab.html stills (±0.03). Pass `skin` (cast.json → skin.id) or `arm` in `at`. */
 export const ARM = { 'glossy-bot': 0.43, 'glossy-owl': 0.42, porcelain: 0.57, glass: 0.48, 'glossy-nova': 0.53, 'clay-snackshop': 0.26 };
 const armOf = at => at.arm ?? ARM[at.skin] ?? 0.45;
+/** How far right of the feet x the pointing tip (hand or stick) ends, as a share of the on-screen height (px), on flat stages.
+ *  Measured in experiment 21 (glossy-bot at x 200, px 430: stick tip at x ≈ 452–482; glass hand ≈ 0.70). Skins not listed
+ *  are not reach-checked. A pointer whose tip stops short of the target, or passes over it, reads as pointing at blank space
+ *  (silent reviews of experiment 21, lessons 2, 3, 6, 7) — so the tip must land INSIDE the target's box. */
+export const REACH = { 'glossy-bot': 0.63, glass: 0.70 };
+const reachOf = at => at.reach ?? REACH[at.skin];
 const lerp = (a, b, k) => a + (b - a) * k;
 const smooth = k => k * k * (3 - 2 * k);
 
@@ -40,8 +46,8 @@ export function pointOf(target, t) {
   if (!v) return null;
   if (Array.isArray(v)) return { x: v[0], y: v[1] };
   if (typeof v.getBoundingClientRect === 'function') v = v.getBoundingClientRect();
-  if ('x0' in v) return { x: (v.x0 + v.x1) / 2, y: (v.y0 + v.y1) / 2, h: Math.abs(v.y1 - v.y0) };
-  if ('left' in v && 'width' in v) return { x: v.left + v.width / 2, y: v.top + v.height / 2, h: v.height };
+  if ('x0' in v) return { x: (v.x0 + v.x1) / 2, y: (v.y0 + v.y1) / 2, h: Math.abs(v.y1 - v.y0), w: Math.abs(v.x1 - v.x0) };
+  if ('left' in v && 'width' in v) return { x: v.left + v.width / 2, y: v.top + v.height / 2, h: v.height, w: v.width };
   if ('x' in v && 'y' in v) return { x: v.x, y: v.y };
   return null;
 }
@@ -124,8 +130,13 @@ export function cueTrack(T, list, { follow = ['student'] } = {}) {
       // (12 px margin; a bare point gets ±40 px). Rows of a list are ~40-80 px apart, so anything looser
       // makes the pointer land on the neighbouring row (silent review of experiment 17).
       const off = tgt.y - shoulderY, tol = tgt.h ? Math.max(24, tgt.h / 2 + 12) : 40;
+      // the tip must land inside the target's box (at least 24 px in; a bare point: within ±60 px); flat stages only
+      const r = fromFn ? null : reachOf(at), tipX = r ? at.x + r * (at.px || 300) : null;
+      const x0 = tgt.w ? tgt.x - tgt.w / 2 : tgt.x - 60, x1 = tgt.w ? tgt.x + tgt.w / 2 : tgt.x + 60, inset = tgt.w ? Math.min(24, tgt.w / 3) : 0;
+      const miss = tipX == null ? 0 : tipX < x0 + inset ? tipX - (x0 + inset) : tipX > x1 ? tipX - x1 : 0;
       const why = dx <= 60 ? `is not left of the target (x≈${Math.round(head.x)} vs ${Math.round(tgt.x)}); skins point to the viewer's right only. Stand the ${role} on the left of what it points at`
-        : Math.abs(off) > tol ? `would point ${Math.round(Math.abs(off))} px ${off < 0 ? 'below' : 'above'} the target (the arm is horizontal at y≈${Math.round(shoulderY)}; allowed ±${Math.round(tol)} px). Move the ${role} or the target so the target sits at arm height, or use point: false` : null;
+        : Math.abs(off) > tol ? `would point ${Math.round(Math.abs(off))} px ${off < 0 ? 'below' : 'above'} the target (the arm is horizontal at y≈${Math.round(shoulderY)}; allowed ±${Math.round(tol)} px). Move the ${role} or the target so the target sits at arm height, or use point: false`
+        : miss ? `would point at blank space: the tip ends at x≈${Math.round(tipX)}, ${Math.round(Math.abs(miss))} px ${miss < 0 ? 'short of' : 'past'} the target (x ${Math.round(x0)}–${Math.round(x1)}). Start what the ${role} points at just left of the tip (left edge ≈ ${Math.round(tipX - 40)}), or use point: false` : null;
       if (!why) pose.point = lerp(pose.point || 0, 1, k);
       else {
         pose.point = lerp(pose.point || 0, 0, k);

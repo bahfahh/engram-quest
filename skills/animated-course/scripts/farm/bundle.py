@@ -2,11 +2,13 @@
 """Copy a ready project's scene sources from the studio into the lesson archive (the render session renders
 from there, and it is the permanent record of how the film was made).
 Usage: STUDIO=<studio> python3 bundle.py <archive-dir> <project-id> ...
-  -> <archive-dir>/<id>/src/      html, js, css, json, used images and fonts (no renders, no stills)
+  -> <archive-dir>/<id>/src/      html, js, css, json, vtt, py, used images and fonts (no renders, no stills),
+                                  .tts-cache/ (the film's edge-tts clips, so a restored project re-voices only changed lines)
+                                  and narration.opus (narration.wav at 64k Opus; restore: ffmpeg -i narration.opus -ar 24000 -ac 1 narration.wav)
   -> <archive-dir>/<id>/*.md      UNDERSTANDING, CARD, SCRIPT, NOTES, SILENT (moved up next to src/)"""
-import os, shutil, sys
+import os, shutil, subprocess, sys
 STUDIO = os.environ.get("STUDIO", "/tmp/studio")
-TEXT = {".html", ".js", ".mjs", ".css", ".json", ".md", ".svg"}
+TEXT = {".html", ".js", ".mjs", ".css", ".json", ".md", ".svg", ".vtt", ".py"}
 SKIP_DIRS = {"stills", "stills_old", "__pycache__", "asrclip", "_asr", "tools", "node_modules", "_parts"}
 DOCS = ["UNDERSTANDING.md", "CARD.md", "SCRIPT.md", "FACTS.md", "NOTES.md", "SILENT.md"]
 
@@ -25,9 +27,13 @@ def project(arch, pid):
     blob = "".join(open(p, encoding="utf-8", errors="ignore").read() for p in texts if p.endswith((".html", ".js", ".mjs", ".css", ".json")))
     for root, f in walk(src):
         p = os.path.join(root, f); rel = os.path.relpath(p, src); ext = os.path.splitext(f)[1].lower()
-        keep = p in texts or (ext in {".png", ".jpg", ".jpeg", ".webp", ".gif", ".woff2", ".ttf", ".wav"} and (f in blob or rel.split(os.sep)[0] in ("img", "assets", "sfx")))
+        keep = p in texts or (ext in {".png", ".jpg", ".jpeg", ".webp", ".gif", ".woff2", ".ttf", ".wav"} and (f in blob or rel.split(os.sep)[0] in ("img", "assets", "sfx"))) \
+            or (rel.split(os.sep)[0] == ".tts-cache" and ext == ".mp3") or f == "narration.opus"
         if keep:
             os.makedirs(os.path.dirname(os.path.join(out, rel)), exist_ok=True); shutil.copy(p, os.path.join(out, rel))
+    wav = os.path.join(src, "narration.wav")  # experiment 21: a handover without the narration had to re-voice everything
+    if os.path.exists(wav):
+        subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", wav, "-c:a", "libopus", "-b:a", "64k", os.path.join(out, "narration.opus")], check=True)
     for f in DOCS:
         if os.path.exists(os.path.join(out, f)): shutil.move(os.path.join(out, f), os.path.join(arch, pid, f))
     print(pid, sum(len(fs) for _, _, fs in os.walk(out)), "files ->", out)

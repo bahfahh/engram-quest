@@ -17,4 +17,7 @@ def frames(t0, n=6):
 for j in joins:
     f = frames(j - 3 / 30)
     d = [np.abs(f[i + 1] - f[i]).mean() for i in range(len(f) - 1)]
-    print(f"{kinds[round(j,3)]:4s} {j:8.3f}  diffs " + ' '.join(f'{x:5.1f}' for x in d) + "   (join is between 3rd and 4th frame -> 3rd value)")
+    # A designed dissolve moves ~5-15 per frame. A value above 40 anywhere in the window is a hard cut: a stale or wrong
+    # handover image (experiment 18: the tail's first frames showed an old recap card, diffs 130 right after the join).
+    flag = "   <-- JUMP: hard cut at this seam; compare img/h*.jpg with the rendered frames and re-render the part" if max(d) > 40 else ""
+    print(f"{kinds[round(j,3)]:4s} {j:8.3f}  diffs " + ' '.join(f'{x:5.1f}' for x in d) + "   (join is between 3rd and 4th frame -> 3rd value)" + flag)

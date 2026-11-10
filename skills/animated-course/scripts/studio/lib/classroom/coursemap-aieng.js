@@ -759,6 +759,19 @@ function questionSign(text, tagText) {
   return g;
 }
 
+/** x30r: a small dark tag (the question card's tag look) shown over a group of stops while it is lit, e.g. 「複習」 (實驗 16 P13) */
+const TAG_H = 0.15;
+function tagSign(text) {
+  const mc = document.createElement('canvas').getContext('2d'), h = 120, fs = 80, w = Math.ceil(measure(mc, text, fs) + 96);
+  const cv = document.createElement('canvas'); cv.width = w; cv.height = h; const c = cv.getContext('2d');
+  c.fillStyle = '#3b2a20'; c.beginPath(); c.roundRect(4, 4, w - 8, h - 8, (h - 8) / 2); c.fill();
+  drawText(c, text, w / 2, h / 2 + fs * 0.36, fs, '#f8d867', 'center');
+  const W = TAG_H * w / h, g = new THREE.Group();
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(W, TAG_H), new THREE.MeshBasicMaterial({ map: canvasTexture(cv), transparent: true, toneMapped: false, depthTest: false }));
+  m.renderOrder = 10; g.add(m); g.userData.W = W; g.userData.H = TAG_H; g.userData.faceMesh = m;
+  return g;
+}
+
 // ---------------------------------------------------------------- camera fit (whole points set inside the frame, bottom 140 px kept free)
 function fitCam(pts, { elev = 0.5, yaw = 0, fov = 30, xm = 0.9, yTop = 0.86, yBot = -0.68 } = {}) {
   const dir = V(Math.sin(yaw) * Math.cos(elev), Math.sin(elev), Math.cos(yaw) * Math.cos(elev));
@@ -817,6 +830,10 @@ function stripAlong(i, w, h, mat) {
  * @param o.camFrom   {pos, look, fov} world: blend from your camera, starting at t0 (o.camBlend s, default 1.2)
  * @param o.place     { x, y, z, rotY, scale } where the table stands (default: in front of the blackboard, between teacher and student)
  * @param o.parts     per-part name overrides {n: {name}}
+ * @param o.times.hold  ride, optional (x30r, 實驗 20 測試 21): per group of stops, the time the camera stops on that group (pushes in, 1.1 s);
+ *                    from then it is lit but still (its mechanism rests at the start) until its play time times.parts[i]. The group before
+ *                    it ends its window at the hold. null/omitted = A's behaviour (lit = play time, camera stays wide). E.g. [null, Ls('M01q')]
+ * @param o.groupTags ride, optional (x30r): per group of stops, a small dark tag over the group while it is lit, e.g. ['複習'] (實驗 16 P13)
  */
 export async function makeCourseMapAIEng(o = {}) {
   const lesson = clamp(Math.round(o.lesson || 1), 1, NP);
@@ -833,7 +850,7 @@ export async function makeCourseMapAIEng(o = {}) {
       const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = href; document.head.appendChild(l); await new Promise(r => { l.onload = r; l.onerror = r; });
     }
   }
-  const allText = names.join('') + question + (o.questionTag || '') + JSON.stringify(o.parts || {}) + '第課·維修費機型保固內費用價目表學來的傾向找不到「那一行」偏差變異沒撈到沒用上問題模糊其他精確率召回率考題冊人工評審去重配額提問分布建時現在每則成本檢討不責備錯誤預算';
+  const allText = names.join('') + question + (o.questionTag || '') + (o.groupTags || []).join('') + JSON.stringify(o.parts || {}) + '第課·維修費機型保固內費用價目表學來的傾向找不到「那一行」偏差變異沒撈到沒用上問題模糊其他精確率召回率考題冊人工評審去重配額提問分布建時現在每則成本檢討不責備錯誤預算';
   await document.fonts.load(`700 120px "${ZH}"`, allText);
   await document.fonts.load(`800 120px "${EN}"`, 'defifelsereturn(),:=[]?v1.1 eval SLO 0123456789/%');
   await document.fonts.ready;
@@ -915,7 +932,7 @@ export async function makeCourseMapAIEng(o = {}) {
   const PUSH = 1.1;
   const L = (n) => L_PART[n];
   const review = o.review || (lesson >= 5 ? 'group' : 'wide');
-  let stops = [], plays = [];                  // plays: { n, a (start), b (window end), rate }
+  let stops = [], plays = [], held = [];      // plays: { n, a (start), b (window end), rate }; held (x30r): [{ parts, hold }]
   if (shot === 'ride') {
     stops = (o.stops ? o.stops.slice() : lesson === 1 ? Array.from({ length: NP }, (_, i) => i + 1) : Array.from({ length: lesson - 1 }, (_, i) => i + 1));
     // groups: stops may be nested ([[1],[2,3],[4,5,6],[7,8]]): each inner list is lit and played together in one window.
@@ -943,11 +960,15 @@ export async function makeCourseMapAIEng(o = {}) {
     const lastEnd = slots ? starts[slots - 1] + (given ? Math.max(2.6, lastLen * 0.85) : lastLen) : t0 + Math.max(1.6, blendIn + 0.8);
     if (arrive == null) arrive = lastEnd + PUSH;
     const pushStart = T.push ?? arrive - PUSH;
+    // x30r: times.hold[i] = the camera stops on group i and it is lit but still until its play time (default: none)
+    const holds = Array.isArray(T.hold) ? T.hold.slice(0, slots) : [];
+    const litAt = (i) => holds[i] != null ? Math.min(holds[i], starts[i]) : starts[i];
+    held = groups.map((g, i) => holds[i] != null ? { parts: g, hold: litAt(i) } : null).filter(Boolean);
     groups.forEach((g, i) => {
-      const a = starts[i], b = i + 1 < slots ? starts[i + 1] : Math.max(pushStart, a + 1.0);
-      for (const n of g) plays.push({ n, a, b, rate: clamp(L(n) / Math.max(0.6, b - a - 0.5), 1, maxRate) });
+      const a = starts[i], b = i + 1 < slots ? litAt(i + 1) : Math.max(pushStart, a + 1.0);
+      for (const n of g) plays.push({ n, a, b, rate: clamp(L(n) / Math.max(0.6, b - a - 0.5), 1, maxRate), ...(holds[i] != null ? { hold: litAt(i) } : {}) });
     });
-    tm.groups = groups.map((g, i) => ({ parts: g, t: +starts[i].toFixed(2), end: +(i + 1 < slots ? starts[i + 1] : pushStart).toFixed(2) }));
+    tm.groups = groups.map((g, i) => ({ parts: g, t: +starts[i].toFixed(2), end: +(i + 1 < slots ? litAt(i + 1) : pushStart).toFixed(2), ...(holds[i] != null ? { hold: +litAt(i).toFixed(2) } : {}) }));
     const colorIn = T.colorIn ?? T.play ?? (lesson === 1 ? pushStart + 0.15 : arrive - 0.6);
     plays.push({ n: lesson, a: colorIn, b: 1e9, rate: T.rate ?? 1, current: true });
     tm.overview = ovStart; tm.stops = plays.filter(p => !p.current).map(p => ({ n: p.n, t: p.a, end: p.b, rate: +p.rate.toFixed(2) }));
@@ -976,6 +997,17 @@ export async function makeCourseMapAIEng(o = {}) {
   }
   tm.lit = plays.map(p => ({ n: p.n, t: p.a }));
   const learned = (n) => shot === 'overview' ? (o.allLit || n <= lesson) : shot === 'finale' ? n <= lesson : chain ? true : n < lesson;
+  // ---- x30r: o.groupTags[i] over group i while it is lit (none by default)
+  const gtags = [];
+  if (shot === 'ride' && Array.isArray(o.groupTags)) (tm.groups || []).forEach((g, i) => {
+    const text = o.groupTags[i]; if (!text) return;
+    const play = plays.find(p => p.n === g.parts[0] && !p.current); if (!play) return;
+    const sg = tagSign(text); land.add(sg);
+    const xs = g.parts.map(n => SLOT(n).x), cx = (Math.min(...xs) + Math.max(...xs)) / 2;
+    if (g.parts.every(n => SLOT(n).row === 'f')) sg.position.set(cx, H2 - 0.05, ZB1 + 0.01);                  // on the back step's riser, over the front row
+    else sg.position.set(cx, H2 + BACK_S * (SIGN_UP + PLATE_H) + 0.07, ROW_B + BACK_S * SIGN_Z);          // above the back row's signs
+    Object.assign(sg.userData, { play, text, i, k: 0 }); gtags.push(sg);
+  });
 
   // ---- cameras (land-local, returned in world space)
   const W = (v) => land.localToWorld(v.clone());
@@ -994,6 +1026,9 @@ export async function makeCourseMapAIEng(o = {}) {
   const cams = {
     overview: () => cache.ov || (cache.ov = L2W(fitCam(allParts(), { elev: ELEV.ov, fov: 30, xm: 0.95, yTop: 0.88, yBot: -0.72 }))),
     chain: () => cache.ch || (cache.ch = L2W(fitCam([...allParts(), ...PATH.map(p => p.clone().add(V(0, 0.02, 0.05)))], { elev: ELEV.ov, fov: 30, xm: 0.96, yTop: 0.9, yBot: -0.64 }))),
+    /** x30r: the camera stop of a held group: its parts and name plates, from higher up than a push-in (a back-row plate stands
+     *  high on its posts; at the push-in angle the part came out small under a band of empty wall) */
+    group: (ns) => cache['g' + ns.join('_')] || (cache['g' + ns.join('_')] = L2W(fitCam(ns.flatMap(n => [...partPts(n), ...platePts(n)]), { elev: 0.9, fov: 30, xm: 0.95, yTop: 0.9, yBot: -0.72 }))),
     part: (n = lesson) => cache['p' + n] || (cache['p' + n] = L2W(fitCam([...partPts(n),
       ...(n === lesson && qs ? (() => { const s = signPos(); return [s.clone().add(V(-SIGN_W / 2, qs.userData.H * 1.02, 0)), s.clone().add(V(SIGN_W / 2, qs.userData.H * 1.02, 0)), s.clone().add(V(-SIGN_W / 2, 0, 0)), s.clone().add(V(SIGN_W / 2, 0, 0))]; })() : platePts(n))],
     { elev: parts[n].sl.row === 'b' ? ELEV.b : ELEV.f, fov: 30, xm: 0.92, yTop: 0.8, yBot: -0.7 }))),
@@ -1005,6 +1040,7 @@ export async function makeCourseMapAIEng(o = {}) {
     if (shot === 'ride') {
       const ks = [[t0, cams.overview()]];
       if (review === 'push') for (const p of plays) { if (p.current) continue; ks.push([p.a - 0.5, ks[ks.length - 1][1]]); ks.push([p.a + 0.3, cams.part(p.n)]); }
+      for (const g of held) { ks.push([g.hold, ks[ks.length - 1][1]]); ks.push([g.hold + PUSH, cams.group(g.parts)]); }   // x30r: camera stops on a held group
       ks.push([tm.push, ks[ks.length - 1][1]]);
       ks.push([tm.arrive, cams.part(lesson)]);
       c = ks[0][1];
@@ -1056,8 +1092,10 @@ export async function makeCourseMapAIEng(o = {}) {
     } else { runner.visible = false; runGlow.material.opacity = 0; }
     // which part is in focus
     const focus = new Array(NP + 1).fill(0);
-    for (const p of plays) focus[p.n] = Math.max(focus[p.n], winK(t, p.a - 0.15, p.b));
+    for (const p of plays) focus[p.n] = Math.max(focus[p.n], winK(t, (p.hold ?? p.a) - 0.15, p.b));
     const allK = chain ? ease.inOut(prog(t, tm.allOn, tm.allOn + 0.6)) : 0;
+    const stopNow = held.find(g => t >= g.hold && t < tm.push) || null;   // x30r
+    const stopPl = t < tm.arrive ? held.filter(g => t >= g.hold).pop() || null : null;   // x30r: from a stop until the camera reaches this lesson's part
     for (let n = 1; n <= NP; n++) {
       const P = parts[n];
       let dim;
@@ -1077,33 +1115,39 @@ export async function makeCourseMapAIEng(o = {}) {
       let lt;
       let mine = null; for (const p of plays) if (p.n === n && t >= p.a - 1e-6) mine = p;
       if (mine) lt = (t - mine.a) * mine.rate;
-      else lt = learned(n) ? 99 : 0;
+      else lt = learned(n) && !plays.some(p => p.n === n && p.hold != null && t < p.a) ? 99 : 0;   // x30r: a held part waits at its start
       if (shot === 'overview' || shot === 'finale') { const per = L(n) + 2.2; lt = learned(n) ? ((t - t0 + n * 1.3) % per + per) % per : 0; if (shot === 'finale' && n !== lesson) lt = 99; }
       if (chain && t < plays[n - 1].a) lt = t < tm.join[0] ? 99 : 0;
-      DETAIL = !!camera && (shot !== 'ride' || n === lesson || t < tm.push) && camera.position.distanceTo(P.holder.getWorldPosition(tmp)) < detailD(n);
+      const offStop = stopNow && !stopNow.parts.includes(n);   // x30r: the camera has stopped on another (held) group
+      DETAIL = !!camera && !offStop && (shot !== 'ride' || n === lesson || t < tm.push) && camera.position.distanceTo(P.holder.getWorldPosition(tmp)) < detailD(n);
       for (const l of P.labels) l.visible = true;
       P.act(clamp(lt, 0, L(n)));
       if (!DETAIL) for (const l of P.labels) l.visible = false;
       DETAIL = true;
       // pushed in on another part: this one's text is hidden (no half-cut labels at the frame edge)
-      const away = shot === 'ride' && n !== lesson && t > tm.push + 0.55;
+      const away = (shot === 'ride' && n !== lesson && t > tm.push + 0.55) || (offStop && t > stopNow.hold + 0.55);
       for (const f of P.faces) f.visible = !away;
       const curK = chain ? (focus[n] > 0.5 && allK < 0.5) || allK > 0.5 : focus[n] > 0.5 || (shot === 'finale' && n === lesson);
       const pushedAway = shot === 'ride' && n !== lesson && t > tm.push + 0.3;
       P.plate.userData.setStyle(curK ? 'cur' : !pushedAway && (learned(n) || (shot === 'ride' && lesson === 1 && plays.some(p => p.n === n && t > p.b))) ? 'alive' : 'gray');
       P.glow.material.opacity = 0.75 * Math.max(focus[n], allK);
-      P.plate.visible = !(shot === 'ride' && n !== lesson && t > tm.push + 0.55);
+      P.plate.visible = !(shot === 'ride' && n !== lesson && t > tm.push + 0.55) && !(stopPl && !stopPl.parts.includes(n) && t > stopPl.hold + 0.55);   // x30r: only the stopped group's plate (no plate flashing past in the move on)
+    }
+    for (const sg of gtags) {   // x30r
+      const p = sg.userData.play, k = winK(t, (p.hold ?? p.a) - 0.15, p.b);
+      sg.userData.k = k; sg.visible = k > 0.01; sg.scale.setScalar(Math.max(0.001, 0.85 + 0.15 * k)); sg.userData.faceMesh.material.opacity = k;
     }
     if (qs) {
       const qk = ease.outBack(prog(t, tm.ask - 0.05, tm.ask + 0.4));
       qs.visible = qk > 0.01; qs.position.copy(signPos()); qs.position.y += 0.006 * Math.sin(t * 2.2); qs.scale.setScalar(Math.max(0.001, qk));
-      cur.plate.visible = !qs.visible;
+      cur.plate.visible = cur.plate.visible && !qs.visible;   // x30r: && (was =): keeps a plate hidden by a stop hidden; same as before without stops
     }
     if (camera) {
       land.worldToLocal(camLocal.copy(camera.position));
       land.getWorldQuaternion(qInv).invert();
       for (let n = 1; n <= NP; n++) parts[n].plate.quaternion.copy(qInv).multiply(camera.quaternion);   // full billboard: name plates never look rolled at the frame edges
       if (qs) qs.quaternion.copy(qInv).multiply(camera.quaternion);
+      for (const sg of gtags) sg.quaternion.copy(qInv).multiply(camera.quaternion);   // x30r
       camera.updateMatrixWorld(true);
       for (let n = 1; n <= NP; n++) { const p = parts[n].plate; if (!p.visible) continue; const b = screenBox(p.userData.faceMesh, p.userData.w, p.userData.h, camera); p.visible = !!b && b.x0 >= 0 && b.y0 >= 0 && b.x1 <= window.innerWidth && b.y1 <= window.innerHeight; }
     }
@@ -1134,6 +1178,7 @@ export async function makeCourseMapAIEng(o = {}) {
       const p = parts[n].plate; if (!p.visible) continue;
       const b = screenBox(p.userData.faceMesh, p.userData.w, p.userData.h, camera); if (b) out.push({ id: 'map-plate-' + n, text: names[n], ...b });
     }
+    for (const sg of gtags) if (sg.visible && sg.userData.k > 0.95) { const b = screenBox(sg.userData.faceMesh, sg.userData.W, sg.userData.H, camera); if (b && b.x0 >= 0 && b.y0 >= 0 && b.x1 <= window.innerWidth && b.y1 <= window.innerHeight) out.push({ id: 'map-tag-' + sg.userData.i, text: sg.userData.text, ...b }); }   // x30r
     if (qs && qs.visible && qs.scale.x > 0.9) { const b = screenBox(qs.userData.faceMesh, SIGN_W, qs.userData.H, camera); if (b) out.push({ id: 'map-question', text: `第 ${lesson} 課 · ${names[lesson]} ` + question.replace(/\n/g, ''), ...b }); }
     return out;
   }

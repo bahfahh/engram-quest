@@ -53,14 +53,20 @@ async function slot(name = '.render-slots', n = 2) {  // cross-process semaphore
   const queue = path.join(dir, 'queue');
   fs.mkdirSync(queue, { recursive: true });
   const alive = (pid) => { try { process.kill(pid, 0); return true; } catch { return false; } };
-  const ticket = path.join(queue, `${Date.now()}-${process.pid}`);
+  // Ticket = <arrival ms>-<pid>-<slots this job may use>. First come first served on the slots several waiters share;
+  // a job with a higher RENDER_SLOTS may take slot k ahead of earlier waiters that cannot use slot k at all
+  // (before this, a waiting 2-slot job at the head blocked every RENDER_SLOTS=6 job behind it while slots c–h were free).
+  const ticket = path.join(queue, `${Date.now()}-${process.pid}-${n}`);
   fs.writeFileSync(ticket, '');
   const leave = () => fs.rmSync(ticket, { force: true });
   process.on('exit', leave);
   for (;;) {
     const waiting = fs.readdirSync(queue).filter((f) => alive(+f.split('-')[1]) || (fs.rmSync(path.join(queue, f), { force: true }), false)).sort();
-    if (waiting[0] === path.basename(ticket)) {
-      for (const s of 'abcdefgh'.slice(0, n).split('')) {
+    const me = waiting.indexOf(path.basename(ticket));
+    const ahead = waiting.slice(0, Math.max(0, me)).map((f) => Number(f.split('-')[2]) || 2);   // old tickets: 2 slots
+    if (me >= 0) {
+      for (const [k, s] of 'abcdefgh'.slice(0, n).split('').entries()) {
+        if (ahead.some((m) => m > k)) continue;   // an earlier waiter can use this slot: it goes first
         const p = path.join(dir, s);
         try { fs.mkdirSync(p); fs.writeFileSync(path.join(p, 'pid'), String(process.pid)); leave(); return () => fs.rmSync(p, { recursive: true, force: true }); }
         catch { try { if (!alive(+fs.readFileSync(path.join(p, 'pid'), 'utf8'))) fs.rmSync(p, { recursive: true, force: true }); } catch { fs.rmSync(p, { recursive: true, force: true }); } }
@@ -127,9 +133,13 @@ async function slot(name = '.render-slots', n = 2) {  // cross-process semaphore
   ff.push(out);
   const enc = spawn('ffmpeg', ff, { stdio: ['pipe', 'inherit', 'inherit'] });
   const frames = Math.round((to - from) * fps);
+  // Frame times are whole frames over fps, the same doubles the pages compute with their own Math.ceil(x*fps)/fps.
+  // `from` arrives rounded to 4 decimals ("110.6333" for 3319/30), which is 0.00003 s BEFORE the page's tH3, so the first
+  // frame of a part would still count as "before the handover" and show the previous overlay for one frame (experiment 18).
+  const f0 = Math.round(from * fps);
   const t0 = Date.now();
   for (let i = 0; i < frames; i++) {
-    await page.evaluate(t => { window.renderAt(t); }, from + i / fps);
+    await page.evaluate(t => { window.renderAt(t); }, (f0 + i) / fps);
     const buf = await shot();
     if (!enc.stdin.write(buf)) await new Promise(r => enc.stdin.once('drain', r));
     if (i % (fps * 10) === 0) console.log(`frame ${i}/${frames}  ${((Date.now() - t0) / 1000).toFixed(0)}s`);

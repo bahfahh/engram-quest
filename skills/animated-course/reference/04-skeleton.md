@@ -1,89 +1,114 @@
 # 04 The skeleton (the same in every lesson)
 
-The skeleton is the fixed interface of the adapter pattern. Its **functions** are required in every course; its **look** (the clay classroom, Professor Bao and Taro, the tabletop map) is the approved AdsDemo look and is reused unless another subject needs a different one. Professor Bao is the default teacher; the learner may pick another (`11-teachers.md`), who keeps every function below and changes only how each beat is said.
+The skeleton is the stable interface of the adapter pattern; how each part does its job adapts to the lesson. The classroom head and tail — blackboard, 3D course map, blackboard mindmap — are what); they keep that look in every subject. What was AdsDemo's own is the cast and the map's model: the clay Professor Bao and Taro were how that course did it — the cast is now the learner's teacher and student (`makeCast`, `11-teachers.md`) — and each course builds its own 3D course map (§1, item 3). The Engram studio (明棚 / 暗棚) comes in only when the user asks for it (`01-principles.md` §1). Nico is the default and only free teacher (product decision); Pro learners may pick another (`11-teachers.md` §1b), who keeps every part's purpose below and changes only how each beat is said.
 
 ## 1. Head (40–55 s)
 
-1. **Classroom opening.** 3D clay classroom (`lib/classroom/cast.js`): the teacher and the student (who owns the running project) talk. The first frame is a good-looking opening picture (it is held 3 s at delivery).
-2. **Hook that grows out of the content**: the student's wrong guess, a visible loss, a counter-intuitive result. Then say the topic plainly — no withholding.
-3. **Course map** (`lib/classroom/coursemap4.js` for AdsDemo): parts already learned play their own mechanism (= review), the camera arrives at this lesson's part and its question card. For the first lesson, the map of the whole course. **It must be clearly visible** (§5).
-4. **The one-liner**, within 60 s, with every term in it already defined.
-5. **Camera pushes into the blackboard or screen** and hands over to the middle (the handover frame is identical on both pages).
+1. **Classroom opening.** 3D clay classroom (`lib/classroom/cast.js`): the teacher and the student (who owns the running project) talk. The first frame is a good-looking picture (held 3 s at delivery). It opens in the classroom at 0:00, without a teaser page in front (a terminal, a phone, a dramatic cut): experiment 17's social cuts opened on a 7 s terminal-and-phone page, and When the hook is a story (an AI says it fixed a bug, then the phone buzzes twice), what worked instead was pinning it on the board as a card in the first frame — the teacher says it, the student reacts. A faster cut gets there with shorter pauses and the point sooner (§9), not with a teaser.
+2. **Hook — why care.** It grows out of the content: the student's wrong guess, a visible loss, a counter-intuitive result. Then the topic is said plainly — nothing withheld.
+3. **Course map — where this lesson sits and what it builds on** (`lib/classroom/`: one map per course; `coursemap-aieng.js` is the most complete example to copy, `coursemap4.js` is AdsDemo's and needs rework; `08-tools.md` §5): learned parts play their own mechanism (a quick review); the camera arrives at this lesson's part and its question card. Lesson 1: the whole course. It helps only if readable (§5). When this lesson builds on the previous one's answer, the map can ask it instead of retelling it (`05-presentation-methods.md` §3d, The map asks the previous lesson).
+4. **The one-liner — the point.** Within ≈ 60 s is the reference, with every term already defined — a point in unknown words cannot land.
+5. **Camera pushes into the blackboard or screen** and hands over to the middle; the handover frame is identical on both pages (technical contract: otherwise the cut jumps).
+
+**The blackboard holds the point — one idea at a time.** Purpose: a glance tells the viewer what is taught now, and the board's sequence reads as the lesson's outline — clear head, point and tail. Reason:; earlier, experiment 8: 「一次一個觀念，非常清晰」. What went wrong: a board of scenery (a calendar, a server diagram) with no concept on it. The default that serves this: while a thing is taught, the board carries its key concept — a keyword or short phrase, a small picture when it helps — written on the words that say it; the next idea comes once this one has closed on its keyword. In the head it goes task → key concept → one-liner; the recap images return to it; the ending mindmap is drawn on the same board. The blackboard is the crib sheet, not the stage: the mechanism itself plays on the middle's stage, and a full-frame Whiteboard explanation (`05-presentation-methods.md` §3) is a separate middle method that still sits inside this head and tail. Building it: each lesson writes its own board in the project folder (`08-tools.md` §5, `classroom/board.js` row); `house/board.js` is the studio's typeset board, made for the studio look.
 
 ## 2. Middle
 
-Three segments (four at most) of 40–90 s, on one stage chosen for the lesson (`03-adapter-pattern.md` §1). **Each segment ends on one recap image** (`lib/kit/keypoint.js`, the blackboard, or the stage's wide shot with that station lit and its result left in place): one diagram + one sentence, held 4–6 s, the last 2.5–3 s of it in real silence.
+Approved lessons used three segments (four at most) of 40–90 s on one stage chosen for the lesson (`03-adapter-pattern.md` §1). **Each segment ends on one recap image** to consolidate: one picture and one sentence (`lib/kit/keypoint.js`, the blackboard, or the stage's wide shot with that station lit and its result in place), held ≈ 4–6 s, the last 2.5–3 s in real silence.
 
 ### Rhythm baseline (approved, experiment 17 D; every film; `scripts/studio/pacecheck.py` measures it)
 
 > Experiment 16 measured why: the middle was 85–94% speech, recap cards had 1 s of silence, up to 159 s of talk without a 1 s pause, four minutes of one look. Experiment 17 made one lesson's middle four ways on this baseline; D (this rhythm, the old look) was approved together with A and B.
 
-| Rule | Target |
+What fixed that boredom — a reference, not a quota; checks report, the viewer staying with it and understanding decides.
+
+| Knob | Reference |
 |---|---|
-| Speech share in the middle | ≤ 80% |
-| Recap | the key sentence, then 2.5–3 s of real silence (`{"id": "K1-hold", "silence": 2.8}`) |
-| Moment of understanding | the picture plays 3–5 s with no voice (one effect at most), then the line |
-| Breathing | no stretch over ~40 s without a ≥ 1 s pause |
-| Segment opener | a surprising fact or a question (「隨機抽五十題，有將近一半的機會，整類消失。」), never "next, let's look at…" |
-| Recall between segments | 8–10 s: a question about the **previous** segment over the stage's wide shot; the student answers; the place it points to flashes |
-| Neighbours differ | adjacent segments differ in at least two knobs: scale (wide / close), form, watch / guess, talk / silence, tension |
-| One point per segment | ≤ 2 new terms. Save time by cutting whole points or sentences, never by chopping sentences into fragments (teacher lines average ≥ ~22 characters, `07-voice-and-language.md` §1b-2; experiment 17 slipped to 17–18.5). Points you cut go in `CARD.md`; if an existing ending mindmap is reused, check its nodes still match |
-| The turn | the strongest reversal (the score was fake, the rule fails) lives in the last segment; the main aha lands at about two-thirds of the film (experiment 17: 64–70% in all four versions) |
-| The student acts | does the wrong step with their own hand and sees the consequence; a refused move is stamped with one line of reason; no idle puppet |
-| Interest curve | sketched in `CARD.md`: rising with rests, highest at the aha; never three equal humps |
-| Density | a table shows ≤ 5 rows (the rest as "… 195 more"); text sizes per §7 |
+| Speech share in the middle | room to think: bored middles were 85–94%; the baseline kept ≈ ≤ 80% |
+| Recap | the key sentence, then 2.5–3 s of real silence (`{"id": "K1-hold", "silence": 2.8}`). An option for a key sentence of two clauses (approved, experiment 20 test 18; every teacher; the user: a bit better, small difference — not required): the card can be an anchor, not a transcript — its key nouns in one shorter line, worded a little differently — said 「考題要像客人，每一類都考得到。」, card 「每一類都要有考題」. It worked as a whole phrase a stranger understands, not a code label (「改題升版」). Words that must stay exact keep their wording (truthfulness, one term one concept): a term's definition sentence (§4, `02-learning-design.md` §3), numbers, a question's or a quoted source's wording. An already-minimal sentence stays as said, minus the full stop; the selection box goes on the word the segment is about. What the shorter card drops was in the picture (there: the path starting at the conversation store carries 「像客人」) |
+| Recap that draws the path | an option for a multi-step process on one stage (approved, experiment 20 test 14; every teacher) to keep the whole path re-readable at a glance: each settled step leaves a faint trace — a thin path line and a count tag (≈ 0.3 opacity, still) — and the recap is the wide shot with every trace brightened, the point's station lit and the one sentence on a small card (30,000 → 200 → −45 → 155 → 6 categories → 「隨機抽 50：46% 整類消失」 → 「每類保底 5」). It replaces an end-state picture, so the end state sits on the trace (the lit tag), not a separate chart. Traces showed only numbers already said or shown, never during a change the viewer must watch (Only the change moves). Less fitting for one or two steps or one abstract relation, or when traces would cover the focus |
+| Moment of understanding | the viewer sees it before being told: the picture plays 3–5 s with no voice (one effect at most), then the line. **Composed as the same picture reassembled** (approved, experiment 20 test 11; every teacher): the 2–4 pieces needed are in one composition before the silence, visible together ≈ 1–1.5 s; the last piece — the one that makes it click — lands as the silence starts; inside it nothing new arrives (no camera move, words, numbers or terms) and nothing else moves, so the eye has one thing to read; the next line can be checked against the screen (「剩下十二題」 → four lamps go grey, twelve stay lit). A term appears on screen when it is said, not before. If one shot cannot hold them, or a new scale or place is needed, move there first, let the pieces arrive there, then the beat. A student in frame may react once inside the silence (next row) |
+| The student reacts at a reveal | an option when the student is already in frame (approved, experiment 20 test 13; every teacher): it says "this is the moment" and the hold lets the viewer catch up. Default: once the reveal's motion ends (≈ 1.5 s into the silence), one take — eyes first, a quick turn toward the revealed thing, a small recoil, in pose within 0.25–0.35 s — then completely still (no breathing, no blink) until the next line, easing into the next state. A take at the reveal's instant (+0.2 s, tested during a camera push-in and an x-ray scan) was also approved: shown both, the user answered 「我看過了 都有比較好」 (2026-11-09; the host read this as both acceptable and told the user). The later default stays: research expects an early take to compete with the reveal for the eye; when to prefer the early one is untested. Less fitting when the shot must change to show the student, or at the solved moment (that is the aha state); once per segment keeps it a signal |
+| Only the change moves | when the thing to learn **is** a change (a sieve drops duplicates, cards sort into bins, ten draws fill in), everything else holds still so the eye follows only that: idle breathing, blinks, pulses, floating markers paused, the camera settled first (or the change waits), station switches and label exits done before it; the result stays as a trace the recap can point back to (approved, experiment 20 test 9; every teacher; motion outside the focus: A peaked at 13.9 % of the frame at the start of the bin sort and 6.4 % during the sieve, B 0 %). Not a freeze: idle life returns between changes and in segments that only explain (all frozen read as a stuck video). A useful check: two stills 0.1 s apart during a change differ only inside the changing area (a speaking mouth aside). A cue toward the changing thing (`01-principles.md` §2) lands before the change, or the change waits for it (gestures finished first in the approved film) |
+| Breathing | rests to re-focus: the baseline kept ≤ ~40 s between ≥ 1 s pauses |
+| Segment opener | re-catch attention: a surprising fact or a question (「隨機抽五十題，有將近一半的機會，整類消失。」); "next, let's look at…" gives no reason to lean in |
+| Recall between segments | retrieve the last point before building on it — 8–10 s: a question on the **previous** segment over the stage's wide shot; the student answers; the place it points to flashes. Pro teachers may instead apply its rule to an unseen case (`05-presentation-methods.md` §3b, Recall with a new case). Left out at a seam made by closing at a reveal right after questions (Close a segment at its reveal, below) |
+| Picture follows new information | narration over a frozen picture for more than ≈ 3 s (outside planned holds and the recall question) is where to look (`livecheck.py` reports it; approved, experiment 20: the longest such stretch fell from 6.4 s to 2.6 s, which the user preferred). What helped: an event showing what the sentence states, on its word (`01-principles.md` §2); motion just to pass the check serves nothing |
+| Carry the object across | when the next segment's (or shot's) subject is literally an object on screen — the same cards, number, pile — moving or scaling it into place, not cutting or cross-fading, shows it is the same thing (approved, experiment 20 test 15; every teacher): it moves first, the camera follows; it lands just before the camera settles, inside an existing silence or camera move (≈ 0.8–1.7 s, slow in, slow out); a group converges into one pile (in the test the cards left their trays in a 0.035 s stagger and piled into the crate at the destination), dealt out once the camera settles, on the word that says so (「湊齊」). Then it is not in two places. What went wrong: turning it into something else breaks identity; sending each item to its own final slot read as confetti, and a sorted mapping can suggest a relation the lesson never makes (e.g. split by category — pair it with a fixed-seed shuffle); during a change the viewer must watch, or under a question tag's entrance, it competes for the eye |
+| Neighbours differ | against four minutes of one look: adjacent segments differed in at least two knobs — scale (wide / close), form, watch / guess, talk / silence, tension |
+| One point per segment | one thing to take away: approved segments had ≤ 2 new terms. To save time, cut whole points or sentences; fragments read as AI tone (teacher lines average ≥ ~22 characters, `07-voice-and-language.md` §1b-2; experiment 17 slipped to 17–18.5). Cut points go in `CARD.md`; a reused ending mindmap needs its nodes rechecked |
+| The turn | the strongest reversal (the score was fake, the rule fails) lands once the viewer has enough to feel it: in the last segment — or, when it was split at its reveal (next row), the one before the closing one; the main aha at ≈ two-thirds of the film (experiment 17: 64–70% in all four versions) |
+| Close a segment at its reveal | an option for a segment past ≈ 90 s still carrying a second point after its reveal (approved, experiment 20 test 25; every teacher;): end the segment right after the reveal is named — lights up if down, camera one step back, the result left in place, a recap card for its point (「客人分到兩邊，分數就灌水」, no figure: the stage is the figure) and its 2.5–3 s of silence — then a wide pano (≈ 1.3 s); the rest becomes the next segment, opening on its first line unchanged. The question tag is ticked at the last recap, where it is answered. It paid off with ≥ ≈ 40 s left (lesson 6, Pro cut: 131.6 s → 93.4 + 46.3 s; longest stretch without a pause 26.9 → 14.8 s; ≈ +8 s. Lesson 6's free cut would leave only ≈ 22 s, so not there); not worth it for one closing line; in a lesson already at four segments (four at most, above), shorten the long segment by cutting a whole point instead (One point per segment); no recall question at the new seam right after questions. The tested film's old mindmap left the new recap without a branch (a risk the build noted) — give it one (§3). In a film shot in the Engram studio (when asked), lights are up before the card enters (`lintLights` checks) |
+| The student acts | learning through the student's mistake: they do the wrong step with their own hand and see the consequence; a refused move is stamped with one line of reason; a student who only watches is an idle puppet. When a wrong proposal holds a part the right answer needs, the teacher can name it first, then the missing condition — 「是很像沒錯，可是…處理方法要一樣才能合併。」, 「交給AI是對的，可是不能讓它自己想。」 — with a small amber ✓ on the right part on its word and the stamp moved to 「可是」 (approved, experiment 20 test 19; every teacher; the user: a bit better, small difference). The ✓ has to be true: only where the answer really keeps that part (merging look-alikes; handing the work to AI); a proposal with nothing right is refused plainly. Once or twice in a segment, worded differently, or 「X 沒錯，可是…」 becomes a formula. The line after a bet, 「你押的理由沒錯…」 (`05-presentation-methods.md` §3b), is the same move and counts (the tested film: one per segment, A12, B03, the bet in C). Each costs ≈ 0.5–0.9 s; the ✓ was gone before the cards moved on |
+| Interest curve | a shape, not a plateau: sketched in `CARD.md`, rising with rests, highest at the aha; three equal humps read flat |
+| Density | readable at a glance: tables of ≤ 5 rows worked (the rest as "… 195 more"); text sizes per §7 |
 
 ## 3. Tail
 
-Back in the classroom; the blackboard becomes a **mindmap** (`lib/classroom/mindmap.js`):
-- Centre: the lesson's question or the one-liner. Branches: the segments' recap images **redrawn small** (the viewer recognises them), arrows labelled with the relation (cause, decision, order, contrast). Choose the layout the knowledge has: a funnel lesson is laid out as a path, not a radial star.
-- Each node: one picture + ≤ 8 Chinese characters / ≤ 5 English words. White space, aligned.
-- No rule that the body did not teach.
-- One or two lines lead to the next lesson (or, for a single lesson, to what the learner can do now).
+Purpose: see the whole. Back in the classroom the blackboard becomes a **mindmap** (`lib/classroom/mindmap.js`; the tail the user values):
+- Centre: the lesson's question or the one-liner. Branches: the recap images **redrawn small** (so the viewer recognises them), arrows labelled with the relation (cause, decision, order, contrast). The layout follows the knowledge: a funnel lesson reads as a path, not a radial star.
+- Each node: one picture + a short label (≤ 8 Chinese characters / ≤ 5 English words read well). White space, aligned.
+- Only what the body taught: a rule that first appears here was never taught.
+- When the opening was a concrete problem the lesson fixes piece by piece, the centre may start from that problem and the last arrow return to the one-liner (`05-presentation-methods.md` §3d, "Ending returns to the opening"; a Pro-teacher device, `11-teachers.md` §1b); chosen per lesson, replacing recap lines, not adding a beat.
+- One or two lines lead to the next lesson (for a single lesson, to what the learner can now do).
 - The last frame is complete and clean (held 5 s at delivery).
 
 ## 4. Series continuity
 
-Lesson N assumes only lessons 1…N−1. It opens from where the previous lesson ended and ends with the next lesson's question. Terms keep the same wording and definition sentence across lessons (`02-learning-design.md` §3).
+Purpose: a series that builds. Lesson N assumes only lessons 1…N−1. It opens where the previous lesson ended (the course map can ask that lesson's key question rather than retell it, `05-presentation-methods.md` §3d) and ends on the next lesson's question. Terms keep one wording and definition sentence across lessons, so one word stays one concept (`02-learning-design.md` §3).
 
 ## 5. The course map must be clearly visible
 
 
-1. **Hold long enough.** Each part or group the viewer must look at stays on screen **2–3 s**; any text gets time to be read. Do not squeeze the map into 6–7 s of fly-through — slower still on first appearance and when summing up the course.
-2. **Frame it properly.** For the overview, the whole table is in frame. To look at one part, push in on that part and dim the others. Never stop half-near, where everything is half visible.
-3. **Recognisable.** Simple silhouettes, colours that separate, one group lit at a time. Drop details that become unreadable when small. Name tags readable at the current camera distance.
-4. **Meaningful.** Each part is a small model of that lesson's core mechanism and actually moves (a rules part plays the rule, not a podium with a name tag).
+1. **Hold long enough.** Each part or group to look at gets about **2–3 s**, with time to read its text; a 6–7 s fly-through was unreadable. First appearance and the course summing-up want slower still.
+2. **Frame it properly.** Overview: the whole table in frame. One part: push in, dim the rest. Stopping half-near left everything half visible.
+3. **Recognisable.** Simple silhouettes, separating colours, one group lit at a time. Drop details unreadable when small. Name tags readable at the current camera distance.
+4. **Meaningful.** Each part is a small, moving model of that lesson's core mechanism (a rules part plays the rule, not a podium with a name tag).
 
 Better a longer map than a fly-by: an unreadable map is a signpost.
 
 ## 5b. Reading time (all text, checked by machine)
 
-Every block of text the viewer must read (map name tags, labels, recap cards, question cards, callouts) stays **fully in frame** for at least **CJK characters ÷ 4.5 + other characters ÷ 15 + 1.5 s** (minimum 1.5 s). Pages report their text through `window.TEXTS(t)` and `readcheck.cjs` checks the whole film (`08-tools.md`). Fast is fine — with fewer words per screen, not by cutting before people finish reading.
+So every text can be finished, each block (map name tags, labels, recap cards, question cards, callouts) **fully in frame** for at least **CJK characters ÷ 4.5 + other characters ÷ 15 + 1.5 s** (minimum 1.5 s). Pages report text through `window.TEXTS(t)` (page contract); `readcheck.cjs` measures the film (`08-tools.md`). Fast is fine — with fewer words per screen, not by cutting before people finish reading.
 
-- **Comparisons hold still before the verdict**: when the film compares options (two ad sets, three treatments, four bridges), each option is fully in frame and held at least **2.5 s** before it is judged.
-- A label is either fully in or fully out of a shot; a push-in must not cut labels in half.
+- **Comparisons hold still before the verdict**: so the viewer can compare, each option (two ad sets, three treatments, four bridges) fully in frame around **2.5 s** or more before it is judged.
+- A label is fully in or fully out of a shot; a push-in that halves labels makes them unreadable.
 
 ## 6. Sound
 
-- Two voices in dialogue (teacher + student), warm and varied: per line rate −12%…+15%, pitch −10…+25 Hz (English voices are more sensitive to pitch; use a smaller range). The one-liner slower and lower, with a 0.4–0.6 s pause before it.
-- Pauses of different lengths: dialogue 0.15–0.25 s, after a reveal 0.8–1.2 s, after a question 2.5–4 s.
-- Background music: "Morning" (`assets/music/`), **opening and ending only**, ending 3 dB quieter. Never under the lesson. Music supports; it must never compete with the voice.
-- **Sound design (status: trial — rules from Lemo-Opuscar's DIRECTOR.md §6, adapted; the user has not reviewed them yet; every film using them is delivered with a no-effects B version for A/B listening)**:
-  1. **Key visible actions have a quiet sound** — chalk stroke, UI tap, a card landing, a heartbeat, a particle released (`scripts/studio/sfx.py`, anchored to the word in `script.json`). Gain 0.15–0.35 (≈10–12 dB under the voice). Not every motion — only actions the viewer should notice. Never a constant bed, room tone or noise floor.
-  2. **Real near-silence before the turn**: before the one-liner and before the moment of understanding, no effects and a real pause (0.6–1.2 s). The first sound after that silence is the important one (the line itself, or the one effect that marks the reveal).
-  3. **Sound carries the handover**: at classroom ↔ middle page changes, let the next scene's first effect start 0.2–0.4 s before the cut (J-cut) or the last one ring past it (L-cut), instead of a silent hard cut.
-  4. Music stays at opening and ending only (the user's rule); effects never replace or imitate music.
+- Two voices in dialogue (teacher + student), warm and varied: per line rate around −12%…+15%, pitch −10…+25 Hz (English voices are pitch-sensitive: smaller range). The one-liner slower and lower, with a 0.4–0.6 s pause before it.
+- Pauses of different lengths: dialogue 0.15–0.25 s, after a reveal 0.8–1.2 s, after a question 2.5–4 s. Within one speaker's turn pauses come in layers too (same idea / end of a thought / topic change, idea groups, focus pause): `07-voice-and-language.md` §1b-4.
+- Background music: "Morning" (`assets/music/`), **opening and ending only**, ending 3 dB quieter — the user's decision; music supports and does not compete with the voice.
+- **Sound design (approved, experiment 20 test 10; level confirmed by the user's volume check; adapted from Lemo-Opuscar's DIRECTOR.md §6)**. The user compared current effects, none, and effects only at segment edges and one key moment: 「這是原版有聲音是可以接受的但是聲音在小聲一點點 這種背景因本身不需要每個都有 但是有影響也不大」. So:
+  1. **Key visible actions may have a quiet sound** — chalk stroke, UI tap, card landing, stamp, draw, particle released (`scripts/studio/sfx.py`, anchored to the word in `script.json`). Gain **0.11–0.21, typically 0.14** — ≈ 0.7× (−3 dB) the levels in the film the user heard (x20: 0.16–0.30, median 0.20). Heard next to the same film at −3 dB, the user approved the quieter one (「我看過了 都有比較好」, 2026-11-09). Only actions the viewer should notice — leaving one out costs little, so when in doubt leave it out; no constant bed, room tone or noise floor was approved.
+  2. **Real near-silence before the turn**: before the one-liner and the moment of understanding, no effects and a real pause (0.6–1.2 s), so the first sound after it (the line, or the effect marking the reveal) lands.
+  3. **Sound carries the handover**: at classroom ↔ middle page changes, the next scene's first effect 0.2–0.4 s before the cut (J-cut) or the last ringing past it (L-cut) beat a silent hard cut.
+  4. Music stays at opening and ending only (the user's rule); effects neither replace nor imitate it.
 
 ## 7. Picture spec
 
-- **One house style** across classroom, stage, cards, mindmap and map (`01-principles.md` §1): the Engram studio, light or dark by content (`03-adapter-pattern.md` §1.2), components in `scripts/studio/lib/house/`; the stage's look comes from the house style, not from the producer.
+- **One consistent look** across classroom, stage, cards, mindmap and map within a film and a course (`01-principles.md` §1): classroom head and tail, the real thing in its own look in the middle, no look invented for one film. The Engram studio (`scripts/studio/lib/house/`) only when the user asks for it (the user's decision).
 
-- 1920×1080, 30 fps. The learner's `quality: compact` only shrinks the delivered copy to 720p (`deliver.py`); always render at full size.
-- Interface text when pushed in ≥ 28 px; key numbers ≥ 36 px; key words ≈ 40 px; chalk text ≥ 50 px. Small text in a wide shot is never the point.
+- 1920×1080, 30 fps. The learner's `quality: compact` only shrinks the delivered copy to 720p (`deliver.py`); render at full size (technical: the 720p copy is made from it).
+- Sizes that read: pushed-in interface text ≥ 28 px; key numbers ≥ 36 px; key words ≈ 40 px; chalk text ≥ 50 px. Small text in a wide shot cannot be the point.
 - The main subject fills about 70% of the frame.
-- Bottom 140 px: nothing important (the plugin shows `subtitles.vtt` there; never burn subtitles in).
+- Bottom 140 px: nothing important — the plugin shows `subtitles.vtt` there, so subtitles are not burned in.
 
 ## 8. Length
 
-5–7 minutes per lesson (target 5:30–6:30) for a course lesson, modules included (`12-modules.md`: they fit inside this length, they do not extend it); a single-concept lesson may be shorter. First drafts run to 7–8 minutes — cut at the storyboard stage, not after rendering.
-Sizing a draft: the English dialogue voices with normal pauses run at about **140 words per minute** (experiment 12: 975 words ≈ 6:55), so 6:30 ≈ 900 words. Measure the Chinese rate on your first `voice.py` run and size from that.
+Course lessons run 5–7 minutes (reference 5:30–6:30), modules included (`12-modules.md`: they fit inside it, not on top); a single-concept lesson may be shorter. First drafts run 7–8 minutes — cut at the storyboard, cheaper than after rendering.
+Sizing a draft: English dialogue voices with normal pauses run about **140 words per minute** (experiment 12: 975 words ≈ 6:55), so 6:30 ≈ 900 words. Measure the Chinese rate on the first `voice.py` run and size from it.
+
+## 9. Short social cut (trial, experiment 18 — not reviewed by the user yet)
+
+Purpose: a film meant to stop a scroll (). The skeleton keeps every function, compressed. The numbers are what experiment 18 used — a starting point, not a template, until the user has reviewed it.
+
+| Part | What experiment 18 did | What it was for |
+|---|---|---|
+| Head (≤ 30 s) | The first spoken sentence is the hook (0.3–4 s in), the same sentence pinned on the board in frame 0; the student doubts within 8 s; a 3 s chalk agenda in place of the course map | The reason to stay arrives before the thumb moves; still the classroom, no teaser (§1) |
+| One-liner (by ≈ 1:00) | Defined terms only, 0.5 s of real quiet before it | The point lands in known words |
+| Middle | 2 segments × 35–45 s, each ending on a recap card held 2.5–3.5 s (longer when §5b needs it) | One point each, still consolidated |
+| Tail (12–20 s) | Mindmap with the film's own numbers; one thing to notice tomorrow | See the whole, take one thing away |
+| Total | 2:00–2:30 | Past that it stops being a short |
+
+Delivery used: no frozen first frame (`deliver.py --solo 0`), last frame held 3 s (`--tail 3`); a 1.5–2 s prediction pause after each question to the student; the bottom 14 % kept free because the social copy burns its subtitles there (`scripts/burnsubs.py`, `08-tools.md` §6 — the library copy keeps them off, §7) at −14 LUFS. Topics chosen by a hook test: it is about the viewer, the first sentence makes them disagree, a picture exists within 5 s, the answer is true.

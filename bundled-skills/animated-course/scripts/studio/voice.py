@@ -17,9 +17,20 @@ script.json:
     {"id": "L02", "speaker": "teacher", "text": "...", "sub": "字幕想跟念的不一樣時才填"},
     {"id": "L03", "speaker": "teacher", "text": "...", "rate": "+10%", "pitch": "+15Hz"}  # per-line override of the voice's rate/pitch
   ],
-  "sfx": [{"file": "sfx/pop.wav", "line": "L02", "word": "Docker", "offset": 0.0, "gain": 0.25}]   # optional;
+  "sfx": [{"file": "sfx/pop.wav", "line": "L02", "word": "Docker", "offset": 0.0, "gain": 0.14}]   # optional;
           # "word" anchors to that word's start in the line (else the line start); "offset" shifts it; or {"t": seconds}
 }
+
+Prosody (reference/07-voice-and-language.md §1b-4, approved in experiment 20):
+  "group": "g1"         on consecutive lines of ONE speaker = one idea: they are synthesized as ONE sentence (their inner
+                        full stops become commas), so the voice keeps one intonation arc instead of restarting at every
+                        line; timeline.json still gets every original line id (word timings are split back per line).
+  "‖" / "‖0.4" in text  a real pause (default 0.35 s) cut into the audio before the next word, without restarting the
+                        intonation (edge-tts ignores "……"); write it before a focus word, sparingly.
+  "pauseShape": {"、": 0.12, "，": 0.24, "join": 0.32}   resizes the pauses INSIDE each clip by what separates the words
+                        (enumeration comma, comma, a joined line), so pauses come in layers instead of one 0.3 s beat;
+  "pauseShapeOnly": ["A", "K1"]   optional: apply pauseShape only to lines whose id starts with one of these.
+  "gapBefore": s        extra silence before a line (a turn that comes after thinking, a reply to a wrong guess).
 
 Voice engine (reference/07-voice-and-language.md §1c): edge-tts by default. An AI voice is used when it is chosen
 (VOICE_ENGINE or script.json "engine": edge|gemini|azure|custom) and configured (GEMINI_API_KEY;
@@ -31,9 +42,11 @@ If the chosen engine fails or does not match the text, the WHOLE narration is re
 
 timeline.json gives every line's start/end in seconds and, for spoken lines, word timings
 ("words": [{"text","start","end"}]) so visuals can land exactly when a word is said.
-TTS results are cached in studio/.tts-cache, so re-running after editing one line is fast.
+TTS results are cached in studio/.tts-cache, so re-running after editing one line is fast. The edge-tts clips a project
+uses are also kept in projects/<id>/.tts-cache (bundle.py archives them with the sources), so a project restored into a new
+studio re-voices only the lines whose text changed instead of the whole film (experiment 21: a lost cache moved every timing).
 """
-import asyncio, base64, difflib, hashlib, json, os, re, shlex, ssl, subprocess, sys, tempfile, urllib.request, wave
+import asyncio, base64, difflib, hashlib, json, os, re, shlex, shutil, ssl, subprocess, sys, tempfile, urllib.request, wave
 import numpy as np
 import edge_tts
 import edge_tts.communicate as _c
@@ -44,6 +57,7 @@ _c._SSL_CTX = ssl.create_default_context(cafile="/root/.ccr/ca-bundle.crt")
 SR = 24000
 STUDIO = os.path.dirname(os.path.abspath(__file__))
 CACHE = os.path.join(STUDIO, ".tts-cache")
+USED = set()  # edge-tts cache files this run used (copied into the project's own .tts-cache at the end)
 # zh-TW-YunJheNeural fails intermittently (NoAudioReceived) for the same text that succeeds a minute
 # later, so retry a lot per line, and run several rounds over the failed lines before giving up.
 RETRIES = int(os.environ.get("TTS_RETRIES", 4))
@@ -54,7 +68,8 @@ _HTTPS = ssl.create_default_context(cafile=CA) if os.path.exists(CA) else ssl.cr
 
 # ------------------------------------------------------------------ engine choice
 def pick_engine(spec):
-    """Return (engine, reason). 'auto' uses an AI voice when one is configured, else edge-tts."""
+    """Return (engine, reason). 'auto'/unset always means edge-tts; an AI engine is used only when named in
+    VOICE_ENGINE or script.json "engine" (the user's choice, reference/07-voice-and-language.md §1c)."""
     want = (os.environ.get("VOICE_ENGINE") or spec.get("engine") or "auto").lower()
     env = os.environ
     have = {"gemini": bool(env.get("GEMINI_API_KEY")),
@@ -67,8 +82,8 @@ def pick_engine(spec):
     # 'auto' never spends money on its own: the engine is chosen while planning (resolve.cjs engine.askUser)
     found = [e for e in ("gemini", "azure", "custom") if have[e]]
     if found:
-        return "edge", (f"AI voice available ({', '.join(found)}) but no engine chosen in script.json -> edge-tts; "
-                        "ask the user while planning and set \"engine\"")
+        return "edge", (f"AI voice available ({', '.join(found)}) but not chosen -> edge-tts "
+                        "(only the user picks an AI voice, at the start-up question; do not ask now, SKILL.md rule 0)")
     return "edge", "no AI voice configured -> edge-tts (default)"
 
 
@@ -284,6 +299,7 @@ async def synth(text, voice, rate, pitch):
     if os.path.exists(mp3) and os.path.exists(meta):
         cached = json.load(open(meta, encoding="utf-8"))
         if complete(text, cached):
+            USED.update((mp3, meta))
             return mp3, cached
         print(f"  re-synthesizing a truncated cached clip: {text[:50]!r}", flush=True)
     last = None
@@ -306,6 +322,7 @@ async def synth(text, voice, rate, pitch):
                 raise RuntimeError(f"truncated audio (word boundaries cover only part of the text)")
             open(mp3, "wb").write(buf)
             json.dump(words, open(meta, "w", encoding="utf-8"), ensure_ascii=False)
+            USED.update((mp3, meta))
             return mp3, words
         except ValueError:  # a bad argument (e.g. an invalid rate/pitch) never succeeds: do not retry
             raise
@@ -407,8 +424,144 @@ async def prefetch(spec):
     sys.exit(f"TTS still failing for: {ids} (last errors: {last}). Successful lines are cached; re-run voice.py to retry only these.")
 
 
+def group_units(lines):
+    """Consecutive spoken lines with the same "group" and speaker are synthesized as ONE sentence
+    (inner full stops become commas), so the voice keeps one intonation arc across the idea instead of
+    resetting at every line. The unit keeps its members so timeline.json still has every original line id."""
+    out, i = [], 0
+    while i < len(lines):
+        ln = lines[i]
+        g = ln.get("group")
+        if g and "silence" not in ln:
+            mem = [ln]
+            while i + 1 < len(lines) and lines[i + 1].get("group") == g and lines[i + 1].get("speaker") == ln["speaker"]:
+                i += 1; mem.append(lines[i])
+            if len(mem) > 1:
+                parts = [re.sub(r"[。！!]$", "，", m["text"]) for m in mem[:-1]] + [mem[-1]["text"]]
+                u = {k: v for k, v in mem[0].items() if k not in ("text", "sub", "pauseAfter")}
+                u.update(id="grp-" + mem[0]["id"], text="".join(parts), members=mem,
+                         pauseAfter=mem[-1].get("pauseAfter", None))
+                if u["pauseAfter"] is None: u.pop("pauseAfter")
+                for m in mem:  # per-member rate/pitch cannot differ inside one synthesis: use the last member's
+                    if "rate" in m: u["rate"] = m["rate"]
+                    if "pitch" in m: u["pitch"] = m["pitch"]
+                out.append(u); i += 1; continue
+        out.append(ln); i += 1
+    return out
+
+
+SHAPE = {}   # punctuation -> target pause (s) inside a synthesized clip, e.g. {"、": 0.1, "，": 0.22, "join": 0.3}
+MARK = re.compile(r"‖(\d*\.?\d+)?")
+
+
+def prep_marks(u):
+    """'‖' (or '‖0.4') before a word = a real pause before that focus word (default 0.35 s), cut into the audio after
+    synthesis, so the voice keeps its intonation (a new sentence would reset it). Also records where an idea group
+    joined two lines (their inner full stop became a comma)."""
+    if "text" not in u:
+        return u
+    u = dict(u)
+    marks, clean, pos = [], "", 0
+    i = 0
+    for m in MARK.finditer(u["text"]):
+        seg = u["text"][i:m.start()]; clean += seg; pos += len(_letters(seg))
+        marks.append((pos, float(m.group(1) or 0.35))); i = m.end()
+    clean += u["text"][i:]
+    u["text"] = clean
+    if u.get("members"):
+        u["members"] = [dict(mm, text=MARK.sub("", mm["text"])) for mm in u["members"]]
+        joins, c = [], 0
+        for mm in u["members"][:-1]:
+            c += len(_letters(mm["text"])); joins.append(c)
+        u["joins"] = joins
+    if marks: u["marks"] = marks
+    return u
+
+
+def shape_pauses(audio, words, ln, SHAPE):
+    """Resize the silences inside one clip by what separates the words there (、 ， joined line, focus mark)."""
+    text = ln["text"]
+    # letter offset of each word, and the raw text between consecutive words
+    offs, ptr, letters = [], 0, 0
+    spans = []
+    for w in words:
+        wt = w["text"]
+        j = text.find(wt, ptr) if wt else -1
+        if j < 0:
+            j = ptr
+        spans.append((j, j + len(wt))); offs.append(letters); letters += len(_letters(wt)); ptr = j + len(wt)
+    marks = dict(ln.get("marks", []))
+    joins = set(ln.get("joins", []))
+    frame = int(SR * 0.01)
+    edits = []
+    for k in range(len(words) - 1):
+        between = text[spans[k][1]:spans[k + 1][0]]
+        nxt = offs[k + 1]
+        target = None
+        if nxt in marks:
+            target = marks[nxt]
+        elif nxt in joins and "join" in SHAPE:
+            target = SHAPE["join"]
+        else:
+            for p in ("。", "？", "！", "，", "、", "；", "：", ","):
+                if p in between and p in SHAPE:
+                    target = SHAPE[p]; break
+        if target is None:
+            continue
+        # find the quiet run just before the next word
+        ws = words[k + 1]["start"]
+        a = max(0, int((ws - 0.7) * SR) // frame); b = min(len(audio) // frame, int((ws + 0.06) * SR) // frame)
+        if b <= a:
+            continue
+        seg = audio[a * frame:b * frame]
+        rms = np.sqrt((seg.reshape(-1, frame) ** 2).mean(axis=1))
+        quiet = rms < 10 ** (-38 / 20)
+        best, run, k0 = (0, 0), 0, 0
+        for f in range(len(quiet)):
+            if quiet[f]:
+                if run == 0: k0 = f
+                run += 1
+                if run > best[1] - best[0]: best = (k0, f + 1)
+            else:
+                run = 0
+        r0, r1 = (a + best[0]) * frame, (a + best[1]) * frame
+        if r1 - r0 < int(0.05 * SR):  # no real gap: insert at the quietest frame just before the word
+            if nxt not in marks:
+                continue
+            c = int(np.argmin(rms[-8:])) + len(rms) - 8
+            r0 = r1 = (a + c) * frame
+        edits.append((r0, r1, target, k + 1))
+    for r0, r1, target, kk in sorted(edits, reverse=True):
+        new = np.zeros(int(target * SR), dtype=audio.dtype)
+        audio = np.concatenate([audio[:r0], new, audio[r1:]])
+        delta = (len(new) - (r1 - r0)) / SR
+        for w in words[kk:]:
+            w["start"] += delta; w["end"] += delta
+    return audio, words
+
+
+def seed_cache(project):
+    """Copy the project's own clips (archived by bundle.py) into the studio cache, so they count as cached."""
+    pc = os.path.join(project, ".tts-cache")
+    if os.path.isdir(pc):
+        for f in os.listdir(pc):
+            if not os.path.exists(os.path.join(CACHE, f)):
+                shutil.copy(os.path.join(pc, f), CACHE)
+
+
+def keep_cache(project):
+    """Keep exactly the edge-tts clips this film uses in projects/<id>/.tts-cache (small mp3 + json; AI-voice wavs stay out)."""
+    pc = os.path.join(project, ".tts-cache"); os.makedirs(pc, exist_ok=True)
+    want = {os.path.basename(p) for p in USED}
+    for f in os.listdir(pc):
+        if f not in want: os.remove(os.path.join(pc, f))
+    for p in USED:
+        if not os.path.exists(os.path.join(pc, os.path.basename(p))): shutil.copy(p, pc)
+
+
 async def main(project):
     os.makedirs(CACHE, exist_ok=True)
+    seed_cache(project)
     spec = json.load(open(os.path.join(project, "script.json"), encoding="utf-8"))
     voices = spec["voices"]
     global ENGINE, LANG
@@ -421,6 +574,8 @@ async def main(project):
         except Exception as e:
             print(f"voice engine: {ENGINE} did not work ({e}); redoing the whole narration with edge-tts", flush=True)
             ENGINE = "edge"
+    spec = dict(spec, lines=[prep_marks(u) for u in group_units(spec["lines"])])
+    SHAPE.update(spec.get("pauseShape", {}))
     if ENGINE == "edge":
         await prefetch(spec)
     t = float(spec.get("leadIn", 0.6))
@@ -437,12 +592,35 @@ async def main(project):
         audio, lead = trim(decode(mp3))
         audio = level(audio)
         words = [{**w, "start": max(0.0, w["start"] - lead), "end": max(0.0, w["end"] - lead)} for w in words]
+        first_id = (ln.get("members") or [ln])[0]["id"]
+        only = spec.get("pauseShapeOnly")
+        shaped = SHAPE and (not only or any(first_id.startswith(p) for p in only))
+        if shaped or ln.get("marks"):
+            audio, words = shape_pauses(audio, words, ln, SHAPE if shaped else {})
         t += float(ln.get("gapBefore", 0))
         start, dur = t, len(audio) / SR
         if words:  # word boundary ends can run a little past the trimmed audio
             dur = max(dur, words[-1]["end"])
         placed.append((start, audio))
-        out_lines.append({"id": ln["id"], "speaker": ln["speaker"], "text": ln["text"],
+        if ln.get("members"):  # one synthesis for an idea group: split the word timings back into its lines
+            bounds, c = [], 0
+            for m in ln["members"]:
+                c += len(_letters(m["text"])); bounds.append(c)
+            per = [[] for _ in ln["members"]]
+            pos = 0
+            for w in words:
+                k = next((i for i, b in enumerate(bounds) if pos < b), len(bounds) - 1)
+                per[k].append(w); pos += len(_letters(w["text"]))
+            for i, m in enumerate(ln["members"]):
+                ws = per[i]
+                s0 = start if i == 0 else start + (ws[0]["start"] if ws else 0)
+                e0 = start + dur if i == len(per) - 1 else start + (ws[-1]["end"] if ws else 0)
+                out_lines.append({"id": m["id"], "speaker": ln["speaker"], "text": m["text"],
+                                  "sub": m.get("sub", m["text"]), "start": round(s0, 3), "end": round(e0, 3),
+                                  "words": [{"text": w["text"], "start": round(start + w["start"], 3),
+                                             "end": round(start + w["end"], 3)} for w in ws]})
+        else:
+            out_lines.append({"id": ln["id"], "speaker": ln["speaker"], "text": ln["text"],
                           "sub": ln.get("sub", ln["text"]), "start": round(start, 3), "end": round(start + dur, 3),
                           "words": [{"text": w["text"], "start": round(start + w["start"], 3),
                                      "end": round(start + w["end"], 3)} for w in words]})
@@ -454,23 +632,37 @@ async def main(project):
         i = int(start * SR)
         mix[i:i + len(audio)] += audio
     by_id = {l["id"]: l for l in out_lines}
+
+    def anchor(fx):  # resolve every sfx time before writing anything, so a bad anchor leaves no half-written output
+        if "line" not in fx:
+            return fx["t"]
+        if fx["line"] not in by_id:
+            raise SystemExit(f"sfx: line {fx['line']!r} not in script")
+        ln_ = by_id[fx["line"]]; at = ln_["start"]
+        if fx.get("word"):  # the first word boundary where this text starts; edge-tts may split it over
+            want, ws = _letters(fx["word"]), ln_.get("words", [])  # several boundaries (修好 -> 修 + 好)
+            hit = None
+            for i in range(len(ws)):
+                acc = ""
+                for w in ws[i:]:
+                    acc += _letters(w["text"])
+                    if len(acc) >= len(want):
+                        break
+                if acc.startswith(want):
+                    hit = ws[i]; break
+            if not hit:
+                raise SystemExit(f"sfx: word {fx['word']!r} not found in line {fx['line']}")
+            at = hit["start"]
+        return at + fx.get("offset", 0)
+
+    fx_at = [anchor(fx) for fx in spec.get("sfx", [])]
     if spec.get("sfx"):  # keep a voice-only copy for A/B listening (deliver.py --dry)
         dry = mix[:int(total * SR)] * (0.98 / max(0.98, float(np.max(np.abs(mix))) or 1.0))
         with wave.open(os.path.join(project, "narration_dry.wav"), "wb") as w:
             w.setnchannels(1); w.setsampwidth(2); w.setframerate(SR)
             w.writeframes((dry * 32767).astype(np.int16).tobytes())
-    for fx in spec.get("sfx", []):
-        if "line" in fx:
-            ln_ = by_id[fx["line"]]; at = ln_["start"]
-            if fx.get("word"):  # anchor to the first word boundary that starts with this text
-                hit = [w for w in ln_.get("words", []) if _letters(w["text"]).startswith(_letters(fx["word"]))]
-                if not hit:
-                    raise SystemExit(f"sfx: word {fx['word']!r} not found in line {fx['line']}")
-                at = hit[0]["start"]
-            at += fx.get("offset", 0)
-        else:
-            at = fx["t"]
-        audio = decode(os.path.join(project, fx["file"])) * float(fx.get("gain", 0.6))
+    for fx, at in zip(spec.get("sfx", []), fx_at):
+        audio = decode(os.path.join(project, fx["file"])) * float(fx.get("gain", 0.14))
         i = int(at * SR)
         seg = mix[i:i + len(audio)]
         seg += audio[:len(seg)]
@@ -481,6 +673,24 @@ async def main(project):
     with wave.open(os.path.join(project, "narration.wav"), "wb") as w:
         w.setnchannels(1); w.setsampwidth(2); w.setframerate(SR)
         w.writeframes((mix * 32767).astype(np.int16).tobytes())
+
+    # Lines inserted or re-timed in the middle move the page hand-overs: warn with the shifted values
+    # (experiment 20: tOut left at the old time fired the closing wipe mid-segment and hid the last key card).
+    tl_path, ho_path = os.path.join(project, "timeline.json"), os.path.join(project, "handover.json")
+    if os.path.exists(tl_path) and os.path.exists(ho_path):
+        try:
+            old = {l["id"]: l["start"] for l in json.load(open(tl_path, encoding="utf-8"))["lines"]}
+            new = {l["id"]: l["start"] for l in out_lines}
+            ho = json.load(open(ho_path, encoding="utf-8"))
+            for key in ("tHand", "tOut"):
+                after = sorted((s0, i) for i, s0 in old.items() if key in ho and s0 >= ho[key] - 1.0 and i in new)
+                if after and abs(new[after[0][1]] - after[0][0]) > 0.05:
+                    d = new[after[0][1]] - after[0][0]
+                    print(f"WARNING: the lines at handover.json {key}={ho[key]} moved {d:+.2f} s (first line there: "
+                          f"{after[0][1]}). Set {key} to {ho[key] + d:.3f} and the matching segments.json 'from', "
+                          f"or the page change, wipe and last key card fire at the old time.", flush=True)
+        except Exception as e:  # never block voicing on this check
+            print(f"(handover check skipped: {e})")
 
     timeline = {"duration": round(total, 3), "lines": out_lines}
     json.dump(timeline, open(os.path.join(project, "timeline.json"), "w", encoding="utf-8"),
@@ -493,6 +703,7 @@ async def main(project):
         n += 1
         cues += [str(n), f"{vtt_time(l['start'])} --> {vtt_time(l['end'])}", l["sub"], ""]
     open(os.path.join(project, "subtitles.vtt"), "w", encoding="utf-8").write("\n".join(cues))
+    keep_cache(project)
     spoken = sum(1 for l in out_lines if l["speaker"])
     print(f"ok: {spoken} spoken lines, duration {total:.1f}s -> narration.wav, timeline.json, subtitles.vtt")
 

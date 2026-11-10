@@ -4,7 +4,10 @@
 import * as THREE from 'three';
 import * as K from '/lib/kit/kit.js';
 
-export async function makeStage({ card = true, cardAt = { x: 920, y: 380 }, floor: floorSrc = '/lib/cast/floor.jpg' } = {}) {
+// transparent: true → no background colour, floor or wash: the characters float over the page's own DOM
+// (put your scene behind the stage frame, or append your elements into frame below layer2d).
+export async function makeStage({ card = true, cardAt = { x: 920, y: 380 }, floor: floorSrc = '/lib/cast/floor.jpg', transparent = false } = {}) {
+  if (transparent) floorSrc = null;
   await K.init(['wallet']);
   const css = document.createElement('style');
   css.textContent = `
@@ -17,8 +20,9 @@ export async function makeStage({ card = true, cardAt = { x: 920, y: 380 }, floo
     .x14-3d{position:absolute;left:0;top:0;width:1920px;height:1080px;z-index:40;pointer-events:none}`;
   document.head.append(css);
   const frame = document.createElement('div'); frame.className = 'x14-frame'; document.body.append(frame);
+  if (transparent) frame.style.background = 'transparent';
   if (floorSrc) { const floor = new Image(); floor.className = 'x14-floor'; floor.src = floorSrc; frame.append(floor); await floor.decode(); }
-  const wash = document.createElement('div'); wash.className = 'x14-wash'; frame.append(wash);
+  if (!transparent) { const wash = document.createElement('div'); wash.className = 'x14-wash'; frame.append(wash); }
   let cardEl = null, toggleEl = null;
   if (card) {
     const p = K.am.panel({ w: 520, sections: [{ title: 'Budget', icon: 'wallet', rows: [

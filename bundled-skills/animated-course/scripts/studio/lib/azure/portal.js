@@ -161,7 +161,7 @@ export function portalTop({ search = '搜尋資源、服務及文件 (G+/)', cop
     <span class="az-ptop-search">${ic('search', 22)}<span>${esc(search)}</span></span>
     <span class="az-ptop-right">${copilot ? `<span class="az-ptop-copilot">${ic('sparkles', 22, '#8764B8')}<span>Copilot</span></span>` : ''}
       ${['square-terminal', 'bell', 'settings', 'circle-help', 'message-square-heart'].map(n => `<span class="az-ptop-ic">${ic(n, 25)}</span>`).join('')}
-      <span class="az-ptop-acct"><span class="e">${esc(account.email)}</span><span class="t">${esc(account.tenant)}</span></span>
+      <span class="az-ptop-acct"><span class="az-e">${esc(account.email)}</span><span class="az-t">${esc(account.tenant)}</span></span>
       <span class="az-ptop-av">${ic('user', 24, '#fff')}</span></span></div>`);
 }
 function menuHtml(menu, active, { search = true } = {}) {
@@ -216,7 +216,7 @@ export function portalHome({ w = 1920, h = 1080, services = HOME_SERVICES, rows 
     return `<tr><td class="link" data-key="n"><span class="az-st">${ic(ti, 22, c)}<span>${esc(n)}</span></span></td><td data-key="t">${esc(t)}</td><td data-key="w">${esc(when)}</td></tr>`; }).join('')}</tbody></table>`;
   const el = node(`<div class="az az-pb az-home" style="width:${w}px;height:${h}px"><div class="az-home-in">
     <div class="az-home-h"${rd(rid + '-svc')}>Azure 服務</div>
-    <div class="az-home-svc">${services.map(([n, i, c, link]) => `<div class="az-home-s ${link ? 'is-link' : ''}" data-name="${esc(n)}"><span class="ic">${ic(i, 44, c)}</span><span class="l">${esc(n)}</span></div>`).join('')}</div>
+    <div class="az-home-svc">${services.map(([n, i, c, link]) => `<div class="az-home-s ${link ? 'is-link' : ''}" data-name="${esc(n)}"><span class="ic">${ic(i, 44, c)}</span><span class="az-l">${esc(n)}</span></div>`).join('')}</div>
     <div class="az-home-h"${rd(rid + '-res')}>資源</div>
     <div class="az-tabs az-home-tabs">${['最近', '我的最愛'].map(t => `<span class="az-tab ${t === tab ? 'is-on' : ''}">${t}</span>`).join('')}</div>
     ${tbl}<div class="az-link az-home-all">查看全部</div><div class="az-home-h">瀏覽</div></div></div>`);
@@ -264,7 +264,7 @@ export function valueBox({ value = '', w = null, mono = false, copy = false, dd 
 export function form(rows, { labelW = 380, gap = 18, read: rid = '' } = {}) {
   const el = node(`<div class="az-form" style="grid-template-columns:${labelW}px 1fr;row-gap:${gap}px"></div>`);
   rows.forEach(([lab, ctl, o = {}], i) => {
-    const L = node(`<span class="az-form-l" data-name="${esc(lab)}"><span${rd(rid && `${rid}-l${i}`)}>${esc(lab)}</span>${o.req ? '<span class="req">*</span>' : ''}${o.info ? ic('info', 18, '#616161') : ''}</span>`);
+    const L = node(`<span class="az-form-l" data-name="${esc(lab)}"><span${rd(rid && `${rid}-l${i}`)}>${esc(lab)}</span>${o.req ? '<span class="az-req">*</span>' : ''}${o.info ? ic('info', 18, '#616161') : ''}</span>`);
     const C = document.createElement('span'); C.className = 'az-form-c';
     if (typeof ctl === 'string') { const v = valueBox({ value: ctl, read: rid && `${rid}-v${i}` }); C.append(v); } else if (ctl) C.append(el$(ctl));
     if (o.sub) C.append(node(`<span class="az-sub" style="white-space:normal">${esc(o.sub)}</span>`));
@@ -569,7 +569,7 @@ export function wafPolicy({ mode = 'Prevention', managed = [['Microsoft_DefaultR
 export function secureScore({ pct = 38, size = 220, label = '安全分數', read: rid = 'score' } = {}) {
   const r = size / 2 - 16, C = 2 * Math.PI * r;
   const el = node(`<div class="az-score" style="width:${size}px"><svg width="${size}" height="${size}"><circle cx="${size / 2}" cy="${size / 2}" r="${r}" fill="none" stroke="#E0E0E0" stroke-width="18"/><circle class="arc" cx="${size / 2}" cy="${size / 2}" r="${r}" fill="none" stroke="#0F6CBD" stroke-width="18" stroke-linecap="round" transform="rotate(-90 ${size / 2} ${size / 2})" stroke-dasharray="${C}"/></svg>
-    <div class="in" style="height:${size}px"><b${rd(rid + '-v')}>${pct}%</b></div><div class="l"${rd(rid + '-l')}>${esc(label)}</div></div>`);
+    <div class="in" style="height:${size}px"><b${rd(rid + '-v')}>${pct}%</b></div><div class="az-l"${rd(rid + '-l')}>${esc(label)}</div></div>`);
   const arc = el.querySelector('.arc'), v = el.querySelector('b');
   const api = { el, set(p) { arc.setAttribute('stroke-dashoffset', (C * (1 - Math.max(0, Math.min(100, p)) / 100)).toFixed(1)); const s = Math.round(p) + '%'; if (v.textContent !== s) v.textContent = s; return api; } };
   return api.set(pct);
@@ -675,7 +675,7 @@ export function availabilityPage({ tests = [['api-healthz', 'Standard', '100%']]
   const el = node('<div class="az-col" style="gap:18px"></div>');
   el.append(cmdRow([['plus', '新增標準測試'], ['refresh-cw', '重新整理']]));
   const t = tableZh({ columns: [{ key: 'n', label: 'Test name' }, { key: 'y', label: 'Test type' }, { key: 'p', label: 'Availability', num: true }], rows: tests, read: rid }); el.append(t.el);
-  const g = node(`<div class="az-card az-avail"><div class="az-row" style="gap:12px;margin-bottom:10px"><span class="az-h3"${rd(rid + '-loc')}>Test locations</span><span class="az-sub" style="margin-left:auto">5 min frequency</span></div>${locations.map((l, i) => `<div class="az-avail-r"><span class="l"${rd(`${rid}-l${i}`)}>${esc(l)}</span><span class="d">${runs[i].map((r, j) => `<i class="${r ? 'ok' : 'err'}" data-i="${j}"></i>`).join('')}</span></div>`).join('')}</div>`);
+  const g = node(`<div class="az-card az-avail"><div class="az-row" style="gap:12px;margin-bottom:10px"><span class="az-h3"${rd(rid + '-loc')}>Test locations</span><span class="az-sub" style="margin-left:auto">5 min frequency</span></div>${locations.map((l, i) => `<div class="az-avail-r"><span class="az-l"${rd(`${rid}-l${i}`)}>${esc(l)}</span><span class="az-d">${runs[i].map((r, j) => `<i class="${r ? 'ok' : 'err'}" data-i="${j}"></i>`).join('')}</span></div>`).join('')}</div>`);
   el.append(g);
   if (ssl) el.append(form([['啟用 SSL 憑證有效性', checkbox({ on: ssl.on, read: rid + '-ssl' })], ['Proactive lifetime check (days)', valueBox({ value: String(ssl.days), w: 160, read: rid + '-days' })]], { labelW: 420, gap: 12 }).el);
   return { el, row: t.row, dot: (li, i) => g.querySelectorAll('.az-avail-r')[li]?.querySelector(`i[data-i="${i}"]`) };
@@ -703,8 +703,8 @@ export function alertActionsZh({ groups = [['ag-cram-oncall', 'Email, SMS']] } =
 /** Alert rule 詳細資料 tab: 嚴重性, 警示規則名稱, 警示規則描述 [learn]; severity values [en]. o: {severity, name, description} → element */
 export function alertDetailsZh({ severity = '1 - Error', name = 'cram-api-5xx-rate', description = '' } = {}) {
   return node(`<div class="az-sec"><span class="az-h2">詳細資料</span><div class="az-grid2">
-    <div class="az-field"><span class="az-label">嚴重性<span class="req">*</span></span><span class="az-input" style="justify-content:space-between"><span data-read="alert-sev">${esc(severity)}</span>${ic('chevron-down', 22)}</span></div>
-    <div class="az-field"><span class="az-label">警示規則名稱<span class="req">*</span></span><span class="az-input"><span data-read="alert-name">${esc(name)}</span></span></div>
+    <div class="az-field"><span class="az-label">嚴重性<span class="az-req">*</span></span><span class="az-input" style="justify-content:space-between"><span data-read="alert-sev">${esc(severity)}</span>${ic('chevron-down', 22)}</span></div>
+    <div class="az-field"><span class="az-label">警示規則名稱<span class="az-req">*</span></span><span class="az-input"><span data-read="alert-name">${esc(name)}</span></span></div>
     ${description ? `<div class="az-field" style="grid-column:1/3"><span class="az-label">警示規則描述</span><span class="az-input"><span>${esc(description)}</span></span></div>` : ''}</div></div>`);
 }
 /**
@@ -793,7 +793,7 @@ export function advisorPage({ score = 64, tiles = [['可靠性', 3], ['Security'
  * → {el, card(title)}
  */
 export function monitorOverview({ read: rid = 'mon' } = {}) {
-  const card = (t, d, i, c) => `<div class="az-card az-mon-c" data-name="${esc(t)}"><div class="az-row" style="gap:12px">${ic(i, 30, c)}<b>${esc(t)}</b></div><span class="d">${esc(d)}</span><span class="f">${ic('eye', 20, IC.sky)} 檢視 &nbsp;&nbsp; ${ic('ellipsis', 20, IC.sky)} 更多</span></div>`;
+  const card = (t, d, i, c) => `<div class="az-card az-mon-c" data-name="${esc(t)}"><div class="az-row" style="gap:12px">${ic(i, 30, c)}<b>${esc(t)}</b></div><span class="az-d">${esc(d)}</span><span class="f">${ic('eye', 20, IC.sky)} 檢視 &nbsp;&nbsp; ${ic('ellipsis', 20, IC.sky)} 更多</span></div>`;
   const el = node(`<div class="az-col" style="gap:16px">
     <div class="az-pinfo info az-mon-new">${ic('rocket', 22, IC.purple)}<span>試用全新的 Azure 監視器概觀</span><span style="margin-left:auto" class="az-row">新概觀 <span class="az-switch" style="margin-left:10px"><i></i></span></span></div>
     ${tabsEl(['概觀', '教學課程'], '概觀').el.outerHTML}

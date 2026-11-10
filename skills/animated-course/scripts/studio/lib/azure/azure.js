@@ -168,7 +168,7 @@ export function button(label, { primary = false, subtle = false, icon = null, pr
 }
 /** Text field with label. o: {label, value, placeholder, required, focus, w, read} → {el, input, set(value)} */
 export function textField({ label = '', value = '', placeholder = '', required = false, focus = false, w = null, read: rid = '' } = {}) {
-  const el = node(`<div class="az-field" style="${w ? `width:${w}px` : ''}">${label ? `<span class="az-label">${esc(label)}${required ? '<span class="req">*</span>' : ''}</span>` : ''}<span class="az-input ${value ? '' : 'is-ph'} ${focus ? 'is-focus' : ''}"><span${rd(rid)}>${esc(value || placeholder)}</span></span></div>`);
+  const el = node(`<div class="az-field" style="${w ? `width:${w}px` : ''}">${label ? `<span class="az-label">${esc(label)}${required ? '<span class="az-req">*</span>' : ''}</span>` : ''}<span class="az-input ${value ? '' : 'is-ph'} ${focus ? 'is-focus' : ''}"><span${rd(rid)}>${esc(value || placeholder)}</span></span></div>`);
   const input = el.querySelector('.az-input'), sp = input.firstElementChild;
   return { el, input, set(v) { if (sp.textContent !== v) { sp.textContent = v; input.classList.toggle('is-ph', !v); } } };
 }
@@ -177,7 +177,7 @@ export function textField({ label = '', value = '', placeholder = '', required =
  * → {el, box (the closed field), list, opt(name), set({open, value, selected, hover})}
  */
 export function dropdown({ label = '', value = '', options = [], open = false, selected, hover = null, required = false, w = 560, read: rid = '' } = {}) {
-  const el = node(`<div class="az-field az-dd" style="width:${w}px">${label ? `<span class="az-label">${esc(label)}${required ? '<span class="req">*</span>' : ''}</span>` : ''}
+  const el = node(`<div class="az-field az-dd" style="width:${w}px">${label ? `<span class="az-label">${esc(label)}${required ? '<span class="az-req">*</span>' : ''}</span>` : ''}
     <span class="az-input"><span class="val"${rd(rid)}>${esc(value)}</span>${ic('chevron-down', 22)}</span>
     <div class="az-list">${options.map(o => `<div class="az-opt" data-name="${esc(o)}">${ic('check', 22)}<span>${esc(o)}</span></div>`).join('')}</div></div>`);
   const list = el.querySelector('.az-list'), boxEl = el.querySelector('.az-input'), val = el.querySelector('.val');
@@ -234,7 +234,7 @@ export function banner({ kind = 'err', title = '', text = '', read: rid = 'banne
 /** Portal notification (toast). o: {kind, title, text, when, read} → element */
 export function toast({ kind = 'err', title = '', text = '', when = '', read: rid = 'toast' } = {}) {
   const icn = { err: 'circle-x', warn: 'triangle-alert', ok: 'circle-check', info: 'info' }[kind];
-  return node(`<div class="az-toast ${kind}">${ic(icn, 30)}<div><div class="t"${rd(rid + '-t')}>${esc(title)}</div><div class="m"${rd(rid + '-m')}>${text}</div>${when ? `<div class="when">${esc(when)}</div>` : ''}</div></div>`);
+  return node(`<div class="az-toast ${kind}">${ic(icn, 30)}<div><div class="az-t"${rd(rid + '-t')}>${esc(title)}</div><div class="az-m"${rd(rid + '-m')}>${text}</div>${when ? `<div class="az-when">${esc(when)}</div>` : ''}</div></div>`);
 }
 
 // ------------------------------------------------------------------------------------------------ line chart (Azure Monitor metrics look)
@@ -304,7 +304,7 @@ function tokenize(line, lang) {
 export function codeEditor({ lang = 'csharp', code = '', title = '', run = false, time = 'Last 24 hours', first = 1, w = 1100, read: rid = '', runLabel = 'Run', timeLabel = 'Time range' } = {}) {
   const src = code.replace(/^\n/, '').replace(/\s+$/, '').split('\n');
   const el = node(`<div class="az-editor" style="width:${w}px">${title || run ? `<div class="az-ed-bar">${run ? `<span class="az-btn is-primary" data-name="Run">${ic('play', 20)}<span>${esc(runLabel)}</span></span><span class="az-ed-time">${esc(timeLabel)} : <b class="az-sb">${esc(time)}</b></span>` : ''}${title ? `<span class="az-ed-file" style="${run ? 'margin-left:auto' : ''}">${esc(title)}</span>` : ''}</div>` : ''}
-    <div class="az-code">${src.map((l, i) => `<div class="az-ln"><span class="no">${first + i}</span><span class="tx"${rd(rid ? `${rid}-${first + i}` : '')}>${tokenize(l, lang) || ' '}</span></div>`).join('')}</div></div>`);
+    <div class="az-code">${src.map((l, i) => `<div class="az-ln"><span class="az-no">${first + i}</span><span class="az-tx"${rd(rid ? `${rid}-${first + i}` : '')}>${tokenize(l, lang) || ' '}</span></div>`).join('')}</div></div>`);
   const codeEl = el.querySelector('.az-code'), lines = [...el.querySelectorAll('.az-ln')];
   let lastKey = '';
   return { el, code: codeEl, lines, line: n => lines[n - first], runBtn: el.querySelector('[data-name="Run"]'),
@@ -348,7 +348,7 @@ export function waterfall({ spans = [], total = 10, unit = 's', ticks = null, w 
  */
 export function simpleView({ steps = [], head = true, w = 760, read: rid = 'sv' } = {}) {
   const el = node(`<div class="az-sv" style="width:${w}px">${head ? `<div class="az-sv-head"><span class="az-h3">Simple view</span><span class="az-link" style="margin-left:auto">Leave simple view</span></div>` : ''}
-    ${steps.map((s, i) => `<div class="az-sv-step ${s.warn ? 'is-warn' : ''}"><span class="az-sv-ic ${s.kind}">${ic(KIND_ICON[s.kind] || 'activity', 24)}</span><div class="az-sv-card"><div class="t"${rd(`${rid}-${i}`)}>${esc(s.title)}</div>${s.detail ? `<div class="d">${esc(s.detail)}</div>` : ''}
+    ${steps.map((s, i) => `<div class="az-sv-step ${s.warn ? 'is-warn' : ''}"><span class="az-sv-ic ${s.kind}">${ic(KIND_ICON[s.kind] || 'activity', 24)}</span><div class="az-sv-card"><div class="az-t"${rd(`${rid}-${i}`)}>${esc(s.title)}</div>${s.detail ? `<div class="az-d">${esc(s.detail)}</div>` : ''}
       <div class="az-sv-meta">${s.dur != null ? `<span class="dur"${rd(`${rid}-${i}-d`)}>${ic('clock', 20)}${esc(s.dur)}</span>` : ''}${s.tokens != null ? `<span${rd(`${rid}-${i}-t`)}>${ic('coins', 20)}${esc(s.tokens)}</span>` : ''}</div></div></div>`).join('')}</div>`);
   const st = [...el.querySelectorAll('.az-sv-step')];
   return { el, step: i => st[i] };
@@ -385,8 +385,8 @@ export function alertActions({ groups = [{ name: 'ag-grading-oncall', actions: '
 /** Details: severity + rule name. o: {severity ('2 - Warning'), name, description} → element */
 export function alertDetails({ severity = '2 - Warning', name = 'grading-429-rate', description = '' } = {}) {
   return node(`<div class="az-sec"><span class="az-h2">Details</span><div class="az-grid2">
-    <div class="az-field"><span class="az-label">Severity<span class="req">*</span></span><span class="az-input" style="justify-content:space-between"><span data-read="alert-sev">${esc(severity)}</span>${ic('chevron-down', 22)}</span></div>
-    <div class="az-field"><span class="az-label">Alert rule name<span class="req">*</span></span><span class="az-input"><span data-read="alert-name">${esc(name)}</span></span></div>
+    <div class="az-field"><span class="az-label">Severity<span class="az-req">*</span></span><span class="az-input" style="justify-content:space-between"><span data-read="alert-sev">${esc(severity)}</span>${ic('chevron-down', 22)}</span></div>
+    <div class="az-field"><span class="az-label">Alert rule name<span class="az-req">*</span></span><span class="az-input"><span data-read="alert-name">${esc(name)}</span></span></div>
     ${description ? `<div class="az-field" style="grid-column:1/3"><span class="az-label">Alert rule description</span><span class="az-input"><span>${esc(description)}</span></span></div>` : ''}</div></div>`);
 }
 
@@ -398,10 +398,10 @@ export function alertDetails({ severity = '2 - Warning', name = 'grading-429-rat
  */
 export function grafanaPanel({ title = 'Agent Framework', folder = 'Dashboards', range = 'Last 6 hours', w = 1300, cols = 4, tiles = [], series = null, read: rid = 'gf' } = {}) {
   const el = node(`<div class="az-gf" style="width:${w}px"><div class="az-gf-top">${ic('layout-dashboard', 24)}<span>${esc(folder)}</span>${ic('chevron-right', 18)}<b${rd(rid + '-title')}>${esc(title)}</b><span class="tr">${ic('clock', 18)}${esc(range)}</span></div>
-    <div class="az-gf-grid" style="grid-template-columns:repeat(${cols},1fr)">${tiles.map((t, i) => `<div class="az-gf-p"><div class="t"${rd(`${rid}-l${i}`)}>${esc(t.label)}</div><div class="az-gf-stat" style="color:${t.color || '#73BF69'}"${rd(`${rid}-v${i}`)}>${esc(t.value)}${t.unit ? `<small>${esc(t.unit)}</small>` : ''}</div></div>`).join('')}</div></div>`);
+    <div class="az-gf-grid" style="grid-template-columns:repeat(${cols},1fr)">${tiles.map((t, i) => `<div class="az-gf-p"><div class="az-t"${rd(`${rid}-l${i}`)}>${esc(t.label)}</div><div class="az-gf-stat" style="color:${t.color || '#73BF69'}"${rd(`${rid}-v${i}`)}>${esc(t.value)}${t.unit ? `<small>${esc(t.unit)}</small>` : ''}</div></div>`).join('')}</div></div>`);
   let api = { el, tile: i => el.querySelectorAll('.az-gf-p')[i], reveal() {} };
   if (series) {
-    const H = series.h || 260, SW = w - 36 - 28, p = node(`<div class="az-gf-grid" style="grid-template-columns:1fr"><div class="az-gf-p"><div class="t"${rd(rid + '-s')}>${esc(series.title || '')}</div></div></div>`);
+    const H = series.h || 260, SW = w - 36 - 28, p = node(`<div class="az-gf-grid" style="grid-template-columns:1fr"><div class="az-gf-p"><div class="az-t"${rd(rid + '-s')}>${esc(series.title || '')}</div></div></div>`);
     el.append(p); const svg = svgEl('svg', { width: SW, height: H }); p.firstElementChild.append(svg);
     const xs = series.pts.map(q => q[0]), ys = series.pts.map(q => q[1]), x0 = Math.min(...xs), x1 = Math.max(...xs), y1 = series.max ?? Math.max(...ys) * 1.15;
     const P = (x, y) => [10 + (x - x0) / (x1 - x0) * (SW - 20), 10 + (1 - y / y1) * (H - 30)];

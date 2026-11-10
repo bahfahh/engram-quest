@@ -1,28 +1,41 @@
 /* Engram studio skin for lib/kit (kit.css + keypoint.css). Styles only — kit.js / keypoint.js behaviour is unchanged.
+   Only for a film the user asked to shoot in the Engram studio; the studio is not the default look (HOUSE.md, status line).
    <link rel="stylesheet" href="/lib/kit/kit.css">
    <link rel="stylesheet" href="/lib/kit/keypoint.css">
    <link rel="stylesheet" href="/lib/house/house.css">
    <link rel="stylesheet" href="/lib/house/kit-house.css">     ← last
    then put data-house="light" | "dark" on <html> (or any ancestor of the kit stage). For a lights change, set the
    variables with applyVars(el, k) from tokens.js (ui.lights(k) does it for its root).
+   What it reaches: the annotation layer only — callouts, highlight ring, label, tag, cursor, connectors, chapter bar,
+   title card, recap, charts / funnel / crowd, the key-point card (kp-*) and the K.card panel. The real-UI mocks
+   (K.phone, ig.*, am.*, K.toggle, the Play Store page) keep kit.css's own colours, shadows and fonts even on a
+   data-house page. Why: a real interface stays the real interface — Meta blue, a white Ads Manager, the Instagram
+   wordmark are what the learner will meet on their own screen; the studio styles our notes about it, not the thing. So the kit variables are redefined on the annotation
+   elements, not on [data-house] itself, and the hex re-map and stroke / fill re-map only touch annotation elements.
+   A mock you build yourself keeps its look as long as it does not sit inside one of those annotation elements.
    Mapping of kit colours (kit.js writes them inline as hex, so they are matched here and replaced):
      teal (concept A) / green / blue → house cyan line · orange (concept B) / amber → house amber (the student's)
-     red → house magenta (warning) · neutral → house ink.  No handwriting: the recap and title fonts become Noto Sans TC. */
+     red → house magenta (warning) · neutral → house ink.  No handwriting: the recap and title fonts become Noto Sans TC
+     (English pages, html.k-en, keep kit's Latin-first fonts, as before). */
 
-[data-house] {
+/* annotation roots that take the house variables (their children inherit them) */
+:is([data-house], [data-house] *):is(.k-callout, .k-hl, .k-label, .k-tag, .k-cursor, .k-svg, .k-chapters, .k-title, .k-recap-dim, .k-recap, .k-chart, .k-funnel, .k-crowd, [class^="kp-"], [class*=" kp-"]) {
   --bg: var(--h-bg); --card: var(--h-panel-top); --ink: var(--h-ink); --muted: var(--h-ink2); --line: var(--h-hair); --line2: var(--h-grey);
   --blue: var(--h-line); --blue-soft: color-mix(in srgb, var(--h-cyan) 16%, transparent); --teal: var(--h-line); --orange: var(--h-amber);
   --red: var(--h-magenta); --green: var(--h-line); --amber: var(--h-amber);
   --shadow: 0 0 0 6px var(--h-glow-ring), 0 0 22px var(--h-glow), 0 12px 30px var(--h-drop);
   --shadow-lg: 0 0 0 6px var(--h-glow-ring), 0 0 30px var(--h-glow), 0 18px 44px var(--h-drop);
-  --font: Inter, "Noto Sans TC", system-ui, sans-serif; --font-tc: "Noto Sans TC", Inter, sans-serif; --font-hand: "Noto Sans TC", Inter, sans-serif;
+  --font: Inter, "Noto Sans TC", system-ui, sans-serif;
   --kp-mark: color-mix(in srgb, var(--h-cyan) 34%, transparent);
 }
-/* kit tones arrive as inline hex (--c); re-map them to the house semantics */
-[data-house] [style*="#0F9D8F" i], [data-house] [style*="#2EA44F" i], [data-house] [style*="#1877F2" i] { --c: var(--h-line) !important; }
-[data-house] [style*="#F2780C" i], [data-house] [style*="#F5A524" i] { --c: var(--h-amber) !important; }
-[data-house] [style*="#E5484D" i] { --c: var(--h-magenta) !important; }
-[data-house] [style*="#1C1E21" i] { --c: var(--h-ink) !important; }
+:root:not(.k-en) :is([data-house], [data-house] *):is(.k-callout, .k-hl, .k-label, .k-tag, .k-cursor, .k-svg, .k-chapters, .k-title, .k-recap-dim, .k-recap, .k-chart, .k-funnel, .k-crowd, [class^="kp-"], [class*=" kp-"]) {
+  --font-tc: "Noto Sans TC", Inter, sans-serif; --font-hand: "Noto Sans TC", Inter, sans-serif;
+}
+/* kit tones arrive as inline hex (--c) on the elements that read --c; re-map them to the house semantics */
+[data-house] :is(.k-callout, .k-hl, .k-recap .pt, [class^="kp-"], [class*=" kp-"]):is([style*="#0F9D8F" i], [style*="#2EA44F" i], [style*="#1877F2" i]) { --c: var(--h-line) !important; }
+[data-house] :is(.k-callout, .k-hl, .k-recap .pt, [class^="kp-"], [class*=" kp-"]):is([style*="#F2780C" i], [style*="#F5A524" i]) { --c: var(--h-amber) !important; }
+[data-house] :is(.k-callout, .k-hl, .k-recap .pt, [class^="kp-"], [class*=" kp-"])[style*="#E5484D" i] { --c: var(--h-magenta) !important; }
+[data-house] :is(.k-callout, .k-hl, .k-recap .pt, [class^="kp-"], [class*=" kp-"])[style*="#1C1E21" i] { --c: var(--h-ink) !important; }
 
 html[data-house], [data-house] body { background: var(--h-bg); color: var(--h-ink); }
 [data-house] .k-frame { background: var(--h-bg); }
@@ -120,10 +133,11 @@ html[data-house], [data-house] body { background: var(--h-bg); color: var(--h-in
 [data-house] .kp-col .cs { color: var(--h-ink2); } [data-house] .kp-col .it { color: var(--h-ink); }
 [data-house] .kp-vs { background: var(--h-hair); } [data-house] .kp-vs span { background: var(--h-panel-top); color: var(--h-ink3); }
 
-/* connectors / arrows are SVG with stroke / fill attributes in kit hex: a CSS property beats the attribute */
-[data-house] [stroke="#0F9D8F" i], [data-house] [stroke="#2EA44F" i], [data-house] [stroke="#1877F2" i] { stroke: var(--h-line); }
-[data-house] [stroke="#F2780C" i], [data-house] [stroke="#F5A524" i] { stroke: var(--h-amber); }
-[data-house] [stroke="#E5484D" i] { stroke: var(--h-magenta); }
-[data-house] [fill="#0F9D8F" i], [data-house] [fill="#2EA44F" i], [data-house] [fill="#1877F2" i] { fill: var(--h-line); }
-[data-house] [fill="#F2780C" i], [data-house] [fill="#F5A524" i] { fill: var(--h-amber); }
-[data-house] [fill="#E5484D" i] { fill: var(--h-magenta); }
+/* connectors / arrows are SVG with stroke / fill attributes in kit hex: a CSS property beats the attribute.
+   Only inside the connector layers, key-point figures and callouts — never a mock's own logo or icon. */
+[data-house] :is(.k-svg, .k-callout, [class^="kp-"], [class*=" kp-"]) :is([stroke="#0F9D8F" i], [stroke="#2EA44F" i], [stroke="#1877F2" i]) { stroke: var(--h-line); }
+[data-house] :is(.k-svg, .k-callout, [class^="kp-"], [class*=" kp-"]) :is([stroke="#F2780C" i], [stroke="#F5A524" i]) { stroke: var(--h-amber); }
+[data-house] :is(.k-svg, .k-callout, [class^="kp-"], [class*=" kp-"]) [stroke="#E5484D" i] { stroke: var(--h-magenta); }
+[data-house] :is(.k-svg, .k-callout, [class^="kp-"], [class*=" kp-"]) :is([fill="#0F9D8F" i], [fill="#2EA44F" i], [fill="#1877F2" i]) { fill: var(--h-line); }
+[data-house] :is(.k-svg, .k-callout, [class^="kp-"], [class*=" kp-"]) :is([fill="#F2780C" i], [fill="#F5A524" i]) { fill: var(--h-amber); }
+[data-house] :is(.k-svg, .k-callout, [class^="kp-"], [class*=" kp-"]) [fill="#E5484D" i] { fill: var(--h-magenta); }

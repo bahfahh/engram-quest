@@ -1,6 +1,6 @@
 {
  "version": 1,
- "about": "Default teacher registry of the engram-animated-course skill. When the EngramQuest plugin writes engram-quest/videos/cast.json, that file wins; this one is the fallback. Teachers differ only in how each beat is said; the beats themselves (reference/04-skeleton.md) never change. See reference/11-teachers.md. Voice a teacher line by line: one sentence per script.json line, gaps = pace.defaultPause (reference/07-voice-and-language.md §1b); sampleScript is the preview in that form.",
+ "about": "Default teacher registry of the engram-quest-animated-course skill. When the EngramQuest plugin writes engram-quest/videos/cast.json, that file wins; this one is the fallback. Teachers differ only in how each beat is said; the beats themselves (reference/04-skeleton.md) never change. See reference/11-teachers.md. Voice a teacher line by line: one sentence per script.json line, gaps = pace.defaultPause (reference/07-voice-and-language.md §1b); sampleScript is the preview in that form.",
  "beats": {
   "hook": {
    "from-what-you-know": "Open from a concept the learner already knows (found in their notes or review cards), said naturally as shared knowledge (\"Remember containers?\"). Never mention notes, note titles or dates: the notes may be AI-written.",
@@ -100,8 +100,14 @@
      "pitch": "+0Hz"
     },
     "gemini": {
-     "voice": "Gacrux",
-     "style": "台灣國語口音。沉穩、博學，句子短而清楚，陳述句尾音不上揚。"
+     "zh-tw": {
+      "voice": "Gacrux",
+      "style": "台灣國語口音。沉穩、博學，句子短而清楚，陳述句尾音不上揚。"
+     },
+     "en": {
+      "voice": "Gacrux",
+      "style": "American English. Calm and well-read; short, clear sentences; statements end without rising."
+     }
     }
    },
    "sample": {
@@ -187,8 +193,14 @@
      "pitch": "+0Hz"
     },
     "gemini": {
-     "voice": "Iapetus",
-     "style": "台灣國語口音。俐落、行動派，語速偏快，指令清楚。"
+     "zh-tw": {
+      "voice": "Iapetus",
+      "style": "台灣國語口音。俐落、行動派，語速偏快，指令清楚。"
+     },
+     "en": {
+      "voice": "Iapetus",
+      "style": "American English. Brisk and hands-on, a little fast, clear instructions."
+     }
     }
    },
    "sample": {
@@ -219,7 +231,8 @@
       "rate": "+2%"
      }
     ]
-   }
+   },
+   "default": true
   },
   {
    "id": "iris",
@@ -285,8 +298,14 @@
      "pitch": "+0Hz"
     },
     "gemini": {
-     "voice": "Erinome",
-     "style": "台灣國語口音。冷靜、清楚，提問時溫和地引導，不宣布步驟。"
+     "zh-tw": {
+      "voice": "Erinome",
+      "style": "台灣國語口音。冷靜、清楚，提問時溫和地引導，不宣布步驟。"
+     },
+     "en": {
+      "voice": "Erinome",
+      "style": "American English. Calm and clear; when asking, guide gently and never announce the steps."
+     }
     }
    },
    "sample": {
@@ -368,8 +387,14 @@
      "pitch": "+0Hz"
     },
     "gemini": {
-     "voice": "Sulafat",
-     "style": "台灣國語口音。溫暖、有學問的引導者，從容、帶一點笑意，不急，陳述句尾音不上揚。"
+     "zh-tw": {
+      "voice": "Sulafat",
+      "style": "台灣國語口音。溫暖、有學問的引導者，從容、帶一點笑意，不急，陳述句尾音不上揚。"
+     },
+     "en": {
+      "voice": "Sulafat",
+      "style": "American English. A warm, learned guide; unhurried, with a hint of a smile; statements end without rising."
+     }
     }
    },
    "sample": {
@@ -458,8 +483,14 @@
      "pitch": "+0Hz"
     },
     "gemini": {
-     "voice": "Laomedeia",
-     "style": "台灣國語口音。快、有衝勁、直白，像補教名師，陳述句尾音不上揚。"
+     "zh-tw": {
+      "voice": "Laomedeia",
+      "style": "台灣國語口音。快、有衝勁、直白，像補教名師，陳述句尾音不上揚。"
+     },
+     "en": {
+      "voice": "Laomedeia",
+      "style": "American English. Quick, energetic and direct, like a top tutor; statements end without rising."
+     }
     }
    },
    "sample": {
@@ -542,8 +573,14 @@
      "pitch": "+0Hz"
     },
     "gemini": {
-     "voice": "Achird",
-     "style": "台灣國語口音。親切、溫暖，像在跟朋友解釋。"
+     "zh-tw": {
+      "voice": "Achird",
+      "style": "台灣國語口音。親切、溫暖，像在跟朋友解釋。"
+     },
+     "en": {
+      "voice": "Achird",
+      "style": "American English. Friendly and warm, like explaining to a friend."
+     }
     }
    },
    "sample": {
@@ -726,14 +763,20 @@
    "pitch": "+10Hz"
   },
   "gemini": {
-   "voice": "Leda",
-   "style": "台灣國語口音。年輕、好奇的學生，語氣自然。"
+   "zh-tw": {
+    "voice": "Leda",
+    "style": "台灣國語口音。年輕、好奇的學生，語氣自然。"
+   },
+   "en": {
+    "voice": "Leda",
+    "style": "American English. A young, curious student; natural tone."
+   }
   }
  },
  "voicePolicy": {
-  "zh-tw": "Taiwan voices first. Student = HsiaoYu (reserved). Female teachers = HsiaoChen, male teachers = YunJhe; teachers sharing a voice differ by rate, pitch, pace and wording (one teacher per film). Exception chosen by the user: Alden speaks with fr-FR-VivienneMultilingualNeural (a multilingual voice reading Chinese; not a Taiwan accent).",
+  "zh-tw": "Taiwan voices first. Student = HsiaoYu (reserved). Female teachers = HsiaoChen, male teachers = YunJhe; teachers sharing a voice differ by rate, pitch, pace and wording (one teacher per film, so sharing never collides, except with an extra speaker such as the decision-maker, reference/05-presentation-methods.md §3c: her voice must not be the teacher's; with a HsiaoChen teacher (Luna, Iris, Nova) the student reads her line, or she gets another voice, checked with ASR and by ear first). Exception chosen by the user: Alden speaks with fr-FR-VivienneMultilingualNeural (a multilingual voice reading Chinese; not a Taiwan accent).",
   "en": "US voices. Student = Ava (reserved). Each teacher has its own voice.",
   "other": "Add a voice block per language (teacher and studentVoices) from edge-tts --list-voices; test with ASR and re-measure punctuation pauses before use.",
-  "engines": "edge-tts by default. voice.py uses an AI voice automatically when one is configured (GEMINI_API_KEY, AZURE_SPEECH_KEY+AZURE_SPEECH_REGION, or TTS_CUSTOM_CMD) and falls back to edge-tts for the whole narration if it fails. voice.gemini presets (voice + style) are untested defaults: check gender and Taiwan accent by ear before relying on them. Azure uses the same voice names as edge-tts."
+  "engines": "edge-tts by default. An AI voice (GEMINI_API_KEY, AZURE_SPEECH_KEY+AZURE_SPEECH_REGION, or TTS_CUSTOM_CMD) is used only when the user chose it (named in the request or a standing rule -> --engine, VOICE_ENGINE, settings.json voice.engine, or their answer to the one start-up question, written as script.json \"engine\"); a key alone never switches it, and unset or \"auto\" means edge-tts (user, 2026-11-10; reference/07-voice-and-language.md §1c). If the chosen engine fails, the whole narration is redone with edge-tts. voice.gemini presets are per language ({\"zh-tw\": {voice, style}, \"en\": {voice, style}}; resolve.cjs picks the film's language) and only fill in the voice once Gemini is chosen; they are untested defaults: check gender and accent by ear before relying on them. Azure uses the same voice names as edge-tts."
  }
 }

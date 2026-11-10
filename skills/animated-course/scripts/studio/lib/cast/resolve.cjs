@@ -130,7 +130,8 @@ if (fixedBy) {
   engine = { id: 'edge', askUser: false, reason: 'no AI voice configured -> edge-tts (default), no question' };
 }
 engine.available = available;
-engine.options = available.map(id => ({ id, label: LABEL[id], recommended: id === (available.includes('gemini') ? 'gemini' : available[available.length - 1]) }));
+// user, 2026-11-10: an AI voice is the user's choice, never pushed -> the recommended option is always edge-tts (the default)
+engine.options = available.map(id => ({ id, label: LABEL[id], recommended: id === 'edge' }));
 // course modules (reference/12-modules.md): every module is ON (the full version) unless the learner turned it off
 // in settings.json -> course.off; --off a,b (named in the request) also turns them off, --on a,b turns them back on
 // for this run. Subtraction only: the skeleton is not a module.
@@ -145,7 +146,23 @@ const modules = modReg.modules.map(m => {
   return { id: m.id, on, why, status: m.status, name: m.name, where: m.where };
 });
 for (const m of modules) if (!m.on) notes.push(`module ${m.id} off (${m.why})`);
-const withEngines = (base, src) => base && Object.assign({}, base, src && src.gemini ? { gemini: src.gemini } : {}, src && src.azure ? { azure: src.azure } : {}, src && src.custom ? { custom: src.custom } : {});
+// Engine presets are per language: {"zh-tw": {voice, style}, "en": {voice, style}}. They only fill in the voice settings;
+// whether an AI engine is used at all is decided above (engine), never here. An older flat preset ({voice, style}, e.g. in
+// a plugin-written cast.json or a custom teacher) was written for zh-tw: for another language keep only a Gemini voice
+// name (multilingual) and drop the style, which names a Taiwan accent.
+const pickLang = (p, eng, who) => {
+  if (!p) return null;
+  if (!(p.voice || p.style)) return p[L] || null;
+  if (L === 'zh-tw') return p;
+  notes.push(`${who} ${eng} preset is the old flat (zh-tw) format: ${eng === 'gemini' && p.voice ? 'voice kept, style dropped' : 'not used'} for ${L}`);
+  return eng === 'gemini' && p.voice ? { voice: p.voice } : null;
+};
+const withEngines = (base, src, who) => {
+  if (!base) return base;
+  const o = Object.assign({}, base);
+  for (const eng of ['gemini', 'azure', 'custom']) { const v = src && pickLang(src[eng], eng, who); if (v) o[eng] = v; }
+  return o;
+};
 const out = {
   teacher: { id: teacher.id, name: teacher.name, say: teacher.say, title: teacher.title, tier: teacher.tier, core: teacher.core || null, register: teacher.register, principles: teacher.principles, uses: teacher.uses || [], limits: teacher.limits || null, dimensions: teacher.dimensions || null, fallback: teacher.fallback || null, custom: !!teacher.custom },
   skin, beats,
@@ -157,6 +174,6 @@ const out = {
   meta: { cast: { teacher: teacher.id, skin: skin.id, variant: skin.variant || undefined } },
   pro, lang: L, vault, notes,
 };
-out.voices.teacher = withEngines(out.voices.teacher, teacher.voice);
-out.voices.student = withEngines(out.voices.student, (reg.studentVoices || {}));
+out.voices.teacher = withEngines(out.voices.teacher, teacher.voice, 'teacher');
+out.voices.student = withEngines(out.voices.student, (reg.studentVoices || {}), 'student');
 process.stdout.write(JSON.stringify(out, null, 2) + '\n');

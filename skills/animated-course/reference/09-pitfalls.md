@@ -1,41 +1,45 @@
 # 09 Pitfalls (each one happened)
 
+Lessons, not bans: what went wrong, why, what helped.
+
 ## Design
-- **Forcing content into an existing method** — the worst. If it doesn't fit, design one.
+- **Forcing content into an existing method** — the worst: the point bends to fit. When nothing fits, design one.
 - **Treating versions as either/or**; a new round redesigning the whole film and dropping the approved skeleton. (A round that rebuilt head and tail of six lessons from scratch got "I meant you to merge it into version 3 — you rebuilt everything".)
-- **Asking the user which method to use.** That is the producer's judgement.
+- **Asking the user which method to use.** The user decides goal, scope, teacher and approval; the method is the producer's judgement.
 - **Writing rules as form** ("seven little buildings") instead of understanding → signposts.
 - **Signpost maps and icons**: a station that is a podium with a name tag instead of the mechanism running.
 - **Maps too fast, too close, unrecognisable**. An unreadable map is a signpost.
-- **The whole film as one map** (experiment 18): every detail drawn onto one world, every concept opened inside it — dense, no focus, and the narration ended up reading the map item by item. A zoomed-out map is fine as the opening, the place between concepts and the ending; the film is not the map (`01-principles.md` §1).
-- **"Subtraction" done as deletion** (experiment 18b): told the old frames had no focus, the producers cut content and narration to meet word, colour and silence budgets until frames were empty and meaningless. Move details to their own frame; judge by a glance, not by counts.
-- **Turning one good way into the only way** (after 18c): the zoom out / zoom in decomposition is one approved method for abstract mechanisms. Do not redraw a real screen as a simplified diagram, or chop code into cards.
-- **Extracting a demo into rigid rules**: the host turned the user's demo into eight rules. Pass a concept, references and examples; let each subject grow its own form.
+- **The whole film as one map** (experiment 18): every detail on one world, every concept opened inside it — dense, unfocused, the narration reading the map item by item. A zoomed-out map served as opening, the place between concepts and ending; the film is not the map (`01-principles.md` §1).
+- **"Subtraction" done as deletion** (experiment 18b): told frames lacked focus, producers cut content and narration to word, colour and silence budgets until frames were empty and meaningless. Focus comes from details on their own frame, judged by a glance, not counts.
+- **Turning one good way into the only way** (after 18c): the zoom out / zoom in decomposition is one approved method for abstract mechanisms. A real screen redrawn as a simple diagram, or code chopped into cards, loses the real thing.
+- **Extracting a demo into rigid rules**: the host turned the user's demo into eight rules. A concept, references and examples let each subject grow its own form.
 - **Taking a user's metaphor literally**: "thinking castle" meant *make thinking visible*, not *build a castle*.
-- **Replacing the realistic middle with the classroom**; making the whiteboard the main screen (it is a crib sheet); falling in love with analogies.
+- **Replacing the realistic middle with the classroom** (one beat with content on the board — a bet with its numbers — and a hard cut back is different: `05-presentation-methods.md` §3b, Bet on the blackboard); putting the mechanism itself on the classroom blackboard instead of the stage (the blackboard is the crib sheet: one key concept at a time, `04-skeleton.md` §1; the full-frame Whiteboard explanation, `05-presentation-methods.md` §3, is a separate middle method inside the classroom head and tail); falling in love with analogies.
 - **Every lesson in the same mould** ("every lesson looks exactly the same").
 - **A 5-minute middle with no recap** ("my attention scattered").
-- **A puppet that does nothing** in a split screen. A character on screen must be doing something.
+- **A puppet that does nothing** in a split screen draws the eye to nothing; a character earns its place by doing something.
+- **A cold-open teaser page in front of the classroom** (experiment 17, social cuts: a 7 s terminal-and-phone opening on its own page, "conflict by 2.7 s"). A fast cut wanted shorter pauses and the point sooner; the story pinned on the board, with the characters reacting to it, carried the hook (`04-skeleton.md` §1).
 
 ## Words
-- Vague pronouns and AI-speak: "that cell D7", "this box", "half-blind". Name the thing.
+- Vague pronouns and AI-speak: "that cell D7", "this box", "half-blind". Naming the thing helps.
 - Using a term before defining it — including in the one-liner.
 - Making a simple idea complicated.
-- The same term translated or defined differently in different lessons.
+- The same term translated or defined differently across lessons.
 
 ## Facts and numbers
-- **Numbers not recomputed.** In one round the silent review caught a number error in every lesson (a doubled cost computed wrong, a sample rule contradicting its own examples, counts and percentages that don't divide). Recompute every number from its formula; keep it consistent across frames.
-- **A wrong intuition written on screen without being marked wrong** — muted viewers remember it as advice. A definition written under a wrong intuition has the same problem.
+- **Numbers not recomputed.** In one round the silent review caught a number error in every lesson (a doubled cost computed wrong, a sample rule contradicting its own examples, counts and percentages that don't divide). Numbers must be true: recompute each from its formula, consistent across frames.
+- **A wrong intuition on screen not marked wrong** — muted viewers keep it as advice. A definition under a wrong intuition does the same.
 - The ending introducing a rule the body never taught.
-- Unverified facts presented as certain: keep the course material's "estimated / third-party" hedges; look up unfamiliar terms.
+- Unverified facts presented as certain: keeping the material's "estimated / third-party" hedges and looking up unfamiliar terms keeps it true.
 
 ## Picture
-- Small text in a wide shot treated as the point; reviewing only thumbnails (small, overlapping, cut-off text is invisible in thumbnails).
+- Small text in a wide shot as the point; reviewing only thumbnails (small, overlapping, cut-off text is invisible there).
 - "Clean" done as "small": the idea squeezed into a corner, half the frame empty.
-- Handover frames that differ between pages → a one-frame flash. Take the handover image from the **last frame the outgoing page actually plays** (segment start − 1/30 s), not from the segment's start second: experiment 15 lesson 5's classroom cut its own camera back to the wide shot at the handover second, the producer captured that wide frame, and the film jumped from a board close-up to a wide shot (joincheck diff 73).
-- GPU compositing on DOM pages → ghosting during camera moves (render DOM in software).
+- Handover frames that differ between pages → a one-frame flash (they must be identical). Take the handover image from the **last frame the outgoing page actually plays** (segment start − 1/30 s), not the start second: experiment 15 lesson 5's classroom cut back to the wide shot at the handover second, that wide frame was captured, and the film jumped from a board close-up to a wide shot (joincheck diff 73).
+- **A handover still picked by name prefix** (experiment 18): `ls stills | grep -F "t-110.6" | head -1` took an older `t-110.633.jpg` left from an earlier round, so `img/h3.jpg` held a superseded recap card, and the film flashed it — with the wording the review had just removed — for 0.6 s at the start of the tail. `joincheck` printed 130 right after the join and nobody read it. What helped: exact file names (`grep -Fx "t-<time>.jpg"`), older stills deleted first, and reading the `joincheck` lines — a value above ≈ 40 near a seam is a hard cut, now flagged `<-- JUMP`; six frames around it show what jumped. A second, one-frame flash at the same seam came from frame times: `from` rounded to 4 decimals (110.6333) sat just before the page's own `tH3` (110.63333…), so the part's first frame still showed the previous overlay; `render.cjs` now renders whole frames (`round(from × fps) / fps`), the same times the pages compute.
+- GPU compositing on DOM pages → ghosting during camera moves (software DOM rendering avoids it).
 
-- From Lemo-Opuscar's list of most common failures, all seen in our films too: subject too small or too far; a colour laid on the same colour (red on red); subtitles or captions covering the subject; a gag or a reveal too fast to understand; blank frames in transitions; an effect (spotlight, zoom) that doesn't follow its subject after the camera moves — use one world → screen function.
+- Lemo-Opuscar's most common failures, all seen in our films too: subject too small or too far; a colour laid on the same colour (red on red); subtitles or captions covering the subject; a gag or a reveal too fast to understand; blank frames in transitions; an effect (spotlight, zoom) that doesn't follow its subject after the camera moves — one world → screen function keeps them together.
 
 - One colour meaning two quantities (experiment 13: the boat's own upstream component drawn in the water's blue read as a second current); a whole vector and its component in the same colour at once; a length shown by a floating label instead of a dimension line; an angle with no reference line; arrows riding a moving object out of the frame.
 
@@ -45,44 +49,76 @@
 - Checking English terms and polyphonic characters only with ASR; listing abbreviations in the ASR prompt.
 
 ## Process
-- Running `readcheck.cjs` on a WebGL page with real drawing (experiment 13: a 58 s classroom check ran 40 minutes and was killed). Fixed: readcheck now no-ops WebGL draws itself; don't pass `--draw` unless you must.
-- **Stopping mid-way to wait for the user's approval** (experiment 12 stopped after stage 1 to show stills and ask "is this direction OK?"). Reviews before delivery are internal; decide and record.
-- Skipping stage 1 review or the silent review.
-- **three.js parts in the cloud are very slow and can hit the 2 h background limit** (experiment 12: lesson 1's four GPU parts started together and only 5 of 8 parts finished in 2 h; the host rendered the last 3 locally in ~25 min). Cut GPU parts short, interleave GPU and DOM parts, or render GPU parts on the host machine; if farm.sh makes no poster, grab it from the joined film at the READY second.
-- One cloud session per part (115 child sessions in one project; "opening 96 is absurd"). One per lesson; archive at once.
-- Briefs pointing at outdated files with the same name as the current ones.
+- Running `readcheck.cjs` on a WebGL page with real drawing (experiment 13: a 58 s classroom check ran 40 min and was killed). Fixed: readcheck now no-ops WebGL draws itself; `--draw` is rarely needed.
+- **Stopping mid-way to wait for the user's approval** (experiment 12 stopped after stage 1 to show stills and ask "is this direction OK?"). Firm (user's decision): past the syllabus checkpoint, run end to end; pre-delivery reviews are internal — decide and record.
+- Skipping stage 1 review or the silent review (it caught the number errors above).
+- **three.js parts in the cloud are very slow and can hit the 2 h background limit** (experiment 12: lesson 1's four GPU parts ran together; 5 of 8 parts finished in 2 h; the host rendered the last 3 locally in ~25 min). What helped: shorter GPU parts, GPU and DOM parts interleaved, or GPU parts on the host; if farm.sh makes no poster, grab it from the joined film at the READY second.
+- One cloud session per part (115 child sessions in one project; "opening 96 is absurd"). One per lesson, archived when done, worked.
+- Briefs pointing at outdated files named like the current ones.
 - A brief that invites a full redesign ("don't reuse last round's shell", "at least one segment must be neither A nor B").
-- First drafts at 7–8 minutes because every self-check question was covered — cut at the storyboard.
-- **`replaceChildren(a, null, b)` prints "null"** (screening room template, a film without an `avoid` field: the card showed `null` under the chapters on the user's phone). DOM `append`/`replaceChildren` stringify null; filter optional nodes out first (fixed in `scripts/farm/room-template.html`).
+- First drafts at 7–8 minutes because every self-check question was covered — cutting at the storyboard was cheapest.
+- **`replaceChildren(a, null, b)` prints "null"** (screening room template: a film without `avoid` showed `null` under the chapters on the user's phone). DOM `append`/`replaceChildren` stringify null; filter optional nodes out first (fixed in `scripts/farm/room-template.html`).
+
+- **Lines inserted into the middle, hand-over left at the old time** (experiment 20, test 2 B: a bet and a prediction added 28 s, `handover.json` `tOut` stayed at 250.7): the closing wipe swept across mid-segment, the lesson pill vanished and the last key card never showed (`until: B.out − 0.5` came before its `at`). The user approved; the film was still broken. The timeline is a contract: after any re-timing, move `tOut` (and `tHand` if the head changed) and the matching `segments.json` `from` by the shift; `voice.py` now prints the shifted values.
 
 ## Pacing and look (experiments 16–17)
-- **A middle that never breathes**: 85–94% speech, recap cards with 1 s of silence (the narration ran over the "held 4–6 s"), up to 159 s of talk without a 1 s pause. Measure with `pacecheck.py` before voicing is final (`04-skeleton.md` §2).
-- **Four minutes of one look**: every middle of experiments 15–16 was one flat page; thumbnails could not tell segment 1 from segment 3. Choose a stage and three different segment shapes (`03-adapter-pattern.md` §1).
+- **A middle that never breathes**: 85–94% speech, recap cards with 1 s of silence (the narration ran over the "held 4–6 s"), up to 159 s of talk without a 1 s pause. `pacecheck.py` measures it before final voicing; judge by whether the viewer had room to think (`04-skeleton.md` §2).
+- **Four minutes of one look**: every middle of experiments 15–16 was one flat page; thumbnails could not tell segment 1 from segment 3. What helped: one stage, three different segment shapes (`03-adapter-pattern.md` §1).
 - **A concept lesson built as a made-up workbench UI** turns into tables of small text. If the learner will never operate that screen, it is not "the real thing".
-- **A middle that sounds like non-stop talk despite its pauses**: the narration described what the picture showed, numbers came at 9–14 a minute, cutbacks to the classroom had only moving mouths, and no question carried the viewer forward. Lengthening pauses does not fix it; `03-adapter-pattern.md` §1.4 does.
-- **Turning one good film's device into a rule**: a question spine, clue board, cutback rhythm or a reference's per-minute numbers applied to every segment makes material that does not fit them feel strange. Each is judged per segment (`03-adapter-pattern.md` §1.4).
-- **Saving time by chopping sentences**: cutting speech share made teacher lines fall to 17–18.5 characters on average. Cut whole points instead.
-- **A producer inventing the look**: experiment 17 A's riso-print look was approved as a method but called ugly and clashed with the glossy robots. The look comes from the house style.
+- **A middle that sounds like non-stop talk despite its pauses**: the narration described the picture, numbers came at 9–14 a minute, cutbacks to the classroom had only moving mouths, and no question carried the viewer forward. Lengthening pauses did not fix it; `03-adapter-pattern.md` §1.4 did.
+- **Turning one good film's device into a rule**: a question spine, clue board, cutback rhythm or a reference's per-minute numbers applied to every segment made ill-fitting material feel strange. Judge each per segment (`03-adapter-pattern.md` §1.4).
+- **Saving time by chopping sentences**: cutting speech share made teacher lines fall to 17–18.5 characters on average. Cutting whole points instead kept lines whole.
+- **A producer inventing the look**: experiment 17 A's riso-print look was approved as a method but called ugly and clashed with the glossy robots. Looks that held together came from the skeleton (the classroom) and the real thing, not per-film invention.
 - **3D middles cost 3–6× per frame** (0.85 s vs 0.15 s) and make big files (81 MB; GitHub warns above 50 MB).
-- **Render queue head-of-line blocking**: `render.cjs` full and range renders share one FIFO queue of `RENDER_SLOTS` (default 2) slots; a 2-second speed test waited 10 minutes behind a 3-part host render. Give extra jobs a higher `RENDER_SLOTS` (e.g. `RENDER_SLOTS=6`) so they take a free slot.
+- **Render queue head-of-line blocking**: `render.cjs` full and range renders share one FIFO queue of `RENDER_SLOTS` (default 2) slots; a 2-second speed test waited 10 minutes behind a 3-part host render. Extra jobs with a higher `RENDER_SLOTS` (e.g. 6) take a free slot. Until 2026-11-09 even that failed when a 2-slot job (a `compose.py` third page) was *waiting* at the head: every job behind it waited, with slots c–h free (experiment 20; `debug/issue-2026-11-09-animated-course-render-queue-head-blocking.md`). Fixed: a job may take a slot no earlier waiter can use.
 
-## House style (experiment 19)
-- **Leaving the cast's default warm reflections in a cool room** (experiment 18: four of five styles had to override `lib/cast`'s warm-brown environment and contact shadows by hand). Always `room.dress(cast)` (3D) or `makeFlat` (flat pages): the cast's reflections, contact shadows and colour temperature come from the room and follow lights down.
-- **A seam that cuts between two looks** (head, middle and tail rendered by different pages). Cut on `ui.wipe().update(t, tCut)` on both sides: the covered frame is identical, so a separately rendered head, middle and tail join without a jump (`研究/實驗19-…/定格/A 接縫（wipe）.jpg`).
-- **Six category colours on small particles** (experiment 19 A, B): they cannot be told apart and break "everything else is blue-grey". Use tints of one family plus one accent, and label the categories.
-- **Objects added after the first `room.lights(k)`** keep the old shadow tone in the dark studio; build everything before the first frame.
+## A/B tests on the approved lesson (experiment 20)
+- **A readcheck window that starts mid-segment** (experiment 20 tests 9, 11–13): `readcheck.cjs --from <t>` with `t` mid-segment reported world labels "never fully in frame" — they had been fully shown before `t`. Windows from the segment's start (or the whole page) avoid this; the same window on the baseline shows whether a BAD is yours.
+- **A real case placed before a bet** (experiment 20 test 12 plan): a case about leakage told before 「上線以後，真實的分數會更高、差不多，還是更低？」 gives the answer away. After the term is named, the case confirms instead of spoiling.
+- **Everything moving at once during the change to learn** (experiment 20 test 9, A): as the sieve dropped duplicates the camera pushed, a station switched, five labels faded, the student breathed and the glow pulsed — up to 6.4 % of the frame moved outside the sieve (13.9 % at the start of the bin sort). Finishing camera moves and switches first and holding idle life gave the eye one place (`04-skeleton.md` §2).
+- **An aha that cuts to a new picture** (experiment 20 test 11, A): inside the 4 s silence the lights went off, the camera pushed into the vault, a caption and three new customer sentences appeared, and the term label came 4.7 s before it was said; the picture was still only ≈ 1.5 s. Pieces assembled beforehand left the silence for thinking (`04-skeleton.md` §2).
+- **The same object in two places at once** (experiment 20 test 15, A): the 清潔保養 「2+3」 stack sat both on the station-3 tray and the next station's desk, and at the next seam the 50 question cards popped into the split rooms while the trays still held them. When the next segment's subject is already on screen, carry it there (`04-skeleton.md` §2, Carry the object across), so it leaves where it was.
+- **Each item flown straight to its own final slot** (experiment 20 test 15, first round): 50 cards flying from trays straight to their places looked like confetti, and a sorted mapping sent whole categories to one side — a relation the lesson never makes. What read well: converging into one pile first (a quick staggered departure is fine), then dealing it out on its word; cards paired with a fixed-seed shuffle.
+- **A recap that shows only the end state** (experiment 20 test 14, A): the K1 card drew the quota bars under a veil over the stage, pointing back to none of the segment's six steps. For a process segment, steps that leave traces let the recap be the path (`04-skeleton.md` §2).
+- **A relation that was the point, cued as two separate lights** (experiment 20 test 17, A): on 「你照調整集修好提示詞，驗收集那句也跟著過」 the two cards lit 1.17 s apart, the line between them still — two things, not cause and effect. Where the relation is the point, the cue can travel the line (`05-presentation-methods.md` §3c) — a small-effect option, once or twice a film. In the same lesson C12, A04 and A22 rightly kept separate lights: the relation had just been told by a real case, the effect had no object on screen, or the line was only the reason for a decision.
+- **A recap card that copies a two-clause spoken sentence** (experiment 20 test 18, A): the K1 card carried 「考題要像客人，／每一類都考得到。」 word for word with punctuation, 4.5 s of reading while the same words were heard. Such a card can be shortened to an anchor (`04-skeleton.md` §2, Recap); a sentence already minimal stays as said, without the full stop (K2 and K3 there); a bare code label anchors nothing.
+- **A refusal that throws away the right half of the student's idea** (experiment 20 test 19, A): 「不行，E三是…E四是…處理方法完全不同。」 rejected 「E三跟E四也很像，一起合併吧？」 though merging look-alikes is what the next layer does. When the answer really uses that part, the reply can name it, then the missing condition (`04-skeleton.md` §2, The student acts); a proposal with nothing right in it is still refused plainly.
+- **Moving a stamp later and keeping its old exit** (experiment 20 test 19): the B03 stamp lands on 「可是」 2.1 s later; its exit still tied to the next line cut the reason's reading time to 2.8 s (readcheck measured 3.3 needed). Tying the exit to the new landing word fixes it.
+- **Retelling the previous lesson twice** (experiment 20 test 21, A): the course map named lessons 1–5 and played their parts (M01, M01b); then segment 1 spent 12.1 s (A02–A04) retelling lesson 5's sourcing. Where the previous lesson's answer fits one question, the map can ask it, one later line referring back (`05-presentation-methods.md` §3d).
+- **A bet on a frozen stage** (experiment 20 test 22, A): the narration ran over a still picture twice: 8.1 s through the question and bet (only the gauge at 81 and the bet tag on screen; pick and reason only spoken), then 6.7 s after the 75 % reveal while the teacher explained the gap (the reason was right; the 6 points hide in the cut). livecheck flags stills over 3 s. Options: move the bet to the board (`05` §3b), or show pick, reason and explanation on stage as said.
+- **Two scores on one card with 「≠」** (experiment 20 test 23, A): 「v1.0 驗收 80% ≠ v1.1 驗收 ?」 → 77 % read as "the AI dropped 3 points" when the point was that the test set changed. When the yardstick changed, drawing both yardsticks shows it (`05` §3c, Two rulers).
+- **Absolute seconds for a cutaway** (experiment 20 test 22 → x31): `tRoomIn`/`tRoomOut` as seconds broke once other tests shifted the film. Cut times from line ids survive re-timing.
+- **A segment that runs past its reveal** (experiment 20 test 25, A): segment 3 ran 131.6 s; 0.45 s after 「這叫洩漏」 came the real case, then the fix, radius and versioning, and the last card had to name two rules. When a second point follows the reveal and the rest is long, closing the segment there helps (`04-skeleton.md` §2).
+- **A derivation on a card whose numbers exist only as words** (experiment 20 test 26, A): 155 and 105 were only text, and the −1 was two tiny marks. One stepped-down run showed it (`05` §3c).
+- **One needle that swings to the honest value** (experiment 20 test 27, A): 81 → 75 read as "the score fell", and at the fix the gauge simply vanished. Keeping the measured needle and adding the true one shows the gap (`05` §3c).
+- **A third speaker sharing the teacher's voice** (experiment 20 test 28): the manager is HsiaoChen; with Luna, Iris or Nova as the teacher she would seem to answer her own question. Checking each new voice against the teacher's catches it.
+- **Dash length in world units on a non-scaling stroke** (x31, x30u's 「+16」 bracket): its right end was never drawn. Scale dash lengths by the same factor as the stroke's coordinates (RZ).
+
+## The Engram studio (experiment 19; only when the user asks)
+- **Making the light studio the default for every lesson** (experiments 19–20, 2026-11-05 to 11-10): the rule "light studio for software / AI / data / money / rules" covered nearly every lesson, so new courses lost the classroom, the blackboard with its key concept, the 3D course map and the chalk mindmap, and real pictures went into holo panels. Firm (user's decision): a look the user picked "by situation" is no default; the classroom skeleton (board carries the point, map and mindmap frame head and tail) stays (`01-principles.md` §1).
+- **Leaving the cast's default warm reflections in a cool room** (experiment 18: four of five styles overrode `lib/cast`'s warm-brown environment and contact shadows by hand). `room.dress(cast)` (3D) or `makeFlat` (flat pages) handles it: reflections, contact shadows and colour temperature come from the room and follow lights down.
+- **A seam that cuts between two looks** (head, middle and tail rendered by different pages). Cutting on `ui.wipe().update(t, tCut)` on both sides makes the covered frame identical, so separately rendered parts join without a jump (`研究/實驗19-…/定格/A 接縫（wipe）.jpg`).
+- **Six category colours on small particles** (experiment 19 A, B): they cannot be told apart and break "everything else is blue-grey". Tints of one family plus one accent, categories labelled, read better.
+- **Objects added after the first `room.lights(k)`** keep the old shadow tone in the dark studio; building everything before the first frame avoids it.
 - **Assuming GPU is faster**: x19-a-light (flat iso page, few WebGL layers) rendered 2× faster *without* `RENDER_GPU=1` and without motion trails; measure both on a 2-second clip before a long render.
 
 ## Characters and teachers
-- **A teacher who points at nothing while talking** (experiment 16, lesson 3: `point: speaking ? 0.75 : 0.15`, `lookX: 0.6` fixed for the whole page; the to-do list also has 「包老師不會真的指白板」, 「芋圓在真實畫面段……不會動」). Being on screen does not help; gestures and gaze that lead to the named thing do. Cue them on the word with `lib/cast/cue.js` (`01-principles.md` §2).
-- **A persona that inserts its move everywhere** (experiment 14 follow-up, v3: a companion that asked a deep question in every segment). Teachers change how a beat is said, never add beats (`11-teachers.md`).
-- **Departing from a design image the user liked** (owl v1 deliberately avoided the image's purple glasses and pencil). Follow the image; the old "no glasses" rule was only to tell several teachers apart.
-- **Teacher names that TTS garbles**: one-syllable English names came back from ASR as nonsense (Mo →「MRO」, Max →「Nachs」, Bolt →「不」); Owen varied by voice. Use two-syllable names, test them through all three voices and ASR, and speak them with the Chinese transliteration mid-sentence.
+- **A teacher who points at nothing while talking** (experiment 16, lesson 3: `point: speaking ? 0.75 : 0.15`, `lookX: 0.6` fixed all page; the to-do list also has 「包老師不會真的指白板」, 「芋圓在真實畫面段……不會動」). Presence does not help; gestures and gaze leading to the named thing do, cued on the word with `lib/cast/cue.js` (`01-principles.md` §2).
+- **A persona that inserts its move everywhere** (experiment 14 follow-up, v3: a companion that asked a deep question in every segment). What kept the rhythm: teachers change how a beat is said, not add beats (`11-teachers.md`).
+- **Departing from a design image the user liked** (owl v1 deliberately avoided the image's purple glasses and pencil). The liked image is the reference; the old "no glasses" note only told teachers apart.
+- **Teacher names that TTS garbles**: one-syllable English names came back from ASR garbled (Mo →「MRO」, Max →「Nachs」, Bolt →「不」); Owen varied by voice. What worked: two-syllable names, tested in all three voices and ASR, spoken with the Chinese transliteration mid-sentence.
 - **Coined Chinese pun names** (沈默, 明鏡, 零一 …).
-- **Teacher and student as the same character in two sizes** (glossy-bot v1: two white robots with black visors, the teacher only taller). Tell them apart by silhouette, colour identity and role props; follow the user's design image when there is one (`assets/cast-designs/`).
-- **A skin face canvas on the GPU** (glossy-bot v2, student think frame): headless Chromium kept only a dirty rectangle of the redraw, so the face showed a pale blob and lost its black plate. Create per-pose canvases with `getContext('2d', { willReadFrequently: true })`.
-- **Boxy or eerie characters for a "knowledgeable" teacher** (glass block with a screen face; flat ink figure with a tiny face). Rounded, refined, friendly.
-- **Citing the learner's notes in the film** (Luna mock-up: 「你三週前的筆記寫過……」 plus a note-title chip). Use the known concept naturally; never name the note or its date. Also: 「以舊帶新」 read as odd and weak; the title is now 融會貫通.
-- **Announcing the method in the narration** (Iris: 「先講通：……好，現在換個角度想：」) and commas inside a phrase. Lead into the question from the explanation; label the angle on screen only.
-- **Several sentences in one TTS line** (the first teacher previews): 。！ give ≈0.8 s and ？ ≈1.1 s of silence inside the line. One sentence per line, gaps from `pauseAfter`; energy from short lines, questions and pace (`07-voice-and-language.md` §1b).
-- **Teacher lines that sound slow-witted**: filler, cute phrasing, a comma after every short adverbial, pitch raised on every line. Precise words, setup fast, one beat before the key line, key line last (`07-voice-and-language.md` §1b, 5b).
+- **Teacher and student as the same character in two sizes** (glossy-bot v1: two white robots with black visors, the teacher only taller). Silhouette, colour identity and role props told them apart; the user's design image leads if any (`assets/cast-designs/`).
+- **A skin face canvas on the GPU** (glossy-bot v2, student think frame): headless Chromium kept only a dirty rectangle of the redraw: a pale blob, no black plate. Per-pose canvases with `getContext('2d', { willReadFrequently: true })` fixed it.
+- **Boxy or eerie characters for a "knowledgeable" teacher** (glass block with a screen face; flat ink figure with a tiny face). Wanted: rounded, refined, friendly.
+- **Citing the learner's notes in the film** (Luna mock-up: 「你三週前的筆記寫過……」 plus a note-title chip). Use the known concept naturally; per the user, never name the note or its date. Also: 「以舊帶新」 read as odd and weak; the title is now 融會貫通.
+- **Announcing the method in the narration** (Iris: 「先講通：……好，現在換個角度想：」) and commas inside a phrase. Leading into the question from the explanation, angle labelled on screen only, sounds like guidance.
+- **Several sentences in one TTS line** (the first teacher previews): 。！ give ≈0.8 s and ？ ≈1.1 s of silence inside the line. Natural: one idea per line (several sentences of one idea as a `group`, joined with commas), gaps from `pauseAfter`; energy from short lines, questions and pace (`07-voice-and-language.md` §1b).
+- **Teacher lines that sound slow-witted**: filler, cute phrasing, a comma after every short adverbial, pitch raised on every line. What helped: precise words, setup fast, one beat before the key line, key line last (`07-voice-and-language.md` §1b, 5b).
+
+
+## Handover and tools (experiment 21)
+- **A new studio re-voiced everything.** The TTS cache lived only in the studio, so after a handover editing one line re-synthesized all lines and moved every timing. `voice.py` now keeps each film's edge-tts clips in `projects/<id>/.tts-cache` and `bundle.py` archives them with `narration.opus`, `subtitles.vtt` and the project's `.py` scripts. Restore with `cp -r <archive>/<id>/src/. projects/<id>/`; re-running `voice.py` then re-voices only changed lines.
+- **The pointer pointed at blank space with 0 warnings.** The cue check only tested direction and height; the stick ended ≈ 500 px short of targets centred on the screen. `cue.js` now checks reach (`REACH`, CAST.md); still look at the tip on full-resolution stills.
+- **Page styles broke the Azure kit.** Short inner class names (`.t`, `.e`, `.req`, `.tx`) collided with page styles (the account box turned to garbled text). The kit's inner classes are now `az-` prefixed (`.az-t`, `.az-tx`, …); pages keep their own names off the `az-` prefix.
+- **Review cards that only work inside the film.** Every lesson's silent review found cards missing units, where to look, or the before/after numbers. Write each card so it is understood alone months later (`12-modules.md` §3).

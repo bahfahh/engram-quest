@@ -1,4 +1,7 @@
-# House style: the Engram studio (`lib/house/`)
+# The Engram studio (`lib/house/`) — an option, only when the user asks for it
+
+> **Status (user, 2026-11-10): not the default.** Lessons keep the classroom skeleton (blackboard, 3D course map, blackboard mindmap — `reference/04-skeleton.md`, `lib/classroom/`) and show real pictures in their real look. Use this studio only when the user asks for it; the "when" table in §0 applies only inside such a film.
+
 
 One studio, two lights. Every film of the series (classroom, course map, middle, key cards, mindmap) is shot in the
 same seamless studio; only the lights change. Built in experiment 19 from experiment 18's S1 (light) and S2 (dark)
@@ -140,7 +143,13 @@ a cool DOM contact shadow and a faint floor reflection (a flipped, fading copy u
 `st` gives just the background and layers.
 
 ### `kit-house.css` (lib/kit and keypoint in the house look)
-Load after `kit.css`, `keypoint.css`, `house.css`; set `data-house` on `<html>`. Styles only (kit.js unchanged):
+Only in a film the user asked to shoot in this studio. Load after `kit.css`, `keypoint.css`, `house.css`; set
+`data-house` on `<html>` (or the element that holds the kit stage). Styles only (kit.js unchanged), and only the
+annotation layer: the real-UI mocks (`K.phone`, `ig.*`, `am.*`, `K.toggle`, the Play Store page) keep kit.css's own
+colours, shadows and fonts on a `data-house` page, because a real interface stays the real interface — the learner
+will meet Meta blue and a white Ads Manager on their own screen, and the studio styles our notes about the thing, not
+the thing (`reference/01-principles.md` §1). A mock you build yourself keeps its look as long as it does not sit
+inside a callout, the recap or a key-point card. In the annotation layer:
 cards and callouts become house panels / chips, `K.highlight` becomes the selection box, the chapter bar takes the
 progress-capsule language, title card = studio wall, `K.recap` = a house panel (no note paper, no handwriting),
 keypoint card = house panel with a cyan tab. Kit colours are re-mapped by hex: teal / green / blue → cyan line,
