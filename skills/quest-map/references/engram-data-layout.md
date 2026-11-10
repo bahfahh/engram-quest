@@ -15,7 +15,7 @@ EngramQuest artifact and read it directly from the folder below.
 |---|---|---|
 | "course", "課程", "教材", "lesson", "the X course" | A Lesson Academy course | `engram-quest/lessons/{courseSlug}/` |
 | "deck", "review deck", "卡片", "flashcards", "複習卡" | A Review Deck | `engram-review/` |
-| "quest", "quest map", "關卡", "the quest I made" | A Quest Map | a `*-quest.md` note **or** `engram-quest/state/` for progress |
+| "quest", "quest map", "關卡", "the quest I made" | A Quest Map | `engram-quest/quests/{questSlug}/` (an older quest is a `*-quest.md` note); progress is in `engram-quest/state/` |
 | "explainer", "詳解" | An Explainer page (Pro) | `engram-quest/explainer/` |
 
 ## Folder reference
@@ -25,6 +25,9 @@ engram-quest/
 ├── lessons/{courseSlug}/
 │   ├── meta.json          ← course info + lessons array + completion (the index)
 │   └── lsn-*.html         ← one self-contained HTML per lesson (the actual content)
+├── quests/{questSlug}/
+│   ├── meta.json          ← the map and its nodes
+│   └── nodes/*.html       ← one self-contained HTML per mission
 ├── state/{quest}.json     ← Quest Map progress / scores (not source content)
 └── explainer/{id}.html ← explainer pages (Pro; metadata in explainer/meta/)
 
@@ -56,14 +59,15 @@ This is the common case (a user asks to build a quest/deck/map from a course the
    Read: engram-quest/lessons/{courseSlug}/{file}
    ```
 
-   **Sampling strategy for large courses (5+ lessons):**
-   - Read the first 3–4 core concept lessons in full.
-   - For remaining lessons, use their titles only. Lessons whose title contains「實戰」「案例」
-     「Case」「Practice」repeat earlier concepts — use the title as context, not the HTML.
-   - Stop reading when you can list 6+ concrete practice opportunities. You have enough.
+   Each lesson may carry a `goal` (what the learner can do after it) and the course a `mission`
+   (who is learning and why). When present, these say what the course set out to build; read
+   them before the HTML. Read as much of the lessons as it takes to know what was actually
+   taught and with which examples; in a long course the goals and titles show which lessons to
+   read in full.
 
-   A lesson with `"file": null` is a planned outline entry with no content yet — use its title
-   only, and tell the user that lesson hasn't been generated.
+   A lesson with `"file": null` is a planned outline entry: nothing has been taught yet, so
+   there is nothing to practise from it. Leave it out, and tell the user which lessons the
+   result does not cover.
 
 Once you have the course's lesson content, treat it as your source material and proceed with
 the normal generation flow. You do **not** need a matching vault note — the course content

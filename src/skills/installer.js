@@ -92,15 +92,14 @@ function createInstaller(embeddedOverride) {
       { source: "quest-map/references/engram-data-layout.md", target: "references/engram-data-layout.md" },
       { source: "quest-map/references/html-first-contract.md", target: "references/html-first-contract.md" },
       { source: "quest-map/references/html-quality.md", target: "references/html-quality.md" },
-      { source: "quest-map/references/boss-design.md", target: "references/boss-design.md" },
-      { source: "quest-map/references/domain-patterns.md", target: "references/domain-patterns.md" },
+      { source: "quest-map/references/mission-design.md", target: "references/mission-design.md" },
       { source: "quest-map/references/challenge-formats.md", target: "references/challenge-formats.md" },
       { source: "quest-map/references/visual-challenges.md", target: "references/visual-challenges.md" },
       { source: "quest-map/references/parser-constraints.md", target: "references/parser-constraints.md" },
-      { source: "quest-map/references/yaml-template.md", target: "references/yaml-template.md" },
       { source: "quest-map/scripts/list_quest_icons.sh", target: "scripts/list_quest_icons.sh" },
-      { source: "quest-map/assets/examples/mission-basic.html", target: "assets/examples/mission-basic.html" },
-      { source: "quest-map/assets/examples/boss-cascade.html", target: "assets/examples/boss-cascade.html" }
+      { source: "quest-map/scripts/build_quest.py", target: "scripts/build_quest.py" },
+      { source: "quest-map/assets/quest-base.css", target: "assets/quest-base.css" },
+      { source: "quest-map/assets/quest-base.js", target: "assets/quest-base.js" }
     ],
     "review-deck": [
       { source: "review-deck/skills.md", target: "SKILL.md" },

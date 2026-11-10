@@ -1,27 +1,27 @@
-# Quest Map User Guide
+# Quest Map, for explaining it to a user
 
-Quest Map turns a note into a staged learning journey.
-Each chapter contains:
+Read this when the user asks what a quest map is or how to use one.
 
-- a short summary
-- a few key points
-- one challenge
+A quest map turns something the user has studied into practice. It is a short path of missions
+ending in a boss. Each mission puts the learner in a situation, with the material a practitioner
+would have, and asks them to act on it; the plugin records a score for each node and unlocks the
+next one.
 
-## How users create one
+## Making one
 
-Ask an AI tool:
+The user asks their AI tool, naming a source and optionally a difficulty:
 
-- `Turn [note].md into a medium quest-map`
-- `Make a hard quest-map from [topic]`
+- "Make a quest map from my X course"
+- "Turn [note] into a hard quest map"
 
-The result should be saved as `<source-note-name>-quest.md`.
+The source can be a Lesson Academy course, a note, or a topic.
 
 ## Difficulty
 
-- `easy`: more guided, usually with hints
-- `medium`: balanced difficulty
-- `hard`: less guidance, stronger recall required
+- `easy`: the situation says what kind of problem it is, and little on the desk is beside the point.
+- `medium`: more to weigh, and some of the material is noise.
+- `hard`: the learner has to work out what the problem is, and a wrong step costs more.
 
-## Opening the result
+## Opening it
 
-Users can open the generated file directly or view it from the EngramQuest / Quest Map tab.
+EngramQuest → Quest Map. Nodes unlock in order, and a finished node can be opened again.

@@ -7,97 +7,121 @@ description:
 
 # Quest Map Skill
 
-## Default Output
+A quest map is where a learner finds out whether they can **use** what they know. Each mission
+puts them in a situation they have not seen, with the real material in front of them, and asks
+them to do what someone with the skill would do. Lessons explain and review decks drill recall;
+a quest map is neither. It is practice, and it is scored.
 
-Generate plugin-native HTML-first Quest packages by default.
+## What you produce
 
-A plugin-native quest has:
-- one folder under `engram-quest/quests/{questSlug}/`
-- one `meta.json` file with map metadata and node pointers
-- one self-contained HTML file per mission or boss node in the same quest folder
-- runtime progress stored by the plugin in `engram-quest/state/`, never in the source note
+A quest package the plugin opens from its Quest Map tab:
 
-Use legacy markdown quest-map blocks only when updating existing legacy content or when the user explicitly asks for an embeddable note block. For legacy syntax, read `references/challenge-formats.md`.
+- one folder, `engram-quest/quests/{questSlug}/`
+- a `meta.json` describing the map and its nodes
+- one self-contained HTML file per mission and boss node
 
-## Output Language Rule
+`references/html-first-contract.md` has the exact shape and what the plugin does with it.
+Progress and scores are kept by the plugin in `engram-quest/state/`, never in the package or the
+source note.
 
-Generate user-facing quest titles, node text, HTML copy, hints, feedback, and explanations in the language that best matches the source note or user prompt. Keep structural keys in English.
+Older quests are markdown blocks inside a note. Touch that format only to update such a quest or
+when the user asks for an embeddable block. `references/challenge-formats.md`,
+`references/parser-constraints.md`, `references/visual-challenges.md` and
+`scripts/list_quest_icons.sh` belong to it; nothing in them applies to a quest package.
 
-Skills documents and references are execution instructions and must stay in English.
+## Output language
 
-## Hard Runtime Rules
+Everything the learner reads — titles, material, feedback — is in the language of the source and
+the user's request. Structural keys stay in English.
 
-- Do not modify source notes unless the user explicitly asks to embed a quest block in that note.
-- Node `id` is the progress contract. Preserve existing IDs when updating equivalent content.
-- New quest packages go under `engram-quest/quests/{questSlug}/`.
-- New HTML files stay inside the quest package folder, commonly `nodes/{nodeId}.html` or `{nodeId}.html`.
-- Quest HTML must be self-contained: inline CSS and vanilla JS only, no external scripts, fonts, images, fetches, popups, or top-level navigation.
-- HTML completes by posting `engram-quest-solved`; it resizes by posting `engram-quest-resize`.
-- Every mission must be deterministic enough to emit a numeric score from 0 to 100.
+## Principles
 
-## Required References
+These are what a good quest achieves. How a particular quest achieves them depends on its
+subject, and working that out is the job; nothing here is a layout to reproduce.
 
-Read these before generating files:
+1. **Start from what the learner should be able to do.** Before designing anything, write down
+   the abilities this quest exercises, each as something a person does ("reads a performance
+   report and says which step a page is stuck at"). A Lesson Academy course may already state
+   them, as each lesson's `goal`; where a source does not, derive them from what it teaches and
+   from what the user wants to get good at, and ask when that is unclear. Every later choice is
+   judged against this list.
+2. **A mission is a situation that calls for the ability.** Find where the ability is really
+   used — a desk, a kitchen, a ward, a workshop, a negotiation — and put the learner there, in
+   a case the source did not use as its example. A learner who meets the source's own example
+   again is remembering, not applying.
+3. **The real material is on the desk, and the learner acts on it.** Ask what a practitioner
+   would have in front of them and what they would do with it: mark the line that does not hold
+   up, set a dial, put steps in order, write the missing piece, decide where to look next.
+   Picking one of several written answers is right when the real decision is a choice among
+   options, and only then.
+4. **The material answers before the explanation does.** When the learner commits, show what
+   their decision did: the number that moved, the cup that came out bitter, the defence that
+   now has a hole. Then give the reason, including why the tempting alternative is weaker.
+5. **The score says how good the judgment was.** It is made of the things the ability consists
+   of, each shown with its reason, and a defensible-but-weaker decision earns part of it. A
+   learner who guessed should not score like one who knew.
+6. **The quest is a path.** Earlier missions exercise abilities one at a time; the boss needs
+   several at once, in a situation where an early decision changes what comes later.
+7. **A quest does not teach.** A briefing gives the context needed to start, nothing more. If
+   the learner would need a new idea explained, that idea belongs in a lesson.
+8. **One house style, any mission.** `assets/quest-base.css` and `assets/quest-base.js` fix the
+   look and the contract with the plugin. What is on the desk and what the learner does to it
+   is designed for this mission. Two quests on different subjects should look like the same
+   publisher and ask for completely different things; reusing a mission's layout because it
+   exists is the failure to avoid.
 
-- `references/html-first-contract.md` for package shape, path rules, and postMessage contract.
-- `references/html-quality.md` before writing any HTML.
-- `references/boss-design.md` before writing a boss node.
-- `references/domain-patterns.md` when choosing a mission format for the source domain.
+`references/mission-design.md` works these out: finding the situation, choosing material,
+designing the action and its consequence, scoring, difficulty, and the boss. Read it before
+planning a quest.
 
-Read conditionally:
+## Flow
 
-- `references/engram-data-layout.md` when the user names an EngramQuest course, lesson, review deck, or generated artifact.
-- `references/obsidian-cli.md` when vault search or note discovery is needed.
-- `references/parser-constraints.md` and `references/challenge-formats.md` only for legacy v1 quests.
+1. **Find the source.** When the user names a course, lesson, deck or other EngramQuest
+   artifact, read it from the plugin's folders first (`references/engram-data-layout.md`); a
+   vault search will not find it. For vault notes use the Obsidian CLI
+   (`references/obsidian-cli.md`). A quest practises what the source has actually taught; when
+   part of it is only planned or too thin to practise from, leave that part out and tell the
+   user what the quest does not cover.
+2. **Name the abilities** (principle 1).
+3. **Plan the quest in a few lines per node**: the ability, the situation, what is on the desk,
+   what the learner does, what the material shows in return, and what the score is made of. A
+   plan that reads as a question followed by options is not ready; one that says what the
+   learner has their hands on is. Use as many missions as there are abilities worth practising —
+   usually a handful — and prefer a few rich missions to many thin ones.
+4. **Write `meta.json`** as `references/html-first-contract.md` describes.
+5. **Write each mission** on the house style, following `references/html-quality.md` (read it
+   before the first mission: the plugin's frame silently blocks several ordinary browser
+   features).
+6. **Build** with `scripts/build_quest.py`, then **play every mission**; both steps are in
+   `references/html-quality.md`, section 7.
+7. **Tell the user** what the quest practises, what it leaves out, and where to open it
+   (EngramQuest → Quest Map).
 
-Example assets:
-- `assets/examples/mission-basic.html` demonstrates a compact normal mission.
-- `assets/examples/boss-cascade.html` demonstrates a small cascade boss. Use these as structural examples, not copy-paste templates.
+## Updating a quest
 
-## Generation Flow
+Read the existing `meta.json` and missions first. A node's `id` is what the learner's progress
+is stored under: keep the `id` and filename of any node whose ability is unchanged, and replace
+only the missions whose content really changed. Never write progress into the package.
 
-1. Resolve the source **and** read all required references in parallel (no dependencies between them).
-   Start these simultaneously:
-   - `references/html-first-contract.md`
-   - `references/html-quality.md`
-   - `references/boss-design.md`
-   - `references/domain-patterns.md`
-   - Source course `meta.json` if applicable (read `references/engram-data-layout.md` first if needed)
+## Before calling it done
 
-   Other source resolution rules:
-   - If the user names an EngramQuest artifact, read the plugin data folder directly before vault search.
-   - If vault discovery is needed, use Obsidian CLI (`obsidian search`), not grep scripts.
-   - Use `scripts/list_quest_icons.sh` only when a quest icon filename is needed.
-2. Analyze the source for applied practice opportunities.
-   - Extract realistic cases, operating constraints, failure modes, calculations, tradeoffs, and common confusions.
-   - Do not turn the source into another flashcard deck.
-3. Design the v2 quest.
-   - Small source: 3-4 nodes including boss.
-   - Medium source: 4-6 nodes including boss.
-   - Large source: 6-8 nodes including boss.
-   - Prefer fewer rich missions over many thin nodes.
-   - Use `difficulty: easy | medium | hard`; runtime maps this to the correct background.
-   - Every briefing node MUST have a `points` array (3–5 entries, each `{ title, body }`). Without `points`, the runtime shows only one line of text. See `references/html-first-contract.md` for the format.
-4. Write the quest package.
-   - Create `engram-quest/quests/{questSlug}/meta.json`.
-   - Use node `type: briefing | mission | boss`.
-   - Use `html:` or `file:` on mission and boss nodes.
-   - Keep HTML paths relative to the package folder, such as `nodes/{nodeId}.html`.
-5. Write every HTML mission file.
-   - Match the domain and language.
-   - Include clear feedback and a completion action.
-   - Send score with `window.parent.postMessage({ type: "engram-quest-solved", score }, "*")`.
-6. Update mode.
-   - Read existing `meta.json` and existing HTML before editing.
-   - Preserve node IDs and filenames for unchanged learning objectives.
-   - Replace only the HTML files whose mission content materially changed.
-   - Never write progress into `meta.json`.
+Play each mission as the learner would:
 
-## Quality Bar
+- **It cannot be finished well without the ability**, and can be with it. Nothing in the
+  material or the wording gives the answer away.
+- **The learner's hands are on the material.** If the material could be deleted and the
+  questions would still make sense, it is a quiz with decoration.
+- **Every decision gets its consequence and its reason**, and the learner decides when to move
+  on.
+- **The score is believable.** Each part is visible, and the total matches how well a
+  practitioner would say it went.
+- **It works on a phone**, in light and dark, with a finger (`references/html-quality.md`).
+- **What the mission's judgment rests on is true.** The source is the authority for its own
+  conventions; facts, figures and "best practice" claims from outside it are verified, and
+  invented data is labelled as invented.
 
-The quest should feel like applied practice:
-- Briefing frames context or teaches the minimum needed concept.
-- Mission asks the learner to operate, diagnose, calculate, sequence, compare, or decide.
-- Boss integrates multiple earlier concepts with visible consequences.
-- Distractors are plausible and teach why the best answer is best.
-- Visuals are inspectable and content-specific, not decorative.
+## What not to do
+
+- Do not modify the user's notes, unless they ask for a quest block embedded in one.
+- Do not turn the source into a deck of questions; recall is the review deck's job.
+- Do not explain new ideas inside a mission; hand that to a lesson.

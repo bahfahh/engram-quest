@@ -1,9 +1,8 @@
 # Visual & Interactive Challenge Authoring
 
-This file is legacy v1 guidance for `image-quiz`, `image-occlusion`, and `iframe` challenge types.
-For new HTML-first quests, use `html-quality.md`, `domain-patterns.md`, and `boss-design.md` instead.
+**This file applies only to older markdown quests** and their `image-quiz`, `image-occlusion`, and `iframe` challenge types. Nothing in it applies to a quest package; for those, use `mission-design.md` and `html-quality.md`.
 
-Read this when SKILL.md's Challenge Type Selection routes you to `image-quiz`, `image-occlusion`, or `iframe`. The Type Selection table already decides **which** to use; this file is **how** to author each well.
+Read this when updating a markdown quest that uses `image-quiz`, `image-occlusion`, or `iframe`. The Type Selection table already decides **which** to use; this file is **how** to author each well.
 
 ## Default expectation
 

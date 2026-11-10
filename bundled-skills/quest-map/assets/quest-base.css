@@ -1,0 +1,184 @@
+/* EngramQuest mission house style. Copy this file unchanged to the top of a mission's <style>; the
+   mission's own rules follow it and use its tokens. It fixes how a mission looks: colour, type, the case
+   header, the surfaces material sits on, the controls, the states a learner's mark can be in, and the
+   verdict. It does not decide what material a mission puts on the desk or what the learner does to it.
+   Colour and type are the same as the lesson house style, so a mission's material belongs to the same
+   world as a lesson's figures. */
+.qz{--bg:#fcfbf8;--ink:#1f2127;--body:#33363d;--muted:#676b74;--line:#e4e1d9;--card:#fff;--wash:#f2f0ea;
+  --accent:#4152c4;--soft:#e5e8fb;--stage:#eff1fa;--mark:#fdeaa6;
+  --ok:#166b47;--ok-soft:#dcf1e6;--bad:#b0312b;--bad-soft:#fbe3e0;--warn:#8f5e06;--warn-soft:#fbedcc;--link:#2b5fb4;--link-soft:#e1ebfa;
+  --sans:-apple-system,BlinkMacSystemFont,"PingFang TC","Noto Sans TC","Microsoft JhengHei",system-ui,sans-serif;
+  --mono:ui-monospace,"SF Mono","Cascadia Mono",Consolas,"Microsoft JhengHei",monospace;
+  --hand:"Kaiti TC","BiauKai","DFKai-SB","KaiTi",serif;
+  --shadow:0 1px 2px rgba(25,25,45,.06),0 10px 26px -14px rgba(25,25,45,.22)}
+.qz.dark{--bg:#1a1b1f;--ink:#f1eee7;--body:#d8d5cd;--muted:#a3a29b;--line:#35373e;--card:#25272d;--wash:#2c2e35;
+  --accent:#a5b0ff;--soft:#2b3059;--stage:#21232d;--mark:rgba(244,200,84,.3);
+  --ok:#74d3a4;--ok-soft:#1d3a2d;--bad:#ff938a;--bad-soft:#45231f;--warn:#f0c268;--warn-soft:#3d3117;--link:#93bbff;--link-soft:#22324b;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 26px -14px rgba(0,0,0,.6)}
+/* one accent per quest: indigo by default, or one of these classes on the body element */
+.c-green{--accent:#1f7049;--soft:#daf0e3;--stage:#edf5f0}
+.c-green.dark{--accent:#80d5a8;--soft:#1f3b2e;--stage:#1e2722}
+.c-rose{--accent:#ad365b;--soft:#fbe2e9;--stage:#f9eef1}
+.c-rose.dark{--accent:#f69fba;--soft:#482333;--stage:#292024}
+.c-amber{--accent:#8a5800;--soft:#fbeccb;--stage:#faf4e6;--warn:#a8430a;--warn-soft:#fce3d2}
+.c-amber.dark{--accent:#f0c268;--soft:#3d3117;--stage:#262218;--warn:#ffa672;--warn-soft:#4a2710}
+.c-cyan{--accent:#0e6676;--soft:#d6eef2;--stage:#ebf5f6}
+.c-cyan.dark{--accent:#7fd3e0;--soft:#173a41;--stage:#1c2628}
+.c-violet{--accent:#6b3fc4;--soft:#ece4fb;--stage:#f3effb}
+.c-violet.dark{--accent:#c3a6ff;--soft:#35275c;--stage:#25212f}
+.c-blue{--accent:#1d5fbf;--soft:#dfeafb;--stage:#eef3fb}
+.c-blue.dark{--accent:#8fbcff;--soft:#1f3558;--stage:#1f242e}
+.c-teal{--accent:#0c6b60;--soft:#d5efea;--stage:#eaf5f3}
+.c-teal.dark{--accent:#6fd6c6;--soft:#173d38;--stage:#1c2726}
+.c-lime{--accent:#4d6b0a;--soft:#e6f0cd;--stage:#f2f6e6}
+.c-lime.dark{--accent:#b9dd6a;--soft:#303d14;--stage:#23271b}
+.c-orange{--accent:#a8430a;--soft:#fce3d2;--stage:#fbf0e8}
+.c-orange.dark{--accent:#ffa672;--soft:#4a2710;--stage:#291f19}
+.c-fuchsia{--accent:#a3238f;--soft:#f9def4;--stage:#faedf7}
+.c-fuchsia.dark{--accent:#f2a0e3;--soft:#4a2143;--stage:#2a2029}
+.c-slate{--accent:#475569;--soft:#e2e6ec;--stage:#eff1f4}
+.c-slate.dark{--accent:#b4c0d0;--soft:#2f3642;--stage:#22252b}
+
+*{box-sizing:border-box}
+body.qz{margin:0;padding:20px 20px 28px;background:var(--bg);color:var(--body);font:16px/1.75 var(--sans);-webkit-text-size-adjust:100%;overflow-wrap:break-word}
+.wrap{max-width:760px;margin:0 auto}
+p{margin:0 0 10px}
+b,strong{color:var(--ink)}
+button b,button strong,.flag b,.flag strong,.steps b,.steps strong{color:inherit}
+a{color:var(--accent)}
+button,select,input,textarea{font:inherit;color:inherit}
+code{font-family:var(--mono);font-size:.88em;background:var(--wash);padding:1px 5px;border-radius:4px;color:var(--ink)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+[hidden]{display:none!important}
+
+/* the case: who the learner is here, what is asked of them, and the ability this mission exercises */
+.case{margin-bottom:16px}
+.case .role{margin:0 0 2px;font-size:13.5px;line-height:1.5;color:var(--muted)}
+h1{margin:0 0 8px;font-size:23px;line-height:1.4;color:var(--ink);letter-spacing:.3px}
+.case p{font-size:15.5px}
+.case .goal{margin:10px 0 0;padding:8px 12px;border-radius:10px;background:var(--soft);font-size:14px;line-height:1.65;color:var(--body)}
+.goal b{color:var(--accent);margin-right:6px}
+
+/* the desk: a quiet surface with the material on it — .win: something on a screen (.win-h title bar, .addr
+   address field, .win-b body) · .paper: something on paper, a memo or a sheet (.paper-h its heading) ·
+   .flag: a small label · .hand: handwriting, for words · .sim: the line that says the material is invented */
+.stage{background:var(--stage);border-radius:18px;padding:16px}
+.stage-h{display:flex;align-items:center;gap:8px 12px;flex-wrap:wrap;margin-bottom:12px}
+.stage-h .ttl{flex:1;min-width:120px;font-size:15px;font-weight:700;color:var(--ink);line-height:1.4}
+.win{min-width:0;background:var(--card);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);overflow:hidden}
+.win-h{display:flex;align-items:center;gap:8px;padding:7px 12px;border-bottom:1px solid var(--line);font-size:12.5px;line-height:1.5;color:var(--muted)}
+.win-h::before{content:"";flex:none;width:8px;height:8px;border-radius:50%;background:#ec6a5e;box-shadow:13px 0 #f4bf4f,26px 0 #61c554;margin-right:28px}
+.win-h .addr{flex:1;min-width:0;padding:1px 10px;border-radius:6px;background:var(--wash);font-family:var(--mono);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.win-b{padding:12px 14px;font-size:14.5px;line-height:1.7}
+.paper{min-width:0;padding:12px 14px;background:var(--card);border:1px solid var(--line);border-radius:4px;box-shadow:var(--shadow);font-size:14.5px;line-height:1.7}
+.paper-h{margin:0 0 8px;padding-bottom:6px;border-bottom:1px dashed var(--line);font-size:14px;font-weight:700;color:var(--ink)}
+.flag{display:inline-block;padding:0 8px;border-radius:6px;font-size:12.5px;line-height:1.7;font-weight:700;background:var(--wash);color:var(--muted)}
+.flag.ok{background:var(--ok-soft);color:var(--ok)}.flag.bad{background:var(--bad-soft);color:var(--bad)}.flag.warn{background:var(--warn-soft);color:var(--warn)}.flag.acc{background:var(--soft);color:var(--accent)}
+.hand{font-family:var(--hand);font-size:17px;line-height:1.5;color:var(--accent)}
+.sim{font-size:12.5px;color:var(--muted)}
+
+/* controls — .btn (.pri: the one that commits) · .sel: a select · .fld: a text or number field, or a
+   textarea · .seg: a few short options side by side, pressed ones marked with aria-pressed · .choice:
+   one of several longer answers, each a full-width button, the chosen one .picked · .chk: any of a list */
+.btn{min-height:40px;padding:7px 15px;border:1px solid var(--line);border-radius:9px;background:var(--card);font-size:14.5px;line-height:1.3;color:var(--ink);cursor:pointer}
+.btn:hover:not(:disabled){border-color:var(--accent)}
+.btn:disabled{opacity:.45;cursor:default}
+.btn.pri{background:var(--accent);border-color:var(--accent);color:var(--bg);font-weight:700}
+.sel{min-height:40px;max-width:100%;padding:6px 10px;border:1px solid var(--line);border-radius:9px;background:var(--card);font-size:14.5px;color:var(--ink);cursor:pointer}
+.fld{min-height:40px;max-width:100%;padding:6px 10px;border:1px solid var(--line);border-radius:9px;background:var(--bg);font-size:15px;line-height:1.5;color:var(--ink)}
+textarea.fld{display:block;width:100%;min-height:96px;resize:vertical}
+.fld:disabled{opacity:1}
+.fld.hit{border-color:var(--ok);background:var(--ok-soft)}.fld.part{border-color:var(--warn);background:var(--warn-soft)}.fld.miss{border-color:var(--bad);background:var(--bad-soft)}
+.seg{display:inline-flex;flex-wrap:wrap;gap:2px;padding:3px;background:var(--card);border:1px solid var(--line);border-radius:11px}
+.seg button{border:0;background:none;min-height:36px;padding:5px 13px;border-radius:8px;font-size:14px;line-height:1.3;color:var(--muted);cursor:pointer}
+.seg button[aria-pressed=true]{background:var(--accent);color:var(--bg);font-weight:700}
+.seg button:disabled{cursor:default}
+input[type=range]{accent-color:var(--accent);min-height:36px;width:100%;margin:0}
+.choice{display:flex;align-items:flex-start;gap:4px 10px;flex-wrap:wrap;width:100%;min-height:44px;margin-top:6px;padding:9px 12px;text-align:left;font-size:15px;line-height:1.55}
+.choice>span:first-child{flex:1;min-width:150px}
+.choice .pick-tag{flex-basis:100%}
+.chk{display:flex;align-items:flex-start;gap:10px;min-height:44px;margin-top:6px;padding:9px 12px;border:1px solid var(--line);border-radius:10px;background:var(--card);font-size:15px;line-height:1.55;cursor:pointer}
+.chk input{flex:none;width:18px;height:18px;margin:3px 0 0;accent-color:var(--accent)}
+.chk:has(input:checked){border-color:var(--accent);background:var(--soft)}
+.chk:has(input:disabled){cursor:default}
+.chk:has(input:disabled:not(:checked)){opacity:.55}
+
+/* Something the learner can mark: any element with data-pick, and every .choice. .picked is the learner's
+   mark. Once the mission is judged (.judged on an ancestor) a mark becomes .hit (right), .part (defensible
+   but weaker) or .miss (wrong), and .was shows what should have been marked. Each state also carries a
+   word, in a .pick-tag child, so it never depends on colour alone. */
+[data-pick],.choice{position:relative;border:1px solid var(--line);border-radius:10px;background:var(--card);color:var(--ink);cursor:pointer;transition:border-color .15s,background .15s}
+[data-pick]:hover,.choice:hover{border-color:var(--accent)}
+[data-pick].picked,.choice.picked{border-color:var(--accent);background:var(--soft);box-shadow:inset 0 0 0 1px var(--accent)}
+.judged [data-pick],.judged .choice{cursor:default}
+.judged [data-pick]:hover,.judged .choice:hover{border-color:var(--line)}
+.judged [data-pick].picked,.judged .choice.picked{border-color:var(--accent)}
+.judged [data-pick].hit,.judged .choice.hit{border-color:var(--ok);background:var(--ok-soft);box-shadow:inset 0 0 0 1px var(--ok)}
+.judged [data-pick].part,.judged .choice.part{border-color:var(--warn);background:var(--warn-soft);box-shadow:inset 0 0 0 1px var(--warn)}
+.judged [data-pick].miss,.judged .choice.miss{border-color:var(--bad);background:var(--bad-soft);box-shadow:inset 0 0 0 1px var(--bad)}
+.judged [data-pick].was,.judged .choice.was{border:2px dashed var(--ok)}
+.pick-tag{display:block;font-style:normal;font-size:12px;line-height:1.5;font-weight:700;color:var(--accent)}
+.pick-tag:empty{display:none}
+.hit .pick-tag{color:var(--ok)}.part .pick-tag{color:var(--warn)}.miss .pick-tag{color:var(--bad)}.was .pick-tag{color:var(--ink)}
+
+/* the line under the desk: what has been done so far (.act-note), and the one button that commits it */
+.act{display:flex;align-items:center;gap:10px 14px;flex-wrap:wrap;margin-top:14px}
+.act-note{flex:1;min-width:140px;font-size:14px;line-height:1.5;color:var(--muted)}
+
+/* the reason attached to a judged decision: .good, .part (defensible but weaker), .off */
+.why{margin:8px 0 0;padding:9px 12px;border-radius:10px;background:var(--wash);font-size:14.5px;line-height:1.7}
+.why.good{background:var(--ok-soft)}.why.good>b:first-child{color:var(--ok)}
+.why.off{background:var(--bad-soft)}.why.off>b:first-child{color:var(--bad)}
+.why.part{background:var(--warn-soft)}.why.part>b:first-child{color:var(--warn)}
+
+/* the verdict, drawn by QZ.verdict(): each part of the score with its reason, the total, the way out */
+.verdict{margin-top:18px;padding:16px 18px;border:1px solid var(--line);border-radius:16px;background:var(--card);box-shadow:var(--shadow)}
+.verdict h2{margin:0 0 4px;font-size:18px;line-height:1.5;color:var(--ink)}
+.verdict>p{margin:0;font-size:15px}
+.parts{margin:12px 0 0;padding:0;list-style:none}
+.parts li{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:0 12px;padding:8px 0;border-top:1px solid var(--line);font-size:15px;line-height:1.6}
+.parts li>b{font-family:var(--mono);white-space:nowrap}
+.parts small{grid-column:1/-1;font-size:13.5px;color:var(--muted)}
+.total{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:4px;padding-top:12px;border-top:2px solid var(--ink)}
+.total>b{font:800 30px/1 var(--mono);color:var(--accent)}
+.total>span{flex:1;font-size:14px;color:var(--muted)}
+
+/* For a mission with several stages. .board shows the state of the whole situation: .steps (where the
+   learner is: li.past, li.now), .tiles of .tile (one thing whose state can change: a <b> name and a
+   <small> state; .ok .warn .bad; QZ.flash(tile) draws the eye when it changes), .news (the latest
+   consequence). details.past is a finished stage folded to one line, with its reasons inside. */
+.board{margin-bottom:14px;padding:12px;border-radius:16px;background:var(--stage)}
+.steps{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 10px;padding:0;list-style:none;font-size:12.5px;line-height:1.6;color:var(--muted)}
+.steps li{padding:1px 10px;border-radius:999px;background:var(--card);border:1px solid var(--line)}
+.steps li.now{background:var(--accent);border-color:var(--accent);color:var(--bg);font-weight:700}
+.steps li.past{color:var(--ink)}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}
+.tile{padding:8px 10px;border-radius:10px;background:var(--card);border:1px solid var(--line);border-left-width:4px;font-size:13px;line-height:1.5}
+.tile b{display:block;font-size:13.5px}
+.tile small{display:block;font-size:12.5px;color:var(--muted)}
+.tile.ok{border-color:var(--ok)}.tile.ok small{color:var(--ok)}
+.tile.warn{border-color:var(--warn)}.tile.warn small{color:var(--warn)}
+.tile.bad{border-color:var(--bad);background:var(--bad-soft)}.tile.bad small{color:var(--bad)}
+.flash{animation:flash 1s}
+@keyframes flash{0%{transform:scale(1.05)}100%{transform:none}}
+.news{margin:10px 0 0;font-size:13.5px;line-height:1.6;color:var(--body)}
+.news:empty{display:none}
+.news b{color:var(--ink)}
+details.past{margin:0 0 8px;border:1px solid var(--line);border-radius:12px;background:var(--card)}
+details.past summary{display:flex;align-items:center;gap:8px;min-height:42px;padding:6px 12px;font-size:14px;line-height:1.5;cursor:pointer;list-style:none}
+details.past summary::-webkit-details-marker{display:none}
+details.past summary::before{content:"";flex:none;border:5px solid transparent;border-left:7px solid var(--muted);border-right:0;transition:transform .15s}
+details.past[open] summary::before{transform:rotate(90deg)}
+details.past summary span{flex:1;min-width:0}
+details.past summary b{flex:none;font-family:var(--mono)}
+details.past .why{margin:0 12px 10px}
+
+@media (max-width:560px){
+body.qz{padding:14px 12px 22px;font-size:15.5px}
+h1{font-size:20px}
+.stage{padding:10px;border-radius:14px}
+.win-b{padding:10px}
+.tiles{grid-template-columns:1fr 1fr}
+.verdict{padding:14px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}

@@ -59,10 +59,6 @@ obsidian property:set name="status" value="done" file="My Note"
 
 ## Fallback when CLI is unavailable
 
-If `obsidian search` fails (CLI not installed or Obsidian not running), fall back to:
-
-```bash
-bash scripts/search_vault.sh "<topic>" 30
-```
-
-`search_vault.sh` is grep-based — slower, no index, no Obsidian syntax. Use only as fallback for note discovery, or for L2 hint personal context search (its only other permitted use).
+If `obsidian search` fails (CLI not installed or Obsidian not running), find the note with your
+own file search over the vault's markdown files. It has no index and no Obsidian syntax, so use
+it only for note discovery.

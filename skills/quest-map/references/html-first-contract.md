@@ -1,120 +1,103 @@
-# HTML-First Quest Package Contract
+# Quest package contract
 
-Read this before creating or updating a plugin-native Quest Map.
+What a quest package is on disk and what the plugin does with it. This file states facts about
+the plugin; how to design the missions is in `mission-design.md`.
 
-## File layout
-
-New Quest Maps are plugin packages, not markdown-first maps:
+## Files
 
 ```text
 engram-quest/quests/{questSlug}/
 ├── meta.json
 └── nodes/
-    ├── ch1.html
-    ├── ch2.html
+    ├── ch1-report.html
+    ├── ch2-tuning.html
     └── boss.html
 ```
 
-`questSlug` must be ASCII kebab-case. If the source title is not ASCII, use a compact English slug such as `procurement-system-dev`.
+`questSlug` is ASCII kebab-case; when the title is not ASCII, use a short English slug. The
+plugin scans `engram-quest/quests/`, reads each `meta.json`, and opens the quest in its own
+viewer. Mission files can sit in `nodes/` or beside `meta.json`.
 
-The Hub scans `engram-quest/quests/`, reads `meta.json`, and opens the quest inside the plugin viewer. Do not make the markdown note renderer the primary surface.
-
-## meta.json shape
+## meta.json
 
 ```json
 {
   "version": 2,
-  "title": "Procurement System Dev Quest",
-  "description": "Practice procurement data modeling and monthly purchasing logic through applied missions.",
+  "title": "讀懂搜尋成效",
+  "description": "拿到一份成效報表，判斷每一頁卡在哪、下一步做什麼。",
   "difficulty": "medium",
-  "tags": ["procurement", "system-design"],
+  "tags": ["SEO"],
   "createdAt": "2026-06-20",
-  "layout": {
-    "mode": "dynamic"
-  },
   "nodes": [
     {
-      "id": "briefing-domain",
-      "title": "Domain Briefing",
+      "id": "briefing",
+      "title": "任務簡報",
       "type": "briefing",
-      "summary": "Read the procurement scenario and identify the core entities before modeling.",
+      "summary": "你剛接手一個部落格的搜尋流量。",
       "points": [
-        { "title": "Core Entity: Purchase Order", "body": "A PO links a vendor, a set of line items, and a delivery schedule. It is the unit of record for procurement tracking." },
-        { "title": "Monthly Budget Cycle", "body": "Each department submits a budget ceiling by the 25th. Procurement compares against rolling 3-month actuals before approving." },
-        { "title": "Inventory vs. Direct Purchase", "body": "Inventory items are stocked and consumed over time; direct purchases go straight to cost centers without entering stock." }
+        { "title": "你手上有什麼", "body": "Search Console 最近 28 天的成效報表，和每一頁的搜尋結果畫面。" },
+        { "title": "四個數字", "body": "曝光是被看到幾次，點擊是被點幾次，點擊率是兩者相除，排名是平均位置。" }
       ]
     },
     {
-      "id": "ch1-inventory",
-      "title": "Inventory Units",
+      "id": "ch1-report",
+      "title": "四頁各卡在哪",
       "type": "mission",
-      "html": "nodes/ch1-inventory.html",
-      "height": 760
+      "mission_goal": "從曝光、點擊率、排名的組合，判斷一頁卡在哪一步，並選出對症的做法",
+      "html": "nodes/ch1-report.html"
     },
     {
-      "id": "boss-monthly-procurement",
-      "title": "Monthly Procurement Boss",
+      "id": "boss-rescue",
+      "title": "一季的流量急救",
       "type": "boss",
-      "html": "nodes/boss-monthly-procurement.html",
-      "height": 900
+      "mission_goal": "在時間有限時，決定先救哪幾頁、各用什麼做法",
+      "html": "nodes/boss-rescue.html"
     }
   ]
 }
 ```
 
-Rules:
-- `version` is `2`.
-- `difficulty` is `easy`, `medium`, or `hard`.
-- `type` is `briefing`, `mission`, or `boss`.
-- `mission` and `boss` nodes need `html` or `file`.
-- **`briefing` nodes MUST include a `points` array with 3–5 entries. Each entry: `{ "title": "...", "body": "..." }`. A briefing with only `summary` and no `points` is unacceptable — the plugin renders it as a single line of text.**
-- HTML paths are relative to the quest package folder unless they start with `engram-quest/`.
-- Optional `x` and `y` fields are percentages from 0 to 100. Use them only when you intentionally design a fixed map route.
-- Prefer `layout.mode: "dynamic"` unless you have a tested coordinate plan. Do not place nodes on top of a painted background path unless coordinates are known.
+| Field | Notes |
+|---|---|
+| `version` | `2` |
+| `title`, `description`, `tags` | Shown on the quest's card. Learner's language |
+| `difficulty` | `easy`, `medium` or `hard`. Also picks the map's background |
+| `createdAt` | `YYYY-MM-DD` |
+| `nodes` | **Array order is the path.** The learner unlocks them in this order. The plugin places them on the map itself; `x` / `y` (percent, 0–100) are used only when every node has both, for a route you have laid out and checked |
+| `nodes[].id` | What the learner's progress is stored under. Unique in the quest, and unchanged for as long as the node exercises the same ability |
+| `nodes[].title` | Shown on the map and above the mission |
+| `nodes[].type` | `briefing`, `mission` or `boss` |
+| `nodes[].summary` | Optional. One or two sentences shown beside the node on the map, and as a paragraph above the node's content when it is opened: the opening of a briefing, or a line above a mission's frame |
+| `nodes[].mission_goal` | On a mission or boss: the ability the node exercises, as something the learner does. The map shows it beside the node when there is no `summary`, so the learner reads it before playing; a later update reads it to know what the node is for |
+| `nodes[].points` | Briefing only: `[{ "title", "body" }]`. See below |
+| `nodes[].html` | Mission and boss: the HTML file, relative to the package folder |
+| `nodes[].height` | Optional starting height of the mission's frame in px, before the mission reports its own |
 
-## Runtime contract
+**A briefing is drawn by the plugin, not by you.** It shows the `summary` and then each entry of
+`points` as a numbered block with a bold title and a paragraph. That is everything a briefing can
+show, so a briefing with no `points` is a single line of text. Write as many points as the
+learner needs to start; `mission-design.md` says what belongs there.
 
-The plugin:
-- renders the map and node lock state inside the Hub/plugin viewer
-- loads node HTML in a sandboxed iframe using `srcdoc`
-- sends theme information
-- stores completion and score in `engram-quest/state/`
+Progress, scores and completion are never written to `meta.json`.
 
-The HTML file:
-- renders the interaction
-- grades the learner deterministically
-- posts completion and score
-- posts resize messages after content changes
+## How a mission runs
 
-## postMessage API
+The plugin reads the mission file and puts it in a sandboxed frame (`srcdoc`,
+`sandbox="allow-scripts"`). The mission and the plugin talk through three messages. The shared
+script `assets/quest-base.js` handles all three, so a mission built on the house style does not
+write them itself:
 
-HTML to plugin:
+| Message | Direction | Meaning |
+|---|---|---|
+| `{ type: "engram-quest-theme", dark }` | plugin → mission, on load | Obsidian is in light or dark |
+| `{ type: "engram-quest-resize", height }` | mission → plugin | The mission's content is this tall. The frame takes that height, so the quest window is the only thing that scrolls |
+| `{ type: "engram-quest-solved", score }` | mission → plugin, once | The node is complete. `score` is 0–100. The plugin records it and moves the learner on |
 
-```js
-window.parent.postMessage({ type: "engram-quest-resize", height: document.body.scrollHeight + 24 }, "*");
-window.parent.postMessage({ type: "engram-quest-solved", score: 86 }, "*");
-```
+Because completion moves the learner on, it is sent only after they have read the result and
+chosen to continue.
 
-Plugin to HTML:
+## Older markdown quests
 
-```js
-window.addEventListener("message", (event) => {
-  if (event.data && event.data.type === "engram-quest-theme") {
-    document.body.classList.toggle("dark", Boolean(event.data.dark));
-  }
-});
-```
-
-Score rules:
-- `score` must be a number from 0 to 100.
-- Use first-try correctness, decision quality, or weighted stage scoring.
-- Do not post solved before the learner has made the required decisions.
-
-## Legacy markdown
-
-Legacy markdown quest-map blocks remain supported for old content and explicit embed requests. They are not the default output for new quests.
-
-When updating an existing legacy markdown quest:
-- preserve node IDs
-- preserve progress by not writing `completed:`
-- prefer moving to a package only if the user asks for migration
+Quests written as a markdown block inside a note still work. When updating one, keep its node
+ids, do not write `completed:` into it, and move it to a package only when the user asks for
+the migration.
