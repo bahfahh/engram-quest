@@ -31,6 +31,10 @@ function normalizeMeta(meta) {
     starred: !!meta.starred,
     archived: !!meta.archived,
     createdAt: meta.createdAt || null,
+    // Skill-owned plan data: the course's `mission` and each lesson's `goal` are what later
+    // lessons get generated from. The plugin never edits them, so every load→save carries them
+    // through exactly as written.
+    ...(meta.mission ? { mission: meta.mission } : {}),
     lessons: Array.isArray(meta.lessons)
       ? meta.lessons.filter((l) => l && l.id).map((l) => ({
           id: String(l.id),
@@ -42,6 +46,7 @@ function normalizeMeta(meta) {
           // Anything else collapses to "html" so a bogus value can't break the click branch.
           type: l.type === "canvas" ? "canvas" : "html",
           source: l.source === "import" ? "import" : "skill",
+          ...(l.goal ? { goal: l.goal } : {}),
           ...(l.importedAt ? { importedAt: l.importedAt } : {}),
         }))
       : [],
@@ -143,7 +148,10 @@ async function markLesson(adapter, slug, lessonId, patch = {}) {
  * from the title when ASCII, else falls back to a timestamp slug. Returns { slug, meta }.
  */
 async function createCourse(adapter, { title, description = "", icon = "📘", outline = [] }) {
-  const slug = safeSlugPart(title, `course-${Date.now()}`);
+  let slug = safeSlugPart(title, `course-${Date.now()}`);
+  // A new course never takes over an existing folder: that would replace the other course's
+  // lessons, progress and plan with an empty shell.
+  if (await adapter.exists(`${LESSONS_DIR}/${slug}/meta.json`)) slug = `${slug}-${Date.now()}`;
   const now = new Date();
   const meta = {
     title: String(title || slug),

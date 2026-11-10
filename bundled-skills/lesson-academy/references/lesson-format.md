@@ -30,10 +30,12 @@ folder name; the human-readable title lives in meta.json).
   "colorScheme": "indigo",
   "starred": false,
   "createdAt": "2026-06-10",
+  "mission": "下個月接手公司的 .NET 後端專案；寫過 Python，沒碰過靜態型別；只在通勤時用手機讀。",
   "lessons": [
     {
       "id": "lsn-1717977600000",
       "title": "型別系統基礎",
+      "goal": "看到一段 C# 宣告，能說出每個變數的型別，以及編譯器會擋下哪些賦值",
       "file": "lsn-1717977600000-types.html",
       "source": "skill"
     }
@@ -56,9 +58,11 @@ folder name; the human-readable title lives in meta.json).
 | `colorScheme` | string | One of: `indigo` `green` `amber` `rose` `cyan` `violet` `blue` `teal` `lime` `orange` `fuchsia` `slate`. The plugin sets it when the user creates a course there; keep an existing value |
 | `starred` | bool | Course-level star — plugin-owned, initialize `false`, never reset on update |
 | `createdAt` | string | `YYYY-MM-DD`, set once at course creation |
+| `mission` | string | Optional. What the course is for, in the learner's words and language: why they are learning this, where they start from, and whatever in their situation changes how a lesson should be built. See "The plan" below |
 | `lessons` | array | **Array order = display order.** No order field exists. |
 | `lessons[].id` | string | `lsn-<unix-ms>`. Unique forever; never reuse or renumber |
 | `lessons[].title` | string | Lesson title, user's language |
+| `lessons[].goal` | string | Optional. What the learner can do after this lesson, user's language. The plugin shows it under the title. See "The plan" below |
 | `lessons[].file` | string \| null | Filename (not path) inside the course folder. **`null` = planned** (outline entry without content yet — see below) |
 | `lessons[].type` | string | `"html"` (default — may be omitted) or `"canvas"`. Canvas lessons open in a native Obsidian Canvas tab; their `file` is a `.canvas` (never ending `-memory.canvas`). Generation rules: `canvas-recipe.md` |
 | `lessons[].source` | string | `"skill"` for generated lessons. (`"import"` is written by the plugin's import button — never set it yourself) |
@@ -69,7 +73,7 @@ folder name; the human-readable title lives in meta.json).
 The skill and the plugin share this file, so writes must merge, not replace:
 
 - **Skill owns**: `title`, `topic`, `icon`, `description`, `tags`, `colorScheme`,
-  `createdAt`, and `lessons[]` entries with `source:"skill"`.
+  `createdAt`, `mission`, and `lessons[]` entries with `source:"skill"` (their `goal` included).
 - **Plugin owns**: `starred`, the entire `completion` map, and `lessons[]` entries with
   `source:"import"` (user-imported HTML).
 
@@ -84,14 +88,32 @@ When updating an existing course:
 When regenerating one lesson's HTML (user asked for a redo): keep the same `id` and `file`,
 overwrite only the HTML file. The completion state then carries over automatically.
 
+## The plan (`mission` and `goal`)
+
+A course is designed once and generated over many conversations. `mission` and each lesson's
+`goal` are the part of that design the next conversation cannot work out again: a title names a
+subject, and only the goal says what the lesson has to make the learner able to do, for whom.
+
+- Write both whenever an outline is written, whether its lessons are generated now or left
+  planned.
+- Read both before generating or extending anything in an existing course, and build from them.
+- Both are optional in the file. A course or entry made in the plugin has none, and neither does
+  a course older than these fields. Settle what is missing before generating from it and write
+  it back, so the plan is settled once.
+- A goal changes when the user changes the plan, not when a lesson is generated or redone.
+
+The plugin never sets or edits either field and keeps them through every change it makes to a
+course.
+
 ## Planned lessons (outline entries, `file: null`)
 
 The plugin's "Create course" form (and the skill itself, when the user only wants an outline)
-can write lesson entries with `"file": null` — a title-only placeholder shown as "待生成 /
-Planned" in the UI:
+can write lesson entries with `"file": null` — a placeholder without content, shown as "待生成 /
+Planned" in the UI. One written by the skill carries its `goal`; one the user typed in the
+plugin is a title only:
 
 ```json
-{ "id": "lsn-1718000000000", "title": "REST API 設計", "file": null, "source": "skill" }
+{ "id": "lsn-1718000000000", "title": "REST API 設計", "goal": "能為一個資源設計出一致的路徑與狀態碼", "file": null, "source": "skill" }
 ```
 
 A planned entry may also carry `"type": "canvas"` — the outline already commits that step to
@@ -99,11 +121,12 @@ being a concept map, and the UI shows it with a 🗺️ badge. The plugin's outl
 toggle too, so user-added planned canvas entries look the same.
 
 When the user asks to "generate my course" / "把課綱生成內容" / "fill in the lessons":
-1. Read meta.json, find every entry with `file: null`.
-2. Generate content for each, **keeping the entry's existing `id`** (progress and order depend
-   on it). Filename = `<existing-id>-<short-ascii-slug>.html` — or `.canvas` when the entry has
-   `"type": "canvas"` (follow `canvas-recipe.md`).
-3. Set the entry's `file` to the new filename. Touch nothing else in the entry.
+1. Read meta.json: the `mission`, and every entry with `file: null`.
+2. Generate each entry toward its `goal` for the learner the `mission` describes (settling
+   either first if it is missing — see "The plan"), **keeping the entry's existing `id`**
+   (progress and order depend on it). Filename = `<existing-id>-<short-ascii-slug>.html` — or
+   `.canvas` when the entry has `"type": "canvas"` (follow `canvas-recipe.md`).
+3. Set the entry's `file` to the new filename. Leave the rest of the entry as it was.
 
 The skill may also create outline-only courses (all `file: null`) when the user wants to
 review/edit the plan in the plugin UI before committing to generation.
