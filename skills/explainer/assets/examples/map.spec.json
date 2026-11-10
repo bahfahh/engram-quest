@@ -1,0 +1,35 @@
+{
+  "id": "btree-index-1785489703",
+  "form": "map",
+  "formReason": "Get disk pages wrong and you would believe indexes speed up everything; get selectivity wrong and you would index every column; get write cost wrong and you would think indexes are free; get column order wrong and you would expect any filter to use it.",
+  "title": "Why does an index only sometimes help?",
+  "hook": "It saves page reads, nothing else",
+  "origin": "The card lists what an index is, and its neighbours explain when it works",
+  "points": [
+    { "lead": "It buys fewer pages", "body": "A lookup follows a few sorted pages instead of reading the table. If a scan reads few pages anyway, nothing is gained." },
+    { "lead": "Order is the asset", "body": "The sort order serves equality, ranges, and ORDER BY on its leading columns, and only those." },
+    { "lead": "Writes pay the bill", "body": "Every insert and update must also keep each index sorted, so an unused index is a pure cost.", "note": "Write amplification" }
+  ],
+  "anchor": { "line": "The index at the back of a book", "note": "Worth it for one rare term; for a word on every page, you would just read the book." },
+  "card": { "q": "What is a B-tree index?", "a": "A sorted tree of pages that lets the database find rows **without scanning the table**." },
+  "map": {
+    "center": { "label": "B-tree index", "sub": "sorted pages" },
+    "nodes": [
+      { "id": "pages", "note": "How databases read disk pages", "short": "Page reads", "band": "foundation", "kind": "what it rests on", "relation": "the cost", "why": "Reads are charged per page, not per row. Without this, a fast index looks like magic rather than arithmetic." },
+      { "id": "select", "note": "Selectivity", "short": "Selectivity", "band": "foundation", "kind": "what it rests on", "relation": "the payoff", "why": "An index pays off only when it narrows the rows. A filter matching most of the table reads more pages through it." },
+      { "id": "scan", "note": "Full table scan", "short": "Table scan", "band": "neighbor", "kind": "what it is confused with", "relation": "not worse", "why": "A scan is not a failure. For small tables or broad filters it is the cheaper plan and the optimizer is right to choose it." },
+      { "id": "writes", "note": "Write amplification", "short": "Write cost", "band": "consequence", "kind": "what it costs", "relation": "the price", "why": "Each index is one more structure to update on every write, which is why adding one is a trade and not a free win." },
+      { "id": "order", "note": "Composite index column order", "short": "Column order", "band": "consequence", "kind": "where it stops working", "relation": "the limit", "why": "An index on (a, b) is sorted by a first, so a filter on b alone finds no useful starting point." }
+    ]
+  },
+  "shapes": {
+    "title": "The same rows, sorted",
+    "text": "{1|The table} keeps rows in the order they arrived. {2|The index} is a second, sorted copy of one column that points back to them.",
+    "panels": [
+      { "caption": "Table only", "plates": [ { "size": "l", "marks": "dots" } ] },
+      { "caption": "Table + index", "plates": [ { "size": "l", "marks": "dots" }, { "size": "m", "marks": "rows", "hot": true } ] }
+    ],
+    "steps": ["add index"],
+    "hand": "the rows never moved"
+  }
+}

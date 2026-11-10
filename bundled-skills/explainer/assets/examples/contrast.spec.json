@@ -1,0 +1,56 @@
+{
+  "id": "soft-vs-hard-delete-1785489702",
+  "form": "contrast",
+  "formReason": "Soft and hard delete answer the same decision: an accidental delete favours soft, while an erasure request and a re-used unique email favour hard.",
+  "title": "When should a delete really delete?",
+  "hook": "One keeps a promise, one breaks it",
+  "origin": "The card says soft delete is safer without asking safer for what",
+  "points": [
+    { "lead": "Soft delete hides", "body": "A flag marks the row as gone. It is still stored, still indexed, and still counts against constraints." },
+    { "lead": "Hard delete removes", "body": "The row is gone from the live table. Recovery now depends on backups, which is a far slower path." },
+    { "lead": "Every query inherits it", "body": "With soft delete, each read must remember the filter. One forgotten query shows deleted data.", "note": "Global query filters" }
+  ],
+  "anchor": { "line": "Recycle bin or shredder", "note": "The bin lets you change your mind; only the shredder lets you say the paper no longer exists." },
+  "card": { "q": "Soft delete or hard delete?", "a": "Soft delete keeps a recovery path. Hard delete is required when data must truly be removed." },
+  "contrast": {
+    "options": [
+      { "id": "soft", "label": "Soft delete", "sub": "set a deleted flag" },
+      { "id": "hard", "label": "Hard delete", "sub": "remove the row" }
+    ],
+    "situations": [
+      {
+        "id": "undo",
+        "label": "A user deleted the wrong order",
+        "outcomes": {
+          "soft": { "text": "Clear the flag and it is back", "tone": "good" },
+          "hard": { "text": "Gone unless a backup holds it", "tone": "bad" }
+        },
+        "why": "Soft delete never gave up the data, so undo costs one update."
+      },
+      {
+        "id": "erase",
+        "label": "A legal erasure request arrives",
+        "outcomes": {
+          "soft": { "text": "The personal data is still stored", "tone": "bad" },
+          "hard": { "text": "The live data is really gone", "tone": "good" }
+        },
+        "why": "Erasure is about what you hold, and a hidden row is still held.",
+        "note": "Data retention"
+      },
+      {
+        "id": "reuse",
+        "label": "The same email signs up again",
+        "outcomes": {
+          "soft": { "text": "Unique index hits the hidden row", "tone": "bad" },
+          "hard": { "text": "The email is free to use", "tone": "good" }
+        },
+        "why": "A unique constraint sees every row unless the index excludes deleted ones."
+      }
+    ],
+    "verdict": "Need undo: soft. Must erase: hard."
+  },
+  "relations": [
+    { "note": "Global query filters", "relation": "how reads stay correct" },
+    { "note": "Data retention", "relation": "when hiding is not enough" }
+  ]
+}

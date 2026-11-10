@@ -1,181 +1,166 @@
 ---
 name: engram-explainer
 description: >
-  Generate "Deep Dive" (深入解析) pages for the EngramQuest plugin (Pro feature).
-  A Deep Dive is a single-concept, plain-language, visual HTML explanation page created when a
-  flashcard fails the user — too hard, badly worded, or missing context. It replaces the former
-  Quadrant Card feature. Trigger this skill whenever the user says "deep dive", "深入解析",
-  "解析", "詳解", "explainer", asks to "process the deep dive queue" / "處理解析" / "處理詳解" /
-  "生成解析", wants a concept "explained properly" / "解釋清楚" / "白話解釋" / "圖解" a topic or
-  card, says a flashcard is too hard to understand ("這張卡看不懂"), or has queued cards for
-  deep dives in the plugin and asks to handle them. Also trigger for "make a deep dive about X" /
-  "幫我做一份 X 的深入解析" style direct requests with no queue involved.
+  Write Deep Dive (深入解析) and Insight (洞見) pages for the EngramQuest plugin (Pro). A Deep Dive
+  resolves one concept a flashcard failed to teach; an Insight clarifies how a body of notes fits
+  together and what follows from it. The skill writes a content spec that the plugin draws as an
+  interactive page joined to the owner's notes and review history. Trigger whenever the user says
+  "deep dive", "深入解析", "解析", "詳解", "explainer", "insight card", "洞見", asks to "process the
+  deep dive queue" / "處理解析" / "處理詳解" / "生成解析", wants a concept "explained properly" /
+  "解釋清楚" / "白話解釋" / "圖解", says a flashcard is too hard to understand ("這張卡看不懂"), has
+  queued cards in the plugin and asks to handle them, or asks to pull a topic, course, or folder of
+  notes together. Also trigger for "make a deep dive about X" / "幫我做一份 X 的深入解析".
 ---
 
-# Explainer Skill (Pro)
+# Explainer: Deep Dive and Insight
 
-Generate **Explainer pages** — one self-contained HTML page that explains a single concept in
-plain language with visual diagrams and a memory anchor. An Explainer exists because a flashcard
-failed the user: the card alone was too hard, too terse, or too isolated to learn from. Your job
-is to give the learner the understanding scaffold the card could not.
+You write the content of a page as one JSON spec. The plugin draws it: it computes every position,
+follows the app's light or dark theme, adapts to phone width, opens linked notes, and fills in live
+facts from the vault each time the page opens. That division is why a page cannot come out broken,
+so a spec holds words and structure only, with no HTML, CSS, script, or coordinates.
 
-An Explainer is **not** a quiz, not a quest, and has **no spaced-repetition schedule of its own**.
-The original flashcard keeps its FSRS schedule in review-deck; the Explainer is a support artifact
-attached to it. Success is measured by the original card's future reviews, not by the page itself.
+A page is reading material. It has no quiz, score, or schedule of its own, and it leaves source notes
+and review schedules unchanged.
 
-## Output Language Rule
+## Choose the purpose
 
-Generate all user-facing page content in the language that best matches the source card or the
-user's prompt. Keep JSON keys, file names, and structural fields in English.
-
-CRITICAL: authoring vocabulary must never appear in the generated page. Words like "由淺入深",
-"淺/中/深", "diagnosis", "shallow to deep" are production concepts for you, not content for the
-learner. Depth-layer labels on the page must be content-meaningful (e.g. "地基", "核心原則",
-"完整五步"), never abstraction-level names.
-
-## The two modes
-
-### Mode A — Direct creation
-Trigger: "幫我做一份 HTTPS 的詳解", "make an explainer about X", "把這個筆記做成詳解".
-
-1. Read the source (a note, a card, or a bare topic).
-2. Run the diagnosis (below) — for a bare topic with no failing card, default to the
-   **too-hard** treatment (build from the ground up).
-3. Generate the page and metadata (see Output contract). `sourceCard` is `null` for bare topics.
-
-### Mode B — Drain the queue
-Trigger: "處理詳解", "process the explainer queue", "把我標記的卡片做成詳解".
-
-The plugin's review session has a「詳解」button. Each press appends a `pending` entry to
-`engram-quest/explainer/queue.json`. This mode drains that queue:
-
-1. Read `engram-quest/explainer/queue.json`. If missing or no `pending` entries, tell the user
-   there is nothing queued and offer Mode A instead.
-2. For each `pending` entry: run the diagnosis, generate the page and metadata, then update the
-   entry in place — set `status` to `"done"` and fill `explainerId`.
-3. Write the queue back. Report how many pages were created (and how many were rewrites).
-
-A user may also point at one specific card ("explain this card properly") without the queue —
-handle it like a single Mode B entry; there is no queue to update.
-
-## The diagnosis (run before writing anything)
-
-Pressing「詳解」means "this card's presentation failed me". Different failures need different
-pages, so first read the evidence and pick the failure type:
-
-| Diagnosis | Evidence | Page emphasis |
+| Kind | Goal | The reader afterwards |
 |---|---|---|
-| **too-hard** — the card assumes background the user lacks | jargon-dense card, dense source note, repeated Again in SR history | Build from the ground up: identify the missing prerequisites and teach those first, then climb to the card's concept |
-| **poor-description** — the card is too terse or ambiguous | one-line front/back, hints don't rescue it | Re-explain in plain words: new angle, concrete examples, everyday language |
-| **no-context** — the concept is isolated, memorized without a map | card unrelated to deck siblings, note lacks surrounding context, user memorized steps but not why | Build the map first: where the concept lives, why it exists, who its neighbors are — then the details |
+| `deep-dive` | Resolve one specific obstacle: missing background, a blurred distinction, a misunderstood mechanism | Can explain why it works and return to the original card with understanding |
+| `insight` | Reorganize accumulated notes, courses, or experiences so a meaningful relationship becomes clear | Can place the parts, explain how they affect one another, and see a justified implication or next step |
 
-Evidence sources (all available at batch time, no user interaction needed):
-- The card itself (`q`/`a` from the queue entry).
-- The original card's SR history: `engram-review/sr/{srFileName}.json` (srFileName = notePath with `/` → `__`).
-  Each card's `log` lists its most recent reviews (up to 20) as `{ "d": "YYYY-MM-DD", "r": 1–4 }`, where
-  `r: 1` is Again. Cards last reviewed before the plugin started logging have no `log`; fall back to
-  low `stability` / high `difficulty` as the signal.
-- Hints: `engram-review/hints/{note-name}.json`.
-- The source note (read it — it feeds sections ②④⑤).
-- Deck siblings: other cards in the same deck are natural candidates for the "common confusions"
-  section — the user grouped them together precisely because they live in the same confusion zone.
-- When vault search is needed, use Obsidian CLI — see `references/obsidian-cli.md`.
+A single concept explained well is a Deep Dive, however broad its topic sounds. Several things seen
+together are an Insight. Do not force a multi-note synthesis into a failing-card diagnosis, and do not
+invent a learner error for a bare topic.
 
-State the diagnosis in the page's origin banner in natural language (e.g. "原卡一行帶過 B-tree，
-但它預設你知道磁碟讀取為什麼慢") — never as a bare category label.
+The value of either page is the understanding itself: confusion clearing, a prior experience recognized,
+a new possibility seen. Encouragement, grand statements, and motivational prose take its place without
+doing its work.
 
-## Page structure (①–⑥)
+## Two ways to start
 
-The full skeleton, design system, and section-by-section guidance are in
-`references/html-recipe.md` — **read it before writing any HTML**. Read
-`references/visual-ip.md` before writing the memory anchor or any diagram.
-Structural examples (one per diagnosis type) live in `assets/examples/` — use them as structural
-references, not copy-paste content.
+**Direct request** ("幫我做一份 HTTPS 的詳解", "make an insight from my Azure notes"). Read the source,
+which may be a note, a card, a folder, or a bare topic, and write one page.
 
-1. **Origin banner** — how this page came to be + the diagnosis in natural language.
-2. **① The problem it solves** — what breaks without this concept. Hook first, definition later.
-3. **② The map** — where the concept lives (layer diagram, journey, or cast of roles).
-4. **③ Memory anchor** — one main visual metaphor per page (see `references/visual-ip.md`).
-5. **④ Layered deep-dive** — climb from foundations to full mechanism. Write the layers so each
-   one stands on the previous; label them by content, never by depth level.
-6. **⑤ Common confusions** — 2–3 traps, sourced from deck siblings and classic misconceptions.
-7. **⑥ Back to the original card** — quote the original Q/A (answer collapsed behind a button).
-   The closing line tells the user the real test is the card's next review. No quiz, no scoring.
+**Drain the queue** ("處理詳解", "process the deep dive queue"). The plugin's review session appends
+`pending` entries to `engram-quest/explainer/queue.json`.
 
-## Output contract
+1. Read the queue. If nothing is pending, say so and offer a direct request instead.
+2. For each pending entry, write the page, then set its `status` to `"done"` and fill `explainerId`.
+3. An entry that could not be completed stays `pending`, and you say why. An entry that should not get a
+   page (see below) becomes `"skipped"` with a one-line `reason`, so it does not come back on every run.
+4. Change only the entries you processed. The plugin can add entries while you work, so re-read the file
+   immediately before writing it back.
+5. Report how many pages were created and rewritten.
 
-Each Explainer produces two files plus a queue update (Mode B only).
+An entry with `regenerate: true` already names its page in `explainerId`: rewrite that page under the
+same id. Its `a` may be empty, in which case take the card from the page's meta and source note; a page
+with no card is rewritten from its existing spec and the notes it drew on.
 
-### 1. The page → `engram-quest/explainer/{id}.html`
-Self-contained HTML per `references/html-recipe.md`. postMessage contract: only
-`engram-quest-resize` (outgoing) and `engram-quest-theme` (incoming). **No
-`engram-quest-solved`, no self-assessment, no scoring.**
+## Read the evidence
 
-### 2. The metadata → `engram-quest/explainer/meta/{id}.json`
+For a Deep Dive, work out why the card failed, because the page differs by cause:
+
+| Cause | Signs | The page must |
+|---|---|---|
+| Too hard | Assumes background the owner lacks; dense note; repeated Again | Teach the missing prerequisite first |
+| Poorly worded | Terse or ambiguous card | Say it again from a new angle, with a concrete case |
+| No context | Unrelated to its siblings; steps memorized without the reason | Show where it lives and why it exists |
+
+Sources, all readable without asking the owner:
+
+- The card (`q`, `a`).
+- Its review log in `engram-review/sr/{note path with / replaced by __, no .md}.json`: each card's `log`
+  holds up to 20 `{ "d": "YYYY-MM-DD", "r": 1-4 }` entries, where `r: 1` is Again.
+- Hints in `engram-review/hints/{note name}.json`.
+- The source note, and the other cards in its deck, which are natural candidates for what gets confused
+  with this one.
+- Related notes found through Obsidian search; see `references/obsidian-cli.md`.
+
+For an Insight, read enough to know what the material actually records, then select what belongs to one
+coherent question. A folder is a place to look, not a scope. Useful connections state why two things relate
+and what changes when they are considered together. When the notes are thin, research or reason further,
+verify what you bring in, and mark proposals as proposals. Infer no personal events from topic keywords.
+
+## Find what becomes clearer, then write
+
+Before choosing a form, state privately the one thing that becomes clearer and the evidence for it. If you
+cannot, improve the reasoning first; a well-drawn page around a vague claim is still vague.
+
+Then read `references/spec-guide.md`, which sets out how to choose among the four forms and every field of
+the spec. `assets/examples/` holds one finished spec per form; they show the expected finish, and their note
+names are placeholders. An Insight usually has no flashcard, so it omits `card` and uses `origin` to say which
+material it draws on.
+
+Revise each sentence against these questions:
+
+1. Could it describe any topic without changing? Replace it with a claim specific to this one, or remove it.
+2. Does an adjective stand where a mechanism or observable result belongs? Say what happens, why, and when.
+3. Is the same point repeated in the title, figure, and points? Keep repetition only when each place teaches
+   something different.
+4. Did shortening it lose a condition, exception, or term needed for correctness? Restore it.
+
+## Output
+
+Write in the language of the source. Authoring words such as diagnosis, shallow, or layer never appear on the
+page. JSON keys and file names stay in English.
+
+**`engram-quest/explainer/{id}.spec.json`**: the spec, as defined in the guide. Field limits are checked when
+the page opens, and a page that fails shows an error instead of content, so count before you save.
+
+**`engram-quest/explainer/meta/{id}.json`**:
+
 ```jsonc
 {
   "id": "<slug>-<timestamp>",
-  "title": "詳解：HTTPS 到底是什麼",
-  "sourceCard": { "note": "path/to/note.md", "front": "HTTPS 是什麼？" },  // null for bare topics
-  "deck": "network",
-  "diagnosis": "too-hard | poor-description | no-context",
+  "kind": "deep-dive",                  // or "insight"; a missing kind means deep-dive
+  "title": "HTTPS 到底是什麼",
+  "sourceCard": { "note": "path/to/note.md", "front": "HTTPS 是什麼？" },  // null when there is no card
+  "deck": "network",                    // the card's flashcard tag deck, else the note's folder, else a short topic
+  "diagnosis": "too-hard",              // too-hard | poor-description | no-context; Deep Dive with a card only
   "created": "YYYY-MM-DD",
   "rewriteCount": 0
 }
 ```
-Resolve `deck` like review-deck does: the source note's flashcard tag's deck segment, else the
-note's folder name, else a short topic label.
 
-The plugin owns `engram-quest/explainer/state.json` (per-page viewed/starred/completed flags).
-Never write, rewrite, or delete that file — a rewrite of a page keeps its `id`, so the user's
-reading state survives automatically.
+`id` is a filesystem-safe slug of the concept plus a timestamp suffix, such as `https-basics-1785489701`. A
+rewrite keeps the existing `id` and bumps `rewriteCount`, so links and the owner's reading state carry over. A
+spec takes precedence over an older `{id}.html` of the same id.
 
-### `id` rules
-- Filesystem-safe slug of the concept plus a timestamp suffix, e.g. `https-basics-1785489701`.
-- On rewrite of the same card, **reuse the existing `id`** and bump `rewriteCount` — the page URL
-  stays stable for anything that links to it.
+The plugin owns `engram-quest/explainer/state.json`; leave it alone.
 
-### Queue entry shape (`engram-quest/explainer/queue.json`)
+Queue entry shape:
+
 ```jsonc
-{
-  "entries": [
-    {
-      "status": "pending",              // → "done" after processing
-      "source": "path/to/note.md",       // source note of the card
-      "q": "card front", "a": "card back",
-      "deck": "network",                 // may be null — resolve it yourself then
-      "markedAt": "ISO timestamp",
-      "regenerate": false,               // true = rewrite of an existing explainer
-      "explainerId": null                // filled by skill when done (or pre-filled on regenerate)
-    }
-  ]
-}
+{ "entries": [ {
+  "status": "pending",        // "done" after processing
+  "source": "path/to/note.md",
+  "q": "card front", "a": "card back",
+  "deck": "network",          // can be null or a session label; meta.deck comes from the note's tag
+  "markedAt": "ISO timestamp",
+  "regenerate": false,
+  "explainerId": null         // filled when done, or already set on a regenerate
+} ] }
 ```
 
-## The rewrite loop
+## Rewriting pages that did not help
 
-An Explainer that didn't help must get simpler, not stay stale. During every Mode B run, after
-draining the queue:
+A Deep Dive that did not help must change. After draining the queue, check each existing `meta/*.json` that has
+a `sourceCard`: if the card's log has at least two `r: 1` entries dated after the page's `created` or last
+rewrite, read the card and its context, then rewrite the page. No log means no such inference. A rewrite takes a
+different route, such as a shallower entry point, a different form, or more of the prerequisite. Light rephrasing
+gives the owner the same page again. Insights have no failing card and are rewritten only on request.
 
-1. List existing `meta/*.json` entries with a non-null `sourceCard`.
-2. For each, read the original card's SR `log`. If it has ≥2 entries with `r: 1` (Again) dated
-   **after** the Explainer's `created`/last rewrite date, the page failed — rewrite it. No `log`,
-   or no such entries → leave the page alone.
-3. Rewrite = same `id`, `rewriteCount + 1`, and a genuinely different approach: shallower entry
-   point, different metaphor, more prerequisite coverage. Do not lightly rephrase the old page.
+## When not to write a page
 
-## Suitability
+- The topic needs many missing prerequisites, a course's worth: say so and suggest Lesson Academy.
+- The card is pure lookup, with nothing to confuse it with and no case where it stops applying: say the
+  flashcard was already the right tool.
 
-Good fits: one concept the user is struggling to understand; anything with a "why" behind it.
-Poor fits:
-- A topic needing many missing prerequisites (a whole course's worth) → say so and suggest
-  Lesson Academy instead. An Explainer is one page, not a curriculum.
-- Pure enumeration/lookup content with no mechanism to explain → the flashcard was already the
-  right tool; say so honestly.
+## Before finishing
 
-## References
-
-- `references/html-recipe.md` — page skeleton, design system, section guidance, dark mode, postMessage
-- `references/visual-ip.md` — memory anchor rules, diagram vocabulary, emoji-first constraints
-- `references/obsidian-cli.md` — vault search syntax and fallback rules
-- `assets/examples/` — one finished page per diagnosis type (structure reference)
+- Can you name the confusion resolved or the insight gained, and is it supported by the material?
+- Are observations distinguished from your own proposals?
+- Does every point advance understanding rather than repeat the figure?
+- Could the reader rebuild the card's answer from the page?
+- Does every `note` name a real note, or a note genuinely worth writing?

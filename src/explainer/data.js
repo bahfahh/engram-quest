@@ -132,6 +132,27 @@ async function addToQueue(adapter, { source, q, a, deck }) {
   return { added: !exists, pending };
 }
 
+/**
+ * Ask the skill to rewrite an existing page, keeping its id. `card` is the spec's own card when it
+ * could be read; otherwise the skill falls back to the page's meta and source note.
+ */
+async function queueRegenerate(adapter, page, card) {
+  const queue = await readQueue(adapter);
+  if (queue.entries.some((e) => e.status === "pending" && e.explainerId === page.id)) return;
+  const source = page.sourceCard || {};
+  queue.entries.push({
+    status: "pending",
+    source: source.note || null,
+    q: (card && card.q) || source.front || "",
+    a: (card && card.a) || "",
+    deck: page.deck || null,
+    markedAt: new Date().toISOString(),
+    regenerate: true,
+    explainerId: page.id,
+  });
+  await writeQueue(adapter, queue);
+}
+
 /** True if a given source+question is already queued (pending) — for UI state. */
 function isQueued(queue, source, q) {
   if (!queue || !Array.isArray(queue.entries)) return false;
@@ -165,8 +186,8 @@ async function trashPath(adapter, path) {
 }
 
 /**
- * Delete an explainer: trash its metadata (meta/{id}.json) and its page ({id}.html), then drop any
- * queue entry that produced it. The meta file is the canonical record, so its removal gates the
+ * Delete an explainer: trash its metadata (meta/{id}.json) and its page ({id}.html and/or
+ * {id}.spec.json), then drop any queue entry that produced it. The meta file is the canonical record, so its removal gates the
  * rest — if it can't be trashed we throw before touching anything else, leaving a consistent
  * on-disk state. An orphaned html with no meta is invisible to the scan and harmless.
  */
@@ -175,6 +196,7 @@ async function deleteExplainer(adapter, id) {
   const metaRemoved = await trashPath(adapter, `${META_DIR}/${id}.json`);
   if (!metaRemoved) throw new Error(`EngramQuest: could not delete explainer "${id}"`);
   await trashPath(adapter, `${EXPLAINER_DIR}/${id}.html`);
+  await trashPath(adapter, `${EXPLAINER_DIR}/${id}.spec.json`);
   try {
     const queue = await readQueue(adapter);
     const before = queue.entries.length;
@@ -201,6 +223,7 @@ module.exports = {
   readQueue,
   writeQueue,
   addToQueue,
+  queueRegenerate,
   isQueued,
   trashPath,
   deleteExplainer,

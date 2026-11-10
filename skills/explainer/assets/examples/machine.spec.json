@@ -1,0 +1,56 @@
+{
+  "id": "outbox-pattern-1785489701",
+  "form": "machine",
+  "formReason": "The mistake happens when the API publishes after commit; the symptom appears later in another service that never hears about the order, so the cause cannot be found from the symptom.",
+  "title": "Why write the event to the database first?",
+  "hook": "Two writes can only half succeed",
+  "origin": "The card names the outbox table but not the gap it closes",
+  "points": [
+    { "lead": "No shared transaction", "body": "A database and a message broker cannot commit together, so a crash between them leaves one done and one not.", "note": "Distributed transactions" },
+    { "lead": "One write, not two", "body": "The event row commits with the order. Either both exist or neither does, and the database guarantees it." },
+    { "lead": "Retries mean repeats", "body": "The relay republishes until acknowledged, so consumers must tolerate the same event twice.", "note": "Idempotent consumers" }
+  ],
+  "anchor": { "line": "A letter left in the outbox tray", "note": "You drop it in the tray before leaving; the courier collects it even if you never come back." },
+  "card": { "q": "What problem does the transactional outbox solve?", "a": "It removes the **dual write**: the event is saved in the same transaction as the business data, and a relay publishes it afterwards." },
+  "machine": {
+    "layout": "sequence",
+    "actors": [
+      { "id": "api", "label": "Order API" },
+      { "id": "db", "label": "Database" },
+      { "id": "relay", "label": "Relay" },
+      { "id": "broker", "label": "Broker" }
+    ],
+    "messages": [
+      { "id": "save", "from": "api", "to": "db", "label": "save the order" },
+      { "id": "direct", "from": "api", "to": "broker", "label": "publish the event" },
+      { "id": "both", "from": "api", "to": "db", "label": "order + event row" },
+      { "id": "poll", "from": "relay", "to": "db", "label": "read unsent rows" },
+      { "id": "send", "from": "relay", "to": "broker", "label": "publish, retry until acked" }
+    ],
+    "scenarios": [
+      {
+        "id": "dual",
+        "label": "Two writes",
+        "prompt": "The API commits the order, then publishes the event itself.",
+        "steps": [
+          { "lit": ["save"], "say": "The order is committed. Nothing has promised the event yet." },
+          { "bad": ["direct"], "say": "The process dies here. The order exists and its event never will." }
+        ]
+      },
+      {
+        "id": "outbox",
+        "label": "Outbox",
+        "prompt": "The API writes one transaction; a relay does the publishing.",
+        "steps": [
+          { "lit": ["both"], "say": "Order and event commit together, so neither can exist alone." },
+          { "lit": ["poll"], "say": "After a crash the row is still there for the relay to find." },
+          { "lit": ["send"], "say": "It publishes until acknowledged, which is why duplicates can occur.", "note": "Idempotent consumers" }
+        ]
+      }
+    ]
+  },
+  "relations": [
+    { "note": "Distributed transactions", "relation": "the option this avoids" },
+    { "note": "Idempotent consumers", "relation": "the cost it passes on" }
+  ]
+}

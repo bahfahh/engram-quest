@@ -1,4 +1,5 @@
 import esbuild from 'esbuild';
+import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { spawn } from 'child_process';
@@ -44,6 +45,13 @@ await esbuild.build({
   ],
   format: 'cjs',
   loader: { '.jpg': 'dataurl', '.mp3': 'dataurl' },
+  // Deep Dive page assets go into the sandboxed iframe as text, so they are not bundled as modules.
+  define: {
+    __EXPLAINER_PAGE__: JSON.stringify({
+      css: fs.readFileSync(path.join(__dirname, 'src/explainer/page/page.css'), 'utf8'),
+      runtime: fs.readFileSync(path.join(__dirname, 'src/explainer/page/runtime.js'), 'utf8'),
+    }),
+  },
   target: 'es2018',
   logLevel: 'info',
   sourcemap: prod ? false : 'inline',

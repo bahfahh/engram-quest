@@ -1,0 +1,22 @@
+{
+  "id": "idempotent-1785489704",
+  "form": "reading",
+  "formReason": "Machine failed: skipping idempotency has no separate cause and symptom worth stepping through. Contrast failed: the card defines one term rather than comparing options. Map failed: fewer than 4 outside links change how it is understood.",
+  "title": "What does idempotent actually promise?",
+  "hook": "Same result, not same response",
+  "origin": "The card defines the word, and the confusion starts where it seems to stop applying",
+  "points": [
+    { "lead": "It is about state", "body": "Repeating the call leaves the system as one call would. The response may differ, as a repeated DELETE returning 404 does." },
+    { "lead": "It enables retries", "body": "When a reply is lost you cannot tell whether the work happened. Idempotence makes sending it again safe.", "note": "Retry policies" },
+    { "lead": "A key can provide it", "body": "A POST is not idempotent by nature, but a client-supplied key lets the server recognize a repeat." }
+  ],
+  "anchor": { "line": "The elevator call button", "note": "Press it ten times and one elevator still comes; the light just stays on." },
+  "card": { "q": "What does idempotent mean?", "a": "An operation is idempotent if performing it **many times** has the same effect as performing it **once**." },
+  "edges": {
+    "holds": ["Setting a status to shipped", "PUT replacing a whole resource", "Delete by id, repeated"],
+    "breaks": ["Incrementing a counter", "Safe is not idempotent: reads change nothing", "A repeat that fires a second email"]
+  },
+  "relations": [
+    { "note": "Retry policies", "relation": "what it makes safe" }
+  ]
+}

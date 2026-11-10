@@ -6,20 +6,24 @@
 
 const I = require("obsidian");
 const { t: c, interpolate: K } = require("../i18n");
-const { deleteExplainer, markViewed, toggleStateFlag, EXPLAINER_DIR } = require("./data");
+const { deleteExplainer, markViewed, toggleStateFlag, queueRegenerate, EXPLAINER_DIR } = require("./data");
+const { composeSpecPage, specPath } = require("./compose");
 
 const TRASH_SVG = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>';
 
 class ExplainerViewerModal extends I.Modal {
-  constructor(app, plugin, page, onChanged) {
+  constructor(app, plugin, page, onChanged, hub) {
     super(app);
     this.plugin = plugin;
+    this.hub = hub;
     this.page = page;          // meta json object ({ id, title, sourceCard, deck, ... })
     this.onChanged = onChanged; // called on close when state changed (viewed/star/complete/delete)
     this._handler = null;
     this._isOpen = false;
     this._iframe = null;
     this._dirty = false;        // reading state changed → refresh the list on close
+    this._linkableNotes = new Set(); // only notes the composed page names may be opened from it
+    this._specCard = null;
   }
 
   onOpen() {
@@ -110,8 +114,30 @@ class ExplainerViewerModal extends I.Modal {
       });
     };
 
-    // Resize listener registered before the async load; onClose removes it. Only resize + theme —
-    // explainer pages never post engram-quest-solved.
+    const showInvalidSpec = (issues, card) => {
+      box.empty();
+      const wrap = box.createEl("div", { attr: { style: "padding:14px 16px;display:flex;flex-direction:column;gap:10px;font-size:13px;line-height:1.5;color:var(--text-normal)" } });
+      wrap.createEl("div", { text: c(t, "EXPLAINER_SPEC_INVALID") });
+      const details = wrap.createEl("details", { attr: { style: "color:var(--text-muted)" } });
+      details.createEl("summary", { text: c(t, "EXPLAINER_SPEC_DETAILS") });
+      const list = details.createEl("ul");
+      issues.forEach((issue) => list.createEl("li", { text: issue }));
+      const again = wrap.createEl("button", { text: c(t, "EXPLAINER_SPEC_REGENERATE"), attr: { style: "align-self:flex-start" } });
+      again.addEventListener("click", async () => {
+        again.disabled = true;
+        try {
+          await queueRegenerate(this.app.vault.adapter, this.page, card);
+          new I.Notice(c(t, "EXPLAINER_MARKED"));
+        } catch (err) {
+          again.disabled = false;
+          console.error("EngramQuest: explainer regenerate failed", err);
+          new I.Notice(c(t, "EXPLAINER_SPEC_REGENERATE_FAILED"));
+        }
+      });
+    };
+
+    // Resize listener registered before the async load; onClose removes it. Explainer pages never
+    // post engram-quest-solved.
     this._handler = (event) => {
       if (!this._isOpen) return;
       const frame = this._iframe;
@@ -124,6 +150,17 @@ class ExplainerViewerModal extends I.Modal {
         const next = Math.max(180, Math.min(cap, Math.round(Number(data.height) || 520)));
         frame.style.height = next + "px";
       }
+      if (data && data.type === "engram-quest-render-error" && frame && event.source === frame.contentWindow) {
+        showInvalidSpec([String(data.message)], this._specCard);
+        this._iframe = null;
+      }
+      if (data && data.type === "engram-quest-open-note" && frame && event.source === frame.contentWindow && this._linkableNotes.has(data.note)) {
+        // A note opened behind the modals would look like nothing happened. An unresolved link
+        // makes Obsidian create the note, which is what the page offers for a missing one.
+        this.close();
+        if (this.hub && typeof this.hub._minimize === "function") this.hub._minimize();
+        this.app.workspace.openLinkText(data.note, "", false);
+      }
     };
     window.addEventListener("message", this._handler);
 
@@ -131,17 +168,30 @@ class ExplainerViewerModal extends I.Modal {
     const adapter = this.app.vault.adapter;
     (async () => {
       try {
-        if (adapter.exists && !(await adapter.exists(htmlPath))) {
-          showError(K(c(t, "EXPLAINER_FILE_NOT_FOUND"), { path: htmlPath }));
-          return;
+        const dark = activeDocument.body.classList.contains("theme-dark");
+        const hasSpec = await adapter.exists(specPath(this.page.id));
+        let html;
+        if (hasSpec) {
+          const composed = await composeSpecPage(this.app, this.page.id, { dark });
+          if (!this._isOpen) return;
+          if (composed.issues) { showInvalidSpec(composed.issues, composed.card); return; }
+          html = composed.html;
+          this._linkableNotes = new Set(composed.notes);
+          this._specCard = composed.card;
+        } else {
+          if (adapter.exists && !(await adapter.exists(htmlPath))) {
+            showError(K(c(t, "EXPLAINER_FILE_NOT_FOUND"), { path: htmlPath }));
+            return;
+          }
+          html = await adapter.read(htmlPath);
         }
-        const html = await adapter.read(htmlPath);
         if (!this._isOpen) return;
         const iframe = box.createEl("iframe", {
           attr: {
             sandbox: "allow-scripts",
             srcdoc: html,
-            style: "display:block;width:100%;height:520px;border:0;background:white;",
+            // A composed page paints its own themed background; older pages assume white.
+            style: `display:block;width:100%;height:520px;border:0;background:${hasSpec ? "transparent" : "white"};`,
           },
         });
         this._iframe = iframe;

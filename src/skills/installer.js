@@ -140,17 +140,12 @@ function createInstaller(embeddedOverride) {
     ],
     "explainer": [
       { source: "explainer/skills.md", target: "SKILL.md" },
-      { source: "explainer/references/html-recipe.md", target: "references/html-recipe.md" },
-      { source: "explainer/references/visual-ip.md", target: "references/visual-ip.md" },
+      { source: "explainer/references/spec-guide.md", target: "references/spec-guide.md" },
       { source: "explainer/references/obsidian-cli.md", target: "references/obsidian-cli.md" },
-      { source: "explainer/references/examples.md", target: "references/examples.md" },
-      { source: "explainer/references/insight-composition.md", target: "references/insight-composition.md" },
-      { source: "explainer/references/review-examples.md", target: "references/review-examples.md" },
-      { source: "explainer/references/examples/deep-dive-azure.html", target: "references/examples/deep-dive-azure.html" },
-      { source: "explainer/references/examples/deep-dive-recall.html", target: "references/examples/deep-dive-recall.html" },
-      { source: "explainer/assets/examples/explainer-too-hard.html", target: "assets/examples/explainer-too-hard.html" },
-      { source: "explainer/assets/examples/explainer-no-context.html", target: "assets/examples/explainer-no-context.html" },
-      { source: "explainer/assets/examples/explainer-poor-description.html", target: "assets/examples/explainer-poor-description.html" }
+      { source: "explainer/assets/examples/machine.spec.json", target: "assets/examples/machine.spec.json" },
+      { source: "explainer/assets/examples/contrast.spec.json", target: "assets/examples/contrast.spec.json" },
+      { source: "explainer/assets/examples/map.spec.json", target: "assets/examples/map.spec.json" },
+      { source: "explainer/assets/examples/reading.spec.json", target: "assets/examples/reading.spec.json" }
     ]
   };
 

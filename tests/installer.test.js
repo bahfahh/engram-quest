@@ -181,12 +181,12 @@ describe("installer explainer (Pro)", () => {
     const root = ".obsidian/plugins/engram-quest/" + base;
     return makeAllBundledFiles({
       [`${root}/skills.md`]: "explainer skill",
-      [`${root}/references/html-recipe.md`]: "recipe",
-      [`${root}/references/visual-ip.md`]: "visual",
+      [`${root}/references/spec-guide.md`]: "guide",
       [`${root}/references/obsidian-cli.md`]: "cli",
-      [`${root}/assets/examples/explainer-too-hard.html`]: "<html>hard</html>",
-      [`${root}/assets/examples/explainer-no-context.html`]: "<html>ctx</html>",
-      [`${root}/assets/examples/explainer-poor-description.html`]: "<html>desc</html>",
+      [`${root}/assets/examples/machine.spec.json`]: "{}",
+      [`${root}/assets/examples/contrast.spec.json`]: "{}",
+      [`${root}/assets/examples/map.spec.json`]: "{}",
+      [`${root}/assets/examples/reading.spec.json`]: "{}",
       ...overrides,
     });
   }
@@ -213,15 +213,14 @@ describe("installer explainer (Pro)", () => {
     expect(skillMd).toBeDefined();
     expect(skillMd.content).toBe("explainer skill");
 
-    // one example page per diagnosis type
-    for (const ex of ["explainer-too-hard.html", "explainer-no-context.html", "explainer-poor-description.html"]) {
+    // one example spec per page form
+    for (const ex of ["machine.spec.json", "contrast.spec.json", "map.spec.json", "reading.spec.json"]) {
       expect(
         entries.some((e) => e.path === `.claude/skills/engram-quest-explainer/assets/examples/${ex}`),
       ).toBe(true);
     }
 
-    // all three references present
-    for (const ref of ["html-recipe.md", "visual-ip.md", "obsidian-cli.md"]) {
+    for (const ref of ["spec-guide.md", "obsidian-cli.md"]) {
       expect(
         entries.some((e) => e.path === `.claude/skills/engram-quest-explainer/references/${ref}`),
       ).toBe(true);

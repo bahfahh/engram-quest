@@ -476,7 +476,7 @@ function renderDeckPages(content, hub, t, deck, refresh) {
 
     appendTrashBtn(row, t, () => confirmDeletePage(hub, t, page, refresh));
     row.addEventListener("click", () => {
-      new ExplainerViewerModal(hub.app, hub.plugin, page, refresh).open();
+      new ExplainerViewerModal(hub.app, hub.plugin, page, refresh, hub).open();
     });
   });
 }
