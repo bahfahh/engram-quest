@@ -128,7 +128,10 @@ function createInstaller(embeddedOverride) {
       { source: "lesson-academy/references/lesson-format.md", target: "references/lesson-format.md" },
       { source: "lesson-academy/references/canvas-recipe.md", target: "references/canvas-recipe.md" },
       { source: "lesson-academy/references/obsidian-cli.md", target: "references/obsidian-cli.md" },
-      { source: "lesson-academy/references/visual-teaching.md", target: "references/visual-teaching.md" }
+      { source: "lesson-academy/references/visual-teaching.md", target: "references/visual-teaching.md" },
+      { source: "lesson-academy/assets/lesson-base.css", target: "assets/lesson-base.css" },
+      { source: "lesson-academy/assets/lesson-base.js", target: "assets/lesson-base.js" },
+      { source: "lesson-academy/scripts/build_lesson.py", target: "scripts/build_lesson.py" }
     ],
     "synapse": [
       { source: "synapse/skills.md", target: "SKILL.md" },

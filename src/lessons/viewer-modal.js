@@ -16,11 +16,14 @@ function L(s) { return _getLocale(s, W && W.locale && W.locale()); }
 // character per line. When the viewport is ≤600px, any grid whose columns would be thinner than
 // 180px is collapsed to a single column (and restored when widened). Display-only — the lesson
 // file on disk is never modified, and natively responsive lessons (already 1 column) are untouched.
+// A lesson built on the house style (body.lz, skills/lesson-academy/assets/lesson-base.css) lays out
+// its own narrow grids on purpose — a row of dots, a three-part figure — so it is left alone.
 const MOBILE_GRID_FIX = `
 <script>
 (function () {
   var NARROW = 600, MIN_COL = 180, touched = [];
   function fix() {
+    if (document.body && document.body.classList.contains("lz")) return;
     if ((window.innerWidth || 0) > NARROW) {
       touched.forEach(function (el) { el.style.gridTemplateColumns = ""; });
       touched = [];
@@ -297,4 +300,4 @@ class CanvasLessonModal extends I.Modal {
   }
 }
 
-module.exports = { LessonViewerModal, CanvasLessonModal };
+module.exports = { LessonViewerModal, CanvasLessonModal, MOBILE_GRID_FIX };

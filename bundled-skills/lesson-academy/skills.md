@@ -30,43 +30,37 @@ prompt and source notes. If the user writes in Traditional Chinese, teach in Tra
 
 ## Core principles
 
-1. **One lesson teaches ONE thing.** Completable in 10–20 minutes, ending with a tangible win.
+1. **Every lesson has one learning goal.** Write it down before anything else, as what the
+   learner can do afterwards ("can tell which stage of the funnel lost the customers"). Every
+   paragraph and figure either moves the learner toward it or leaves. Completable in 10–20
+   minutes.
 2. **Ground in the user's mission.** Knowing *why* they want to learn shapes every lesson.
    If the goal is unclear, ask before designing the course.
 3. **Zone of proximal development.** Each lesson should challenge "just enough" — build on what
    the previous lessons established, never re-explain what's already mastered.
 4. **Never trust parametric knowledge alone for fast-moving topics.** For current
-   frameworks/tools/APIs, verify key claims with web search and cite sources in the lesson.
-5. **Knowledge first, then practice.** Teach the concept, then end the lesson with an
-   interactive quiz or exercise so the user gets an immediate feedback loop.
-6. **Use visuals only when they materially improve understanding.** Lessons do not need visuals
-   by default. Add a visual when the topic is spatial, procedural, comparative, abstract, or
-   easier to understand through a realistic scene. Prefer one primary visual; use two only when
-   one sets context and the other explains the mechanism.
-
-### Visual teaching decision
-
-Before writing lesson HTML, decide whether a visual would clarify the one thing this lesson
-teaches. If yes, choose the medium by the learning job:
-
-- **First classify the knowledge shape** (see `references/visual-teaching.md`). Complex concepts
-  — multi-actor flows, layered architectures, abstract mechanisms — are strong candidates for a
-  teaching image. A well-crafted visual compresses what would take three paragraphs into one
-  memorable picture.
-- Use **AI image generation capability** for polished educational infographics and teaching
-  images that make a complex concept click — e.g. a step-by-step flow diagram with numbered
-  actors and arrows, a layered architecture overview, a before/after comparison. Prompt for a
-  *clean technical teaching image*, not a generic decorative scene. A good teaching image is
-  immediately informative on its own; a bad one is atmospheric but explains nothing.
-- Use **SVG/HTML diagrams** for exact labels, arrows, comparisons, flows, decision trees,
-  overlays, or interactive controls where precision matters, or when an AI-generated image fails
-  the quality gate.
-- Use a **hybrid** when a generated image teaches the big picture but needs exact explanatory
-  labels: generated image for the teaching visual, HTML/SVG for labels, arrows, captions, checks,
-  or interactive overlays.
-
-If the lesson needs visual strategy, read `references/visual-teaching.md` before generating the
-HTML. Do not add decorative images.
+   frameworks/tools/APIs, verify key claims with web search and cite sources in the lesson. Cite
+   only what you actually opened and read.
+5. **Arrange the lesson as the learner's path to the goal.** Each part answers the question the
+   previous part leaves open, and the lesson stops when the goal is reached. Derive the path
+   from the goal each time. A path that often suits a concept: a real problem the learner
+   recognises → the idea explained with figures → one example worked through with real numbers
+   → the same idea in a changed situation → carrying it to the learner's own work. A procedure
+   follows the task instead; other subjects have their own natural order. This is a way of
+   thinking about order, not a list of sections to fill.
+6. **Show the subject; let prose carry the thread.** A lesson reads like a well-made handout:
+   one running example, short connected prose, and figures that show the real thing the prose
+   is talking about. Whatever can be shown is shown. How to show it depends on the subject, and
+   on whether image generation is available — read `references/visual-teaching.md` before
+   planning the figures.
+7. **A lesson teaches; it does not examine.** Interaction exists so the learner can see how
+   something works. A short check where the learner applies the idea to a new case and gets the
+   reason back fits a lesson. Scores, gates and drills are the quest map's job.
+8. **One house style, any presentation.** `assets/lesson-base.css` fixes the look: colour,
+   type, and the surfaces figures sit on. What appears on those surfaces is designed for this
+   lesson's content. Two lessons on different subjects should look like the same publisher and
+   show completely different things. Reusing another lesson's layout because it exists is the
+   failure to avoid.
 
 ---
 
@@ -119,7 +113,7 @@ different course than a designer learning React.
 Produce an outline of N lessons, each one line:
 
 ```
-1. <lesson title> — <the ONE thing it teaches>
+1. <lesson title> — <what the learner can do after it>
 2. ...
 ```
 
@@ -149,7 +143,8 @@ Decide these at outline time and mark them:
 Pick the course metadata now:
 - `courseSlug` — short kebab-case ASCII (e.g. `dotnet-basics`, `marketing-seo`)
 - `icon` — one emoji that captures the topic (🔷 💊 📈 🧘 …)
-- `colorScheme` — one of `indigo | green | amber | rose | cyan` (pick what fits the topic mood)
+- `colorScheme` — one of `indigo | green | amber | rose | cyan | violet | blue | teal | lime |
+  orange | fuchsia | slate` (pick what fits the topic mood; keep the value of an existing course)
 - `tags` — **reuse existing tags first; only add a new one if nothing fits:**
   1. Scan the existing tag pool before deciding:
      ```bash
@@ -168,14 +163,17 @@ Pick the course metadata now:
 
 ## Step 4: Generate lessons
 
-For each lesson, write a single self-contained HTML file following the hard rules in
-`references/html-recipe.md` (read it before generating the first lesson — Obsidian's CSP
-silently breaks externally-loaded resources, so violations look fine to you but broken to
-the user).
+For each lesson, work in this order:
 
-When a visual would materially improve learning, also read `references/visual-teaching.md` and
-choose the visual type and production method before writing the lesson. Keep the visual count
-tight: usually one, rarely two.
+1. **Plan it in a few lines before writing HTML**: the learning goal, the running example, the
+   path (principle 5), and for each step what the learner will *see*
+   (`references/visual-teaching.md`). A plan that reads as headings with bullet points under
+   them is not ready; one that names what is on screen at each step is.
+2. **Write a single self-contained HTML file** on the house style, following
+   `references/html-recipe.md` (read it before generating the first lesson — Obsidian's CSP
+   silently breaks externally-loaded resources, so violations look fine to you but broken to
+   the user).
+3. **Build and check it** with `scripts/build_lesson.py` as that file describes.
 
 Canvas steps produce a JSON Canvas file instead of HTML — read
 `references/canvas-recipe.md` before generating the first one (naming rules, layout spacing,
@@ -225,19 +223,20 @@ or ask to regenerate one that didn't land.
 
 ## Lesson HTML quality bar
 
-A lesson is a **beautiful, readable document** the user will revisit. Follow the visual and
-structural guidance in `references/html-recipe.md`, and:
+A lesson is a document the user will revisit. Before calling one done, read it as the learner:
 
-- Open with what the lesson teaches and why it matters for the user's mission.
-- Readable on a phone: multi-column layouts must collapse at narrow widths — see the
-  responsive hard rules in `references/html-recipe.md`.
-- Use concrete examples over abstract definitions. Code topics get runnable-looking snippets;
-  physical skills get step sequences; concept topics get diagrams built from styled divs.
-- Litter factual claims with citations (`<a href>` links to sources) when the topic is
-  technical or fast-moving.
-- End with a short interactive quiz (3–5 questions, inline JS, immediate feedback) plus a
-  "next steps" pointer.
-- Close with a reminder that the user can ask their AI teacher (you) follow-up questions.
+- **The goal is reachable from the page alone.** Someone who reads it start to finish can do
+  what the learning goal says.
+- **Headings and figures tell the story by themselves.** Each heading states a point; each
+  figure shows something real and its caption says what to take from it. A figure that only
+  repeats the paragraph in boxes is removed or redrawn.
+- **Nothing is there because lessons usually have it.** No section, callout, check or image
+  that this goal does not need.
+- **It reads on a phone**, in both light and dark (`references/html-recipe.md`).
+- **Claims the learner will rely on are sourced** (`<a href>` links) when the topic is
+  technical or fast-moving, and anything shown as an illustration is labelled as one.
+- **It ends with a way forward**: where the idea stops applying, what the next lesson adds,
+  and a reminder that the user can ask their AI teacher (you) follow-up questions.
 
 ## Converting lessons to other EngramQuest formats
 

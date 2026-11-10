@@ -52,8 +52,8 @@ folder name; the human-readable title lives in meta.json).
 | `topic` | string | Short topic keyword (used for matching later requests to this course) |
 | `icon` | string | One emoji, shown on the course card |
 | `description` | string | One sentence for the course card (2-line clamp in UI) |
-| `tags` | string[] | 2–3 short tags, user's language |
-| `colorScheme` | string | Exactly one of: `indigo` `green` `amber` `rose` `cyan` |
+| `tags` | string[] | 1–2 short tags, user's language |
+| `colorScheme` | string | One of: `indigo` `green` `amber` `rose` `cyan` `violet` `blue` `teal` `lime` `orange` `fuchsia` `slate`. The plugin sets it when the user creates a course there; keep an existing value |
 | `starred` | bool | Course-level star — plugin-owned, initialize `false`, never reset on update |
 | `createdAt` | string | `YYYY-MM-DD`, set once at course creation |
 | `lessons` | array | **Array order = display order.** No order field exists. |
