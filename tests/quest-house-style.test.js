@@ -9,7 +9,7 @@ const read = (p) => fs.readFileSync(path.join(root, p), "utf8");
 // Runs the shared mission script against a page that records what it posts to the plugin. `parent`
 // stands for the plugin's window; messages arrive through `receive`.
 function runMission({ lang = "zh-Hant", height = 400, standalone = false, systemDark = false } = {}) {
-  const posted = [], listeners = {}, parent = { postMessage: (m) => posted.push(m) };
+  const posted = [], listeners = {}, frames = [], parent = { postMessage: (m) => posted.push(m) };
   const node = (tag) => {
     const n = {
       tag, className: "", textContent: "", children: [], disabled: false, on: {},
@@ -24,17 +24,21 @@ function runMission({ lang = "zh-Hant", height = 400, standalone = false, system
     getBoundingClientRect: () => ({ height: page.height }),
     classList: { toggle: (name, on) => (on ? classes.add(name) : classes.delete(name)), contains: (name) => classes.has(name) },
   });
-  const document = { body, documentElement: { lang }, createElement: node, querySelector: () => null, querySelectorAll: () => [] };
+  const rootClasses = new Set();
+  const documentElement = { lang, classList: { add: (name) => rootClasses.add(name) } };
+  const document = { body, documentElement, createElement: node, querySelector: () => null, querySelectorAll: () => [] };
   const window = {
     parent, addEventListener: (type, fn) => (listeners[type] = fn),
     matchMedia: () => ({ matches: systemDark, addEventListener() {} }),
     ResizeObserver: class { constructor(fn) { page.changed = fn; } observe(target) { page.observed = target; } },
+    innerHeight: height, requestAnimationFrame: (fn) => frames.push(fn),
   };
   if (standalone) { window.parent = window; window.postMessage = parent.postMessage; }   // opened as a page in a browser
   const QZ = new Function("window", "document", read("skills/quest-map/assets/quest-base.js") + "\nreturn QZ;")(window, document);
   const find = (n, cls) => (n.className.split(" ").includes(cls) ? n : n.children.map((c) => find(c, cls)).find(Boolean));
   return {
-    QZ, posted, body, classes, page,
+    QZ, posted, body, classes, rootClasses, page, window,
+    nextFrame: () => frames.splice(0).forEach((fn) => fn()),
     loaded: () => listeners.load(),
     // the page's content changed height, and the browser tells the observer
     grow: (to) => { page.height = to; page.changed(); },
@@ -56,6 +60,31 @@ describe("mission house style: contract with the plugin", () => {
       { type: "engram-quest-resize", height: 400 },
       { type: "engram-quest-resize", height: 1841 },
     ]);
+  });
+
+  it("draws no scrollbar of its own inside the plugin's frame, and keeps it as an ordinary page", () => {
+    const css = read("skills/quest-map/assets/quest-base.css");
+    expect(css).toMatch(/html\.qz-framed\{scrollbar-width:none\}/);
+    expect(css).toMatch(/html\.qz-framed::-webkit-scrollbar\{display:none\}/);
+    expect(runMission().rootClasses.has("qz-framed")).toBe(true);
+    expect(runMission({ standalone: true }).rootClasses.has("qz-framed")).toBe(false);
+  });
+
+  it("brings a part into view only after the frame has grown to the page", () => {
+    const m = runMission({ height: 900 });
+    const part = { scrolled: 0, scrollIntoView() { part.scrolled += 1; } };
+    m.window.innerHeight = 400;                // the frame has not caught up with the page yet
+    m.QZ.show(part);
+    m.nextFrame();
+    expect(part.scrolled).toBe(0);
+    m.window.innerHeight = 900;
+    m.nextFrame();
+    expect(part.scrolled).toBe(1);
+
+    const alone = runMission({ standalone: true, height: 900 });
+    alone.window.innerHeight = 400;            // an ordinary page scrolls by itself
+    alone.QZ.show(part);
+    expect(part.scrolled).toBe(2);
   });
 
   it("opened on its own in a browser, follows the system theme and posts nothing", () => {

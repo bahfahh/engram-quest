@@ -11,6 +11,9 @@ var QZ = (function () {
 
   // The frame is as tall as the page, whenever the page changes. The first report waits until the page
   // has been laid out (the observer's first callback, or load), so a half-built page is never measured.
+  // The page's own scrollbar is turned off in the frame (see the stylesheet): where a scrollbar takes
+  // width, it would appear while the frame catches up, narrow the page, and change the height reported.
+  if (framed) document.documentElement.classList.add("qz-framed");
   var sentH = 0;
   function resize() {
     var h = Math.ceil(document.body.getBoundingClientRect().height);
@@ -89,5 +92,18 @@ var QZ = (function () {
     node.classList.add("flash");
   }
 
-  return { $: $, $$: $$, el: el, verdict: verdict, flash: flash, resize: resize };
+  // Brings a part of the page to the top of the view. Inside the frame it waits until the frame has grown
+  // to the page's new height: until then the quest window has nowhere to scroll to, and the learner lands
+  // somewhere else. A frame that has stopped growing (the plugin's ceiling) is not waited for forever.
+  function show(node) {
+    if (!node) return;
+    var waited = 0;
+    (function go() {
+      var fits = !framed || window.innerHeight + 1 >= document.body.getBoundingClientRect().height;
+      if (fits || ++waited > 30) node.scrollIntoView({ block: "start" });
+      else window.requestAnimationFrame(go);
+    })();
+  }
+
+  return { $: $, $$: $$, el: el, verdict: verdict, flash: flash, show: show, resize: resize };
 })();

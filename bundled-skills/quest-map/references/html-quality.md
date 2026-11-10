@@ -143,7 +143,9 @@ built-in wording is Chinese when `<html lang>` starts with `zh` and English othe
 another language pass `finish`, `sent` and `of`.
 
 `QZ.$` / `QZ.$$` are `querySelector` helpers, `QZ.el(tag, class, text)` makes an element, and
-`QZ.flash(element)` draws the eye to something that has just changed.
+`QZ.flash(element)` draws the eye to something that has just changed. `QZ.show(element)` brings
+a part of the page to the top of the view; use it instead of `scrollIntoView`, which runs before
+the frame has grown to the new content and leaves the learner somewhere else.
 
 ## 4. Both themes
 

@@ -40,6 +40,12 @@
 .c-slate.dark{--accent:#b4c0d0;--soft:#2f3642;--stage:#22252b}
 
 *{box-sizing:border-box}
+/* Inside the plugin's frame the page never draws a scrollbar of its own: the frame follows the page's
+   height, and a scrollbar that took width while the frame caught up would change that height again. */
+html.qz-framed{scrollbar-width:none}
+html.qz-framed::-webkit-scrollbar{display:none}
+/* what the browser draws itself (a select's list, a range input) follows the theme too */
+body.qz.dark{color-scheme:dark}
 body.qz{margin:0;padding:20px 20px 28px;background:var(--bg);color:var(--body);font:16px/1.75 var(--sans);-webkit-text-size-adjust:100%;overflow-wrap:break-word}
 .wrap{max-width:760px;margin:0 auto}
 p{margin:0 0 10px}
