@@ -13,6 +13,7 @@ const {
   isSynapseEnabled
 } = require("./synapse");
 const { collectAllCards, pickTopN, computeCardPriority } = require("./timebox");
+const { icon } = require("../hub/ui");
 
 const SKILL_COMMAND = "engram-synapse";
 
@@ -101,18 +102,23 @@ function renderTimeboxRow(parent, plugin, app, decks, openSession, backToHub) {
   if (!plugin.settings.licenseValid) return;
   const t = plugin.settings;
   const minSuffix = c(t, "TIMEBOX_MIN_SUFFIX");
-  const row = parent.createEl("div", { attr: { class: "lh-timebox-row" } });
+  const pickAndOpen = (minutes) => {
+    const all = collectAllCards(decks);
+    if (all.length === 0) { new I.Notice(c(t, "TIMEBOX_NO_CARDS")); return; }
+    const today = new Date();
+    const picked = pickTopN(all, minutes, (card) => computeCardPriority(card, today));
+    if (picked.length === 0) { new I.Notice(c(t, "TIMEBOX_NO_CARDS")); return; }
+    openSession(picked, `⏱ ${minutes} ${minSuffix}`, backToHub, minutes);
+  };
+  const label = parent.createEl("span", { cls: "lh-tbi" });
+  icon(label, "timer");
+  label.createEl("span", { text: c(t, "TIMEBOX_LABEL") });
+  label.createEl("em", { text: "Pro" });
+  const seg = parent.createEl("div", { cls: "lh-seg" });
   [5, 10, 15].forEach((minutes) => {
-    const btn = row.createEl("button", { attr: { class: "lh-timebox-btn" } });
-    btn.textContent = `⏱ ${minutes} ${minSuffix}`;
-    btn.addEventListener("click", () => {
-      const all = collectAllCards(decks);
-      if (all.length === 0) { new I.Notice(c(t, "TIMEBOX_NO_CARDS")); return; }
-      const today = new Date();
-      const picked = pickTopN(all, minutes, (card) => computeCardPriority(card, today));
-      if (picked.length === 0) { new I.Notice(c(t, "TIMEBOX_NO_CARDS")); return; }
-      openSession(picked, `⏱ ${minutes} ${minSuffix}`, backToHub, minutes);
-    });
+    const title = `${minutes} ${minSuffix}`;
+    const btn = seg.createEl("button", { text: String(minutes), attr: { title, "aria-label": title } });
+    btn.addEventListener("click", () => pickAndOpen(minutes));
   });
 }
 

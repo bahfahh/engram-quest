@@ -20,6 +20,9 @@ const {
   retriggerShake,
 } = require("./helpers");
 const { openQuestChapterModal, renderQuestChallenge } = require("./modal");
+const { applyHubVars } = require("../hub/ui");
+
+const DIFFICULTY_TONE = { easy: "--mstt", medium: "--lrnt", hard: "--newt" };
 
 const W = I.moment;
 function locale(settings) {
@@ -167,6 +170,7 @@ class QuestViewerModal extends I.Modal {
     this.modalEl.addClass("qm-modal");
     this.modalEl.addClass("lh-hub");
     if (isDarkTheme()) this.modalEl.addClass("lh-dark");
+    applyHubVars(this.modalEl, isDarkTheme());
     this.modalEl.style.cssText = "width:min(96vw,1040px);max-width:none;height:min(92vh,760px);max-height:none;padding:0;border-radius:18px;overflow:hidden;display:flex;flex-direction:column;";
     this.contentEl.style.cssText = "padding:0;display:flex;flex-direction:column;min-height:0;flex:1;background:var(--background-primary);color:var(--text-normal);";
     await this.reload();
@@ -256,12 +260,12 @@ class QuestViewerModal extends I.Modal {
 
     // Header
     const header = this.contentEl.createEl("div", {
-      attr: { style: "display:flex;align-items:flex-start;gap:12px;padding:14px 18px;border-bottom:1px solid var(--background-modifier-border);background:linear-gradient(135deg,rgba(99,102,241,.12),rgba(16,185,129,.10));flex-wrap:wrap;" },
+      attr: { style: "display:flex;align-items:flex-start;gap:12px;padding:14px 18px;border-bottom:.5px solid var(--sep);background:var(--card);flex-wrap:wrap;" },
     });
     const main = header.createEl("div", { attr: { style: "flex:1;min-width:0;" } });
     main.createEl("div", {
       text: this.quest.title || this.quest.slug || "Quest Map",
-      attr: { style: "font-size:18px;font-weight:850;color:var(--text-normal);line-height:1.25;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" },
+      attr: { style: "font-size:18px;font-weight:600;color:var(--text);line-height:1.25;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" },
     });
     main.createEl("div", {
       text: this.quest.description || getNodeDescription(activeNode) || (zh ? "在任務地圖中完成節點，解鎖下一步。" : "Complete nodes in the mission map to unlock the next step."),
@@ -270,14 +274,14 @@ class QuestViewerModal extends I.Modal {
     const meta = header.createEl("div", { attr: { style: "display:flex;align-items:flex-end;flex-direction:column;gap:6px;" } });
     meta.createEl("div", {
       text: String(this.quest.difficulty || "medium").toUpperCase(),
-      attr: { style: "font-size:11px;font-weight:900;letter-spacing:.08em;color:#4f46e5;" },
+      attr: { style: `font-size:11px;font-weight:600;letter-spacing:.04em;color:var(${DIFFICULTY_TONE[this.quest.difficulty] || "--text3"});` },
     });
     const barW = isMobile ? "100px" : "150px";
-    const bar = meta.createEl("div", { attr: { style: `width:${barW};height:8px;border-radius:999px;background:rgba(148,163,184,.22);overflow:hidden;` } });
-    bar.createEl("div", { attr: { style: `height:100%;width:${pct}%;background:linear-gradient(90deg,#10b981,#6366f1);border-radius:inherit;` } });
+    const bar = meta.createEl("div", { attr: { style: `width:${barW};height:6px;border-radius:3px;background:var(--trk);overflow:hidden;` } });
+    bar.createEl("div", { attr: { style: `height:100%;width:${pct}%;background:var(--bar);border-radius:inherit;` } });
     meta.createEl("div", {
       text: `${completedCount}/${nodes.length}${progress.bestScorePct != null ? ` / ${progress.bestScorePct}%` : ""}`,
-      attr: { style: "font-size:11px;font-weight:750;color:var(--text-muted);" },
+      attr: { style: "font-size:12px;font-weight:500;color:var(--text3);font-variant-numeric:tabular-nums;" },
     });
 
     const isDark = isDarkTheme();
@@ -550,7 +554,7 @@ class QuestViewerModal extends I.Modal {
     });
     const nextBtn = side.createEl("button", {
       text: zh ? "開始目前節點" : "Start Current Node",
-      attr: { style: "width:100%;border:0;border-radius:12px;padding:11px 14px;background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;font-size:13px;font-weight:850;cursor:pointer;box-shadow:0 8px 18px rgba(79,70,229,.24);" },
+      attr: { style: "width:100%;border:0;border-radius:9px;padding:9px 14px;background:var(--btn);color:var(--onbtn);font-size:13px;font-weight:600;cursor:pointer;" },
     });
     nextBtn.addEventListener("click", () => this.openNode(progress.activeIndex || 0));
     const list = side.createEl("div", { attr: { style: "display:flex;flex-direction:column;gap:8px;margin-top:18px;" } });
@@ -565,9 +569,9 @@ class QuestViewerModal extends I.Modal {
             "border-radius:10px",
             "padding:8px 10px",
             "font-size:12px",
-            "font-weight:750",
-            "border:1px solid var(--background-modifier-border)",
-            `background:${index === progress.activeIndex ? "rgba(99,102,241,.12)" : "var(--background-primary)"}`,
+            "font-weight:500",
+            "border:0",
+            `background:${index === progress.activeIndex ? "var(--fill)" : "var(--background-primary)"}`,
             "color:var(--text-normal)",
             `cursor:${locked ? "not-allowed" : "pointer"}`,
             `opacity:${locked ? ".58" : "1"}`,

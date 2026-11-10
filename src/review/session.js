@@ -9,68 +9,10 @@ const { saveTagSourceCard, saveInlineCard, deleteTagSourceCard, applyFormatToCar
 const { registerSelectionCopy } = require("../ui/selection-copy");
 const { normalizeMarkdown } = require("../ui/markdown");
 const { addToQueue, readQueue, isQueued } = require("../explainer/data");
-const { addRewatchButton } = require("../videos/rewatch");
+const { addRewatchButton, rewatchTarget, openRewatch } = require("../videos/rewatch");
+const { applyHubVars, themedModal, icon: _uiIcon, iconButton: _uiIconButton, isPhone: _isPhone } = require("../hub/ui");
 const W_ref = { get locale() { try { return I.moment && I.moment.locale && I.moment.locale(); } catch(e) { return "en"; } } };
 function L(s) { return _getLocale(s, W_ref.locale); }
-
-const REVIEW_MOBILE_PATCH_ID = "engram-quest-review-mobile-patch";
-function ensureReviewMobilePatch() {
-  if (activeDocument.getElementById(REVIEW_MOBILE_PATCH_ID)) return;
-  const styleEl = activeDocument.createElement("style");
-  styleEl.id = REVIEW_MOBILE_PATCH_ID;
-  styleEl.textContent = `
-body.is-phone .lh-review-nav {
-  overflow:hidden !important;
-}
-body.is-phone .lh-review-nav > .lh-review-tabs {
-  flex:1 1 auto;
-  min-width:0;
-  overflow-x:auto;
-  overflow-y:hidden;
-  -webkit-overflow-scrolling:touch;
-  scrollbar-width:none;
-}
-body.is-phone .lh-review-nav > .lh-review-tabs::-webkit-scrollbar { display:none; }
-body.is-phone .lh-review-nav .lh-review-tab { flex:0 0 auto; }
-body.is-phone .lh-review-card .lh-rc-top {
-  flex-wrap:wrap;
-  gap:8px;
-}
-body.is-phone .lh-review-card .lh-rc-top > div {
-  min-width:0;
-  max-width:100%;
-}
-body.is-phone .lh-review-card .lh-rc-top > div:first-of-type {
-  flex:1 1 100%;
-  margin-left:0 !important;
-  display:flex !important;
-  flex-wrap:wrap;
-  gap:6px;
-}
-body.is-phone .lh-review-card .lh-rc-top > div:last-of-type {
-  width:100%;
-  display:flex !important;
-  flex-wrap:wrap;
-  justify-content:flex-start !important;
-  gap:6px;
-}
-body.is-phone .lh-review-card .lh-rc-edit-btn {
-  margin-left:0;
-  max-width:100%;
-}
-body.is-phone .lh-review-card .lh-rc-badge {
-  font-size:11px;
-  padding:5px 12px;
-}
-body.is-phone .lh-review-footer .lh-pill-row {
-  flex-wrap:wrap;
-}
-body.is-phone .lh-review-footer .lh-pill-btn {
-  flex:1 1 calc(50% - 6px);
-}
-`;
-  activeDocument.head.appendChild(styleEl);
-}
 
 /** Plan A — sync name-based lookup (fast, no I/O) */
 function isAiReviewCard(card) {
@@ -273,23 +215,14 @@ var Q=class extends I.Modal{
   }
 
   onOpen(){
-    ensureReviewMobilePatch();
     // Save initial progress on open
     this._saveResumePoint();
     this._preSessionEvalCtx = buildEvalContext(this.plugin.settings._stats);
-    const _isDark=activeDocument.body.classList.contains("theme-dark");const _bgPrimary=_isDark?"#1e1e2e":"#ffffff";const _bgSecondary=_isDark?"#252538":"#f3f4f6";const _textNormal=_isDark?"#e2e8f0":"#1f2937";const _textMuted=_isDark?"#94a3b8":"#6b7280";
-    this.modalEl.addClass("lh-hub");
+    const _isDark=activeDocument.body.classList.contains("theme-dark");
+    this.modalEl.addClass("lh-hub","lh-session");
     if(_isDark)this.modalEl.addClass("lh-dark");
     registerSelectionCopy(this);
-    this.modalEl.style.cssText="width:min(95vw,700px);max-width:none;height:min(90vh,640px);max-height:none;padding:0;overflow:hidden;border-radius:24px";
-    this.modalEl.style.setProperty("--background-primary",_bgPrimary,"important");
-    this.modalEl.style.setProperty("--background-secondary",_bgSecondary,"important");
-    this.modalEl.style.setProperty("--text-normal",_textNormal,"important");
-    this.modalEl.style.setProperty("--text-muted",_textMuted,"important");
-    this.modalEl.style.setProperty("--background-modifier-border","#e5e7eb","important");
-    const _bgFile=_isDark?"bg_dark.webp":"bg.png";
-    let e=this.app.vault.adapter.getResourcePath(this.app.vault.configDir+"/plugins/engram-quest/"+_bgFile);
-    this.contentEl.style.cssText=`padding:0;display:flex;flex-direction:column;height:100%;overflow:hidden;background-image:url('${e}');background-size:cover;background-position:center top;color:${_isDark?"#e2e8f0":"#1f2937"}`;
+    applyHubVars(this.modalEl,_isDark);
     if(this._timeboxMinutes>0) this._sessionStartMs=Date.now();
     this.renderCard();
     this._loadSynapseAsync();
@@ -307,11 +240,11 @@ var Q=class extends I.Modal{
     if(!this._timerEl||!this._timerEl.isConnected) return;
     if(remaining<=0){
       this._timerEl.textContent=`⏱ ${c(t,"TIMEBOX_TIMES_UP")}`;
-      this._timerEl.style.color="#ef4444";
+      this._timerEl.style.color="var(--newt)";
     } else {
       const mm=Math.floor(remaining/60),ss=remaining%60;
       this._timerEl.textContent=`⏱ ${mm}:${ss.toString().padStart(2,"0")}`;
-      this._timerEl.style.color=remaining<=60?"#f59e0b":"var(--lh-cyan,#22d3ee)";
+      this._timerEl.style.color=remaining<=60?"var(--newt)":"var(--text2)";
     }
   }
 
@@ -370,20 +303,20 @@ var Q=class extends I.Modal{
     this.contentEl.empty();
     let wrap=this.contentEl.createEl("div",{attr:{class:"lh-complete-screen",style:"flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;text-align:center;gap:16px;overflow-y:auto;"}});
     wrap.createEl("div",{attr:{style:"font-size:56px;line-height:1;"}}).textContent="🎉";
-    wrap.createEl("div",{attr:{class:"lh-complete-title",style:"font-size:24px;font-weight:800;color:var(--text-normal, #1e293b);"}}).textContent=c(t,"REVIEW_COMPLETE");
+    wrap.createEl("div",{attr:{class:"lh-complete-title",style:"font-size:24px;font-weight:700;color:var(--text);"}}).textContent=c(t,"REVIEW_COMPLETE");
     {
       let _statLine=`${this.deckName} · ${this.cards.length} ${c(t,"CARDS_REVIEWED")}`;
       if(this._timeboxMinutes>0){
         const _es=Math.floor((Date.now()-this._sessionStartMs)/1000);
         _statLine+=` · ${Math.floor(_es/60)}:${(_es%60).toString().padStart(2,"0")}`;
       }
-      wrap.createEl("div",{attr:{style:"font-size:14px;color:var(--text-muted, #64748b);line-height:1.6;max-width:260px;"}}).textContent=_statLine;
+      wrap.createEl("div",{attr:{style:"font-size:14px;color:var(--text2);line-height:1.6;max-width:260px;"}}).textContent=_statLine;
     }
 
     // Show newly unlocked achievements
     if(newlyUnlocked.length>0){
       const achWrap=wrap.createEl("div",{attr:{style:"width:100%;max-width:320px;margin-top:4px;"}});
-      achWrap.createEl("div",{attr:{style:"font-size:12px;font-weight:700;color:#f59e0b;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;"}}).textContent="🏆 "+c(t,"ACH_SESSION_UNLOCKED");
+      achWrap.createEl("div",{attr:{style:"font-size:12px;font-weight:600;color:var(--text3);margin-bottom:10px;"}}).textContent="🏆 "+c(t,"ACH_SESSION_UNLOCKED");
       const achRow=achWrap.createEl("div",{attr:{style:"display:flex;flex-wrap:wrap;gap:12px;justify-content:center;"}});
       for(const ach of newlyUnlocked){
         const rs=rarityStyles[ach.rarity];
@@ -394,15 +327,15 @@ var Q=class extends I.Modal{
         const iconSrc=this.plugin.app.vault.adapter.getResourcePath(this.plugin.app.vault.configDir+"/plugins/engram-quest/"+ach.icon);
         const img=iconWrap.createEl("img",{attr:{src:iconSrc,width:"56",height:"56",style:"object-fit:contain;display:block;position:relative;z-index:1;"}});
         img.onerror=()=>{iconWrap.empty();iconWrap.createEl("span",{attr:{style:"font-size:36px;line-height:1;"}}).textContent="🏆";};
-        card.createEl("div",{attr:{style:`font-size:10px;font-weight:700;color:${isDark?"#e2e8f0":"#1e293b"};text-align:center;line-height:1.3;padding:0 2px;`}}).textContent=c(t,ach.nameKey);
+        card.createEl("div",{attr:{style:`font-size:10px;font-weight:700;color:var(--text);text-align:center;line-height:1.3;padding:0 2px;`}}).textContent=c(t,ach.nameKey);
       }
     }
 
     let btnRow=wrap.createEl("div",{attr:{style:"display:flex;flex-direction:column;gap:10px;width:100%;max-width:280px;margin-top:8px;"}});
-    let btnHub=btnRow.createEl("button",{attr:{class:"lh-complete-btn",style:"border-radius:99px;padding:14px 24px;font-size:15px;font-weight:700;cursor:pointer;border:none;background:linear-gradient(135deg,#4f46e5,#818cf8);color:#fff;box-shadow:0 4px 16px rgba(79,70,229,0.4);min-height:52px;"}});
+    let btnHub=btnRow.createEl("button",{attr:{class:"lh-pbtn"}});
     btnHub.textContent=c(t,"BACK_TO_HUB");
     btnHub.addEventListener("click",()=>{ this.close(); this.onBack&&this.onBack(); });
-    let btnClose=btnRow.createEl("button",{attr:{class:"lh-complete-btn",style:"border-radius:99px;padding:14px 24px;font-size:15px;font-weight:600;cursor:pointer;border:1.5px solid #e2e8f0;background:#f8faff;color:#475569;min-height:52px;"}});
+    let btnClose=btnRow.createEl("button",{attr:{class:"lh-pbtn alt"}});
     btnClose.textContent=c(t,"HUB_CLOSE");
     btnClose.addEventListener("click",()=>this.close());
   }
@@ -420,79 +353,19 @@ var Q=class extends I.Modal{
       postProcessEmbed(el,this.app,e.notePath||"");
       attachImgZoom(el);
     };
-    // Nav
-    let r=this.contentEl.createEl("div",{attr:{class:"lh-review-nav"}});
-    r.createEl("span",{text:c(t,"HUB_TITLE"),attr:{class:"lh-review-logo"}});
-    let s=r.createEl("div",{attr:{class:"lh-review-tabs"}});
-    [{label:c(t,"TAB_REVIEW"),key:"review"},{label:c(t,"TAB_MEMORY"),key:"memory"},{label:c(t,"TAB_QUEST"),key:"quest"}].forEach(p=>{
-      let g=s.createEl("button",{text:p.label,attr:{class:"lh-review-tab"+(p.key==="review"?" active":"")}});
-      p.key!=="review"&&(g.style.opacity="0.6");
-    });
-    // Task 6: back button → always go back to Hub (not close)
-    let a=r.createEl("button",{attr:{class:"lh-review-back"}});
-    a.textContent="← "+c(t,"BACK");
-    a.addEventListener("click",()=>{ this.close(); this.onBack&&this.onBack(); });
-    // Minimize button
-    let minBtn=r.createEl("button",{attr:{class:"lh-review-back",style:"font-size:16px;padding:4px 8px;margin-left:4px;"}});
-    minBtn.textContent="⏬";
-    minBtn.title="Minimize";
-    minBtn.addEventListener("click",()=>this._minimize());
-    if(this._timeboxMinutes>0){
-      this._timerEl=r.createEl("span",{attr:{class:"lh-timebox-clock"}});
-      this._tickTimer();
-    }
-
-    // Card body
-    let i=this.contentEl.createEl("div",{attr:{class:"lh-review-body"}}).createEl("div",{attr:{class:"lh-review-card"}});
-    let d=i.createEl("div",{attr:{class:"lh-rc-top"}});
-    d.createEl("span",{text:this.deckName,attr:{class:"lh-rc-badge"}});
-    this.browseOnly&&d.createEl("span",{text:c(t,"BROWSE_ONLY"),attr:{class:"lh-rc-badge"}});
-    // Source note buttons — for AI cards show sourceNotePaths only, for hand-written show notePath
-    let notePaths=getCardDisplayNotePaths(e);
-    if(notePaths.length>0){
-      let srcWrap=d.createEl("div",{attr:{style:"display:flex;align-items:center;gap:4px;margin-left:auto;flex-shrink:1;min-width:0;"}});
-      notePaths.forEach(np=>{
-        let name=np.split("/").pop().replace(/\.md$/i,"");
-        let btn=srcWrap.createEl("button",{attr:{class:"lh-rc-edit-btn",style:"font-size:11px;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#6366f1;",title:np}});
-        btn.textContent="📄 "+name;
-        btn.addEventListener("click",(ev)=>{ev.stopPropagation();const _f=this.app.vault.getAbstractFileByPath(np);if(_f){this.app.workspace.openLinkText(_f.path,"",false);}else{const _bn=np.split("/").pop().replace(/\.md$/i,"");const _fb=this.app.metadataCache.getFirstLinkpathDest(_bn,"");if(_fb){this.app.workspace.openLinkText(_fb.path,"",false);}else{new I.Notice("Source note not found: "+_bn);}}});
-      });
-    }
-    if(notePaths.length>0){
-      d.querySelectorAll(".lh-rc-top .lh-rc-edit-btn").forEach(btn=>{
-        if(btn.dataset.feedbackBound==="1") return;
-        let defaultLabel=btn.textContent;
-        btn.dataset.feedbackBound="1";
-        btn.addEventListener("click",()=>{
-          btn.textContent="✓ "+_openedSourceLabel;
-          btn.style.color="#10b981";
-          if(btn._feedbackTimer) window.clearTimeout(btn._feedbackTimer);
-          btn._feedbackTimer=window.setTimeout(()=>{
-            btn.textContent=defaultLabel;
-            btn.style.color="#6366f1";
-            btn._feedbackTimer=null;
-          },1200);
-        });
-      });
-    }
-    // Right-side button group
-    let btnGroup=d.createEl("div",{attr:{style:"display:flex;align-items:center;gap:4px;flex-shrink:0;"}});
-    // Copy button
-    let copyTopBtn=btnGroup.createEl("button",{attr:{class:"lh-rc-edit-btn"}});
-    copyTopBtn.textContent="📋 Copy";
-    copyTopBtn.title="Copy";
-    copyTopBtn.addEventListener("click",()=>{
+    const phone=_isPhone();
+    const notePaths=getCardDisplayNotePaths(e);
+    const goBack=()=>{ this.close(); this.onBack&&this.onBack(); };
+    const openNote=(np)=>{const _f=this.app.vault.getAbstractFileByPath(np);if(_f){this.app.workspace.openLinkText(_f.path,"",false);}else{const _bn=np.split("/").pop().replace(/\.md$/i,"");const _fb=this.app.metadataCache.getFirstLinkpathDest(_bn,"");if(_fb){this.app.workspace.openLinkText(_fb.path,"",false);}else{new I.Notice("Source note not found: "+_bn);}}};
+    const copyCard=()=>{
       let parts=[e.front];
       if(e.hint_l1) parts.push("L1: "+e.hint_l1);
       if(e.hint_l2) parts.push("L2: "+e.hint_l2);
       if(e.hint_l3) parts.push("L3: "+e.hint_l3);
       parts.push("A: "+e.back);
-      navigator.clipboard.writeText(parts.join("\n")).then(()=>{ copyTopBtn.textContent="✅ Copied"; window.setTimeout(()=>copyTopBtn.textContent="📋 Copy",1500); });
-    });
-    // Edit button
-    let editTopBtn=btnGroup.createEl("button",{attr:{class:"lh-rc-edit-btn"}});
-    editTopBtn.textContent="✏️ "+c(t,"EDIT_CARD");
-    editTopBtn.addEventListener("click",async()=>{
+      return navigator.clipboard.writeText(parts.join("\n"));
+    };
+    const editCard=async()=>{
       if(e.notePath){
         try{
           const refreshed=await refreshTagSourceCard(this.app,e);
@@ -500,23 +373,157 @@ var Q=class extends I.Modal{
         }catch(err){console.error("review-edit: refresh failed",err);new I.Notice(c(t,"CREATE_CARD_SAVE_FAILED"));return;}
       }
       this._renderEditForm(e);
-    });
-    // Delete button
-    let delTopBtn=btnGroup.createEl("button",{attr:{class:"lh-rc-edit-btn",style:"color:#ef4444;"}});
-    delTopBtn.textContent="🗑️";
-    delTopBtn.title=c(t,"DELETE");
-    delTopBtn.addEventListener("click",()=>this._renderDeleteConfirm(e));
+    };
+    const deleteCard=()=>this._renderDeleteConfirm(e);
+    const resetHints=()=>{this.hintLevel=0;this.answerShown=false;this._renderCardContent(e);};
+    // Memory Map entry — Plan A (sync) then Plan B (async fallback)
+    const bindMemoryMap=(btn)=>{
+      let memoryMapAction=null;
+      const setMemoryMapAction=(candidates)=>{
+        if(!candidates||candidates.length===0){
+          memoryMapAction=null;
+          this._disablePillBtn(btn);
+          return;
+        }
+        btn.disabled=false;
+        btn.style.opacity="";
+        btn.style.cursor="";
+        memoryMapAction=()=>this._openMemoryMapChooser(candidates);
+      };
+      btn.addEventListener("click",()=>{ if(memoryMapAction) memoryMapAction(); });
+      let w=findMemoryMapCandidatesSync(this.app,e,t,this.deckName);
+      if(w.length>0){setMemoryMapAction(w);}
+      else{setMemoryMapAction([]);
+        const gen=this._mmGen=(this._mmGen||0)+1;
+        findMemoryMapCandidatesByCanvasContent(this.app,e,w).then(found=>{if(this._mmGen===gen&&btn.isConnected)setMemoryMapAction(found||[]);}).catch(()=>{});}
+    };
+    const synapseEnabled=this.plugin.settings.licenseValid && isSynapseEnabled(this._synapseStatus);
+    const anchorCount=Array.isArray(e.synapseAnchors)?e.synapseAnchors.length:0;
+    // Filled in once the card body exists; the phone menu and the desktop pill both call it.
+    let toggleSynapse=()=>{};
+
+    if(phone){
+      const rewatch=rewatchTarget(this.app,e);
+      let rewatchFound=false;
+      if(rewatch) this.app.vault.adapter.exists(rewatch.path).then(found=>{rewatchFound=found;}).catch(()=>{});
+      let queued=false;
+      if(t.licenseValid) readQueue(this.app.vault.adapter).then(_q=>{queued=isQueued(_q,e.notePath,e.front);}).catch(()=>{});
+      const openMore=(ev)=>{
+        const menu=new I.Menu();
+        const add=(title,iconName,run,disabled)=>menu.addItem(item=>{item.setTitle(title).setIcon(iconName).setDisabled(!!disabled).onClick(run);});
+        notePaths.forEach(np=>add(np.split("/").pop().replace(/\.md$/i,""),"file-text",()=>openNote(np)));
+        add(c(t,"COPY_CARD"),"copy",()=>copyCard().then(()=>new I.Notice(c(t,"COPY_CARD_DONE"))));
+        add(c(t,"EDIT_CARD"),"pencil",editCard);
+        add(c(t,"DELETE"),"trash-2",deleteCard);
+        if(synapseEnabled) add(c(t,"SYNAPSE"),"zap",()=>toggleSynapse(),anchorCount===0);
+        if(t.licenseValid&&this.answerShown&&!this.browseOnly) add(queued?c(t,"EXPLAINER_ALREADY"):c(t,"EXPLAINER_MARK_BTN"),"bookmark-plus",async()=>{
+          try{const _r=await addToQueue(this.app.vault.adapter,{source:e.notePath,q:e.front,a:e.back,deck:this.deckName||null});new I.Notice(_r.added?c(t,"EXPLAINER_MARKED"):c(t,"EXPLAINER_ALREADY"));queued=true;}catch(err){console.error("EngramQuest: explainer queue failed",err);}
+        },queued);
+        if(rewatchFound&&this.answerShown) add(c(t,"CARD_REWATCH"),"play",()=>openRewatch(this.app,rewatch));
+        add(c(t,"HUB_MINIMIZE"),"chevrons-down",()=>this._minimize());
+        menu.showAtMouseEvent(ev);
+      };
+      const nav=this.contentEl.createEl("div",{cls:"lh-snav"});
+      nav.createEl("button",{cls:"lh-pback",text:`‹ ${c(t,"DECK_COLUMN")}`}).addEventListener("click",goBack);
+      nav.createEl("span",{cls:"lh-snav-count",text:`${this.idx+1} / ${this.cards.length}`});
+      if(this._timeboxMinutes>0){
+        this._timerEl=nav.createEl("span",{attr:{class:"lh-timebox-clock"}});
+        this._tickTimer();
+      }
+      const acts=nav.createEl("div",{cls:"lh-snav-acts"});
+      bindMemoryMap(_uiIcon(acts.createEl("button",{cls:"lh-sib",attr:{"aria-label":c(t,"MEMORY_MAP"),title:c(t,"MEMORY_MAP")}}),"map"));
+      _uiIconButton(acts,"reset",c(t,"RESET_HINTS"),resetHints,"lh-sib");
+      _uiIconButton(acts,"more",c(t,"MORE_ACTIONS"),openMore,"lh-sib");
+      const prog=this.contentEl.createEl("div",{cls:"lh-sprog"});
+      prog.createEl("i",{attr:{style:`width:${Math.round((this.idx+1)/this.cards.length*100)}%`}});
+    } else {
+      // Nav
+      let r=this.contentEl.createEl("div",{attr:{class:"lh-review-nav"}});
+      r.createEl("span",{text:c(t,"HUB_TITLE"),attr:{class:"lh-review-logo"}});
+      let s=r.createEl("div",{attr:{class:"lh-review-tabs"}});
+      [{label:c(t,"TAB_REVIEW"),key:"review"},{label:c(t,"TAB_MEMORY"),key:"memory"},{label:c(t,"TAB_QUEST"),key:"quest"}].forEach(p=>{
+        let g=s.createEl("button",{text:p.label,attr:{class:"lh-review-tab"+(p.key==="review"?" active":"")}});
+        p.key!=="review"&&(g.style.opacity="0.6");
+      });
+      // Task 6: back button → always go back to Hub (not close)
+      let a=r.createEl("button",{attr:{class:"lh-review-back"}});
+      a.textContent="← "+c(t,"BACK");
+      a.addEventListener("click",goBack);
+      // Minimize button
+      let minBtn=r.createEl("button",{attr:{class:"lh-review-back",style:"font-size:16px;padding:4px 8px;margin-left:4px;"}});
+      minBtn.textContent="⏬";
+      minBtn.title="Minimize";
+      minBtn.addEventListener("click",()=>this._minimize());
+      if(this._timeboxMinutes>0){
+        this._timerEl=r.createEl("span",{attr:{class:"lh-timebox-clock"}});
+        this._tickTimer();
+      }
+    }
+
+    // Card body
+    let i=this.contentEl.createEl("div",{attr:{class:"lh-review-body"+(phone?(this.answerShown&&!this.browseOnly?" has-grades":" has-bar"):"")}}).createEl("div",{attr:{class:"lh-review-card"}});
+    if(phone){
+      if(this.browseOnly) i.createEl("span",{text:c(t,"BROWSE_ONLY"),attr:{class:"lh-rc-badge"}});
+    } else {
+      let d=i.createEl("div",{attr:{class:"lh-rc-top"}});
+      d.createEl("span",{text:this.deckName,attr:{class:"lh-rc-badge"}});
+      this.browseOnly&&d.createEl("span",{text:c(t,"BROWSE_ONLY"),attr:{class:"lh-rc-badge"}});
+      // Source note buttons — for AI cards show sourceNotePaths only, for hand-written show notePath
+      if(notePaths.length>0){
+        let srcWrap=d.createEl("div",{attr:{style:"display:flex;align-items:center;gap:4px;margin-left:auto;flex-shrink:1;min-width:0;"}});
+        notePaths.forEach(np=>{
+          let name=np.split("/").pop().replace(/\.md$/i,"");
+          let btn=srcWrap.createEl("button",{attr:{class:"lh-rc-edit-btn",style:"font-size:11px;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--tint);",title:np}});
+          btn.textContent="📄 "+name;
+          btn.addEventListener("click",(ev)=>{ev.stopPropagation();openNote(np);});
+        });
+      }
+      if(notePaths.length>0){
+        d.querySelectorAll(".lh-rc-top .lh-rc-edit-btn").forEach(btn=>{
+          if(btn.dataset.feedbackBound==="1") return;
+          let defaultLabel=btn.textContent;
+          btn.dataset.feedbackBound="1";
+          btn.addEventListener("click",()=>{
+            btn.textContent="✓ "+_openedSourceLabel;
+            btn.style.color="var(--mstt)";
+            if(btn._feedbackTimer) window.clearTimeout(btn._feedbackTimer);
+            btn._feedbackTimer=window.setTimeout(()=>{
+              btn.textContent=defaultLabel;
+              btn.style.color="var(--tint)";
+              btn._feedbackTimer=null;
+            },1200);
+          });
+        });
+      }
+      // Right-side button group
+      let btnGroup=d.createEl("div",{attr:{style:"display:flex;align-items:center;gap:4px;flex-shrink:0;"}});
+      // Copy button
+      let copyTopBtn=btnGroup.createEl("button",{attr:{class:"lh-rc-edit-btn"}});
+      copyTopBtn.textContent="📋 Copy";
+      copyTopBtn.title="Copy";
+      copyTopBtn.addEventListener("click",()=>{
+        copyCard().then(()=>{ copyTopBtn.textContent="✅ Copied"; window.setTimeout(()=>copyTopBtn.textContent="📋 Copy",1500); });
+      });
+      // Edit button
+      let editTopBtn=btnGroup.createEl("button",{attr:{class:"lh-rc-edit-btn"}});
+      editTopBtn.textContent="✏️ "+c(t,"EDIT_CARD");
+      editTopBtn.addEventListener("click",editCard);
+      // Delete button
+      let delTopBtn=btnGroup.createEl("button",{attr:{class:"lh-rc-edit-btn",style:"color:var(--newt);"}});
+      delTopBtn.textContent="🗑️";
+      delTopBtn.title=c(t,"DELETE");
+      delTopBtn.addEventListener("click",deleteCard);
+    }
     if(e.emoji){ i.createEl("span",{attr:{class:"lh-rc-emoji"}}).textContent=e.emoji; }
-    let qEl=i.createEl("div",{attr:{class:"lh-rc-question"}});
+    let qEl=i.createEl("div",{attr:{class:"lh-rc-question"+(phone&&this.answerShown?" is-done":"")}});
     renderMd(qEl,e.front);
 
     // Stable containers for hints + synapse — refreshed in-place so toggling
     // doesn't rebuild the whole card (preserves scroll, avoids flash).
     // Mutex: hints render only when synapse is closed; clicking a hint closes synapse.
-    let f=[{key:"hint_l1",cls:"lh-hint-l1",label:"L1 · Active Recall"},{key:"hint_l2",cls:"lh-hint-l2",label:"L2 · Contextual Anchor"},{key:"hint_l3",cls:"lh-hint-l3",label:"L3 · Narrowing Hint"}];
+    let f=[{key:"hint_l1",cls:"lh-hint-l1",label:phone?c(t,"HINT_LABEL_L1"):"L1 · Active Recall"},{key:"hint_l2",cls:"lh-hint-l2",label:phone?c(t,"HINT_LABEL_L2"):"L2 · Contextual Anchor"},{key:"hint_l3",cls:"lh-hint-l3",label:phone?c(t,"HINT_LABEL_L3"):"L3 · Narrowing Hint"}];
     const hintsContainer=i.createEl("div",{attr:{class:"lh-hints-container"}});
     const synapseContainer=i.createEl("div",{attr:{class:"lh-synapse-container"}});
-    const synapseEnabled=this.plugin.settings.licenseValid && isSynapseEnabled(this._synapseStatus);
     const refreshHintsContainer=()=>{
       hintsContainer.empty();
       if(this.synapseOpen) return;
@@ -532,6 +539,7 @@ var Q=class extends I.Modal{
       if(!this.synapseOpen) return;
       this._renderSynapsePanel(synapseContainer,e,t,renderMd,refreshSynapseContainer);
     };
+    toggleSynapse=()=>{ this.synapseOpen=!this.synapseOpen; refreshHintsContainer(); refreshSynapseContainer(); };
     refreshHintsContainer();
     refreshSynapseContainer();
 
@@ -558,7 +566,7 @@ var Q=class extends I.Modal{
       let fmtBtns=answerHeader.createEl("div",{attr:{class:"lh-answer-fmt-btns"}});
       // Post-reveal Synapse access: ⚡ toggle next to Highlight/Blockquote.
       const _syAnchors=Array.isArray(e.synapseAnchors)?e.synapseAnchors:[];
-      if(synapseEnabled&&_syAnchors.length>0){
+      if(!phone&&synapseEnabled&&_syAnchors.length>0){
         const syHeaderBtn=fmtBtns.createEl("button",{text:"⚡",attr:{class:"lh-rc-edit-btn lh-fmt-btn",title:c(t,"SYNAPSE_HINT")}});
         syHeaderBtn.addEventListener("click",()=>{ this.synapseOpen=!this.synapseOpen; refreshSynapseContainer(); });
       }
@@ -619,18 +627,21 @@ var Q=class extends I.Modal{
         bqBtn.addEventListener("mousedown",(ev)=>{captureAnswerSelection();ev.preventDefault();});
         bqBtn.addEventListener("click",applyBlockquoteToBack);
       }
-      answerEl=p.createEl("div",{attr:{class:"lh-answer-text"}});
+      answerEl=p.createEl("div",{attr:{class:"lh-answer-text"+(String(e.back||"").length<=90?" is-short":"")}});
       renderMd(answerEl,e.back);
       answerEl.addEventListener("mouseup",captureAnswerSelection);
       answerEl.addEventListener("keyup",captureAnswerSelection);
+      if(phone&&notePaths.length>0){
+        i.createEl("button",{cls:"lh-link lh-open-note",text:c(t,"OPEN_IN_NOTE")}).addEventListener("click",()=>openNote(notePaths[0]));
+      }
       this.browseOnly&&i.createEl("div",{text:c(t,"BROWSE_NOTE"),attr:{class:"lh-browse-note"}});
     }
 
     // Footer buttons
     if(this.answerShown){
-      addRewatchButton(this.contentEl,this.app,t,e);
+      if(!phone) addRewatchButton(this.contentEl,this.app,t,e);
       if(this.browseOnly){
-        let p=this.contentEl.createEl("div",{attr:{class:"lh-browse-row"}});
+        let p=(phone?this.contentEl.createEl("div",{cls:"lh-sbar lh-glass"}):this.contentEl).createEl("div",{attr:{class:"lh-browse-row"}});
         p.createEl("button",{text:c(t,"BACK_TO_QUESTION"),attr:{class:"lh-browse-btn"}}).addEventListener("click",()=>{this.answerShown=false;this._renderCardContent(e);});
         let E=p.createEl("button",{text:c(t,"PREVIOUS"),attr:{class:"lh-browse-btn"}});
         this.idx===0&&(E.disabled=true);
@@ -642,7 +653,9 @@ var Q=class extends I.Modal{
       } else {
         // Task 4: rating buttons with lock
         let p=e.srMeta||null;
-        let g=this.contentEl.createEl("div",{attr:{class:"lh-rating-row"}}); if(t.licenseValid){let _uq=this.contentEl.createEl("div",{attr:{style:"display:flex;justify-content:center;margin-top:8px;"}});let _ub=_uq.createEl("button",{text:c(t,"EXPLAINER_MARK_BTN"),attr:{class:"lh-rc-edit-btn",style:"font-size:12px;"}});_ub.addEventListener("click",async()=>{try{const _r=await addToQueue(this.app.vault.adapter,{source:e.notePath,q:e.front,a:e.back,deck:this.deckName||null});new I.Notice(_r.added?c(t,"EXPLAINER_MARKED"):c(t,"EXPLAINER_ALREADY"));_ub.disabled=true;_ub.style.opacity="0.6";}catch(err){console.error("EngramQuest: explainer queue failed",err);}});readQueue(this.app.vault.adapter).then(_q=>{if(isQueued(_q,e.notePath,e.front)){_ub.textContent=c(t,"EXPLAINER_ALREADY");_ub.disabled=true;_ub.style.opacity="0.6";}}).catch(()=>{});}
+        let _gradeBar=phone?this.contentEl.createEl("div",{cls:"lh-sbar lh-glass"}):null;
+        if(_gradeBar) _gradeBar.createEl("div",{cls:"lh-sbar-title",text:c(t,"RATE_PROMPT")});
+        let g=(_gradeBar||this.contentEl).createEl("div",{attr:{class:"lh-rating-row"}}); if(t.licenseValid&&!phone){let _uq=this.contentEl.createEl("div",{attr:{style:"display:flex;justify-content:center;margin-top:8px;"}});let _ub=_uq.createEl("button",{text:c(t,"EXPLAINER_MARK_BTN"),attr:{class:"lh-rc-edit-btn",style:"font-size:12px;"}});_ub.addEventListener("click",async()=>{try{const _r=await addToQueue(this.app.vault.adapter,{source:e.notePath,q:e.front,a:e.back,deck:this.deckName||null});new I.Notice(_r.added?c(t,"EXPLAINER_MARKED"):c(t,"EXPLAINER_ALREADY"));_ub.disabled=true;_ub.style.opacity="0.6";}catch(err){console.error("EngramQuest: explainer queue failed",err);}});readQueue(this.app.vault.adapter).then(_q=>{if(isQueued(_q,e.notePath,e.front)){_ub.textContent=c(t,"EXPLAINER_ALREADY");_ub.disabled=true;_ub.style.opacity="0.6";}}).catch(()=>{});}
         [{q:1,label:C("AGAIN",t),icon:"AG",cls:"lh-rb-again"},{q:2,label:C("HARD",t),icon:"HD",cls:"lh-rb-hard"},{q:3,label:C("GOOD",t),icon:"GD",cls:"lh-rb-good"},{q:4,label:C("EASY",t),icon:"OK",cls:"lh-rb-easy"}].forEach(E=>{
           let m=P(E.q,p,t);
           let x=g.createEl("button",{attr:{class:`lh-rating-btn ${E.cls}`}});
@@ -703,73 +716,61 @@ var Q=class extends I.Modal{
         });
       }
     } else {
-      // Pill buttons (before answer)
-      let p=this.contentEl.createEl("div",{attr:{class:"lh-review-footer"}});
-      let g=p.createEl("div",{attr:{class:"lh-pill-row"}});
-      let E=g.createEl("button",{attr:{class:"lh-pill-btn lh-pill-show"}});
-      E.textContent="TIP "+C("SHOW_ANSWER",t);
-      E.addEventListener("click",()=>{this.answerShown=true;this._renderCardContent(e);});
-
-      let m=e.hint_l1||e.hint_l2||e.hint_l3;
-      let x=g.createEl("button",{attr:{class:"lh-pill-btn lh-pill-recall"}});
-      x.textContent="L1 "+(this.hintLevel===0?C("RECALL",t):C("HINT_NEXT",t));
-      if(!m||this.hintLevel>=3) this._disablePillBtn(x);
-      else x.addEventListener("click",()=>{
+      const hasHints=e.hint_l1||e.hint_l2||e.hint_l3;
+      const nextHint=()=>{
         // Hints render top-down so a full re-render (scroll-to-top) is acceptable here;
         // the flash bug only mattered for Synapse, where the panel sits mid-card.
         // synapseOpen=false enforces the mutex (opening a hint closes Synapse).
         this.hintLevel++; this.synapseOpen=false;
         this._renderCardContent(e);
-      });
+      };
+      const showAnswer=()=>{this.answerShown=true;this._renderCardContent(e);};
+      if(phone){
+        const bar=this.contentEl.createEl("div",{cls:"lh-sbar lh-sbar-row lh-glass"});
+        const hintBtn=bar.createEl("button",{cls:"lh-pbtn alt",text:C("HINT_NEXT",t)});
+        if(!hasHints||this.hintLevel>=3) this._disablePillBtn(hintBtn);
+        else hintBtn.addEventListener("click",nextHint);
+        bar.createEl("button",{cls:"lh-pbtn",text:C("SHOW_ANSWER",t)}).addEventListener("click",showAnswer);
+        return;
+      }
+      // Pill buttons (before answer)
+      let p=this.contentEl.createEl("div",{attr:{class:"lh-review-footer"}});
+      let g=p.createEl("div",{attr:{class:"lh-pill-row"}});
+      let E=g.createEl("button",{attr:{class:"lh-pill-btn lh-pill-show"}});
+      E.textContent="TIP "+C("SHOW_ANSWER",t);
+      E.addEventListener("click",showAnswer);
 
-      // Memory Map button — Plan A (sync) then Plan B (async fallback)
+      let x=g.createEl("button",{attr:{class:"lh-pill-btn lh-pill-recall"}});
+      x.textContent="L1 "+(this.hintLevel===0?C("RECALL",t):C("HINT_NEXT",t));
+      if(!hasHints||this.hintLevel>=3) this._disablePillBtn(x);
+      else x.addEventListener("click",nextHint);
+
       let k=g.createEl("button",{attr:{class:"lh-pill-btn lh-pill-memory"}});
       k.textContent=c(t,"MEMORY_MAP");
-      let memoryMapAction=null;
-      const setMemoryMapAction=(candidates)=>{
-        if(!candidates||candidates.length===0){
-          memoryMapAction=null;
-          this._disablePillBtn(k);
-          return;
-        }
-        k.disabled=false;
-        k.style.opacity="";
-        k.style.cursor="";
-        memoryMapAction=()=>this._openMemoryMapChooser(candidates);
-      };
-      k.addEventListener("click",()=>{ if(memoryMapAction) memoryMapAction(); });
-      let w=findMemoryMapCandidatesSync(this.app,e,t,this.deckName);
-      if(w.length>0){setMemoryMapAction(w);}
-      else{setMemoryMapAction([]);
-        const gen=this._mmGen=(this._mmGen||0)+1;
-        findMemoryMapCandidatesByCanvasContent(this.app,e,w).then(found=>{if(this._mmGen===gen&&k.isConnected)setMemoryMapAction(found||[]);}).catch(()=>{});}
+      bindMemoryMap(k);
 
       // Three states: hidden (feature off / not Pro), dim (no anchors), active.
-      // synapseEnabled hoisted above (single source of truth for both pre- and post-answer paths).
       if(synapseEnabled){
         g.classList.add("lh-pill-row-4");
         let syBtn=g.createEl("button",{attr:{class:"lh-pill-btn lh-pill-synapse"}});
-        const anchors=Array.isArray(e.synapseAnchors)?e.synapseAnchors:[];
         syBtn.textContent="⚡ "+c(t,"SYNAPSE");
-        if(anchors.length===0){
+        if(anchorCount===0){
           this._disablePillBtn(syBtn,c(t,"SYNAPSE_EMPTY"));
         }else{
           syBtn.title=c(t,"SYNAPSE_HINT");
-          syBtn.addEventListener("click",()=>{
-            this.synapseOpen=!this.synapseOpen;
-            refreshHintsContainer(); refreshSynapseContainer();
-          });
+          syBtn.addEventListener("click",toggleSynapse);
         }
       }
 
       let y=p.createEl("div",{attr:{class:"lh-footer-meta"}});
       let b=y.createEl("button",{attr:{class:"lh-pill-reset"}});
       b.textContent="Reset";
-      b.addEventListener("click",()=>{this.hintLevel=0;this.answerShown=false;this._renderCardContent(e);});
+      b.addEventListener("click",resetHints);
       let T=y.createEl("div",{attr:{class:"lh-dots"}});
       for(let _=0;_<3;_++) T.createEl("div",{attr:{class:"lh-dot"+(_<this.hintLevel?" lit":"")}});
     }
 
+    if(phone) return;
     // Progress bar
     let h=this.contentEl.createEl("div",{attr:{class:"lh-review-progress"}});
     let u=h.createEl("div",{attr:{class:"lh-review-prog-wrap"}});
@@ -834,7 +835,7 @@ var Q=class extends I.Modal{
   }
 
   _openMemoryMapChooser(candidates){
-    const modal=new I.Modal(this.app);
+    const modal=themedModal(new I.Modal(this.app));
     const isZh=L(this.plugin.settings)==="zh-tw";
     const reasonLabelMap={
       "same-folder": isZh?"同資料夾":"Same folder",
@@ -843,37 +844,26 @@ var Q=class extends I.Modal{
       "deck-token": isZh?"同 deck":"Deck match",
       "file-node": isZh?"關聯節點":"Linked node"
     };
-    const reasonStyleMap={
-      "same-folder":"background:rgba(34,197,94,0.16);color:#22c55e;border:1px solid rgba(34,197,94,0.28);",
-      "configured-folder":"background:rgba(59,130,246,0.16);color:#60a5fa;border:1px solid rgba(96,165,250,0.28);",
-      "topic-folder":"background:rgba(245,158,11,0.16);color:#f59e0b;border:1px solid rgba(245,158,11,0.28);",
-      "deck-token":"background:rgba(168,85,247,0.16);color:#c084fc;border:1px solid rgba(192,132,252,0.28);",
-      "file-node":"background:rgba(99,102,241,0.16);color:#818cf8;border:1px solid rgba(129,140,248,0.28);"
-    };
-    modal.modalEl.style.cssText="width:min(92vw,620px);padding:0;border-radius:18px;overflow:hidden;background:var(--background-primary,#141722);box-shadow:0 20px 50px rgba(0,0,0,0.35);";
+    modal.modalEl.style.cssText="width:min(92vw,620px);padding:0;border-radius:18px;overflow:hidden;background:var(--base);box-shadow:var(--float);";
     const wrap=modal.contentEl;
     wrap.style.cssText="padding:24px;display:flex;flex-direction:column;gap:14px;";
-    wrap.createEl("div",{text:isZh?"選擇 Memory Map":"Select Memory Map",attr:{style:"font-size:18px;font-weight:800;color:var(--text-normal,#111);"}});
-    wrap.createEl("div",{text:isZh?"選擇要開啟的地圖":"Choose the map to open",attr:{style:"font-size:12px;color:var(--text-muted,#6b7280);margin-top:-6px;"}});
+    wrap.createEl("div",{text:isZh?"選擇 Memory Map":"Select Memory Map",attr:{style:"font-size:18px;font-weight:700;color:var(--text);"}});
+    wrap.createEl("div",{text:isZh?"選擇要開啟的地圖":"Choose the map to open",attr:{style:"font-size:12px;color:var(--text3);margin-top:-6px;"}});
     candidates.forEach(candidate=>{
-      const card=wrap.createEl("div",{attr:{style:"display:flex;flex-direction:column;gap:12px;padding:16px 18px;border-radius:16px;border:1px solid rgba(148,163,184,0.18);background:linear-gradient(180deg,rgba(255,255,255,0.035),rgba(255,255,255,0.015));cursor:pointer;transition:transform .12s ease,border-color .12s ease,background .12s ease;outline:none;"}});      
+      const card=wrap.createEl("div",{cls:"lh-choice"});
       card.setAttr("role","button");
       card.tabIndex=0;
-      card.addEventListener("mouseenter",()=>{card.style.transform="translateY(-1px)";card.style.borderColor="rgba(99,102,241,0.42)";card.style.background="linear-gradient(180deg,rgba(99,102,241,0.10),rgba(255,255,255,0.02))";});
-      card.addEventListener("mouseleave",()=>{card.style.transform="";card.style.borderColor="rgba(148,163,184,0.18)";card.style.background="linear-gradient(180deg,rgba(255,255,255,0.035),rgba(255,255,255,0.015))";});
-      card.addEventListener("focus",()=>{card.style.borderColor="rgba(99,102,241,0.55)";card.style.boxShadow="0 0 0 3px rgba(99,102,241,0.12)";});
-      card.addEventListener("blur",()=>{card.style.borderColor="rgba(148,163,184,0.18)";card.style.boxShadow="";});
       const topRow=card.createEl("div",{attr:{style:"width:100%;display:flex;align-items:flex-start;justify-content:space-between;gap:12px;"}});
-      topRow.createEl("div",{text:getBaseName(candidate.path),attr:{style:"flex:1 1 auto;min-width:0;font-size:17px;font-weight:800;color:var(--text-normal,#111);line-height:1.35;word-break:break-word;overflow-wrap:anywhere;"}});
-      topRow.createEl("div",{text:reasonLabelMap[candidate.reason]||candidate.reason,attr:{style:`flex:0 0 auto;align-self:flex-start;padding:4px 8px;border-radius:999px;font-size:11px;font-weight:700;white-space:nowrap;${reasonStyleMap[candidate.reason]||"background:rgba(148,163,184,0.16);color:#cbd5e1;border:1px solid rgba(203,213,225,0.24);"}`}});
+      topRow.createEl("div",{text:getBaseName(candidate.path),attr:{style:"flex:1 1 auto;min-width:0;font-size:15px;font-weight:600;color:var(--text);line-height:20px;word-break:break-word;overflow-wrap:anywhere;"}});
+      topRow.createEl("div",{text:reasonLabelMap[candidate.reason]||candidate.reason,attr:{style:"flex:0 0 auto;align-self:flex-start;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600;white-space:nowrap;background:var(--fill);color:var(--text2);"}});
       const metaRow=card.createEl("div",{attr:{style:"display:flex;flex-wrap:wrap;gap:8px;width:100%;"}});
-      metaRow.createEl("div",{text:candidate.file.parent?.path||candidate.path,attr:{style:"max-width:100%;padding:5px 10px;border-radius:999px;background:rgba(148,163,184,0.10);color:var(--text-muted,#6b7280);font-size:12px;line-height:1.45;word-break:break-word;overflow-wrap:anywhere;"}});
-      if(candidate.relatedPath) metaRow.createEl("div",{text:isZh?`關聯：${getBaseName(candidate.relatedPath)}`:`Related: ${getBaseName(candidate.relatedPath)}`,attr:{style:"max-width:100%;padding:5px 10px;border-radius:999px;background:rgba(99,102,241,0.14);color:#818cf8;font-size:12px;line-height:1.45;word-break:break-word;overflow-wrap:anywhere;"}});
+      metaRow.createEl("div",{text:candidate.file.parent?.path||candidate.path,attr:{style:"max-width:100%;font-size:12px;line-height:16px;color:var(--text3);word-break:break-word;overflow-wrap:anywhere;"}});
+      if(candidate.relatedPath) metaRow.createEl("div",{text:isZh?`關聯：${getBaseName(candidate.relatedPath)}`:`Related: ${getBaseName(candidate.relatedPath)}`,attr:{style:"max-width:100%;font-size:12px;line-height:16px;color:var(--text3);word-break:break-word;overflow-wrap:anywhere;"}});
       const openCandidate=()=>{modal.close();this.app.workspace.openLinkText(candidate.path,"",false);};
       card.addEventListener("click",openCandidate);
       card.addEventListener("keydown",(ev)=>{ if(ev.key==="Enter"||ev.key===" "){ ev.preventDefault(); openCandidate(); } });
     });
-    const closeBtn=wrap.createEl("button",{text:isZh?"取消":"Cancel",attr:{style:"margin-top:4px;padding:10px 12px;border-radius:12px;border:1px solid rgba(148,163,184,0.18);background:rgba(148,163,184,0.08);color:var(--text-muted,#6b7280);cursor:pointer;font-size:13px;font-weight:600;"}}); 
+    const closeBtn=wrap.createEl("button",{text:isZh?"取消":"Cancel",cls:"lh-btn alt"}); 
     closeBtn.addEventListener("click",()=>modal.close());
     modal.open();
   }
@@ -1027,30 +1017,30 @@ var Q=class extends I.Modal{
     // Hand-written card: show redirect notice, don't delete
     if(!isAiCard){
       const sourceNote=e.notePath||"";
-      const modal=new I.Modal(this.app);
+      const modal=themedModal(new I.Modal(this.app));
       modal.modalEl.style.cssText="width:min(92vw,400px);padding:0;border-radius:16px;overflow:hidden;";
       const wrap=modal.contentEl;
       wrap.style.cssText="padding:24px;display:flex;flex-direction:column;gap:14px;";
-      wrap.createEl("div",{text:"✏️ "+c(t,"EDIT_CARD"),attr:{style:"font-size:16px;font-weight:700;color:var(--text-normal,#111);"}});
-      wrap.createEl("div",{text:`這是「${sourceNote}」的手寫筆記卡片，請直接在筆記中刪除對應的 question :: answer 行。`,attr:{style:"font-size:13px;color:var(--text-muted,#6b7280);line-height:1.6;"}});
+      wrap.createEl("div",{text:"✏️ "+c(t,"EDIT_CARD"),attr:{style:"font-size:16px;font-weight:700;color:var(--text);"}});
+      wrap.createEl("div",{text:`這是「${sourceNote}」的手寫筆記卡片，請直接在筆記中刪除對應的 question :: answer 行。`,attr:{style:"font-size:13px;color:var(--text2);line-height:1.6;"}});
       const btnRow=wrap.createEl("div",{attr:{style:"display:flex;gap:8px;justify-content:flex-end;"}});
-      btnRow.createEl("button",{text:c(t,"DELETE_CANCEL_BTN"),attr:{style:"padding:7px 16px;border-radius:8px;border:1px solid var(--background-modifier-border, #d1d5db);background:var(--background-secondary, #fff);color:var(--text-muted, inherit);cursor:pointer;font-size:13px;"}}).addEventListener("click",()=>modal.close());
-      const openBtn=btnRow.createEl("button",{cls:"lh-btn-primary",text:"開啟筆記",attr:{style:"padding:7px 16px;border-radius:8px;border:none;background:#6366f1;color:#fff;cursor:pointer;font-size:13px;font-weight:600;"}});
+      btnRow.createEl("button",{text:c(t,"DELETE_CANCEL_BTN"),cls:"lh-btn alt"}).addEventListener("click",()=>modal.close());
+      const openBtn=btnRow.createEl("button",{cls:"lh-btn",text:"開啟筆記"});
       openBtn.addEventListener("click",()=>{ modal.close(); this.app.workspace.openLinkText(sourceNote,"",false); });
       modal.open();
       return;
     }
 
     // AI card: confirm then delete
-    const modal=new I.Modal(this.app);
+    const modal=themedModal(new I.Modal(this.app));
     modal.modalEl.style.cssText="width:min(92vw,400px);padding:0;border-radius:16px;overflow:hidden;";
     const wrap=modal.contentEl;
     wrap.style.cssText="padding:24px;display:flex;flex-direction:column;gap:14px;";
-    wrap.createEl("div",{text:c(t,"DELETE_CONFIRM_TITLE").replace("{name}",e.front),attr:{style:"font-size:16px;font-weight:700;color:var(--text-normal,#111);"}});
-    wrap.createEl("div",{text:c(t,"DELETE_CONFIRM_FILE"),attr:{style:"font-size:13px;color:var(--text-muted,#6b7280);line-height:1.6;"}});
+    wrap.createEl("div",{text:c(t,"DELETE_CONFIRM_TITLE").replace("{name}",e.front),attr:{style:"font-size:16px;font-weight:700;color:var(--text);"}});
+    wrap.createEl("div",{text:c(t,"DELETE_CONFIRM_FILE"),attr:{style:"font-size:13px;color:var(--text2);line-height:1.6;"}});
     const btnRow=wrap.createEl("div",{attr:{style:"display:flex;gap:8px;justify-content:flex-end;"}});
-    btnRow.createEl("button",{text:c(t,"DELETE_CANCEL_BTN"),attr:{style:"padding:7px 16px;border-radius:8px;border:1px solid var(--background-modifier-border, #d1d5db);background:var(--background-secondary, #fff);color:var(--text-muted, inherit);cursor:pointer;font-size:13px;"}}).addEventListener("click",()=>modal.close());
-    const delBtn=btnRow.createEl("button",{text:c(t,"DELETE_CONFIRM_BTN"),attr:{style:"padding:7px 16px;border-radius:8px;border:none;background:#ef4444;color:#fff;cursor:pointer;font-size:13px;font-weight:600;"}});
+    btnRow.createEl("button",{text:c(t,"DELETE_CANCEL_BTN"),cls:"lh-btn alt"}).addEventListener("click",()=>modal.close());
+    const delBtn=btnRow.createEl("button",{cls:"lh-btn danger",text:c(t,"DELETE_CONFIRM_BTN")});
     delBtn.addEventListener("click",async()=>{
       modal.close();
       try { await deleteTagSourceCard(this.app,e); } catch(err){ console.error("review-delete failed",err); }

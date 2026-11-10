@@ -10,6 +10,7 @@ const { presets: LENGTHS } = require("../../skills/episodic-review/templates/len
 const data = require("./data");
 const { renderTopic, renderThumb, queueWrite } = require("./render");
 const { openPromptModal } = require("./request-ui");
+const ui = require("../hub/ui");
 
 const LENGTH_KEY = { short: "EPISODIC_LEN_SHORT", medium: "EPISODIC_LEN_MEDIUM", long: "EPISODIC_LEN_LONG" };
 const MODULE = "episodic-review";
@@ -66,32 +67,42 @@ async function renderEpisodicTab(el, hub) {
   const open = !!(sel && sel.slug === data.EPISODIC_SLUG && films.length);
 
   const root = el.createDiv({ cls: "lh-vid" });
-  const head = root.createDiv({ cls: "lh-vid-head" });
-  const left = head.createDiv({ cls: "lh-vid-head-left" });
-  if (open) {
-    left.createEl("button", { cls: "lh-vid-back", text: c(t, "EPISODIC_BACK") })
-      .addEventListener("click", () => { hub._vTopic = null; refresh(); });
-  } else {
-    left.createSpan({ cls: "lh-vid-head-title", text: c(t, "TAB_EPISODIC") });
-    head.createEl("button", { cls: "lh-vid-btn lh-vid-btn-primary", text: c(t, "EPISODIC_NEW") })
-      .addEventListener("click", () => {
-        if (isPro) openNewFilmModal(hub, t, settings.episodicLength, refresh);
-        else new ProUpgradeModal(hub.app, hub.plugin).open();
-      });
+  hub.setHero(!open);
+  hub._entryHints = { ...hub._entryHints, episodic: K(c(t, "VIDEO_COUNT"), { count: films.length }) };
+  const toList = () => { hub._vTopic = null; refresh(); };
+  ui.setPhoneNav(hub, open ? { label: c(t, "EPISODIC_BACK"), title: "", onBack: toList } : null);
+  const phone = ui.isPhone();
+  const addNew = () => {
+    if (isPro) openNewFilmModal(hub, t, settings.episodicLength, refresh);
+    else new ProUpgradeModal(hub.app, hub.plugin).open();
+  };
+  const newButton = (parent) => {
+    const btn = ui.primaryButton(parent, c(t, "EPISODIC_NEW"), addNew, { alt: !isPro });
+    if (!isPro) btn.createSpan({ cls: "lh-vid-pro-tag", text: "Pro" });
+    return btn;
+  };
+  if (open && !phone) {
+    root.createDiv({ cls: "lh-vid-head-row" }).createEl("button", { cls: "lh-vid-back", text: c(t, "EPISODIC_BACK") }).addEventListener("click", toList);
+  } else if (!open && !phone) {
+    const { right } = ui.pageHeader(root, hub, { titleKey: "TAB_EPISODIC", subtitle: c(t, "EPISODIC_DESC") });
+    newButton(right());
   }
 
-  const body = root.createDiv({ cls: "lh-vid-body" });
+  const body = root.createDiv({ cls: "lh-scroll" }).createDiv({ cls: "lh-vid-body" });
   if (open) {
     const sorted = groupByPeriod(films).flatMap((group) => group.films);
-    renderTopic(body, hub, t, { slug: series.slug, meta: { ...series.meta, videos: sorted } }, refresh);
+    renderTopic(body, hub, t, { slug: series.slug, meta: { ...series.meta, videos: sorted }, othersOnPhone: true }, refresh);
     return;
   }
+  if (phone && (isPro || films.length)) newButton(body);
   if (isPro) renderLengthSetting(body, hub, t, settings.episodicLength, refresh);
   renderRequests(body, hub, t, series, refresh);
   if (!films.length) {
     const empty = body.createDiv({ cls: "lh-vid-empty" });
+    ui.icon(empty.createDiv({ cls: "lh-vid-empty-icon" }), "recall");
     empty.createDiv({ cls: "lh-vid-empty-title", text: c(t, "EPISODIC_EMPTY_TITLE") });
     empty.createDiv({ cls: "lh-vid-empty-body", text: c(t, "EPISODIC_EMPTY_BODY") });
+    if (phone && !isPro) newButton(body);
     return;
   }
   for (const group of groupByPeriod(films)) {
@@ -131,11 +142,12 @@ function renderRequests(body, hub, t, series, refresh) {
   const open = series ? series.meta.requests.filter((r) => r.status !== "done") : [];
   if (!open.length) return;
   const list = body.createDiv({ cls: "lh-vid-ep-requests" });
-  list.createDiv({ cls: "lh-vid-side-head", text: c(t, "EPISODIC_PENDING_HEAD") });
+  list.createDiv({ cls: "lh-vid-ep-requests-head", text: c(t, "EPISODIC_PENDING_HEAD") });
   for (const request of open) {
     const row = list.createDiv({ cls: "lh-vid-ep-request" });
     const failed = request.status === "failed";
-    row.createSpan({ cls: "lh-vid-ep-request-text", text: `${periodText(request.period)} · ${c(t, LENGTH_KEY[request.length])}${failed ? ` · ${c(t, "VIDEO_STATUS_FAILED")}${request.note ? `：${request.note}` : ""}` : ""}` });
+    const label = row.createSpan({ cls: "lh-vid-ep-request-text", text: `${periodText(request.period)} · ${c(t, LENGTH_KEY[request.length])}` });
+    if (failed) { label.appendText(" · "); label.createSpan({ cls: "tn", text: `${c(t, "VIDEO_STATUS_FAILED")}${request.note ? `：${request.note}` : ""}` }); }
     row.createEl("button", { cls: "lh-vid-btn", text: c(t, "VIDEO_COPY_PROMPT") })
       .addEventListener("click", () => openPromptModal(hub, t, { prompt: promptFor(t, request), module: MODULE }));
     row.createEl("button", { cls: "lh-vid-btn lh-vid-btn-danger-text", text: c(t, "EPISODIC_CANCEL") })
@@ -151,13 +163,14 @@ const monthValue = (date) => `${date.getFullYear()}-${String(date.getMonth() + 1
 
 function openNewFilmModal(hub, t, defaultLength, refresh) {
   const modal = new I.Modal(hub.app);
-  modal.modalEl.addClass("lh-vid-modal");
+  modal.modalEl.addClass("lh-vid-modal", "lh-vid-recall-new");
   const wrap = modal.contentEl;
   wrap.createDiv({ cls: "lh-vid-modal-title", text: c(t, "EPISODIC_NEW_TITLE") });
 
   const now = new Date();
+  const periods = wrap.createDiv({ cls: "lh-vid-field-two" });
   const monthField = (labelKey, value) => {
-    const field = wrap.createDiv({ cls: "lh-vid-field" });
+    const field = periods.createDiv({ cls: "lh-vid-field" });
     field.createEl("label", { cls: "lh-vid-label", text: c(t, labelKey) });
     const input = field.createEl("input", { cls: "lh-vid-select", attr: { type: "month", max: monthValue(now) } });
     input.value = value;

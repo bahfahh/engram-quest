@@ -39,4 +39,4 @@ function addRewatchButton(parent, app, t, card) {
   });
 }
 
-module.exports = { rewatchTarget, addRewatchButton };
+module.exports = { rewatchTarget, openRewatch, addRewatchButton };
