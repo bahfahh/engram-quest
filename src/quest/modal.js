@@ -1172,6 +1172,15 @@ function renderQuestChallenge(container, challenge, difficulty, onSolved, settin
   }
 }
 
+// A mission's frame is as tall as the mission reports, so the quest window is the only thing that
+// scrolls. The ceiling is there to stop a page that keeps growing, not to fit a mission.
+const QUEST_FRAME_MIN = 220;
+const QUEST_FRAME_MAX = 8000;
+function questFrameHeight(reported, fallback) {
+  const height = Math.round(Number(reported));
+  return Math.max(QUEST_FRAME_MIN, Math.min(QUEST_FRAME_MAX, Number.isFinite(height) && height > 0 ? height : fallback));
+}
+
 function renderQuestHtmlIframe(container, node, onSolved, settings, app, sourcePath, deps) {
   let zh = isZh(deps, settings);
   let resolved = resolveQuestHtmlPath(node.html, sourcePath);
@@ -1222,8 +1231,7 @@ function renderQuestHtmlIframe(container, node, onSolved, settings, app, sourceP
         let data = event.data || {};
         if (!data || typeof data !== "object") return;
         if (data.type === "engram-quest-resize") {
-          let nextHeight = Math.max(220, Math.min(1200, Math.round(Number(data.height) || frameHeight)));
-          iframe.style.height = nextHeight + "px";
+          iframe.style.height = questFrameHeight(data.height, frameHeight) + "px";
         }
         if (data.type === "engram-quest-solved") {
           let rawScore = Number(data.score);
@@ -1410,6 +1418,7 @@ function openQuestChapterModal(app, nodes, activeIndex, styleName, difficulty, s
 }
 
 module.exports = {
+  questFrameHeight,
   renderQuestHtmlIframe,
   renderQuestChallenge,
   openQuestChapterModal
