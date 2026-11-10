@@ -94,7 +94,11 @@ ls engram-quest/lessons/ 2>/dev/null
 ```
 
 If a matching course exists, read its `meta.json` to see the outline and which lessons are
-completed — extend it rather than starting over.
+completed — extend it rather than starting over. Its `mission` and each lesson's `goal` are the
+plan the course was designed on; generate from them, since a title alone does not say what a
+lesson is for. A course or entry without them — made in the plugin, or written before these
+fields existed — gets them first: settle the mission (Step 2) and the goal before generating,
+and record them (Step 5).
 
 When the request builds on the user's own notes, find them with Obsidian CLI
 (see `references/obsidian-cli.md` for syntax):
@@ -103,7 +107,7 @@ When the request builds on the user's own notes, find them with Obsidian CLI
 obsidian search query="<topic>" format=json
 ```
 
-## Step 2: Establish the mission (new course only)
+## Step 2: Establish the mission (any course without one)
 
 Ask the user (briefly, 2–3 questions max, skip what's already clear from the prompt):
 
@@ -113,6 +117,10 @@ Ask the user (briefly, 2–3 questions max, skip what's already clear from the p
 
 The answers shape the outline. A .NET backend developer learning React needs a completely
 different course than a designer learning React.
+
+The mission has to outlive this conversation, because most lessons are generated in a later one.
+Keep it as the course's `mission`: the why, the starting point, and whatever the user said about
+their situation that changes how a lesson should be built for them.
 
 ## Step 3: Design the course outline
 
@@ -125,6 +133,10 @@ Produce an outline of N lessons, each one line:
 
 Order matters: each lesson should rely only on earlier lessons. Show the outline to the user
 for approval before generating (generation is expensive; outline changes are cheap).
+
+Each lesson also gets a `goal`: what the learner can do after it, in the terms the user approved.
+That holds for a canvas step too — its form is not its goal. A lesson generated later is built
+toward it.
 
 ### Canvas steps in the outline
 
@@ -204,6 +216,9 @@ Critical rules:
 - New lessons append to the `lessons` array with `"source": "skill"`.
 - Initialize `completion[id] = { "viewed": false, "completed": false, "starred": false }`
   for each new lesson.
+- **The plan is saved with the outline**: the course's `mission` and every lesson's `goal` are
+  written when the outline is, whether its lessons are generated now or left planned.
+  Generating a planned lesson fills in its `file`; its goal stays as it was.
 
 ## Step 6: Tell the user
 

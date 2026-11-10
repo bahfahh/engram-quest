@@ -363,6 +363,66 @@ describe("reorderLessons", () => {
   });
 });
 
+// `mission` (course) and `goal` (lesson) belong to the lesson-academy skill: it writes them when
+// it designs an outline and reads them back when it generates a planned lesson. The plugin only
+// has to hand them back unchanged on every one of its own writes.
+describe("skill-owned plan fields (mission / goal)", () => {
+  const MISSION = "三個月後要帶團隊做 A/B 測試；會 Excel，沒學過統計；只有手機可以看教材。";
+  const plannedCourse = () => courseMeta({
+    mission: MISSION,
+    lessons: [
+      { id: "lsn-1", title: "L1", file: "lsn-1-a.html", source: "skill", goal: "能說出漏斗哪一段流失最多" },
+      { id: "lsn-2", title: "L2", file: null, source: "skill", goal: "能判斷樣本數夠不夠" },
+      { id: "lsn-3", title: "L3", file: null, type: "canvas", source: "skill" },
+    ],
+  });
+  const onDisk = (adapter) => JSON.parse(adapter.files[`${LESSONS_DIR}/c/meta.json`]);
+  const goals = (meta) => Object.fromEntries(meta.lessons.map((l) => [l.id, l.goal]));
+
+  it("loads a course written before the fields existed, adding neither", async () => {
+    const adapter = makeAdapter(seedCourse("c", courseMeta()));
+    const meta = await loadCourse(adapter, "c");
+    expect(meta.lessons).toHaveLength(2);
+    expect("mission" in meta).toBe(false);
+    expect(meta.lessons.some((l) => "goal" in l)).toBe(false);
+    await toggleCourseStar(adapter, "c");
+    expect("mission" in onDisk(adapter)).toBe(false);
+    expect(onDisk(adapter).lessons.some((l) => "goal" in l)).toBe(false);
+  });
+
+  it("carries a mission through as written, whatever its shape", () => {
+    const mission = { why: "exam", level: "beginner" };
+    expect(normalizeMeta({ mission }).mission).toEqual(mission);
+  });
+
+  it("creating a course whose title matches an existing folder leaves that course alone", async () => {
+    const adapter = makeAdapter(seedCourse("c", plannedCourse()));
+    const { slug } = await createCourse(adapter, { title: "C", outline: ["Intro"] });
+    expect(slug).not.toBe("c");
+    expect(onDisk(adapter)).toEqual(plannedCourse());
+    expect((await loadCourse(adapter, slug)).lessons.map((l) => l.title)).toEqual(["Intro"]);
+  });
+
+  const writes = {
+    "markLesson (viewed / done / star)": (a) => markLesson(a, "c", "lsn-1", { viewed: true, completed: true, starred: true }),
+    "addPlannedLesson": (a) => addPlannedLesson(a, "c", "New topic"),
+    "toggleCourseStar": (a) => toggleCourseStar(a, "c"),
+    "toggleCourseArchive": (a) => toggleCourseArchive(a, "c"),
+    "importLesson": (a) => importLesson(a, "c", "<html><title>Imported</title></html>", "imported"),
+    "deleteLesson": (a) => deleteLesson(a, "c", "lsn-3"),
+    "reorderLessons": (a) => reorderLessons(a, "c", ["lsn-3", "lsn-2", "lsn-1"]),
+  };
+  for (const [name, write] of Object.entries(writes)) {
+    it(`keeps mission and every goal through ${name}`, async () => {
+      const adapter = makeAdapter(seedCourse("c", plannedCourse()));
+      await write(adapter);
+      const meta = onDisk(adapter);
+      expect(meta.mission).toBe(MISSION);
+      expect(goals(meta)).toMatchObject({ "lsn-1": "能說出漏斗哪一段流失最多", "lsn-2": "能判斷樣本數夠不夠" });
+    });
+  }
+});
+
 describe("sidebar aggregations", () => {
   it("recentLessons sorts by lastViewed desc and respects the limit", () => {
     const mk = (slug, id, last) => ({

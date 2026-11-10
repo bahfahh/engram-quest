@@ -772,7 +772,19 @@ function renderLessonList(main, hub, t, tk, course, state, refresh) {
         attr: { style: `flex-shrink:0;font-size:9px;padding:1px 6px;border-radius:8px;background:${tk.pillIdleBg};color:${tk.pillIdleText};` },
       });
     }
-    if (lesson.file) {
+    // The skill's learning goal for this lesson says more to a learner than a filename, and it
+    // is the only thing a planned row has to show besides its title.
+    if (typeof lesson.goal === "string" && lesson.goal.trim()) {
+      mid.createEl("div", {
+        text: lesson.goal,
+        attr: {
+          style:
+            `margin-top:2px;font-size:11px;line-height:1.4;color:${tk.muted};overflow:hidden;` +
+            "display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;word-break:break-word;",
+          title: lesson.goal,
+        },
+      });
+    } else if (lesson.file) {
       mid.createEl("div", {
         text: lesson.file,
         attr: { style: `font-size:10px;color:${tk.faint};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;` },
