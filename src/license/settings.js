@@ -15,6 +15,8 @@ function renderLicenseSettings(container, plugin, rerender = () => {}) {
     status.setText(tr(`LICENSE_STATUS_${license.state.status.toUpperCase()}`));
   }
   paint();
+  // The first check finishes in the background, possibly after this tab is drawn.
+  const stop = license.subscribe(() => { if (status.isConnected) paint(); else stop(); });
   if (license.config.environment === "sandbox") {
     container.createEl("p", { text: tr("LICENSE_SANDBOX"), cls: "setting-item-description" });
   }

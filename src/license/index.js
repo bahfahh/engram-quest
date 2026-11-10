@@ -2,13 +2,17 @@
 
 const { requestUrl } = require("obsidian");
 const config = require("./config");
-const { checkLicense } = require("./core");
+const { checkLicense, cacheMatches, configured } = require("./core");
 
 function createLicenseController(plugin, options = {}) {
   const publicConfig = options.config || config;
   const clock = options.now || Date.now;
   const transport = options.request || requestUrl;
-  let current = { valid: false, status: "inactive", cache: null };
+  const { licenseKey, licenseCache } = plugin.settings;
+  // A still-valid cache answers at once, so Pro does not depend on the first network reply.
+  let current = configured(publicConfig) && cacheMatches(licenseCache, licenseKey, publicConfig, clock())
+    ? { valid: true, status: "active", cache: licenseCache }
+    : { valid: false, status: "inactive", cache: null };
   let generation = 0;
   let disposed = false;
   const listeners = new Set();
@@ -52,19 +56,21 @@ function createLicenseController(plugin, options = {}) {
   return {
     config: publicConfig,
     get state() { return current; },
+    get disposed() { return disposed; },
     refresh, remove,
     subscribe(fn) { listeners.add(fn); return () => listeners.delete(fn); },
     dispose() { disposed = true; ++generation; listeners.clear(); },
   };
 }
 
-async function initializeLicense(plugin) {
-  plugin.license = createLicenseController(plugin);
+function initializeLicense(plugin, options) {
+  plugin.license = createLicenseController(plugin, options);
   plugin.register(() => plugin.license.dispose());
-  await plugin.license.refresh();
-  plugin.registerInterval(window.setInterval(() => {
-    plugin.license.refresh().catch(() => console.warn("EngramQuest: license refresh could not be saved"));
-  }, 60 * 60 * 1000));
+  const refresh = () => plugin.license.refresh()
+    .catch(() => console.warn("EngramQuest: license refresh could not be saved"));
+  // Obsidian's startup must not wait on the network; callers that need the answer await `ready`.
+  plugin.license.ready = refresh();
+  plugin.registerInterval(window.setInterval(refresh, 60 * 60 * 1000));
 }
 
 module.exports = { initializeLicense, createLicenseController };

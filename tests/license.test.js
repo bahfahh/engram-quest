@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { createRequire } from "node:module";
 const require = createRequire(import.meta.url);
 const { checkLicense, GRACE_MS, RECHECK_MS } = require("../src/license/core");
-const { createLicenseController } = require("../src/license");
+const { createLicenseController, initializeLicense } = require("../src/license");
 
 const config = { environment: "sandbox", organizationId: "00000000-0000-4000-8000-000000000001",
   benefitId: "00000000-0000-4000-8000-000000000002" };
@@ -96,6 +96,44 @@ describe("runtime-only license state", () => {
   function plugin(settings = {}) {
     return { settings: { licenseValid: true, ...settings }, manifest: { version: "1.11.1" }, saveData: vi.fn(async () => {}) };
   }
+  it("a valid cache unlocks Pro before the network answers", async () => {
+    const p = plugin({ licenseKey: "test-key", licenseCache: await goodCache() });
+    createLicenseController(p, { config, now: () => now, request: () => new Promise(() => {}) });
+    expect(p.settings.licenseValid).toBe(true);
+  });
+  it("a cache past the grace period does not unlock Pro at startup", async () => {
+    const p = plugin({ licenseKey: "test-key", licenseCache: await goodCache() });
+    createLicenseController(p, { config, now: () => now + GRACE_MS, request: () => new Promise(() => {}) });
+    expect(p.settings.licenseValid).toBe(false);
+  });
+  it("a revoked key locks Pro when the background check answers", async () => {
+    const p = plugin({ licenseKey: "test-key", licenseCache: await goodCache() });
+    const c = createLicenseController(p, { config, now: () => now + RECHECK_MS, request: async () => ({ status: 404 }) });
+    expect(p.settings.licenseValid).toBe(true);
+    await c.refresh();
+    expect(p.settings.licenseValid).toBe(false);
+  });
+  it("an unloaded plugin ignores a check still in flight", async () => {
+    let resolve;
+    const p = plugin({ licenseKey: "test-key" });
+    const c = createLicenseController(p, { config, now: () => now, request: () => new Promise(r => { resolve = r; }) });
+    const refreshing = c.refresh();
+    c.dispose();
+    resolve(ok());
+    await refreshing;
+    expect(c.disposed).toBe(true);
+    expect(p.settings.licenseValid).toBe(false);
+  });
+  it("startup returns before the first license check finishes", async () => {
+    let resolve;
+    const p = { ...plugin({ licenseKey: "test-key" }), register: vi.fn(), registerInterval: clearInterval };
+    initializeLicense(p, { config, now: () => now, request: () => new Promise(r => { resolve = r; }) });
+    expect(p.settings.licenseValid).toBe(false);
+    expect(p.license.state.status).toBe("checking");
+    resolve(ok());
+    await p.license.ready;
+    expect(p.settings.licenseValid).toBe(true);
+  });
   it("ignores persisted true and omits the derived flag from saved JSON", async () => {
     const p = plugin();
     const c = createLicenseController(p, { config, now: () => now, request: async () => ok() });
