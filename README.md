@@ -137,7 +137,7 @@ Say what you want to learn or review — "my coding workflow", "SEO" — and the
 - **Set it once** — teacher, quality (*High quality* is 1080p, *Space saver* is 720p), narration language, voice engine, subtitles and review cards live in *Video settings*. Every video is shot in the Engram studio, and the AI picks a light or dark set to suit the content
 - Videos live in `engram-quest/videos/` inside your vault. On desktop, the folder button next to *Mark as watched* shows the video file in your system file explorer. To watch on your phone, make sure your sync tool also syncs the mp4 files there — don't exclude them (with git, every video stays in the history; that is your trade-off to make)
 
-> Videos are made with **Claude Code**: install the **Animated Course** skill in `Settings → EngramQuest → AI Skills`, add a series with **+ New series**, then ask Claude Code to make it.
+> Videos are made with **Claude Code**: install the **Animated Course** skill in `Settings → EngramQuest → AI Skills`, add a series with **New series**, then ask Claude Code to make it.
 
 ### 🧠 Memory Map — See the Big Picture
 
@@ -169,7 +169,7 @@ Track your learning milestones with 3D-rendered icons and rarity tiers — from 
 
 ![Deep Dive](assets/guide/deepdive_english.webp)
 
-When a flashcard is too hard to understand, hit **➕ Queue deep dive** during review. The AI diagnoses why the card failed you (too hard? too terse? missing context?) and generates a self-contained, illustrated deep-dive page — problem first, then the big-picture map, a memory anchor metaphor, a layered walkthrough, and common confusions, ending back at your original card. Deep dives carry **no schedule of their own**: the original card keeps reviewing, and if it keeps failing, the page is automatically rewritten from a shallower entry point. You can also ask directly — *"Make a deep dive about the data flywheel."* The Deep Dive page appears in the Memory group once Pro is active. Its progress bar splits pages into **completed, read and unread**; opening a page marks it read, and only your own ✓ marks it completed. Star the ones worth revisiting.
+When a flashcard is too hard to understand, hit **Queue deep dive** during review. The AI diagnoses why the card failed you (too hard? too terse? missing context?) and generates a self-contained, illustrated deep-dive page — problem first, then the big-picture map, a memory anchor metaphor, a layered walkthrough, and common confusions, ending back at your original card. Deep dives carry **no schedule of their own**: the original card keeps reviewing, and if it keeps failing, the page is automatically rewritten from a shallower entry point. You can also ask directly — *"Make a deep dive about the data flywheel."* The Deep Dive page appears in the Memory group once Pro is active. Its progress bar splits pages into **completed, read and unread**; opening a page marks it read, and only your own ✓ marks it completed. Star the ones worth revisiting.
 
 ---
 
@@ -426,7 +426,7 @@ Anki 解決「何時複習」。EngramQuest 解決「如何真正記住」 — �
 - **設一次就好** — 老師、畫質（高畫質 1080p，省空間 720p）、旁白語言、配音引擎、字幕、複習卡都在「影片設定」。畫面都在 Engram 攝影棚，AI 依內容選明棚或暗棚
 - 影片存在 vault 的 `engram-quest/videos/`。桌面版可按「標記已看完」旁的資料夾按鈕，直接在系統檔案總管中找到影片檔。想在手機上看，同步工具也要同步這裡的 mp4，不要排除（用 git 的話，每支影片都會留在 git 歷史裡，這個取捨由你決定）
 
-> 影片用 **Claude Code** 製作：在 `設定 → EngramQuest → AI Skills` 安裝 **Animated Course** skill，在影片學院按 **＋ 新系列** 寫下想學什麼，再請 Claude Code 製作。
+> 影片用 **Claude Code** 製作：在 `設定 → EngramQuest → AI Skills` 安裝 **Animated Course** skill，在影片學院按 **新系列** 寫下想學什麼，再請 Claude Code 製作。
 
 ### 🧠 Memory Map — 看見全局
 
@@ -458,7 +458,7 @@ Anki 解決「何時複習」。EngramQuest 解決「如何真正記住」 — �
 
 ![深入解析](assets/guide/deepdive_中文.webp)
 
-複習時遇到看不懂的卡，按「**➕ 加入解析佇列**」標記它。AI 會診斷這張卡為什麼難（內容太難？描述太簡略？缺乏脈絡？），生成一頁自包含的圖解深入解析——先講它解決什麼問題，再給宏觀地圖、記憶錨比喻、逐層拆解與常見混淆，最後回到你原本的卡片。解析頁**沒有自己的排程**：原卡照常複習，若持續答錯，解析會自動用更淺的切入點重寫。也可以直接說 — *「幫我做一份資料飛輪的深入解析。」* 啟用 Pro 後，深入解析會出現在記憶分組。進度條把解析頁分成**已完成、已讀、未讀**；點開就算已讀，只有你自己按 ✓ 才算完成。值得再看的可以加星。
+複習時遇到看不懂的卡，按「**加入解析佇列**」標記它。AI 會診斷這張卡為什麼難（內容太難？描述太簡略？缺乏脈絡？），生成一頁自包含的圖解深入解析——先講它解決什麼問題，再給宏觀地圖、記憶錨比喻、逐層拆解與常見混淆，最後回到你原本的卡片。解析頁**沒有自己的排程**：原卡照常複習，若持續答錯，解析會自動用更淺的切入點重寫。也可以直接說 — *「幫我做一份資料飛輪的深入解析。」* 啟用 Pro 後，深入解析會出現在記憶分組。進度條把解析頁分成**已完成、已讀、未讀**；點開就算已讀，只有你自己按 ✓ 才算完成。值得再看的可以加星。
 
 ---
 
