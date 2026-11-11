@@ -36,6 +36,18 @@ Once the plugin is installed, click the **EngramQuest icon in the left ribbon** 
 
 <img src="assets/guide/obsidianpluginicon.png" width="380" alt="Open EngramQuest from the left ribbon">
 
+### Inside the Hub
+
+![The EngramQuest Hub](assets/guide/hub_english.webp)
+
+The sidebar groups every page by what you are doing:
+
+- **Memory** — Review Deck, Deep Dive (Pro), Memory Map, Recall Films
+- **Learn** — Lessons, Quest Map, Video Academy
+- **Achieve** — Achievements
+
+The library pages (Review Deck, Deep Dive, Memory Map, Lessons, Quest Map, Video Academy) open with their key numbers and a progress bar, then the same toolbar: search, filters, sort, and list / grid / folder views. The **?** at the bottom of the sidebar, next to Pro, opens the full guide; the **?** beside a page title reopens that page's short guide, which also appears the first time you open the page. On a phone the Hub becomes three tabs at the bottom (Memory, Learn, Achieve), and the **?** sits in the top-right corner.
+
 ---
 
 ## ⚡ Quick Start (AI Path)
@@ -52,9 +64,9 @@ Once the plugin is installed, click the **EngramQuest icon in the left ribbon** 
 2. **Install the Skills** — go to `Settings → EngramQuest → AI Skills` and click **Install** for your tool (Claude Code, Codex / Antigravity, Gemini CLI, or Cursor). Installed skills stay up to date automatically when the plugin updates (toggle in Settings); if outdated skills are ever detected, the Hub shows a reminder banner with a one-click **Update skills** button.
    ![Install Skills](assets/install-skills.png)
 3. **Ask your AI** — *"Turn `Note.md` into a quest-map medium"* or *"Build a review deck from notes tagged math."*
-4. **Open the Hub** — click the 🗺️ ribbon icon, switch to the relevant tab, and start learning.
+4. **Open the Hub** — click the EngramQuest ribbon icon, pick the page in the sidebar, and start learning.
 
-> 💬 **Using Claude Desktop?** No terminal required — paste one Setup Prompt and Claude connects to your vault automatically, loads the skills, and remembers the rules. Open the in-plugin Guide (❓ icon in the Hub) and copy the **Claude Desktop Setup Prompt** from the top of the guide. Claude Desktop also has built-in web search and can generate SVG diagrams alongside your content.
+> 💬 **Using Claude Desktop?** No terminal required — paste one Setup Prompt and Claude connects to your vault automatically, loads the skills, and remembers the rules. Open the in-plugin guide (the **?** at the bottom of the Hub sidebar), expand **Getting started**, and press **Copy setup prompt** under *No terminal? Use Claude Desktop*. Claude Desktop also has built-in web search and can generate SVG diagrams alongside your content.
 
 > **Not a SaaS.** Skills are the execution logic that run inside the AI tool you already have. No extra account, no subscription, and AI is fully optional.
 
@@ -113,7 +125,9 @@ Tell the AI what you want to learn — it builds a course of interactive HTML le
 
 ▶️ [Create a course with Claude Code](https://youtu.be/G8HxBl9Hf9o)
 
-### 🎬 Video Academy — One Sentence, Short Video Lessons (preview)
+### 🎬 Video Academy — One Sentence, Short Video Lessons
+
+![Video Academy](assets/guide/video_academy_english.webp)
 
 Say what you want to learn or review — "my coding workflow", "SEO" — and the AI turns it into short video lessons, each sized to what it teaches.
 
@@ -123,7 +137,7 @@ Say what you want to learn or review — "my coding workflow", "SEO" — and the
 - **Set it once** — teacher, quality (*High quality* is 1080p, *Space saver* is 720p), narration language, voice engine, subtitles and review cards live in *Video settings*. Every video is shot in the Engram studio, and the AI picks a light or dark set to suit the content
 - Videos live in `engram-quest/videos/` inside your vault. On desktop, the folder button next to *Mark as watched* shows the video file in your system file explorer. To watch on your phone, make sure your sync tool also syncs the mp4 files there — don't exclude them (with git, every video stays in the history; that is your trade-off to make)
 
-> Preview: the Hub tab, player and settings are in place; the video-generating skill ships separately.
+> Videos are made with **Claude Code**: install the **Animated Course** skill in `Settings → EngramQuest → AI Skills`, add a series with **+ New series**, then ask Claude Code to make it.
 
 ### 🧠 Memory Map — See the Big Picture
 
@@ -135,22 +149,34 @@ Visualizes abstract concepts using Obsidian Canvas.
 - Any file named `{note-name}-memory.canvas` is auto-detected in Hub → Memory Map
 - During review, the Memory Map button finds and opens the matching canvas automatically
 
+### 🎞️ Recall Films — Walk Back Through What You Studied
+
+![Recall Films](assets/guide/episodic_review_english.webp)
+
+A recall film takes you back to what you read over a month, or a range of months, so the ideas come back in the context you met them.
+
+- **Watch for free** — films are grouped by period, newest first; open one to play it
+- **Make a new film (Pro)** — click **+ New film**, pick the period and a length (short, medium or long; set a default once), and the request waits in *Waiting to be made*. Copy its prompt into Claude Code, which makes the film with the **Episodic Review** skill; you can cancel a request any time
+- Films are stored in `engram-quest/videos/episodic-recall/`
+
 ### 🏆 Achievements
 
-![Achievements](assets/achievements.png)
+![Achievements](assets/guide/achievements_english.webp)
 
-Track your learning milestones with 3D-rendered icons and rarity tiers — from reviews and streaks to mastered cards, Lesson Academy completion, and Quest Map progress. Click any achievement for your activity calendar and progress data.
+Track your learning milestones with 3D-rendered icons and rarity tiers — from reviews and streaks to mastered cards, Lesson Academy completion, and Quest Map progress. The page shows your totals, how familiar your cards are, and your activity over the last 7, 30 or 90 days. Click any achievement to see its details and progress.
 
 ### 📖 Deep Dive — plain-language rescue for hard cards (Pro)
 
-When a flashcard is too hard to understand, hit **➕ Queue deep dive** during review. The AI diagnoses why the card failed you (too hard? too terse? missing context?) and generates a self-contained, illustrated deep-dive page — problem first, then the big-picture map, a memory anchor metaphor, a layered walkthrough, and common confusions, ending back at your original card. Deep dives carry **no schedule of their own**: the original card keeps reviewing, and if it keeps failing, the page is automatically rewritten from a shallower entry point. You can also ask directly — *"Make a deep dive about the data flywheel."* Reading state is colour-coded the same way across the Memory tabs: **amber = unread, blue = read, indigo = starred, green = completed** — and only your own ✓ mark turns something green.
+![Deep Dive](assets/guide/deepdive_english.webp)
+
+When a flashcard is too hard to understand, hit **➕ Queue deep dive** during review. The AI diagnoses why the card failed you (too hard? too terse? missing context?) and generates a self-contained, illustrated deep-dive page — problem first, then the big-picture map, a memory anchor metaphor, a layered walkthrough, and common confusions, ending back at your original card. Deep dives carry **no schedule of their own**: the original card keeps reviewing, and if it keeps failing, the page is automatically rewritten from a shallower entry point. You can also ask directly — *"Make a deep dive about the data flywheel."* The Deep Dive page appears in the Memory group once Pro is active. Its progress bar splits pages into **completed, read and unread**; opening a page marks it read, and only your own ✓ marks it completed. Star the ones worth revisiting.
 
 ---
 
 ## 🚀 Decided to try it? Your first 60 seconds
 
 1. **Install the plugin** — search **EngramQuest** in Community Plugins (or [open it in Obsidian](obsidian://show-plugin?id=engram-quest)).
-2. **Open the Hub** — click the 🗺️ ribbon icon on the left.
+2. **Open the Hub** — click the EngramQuest icon in the left ribbon.
 3. **Pick a path:**
    - **No AI?** Tag any note `#flashcards/topic`, write a `Q:/A:` card, and it appears in your Review Deck instantly. → [Write cards yourself](#-write-cards-yourself-no-ai-required)
    - **Have an AI tool?** Install the Skills once (`Settings → EngramQuest → AI Skills`), then just say *"Build a review deck from my math notes."* → [The AI path](#-quick-start-ai-path)
@@ -235,6 +261,24 @@ Mark key answers with `==highlight==` or `**bold**`, then add a rule to your AI 
 
 ---
 
+## Pro: four ways to learn
+
+**US$11.99 one-time purchase. Future Pro feature updates included.** All existing free features stay available without upgrading. Applicable taxes appear at checkout.
+
+| Pro feature | What it adds | Availability |
+| --- | --- | --- |
+| Memory anchors · Synapse | Connect review cards to related knowledge you have mastered | Available; the skill prepares matching anchors |
+| Deep dive | Queue difficult cards, generate illustrated explanations with the skill, and read them in the Hub | Available |
+| Time-boxed review | Choose 5 / 10 / 15 minutes to review priority cards | Available |
+| More teachers and recall films | Teachers who each teach in their own way, a teacher per series, and recall films made from your notes | Available; videos are made with Claude Code |
+
+Video Academy management, Nico, and watching any video, including recall films you already have, remain free. Open **Pro** at the bottom of the Hub sidebar (on a phone, the Pro row on the Memory page) or **Settings → EngramQuest → Explore Pro** for the illustrated overview. It opens only when selected; no automatic upgrade popup. Separate light and dark illustrations follow the Obsidian theme. Copy your key from Polar and activate it in Settings, then reopen the Hub.
+
+
+**Disclosures.** Pro is an optional one-time payment (US$11.99, through Polar). The plugin uses the network for two things: license validation with Polar (api.polar.sh; sandbox-api.polar.sh for local tests), which sends the key and organization/benefit identifiers and never note content, and downloading the video assets from this project's GitHub Releases when you install the video skills. Hosted checkout and the customer portal are operated by Polar. The key and a bounded success cache stay in plugin data.json; a successful validation allows up to fourteen days offline, and plugin updates trigger an online recheck. Removing the local license preserves learning data. Installing skills writes files to your vault's `.claude/skills/` (and the matching folders for other AI tools). This development build uses sandbox and accepts only test keys.
+
+---
+
 ## ☕ Support
 
 If EngramQuest is useful to you, consider supporting its development:
@@ -281,6 +325,18 @@ Anki 解決「何時複習」。EngramQuest 解決「如何真正記住」 — �
 
 <img src="assets/guide/obsidianpluginicon.png" width="380" alt="從左側 ribbon 打開 EngramQuest">
 
+### Hub 裡有什麼
+
+![EngramQuest Hub](assets/guide/hub_中文.webp)
+
+側欄依你在做的事分組：
+
+- **記憶** — Review Deck、深入解析（Pro）、Memory Map、情境回顧
+- **學習** — 教材、Quest Map、影片學院
+- **成就**
+
+收藏類的頁面（Review Deck、深入解析、Memory Map、教材、Quest Map、影片學院）先給關鍵數字和進度條，下面是一樣的工具列：搜尋、篩選、排序，以及清單／格狀／資料夾三種檢視。側欄底部、Pro 旁邊的 **?** 打開完整說明；頁面標題旁的 **?** 重新打開這一頁的簡短引導，它在你第一次打開這一頁時也會出現。手機上，Hub 變成底部的三個分頁（記憶、學習、成就），**?** 在右上角。
+
 ---
 
 ## ⚡ 快速開始（AI 路徑）
@@ -297,9 +353,9 @@ Anki 解決「何時複習」。EngramQuest 解決「如何真正記住」 — �
 2. **安裝 Skills** — 到 `設定 → EngramQuest → AI Skills`，為你的工具（Claude Code、Codex / Antigravity、Gemini CLI 或 Cursor）點 **安裝**。插件更新後會自動更新已安裝的 skills（可在設定關閉）；若偵測到 skills 過期，Hub 會顯示提醒橫幅，一鍵按「更新 Skills」即可。
    ![安裝 Skills](assets/install-skills.png)
 3. **問你的 AI** — *「把 `Note.md` 變成 quest-map medium」* 或 *「用標 math 的筆記建一副 review deck。」*
-4. **打開 Hub** — 點 🗺️ ribbon 圖示，切到對應分頁，開始學習。
+4. **打開 Hub** — 點 EngramQuest 的 ribbon 圖示，在側欄選頁面，開始學習。
 
-> 💬 **用 Claude Desktop？** 不需要 terminal — 貼一段 Setup Prompt，Claude 自動連上你的 vault、載入 skills 並記住規則。開 plugin 的 Guide（Hub 的 ❓ 圖示），在指南最上方的「連接 AI 工具」區塊複製 **Claude Desktop Setup Prompt**。Claude Desktop 還有內建網路搜尋，可以生成 SVG 圖解。
+> 💬 **用 Claude Desktop？** 不需要 terminal — 貼一段 Setup Prompt，Claude 自動連上你的 vault、載入 skills 並記住規則。打開插件的說明（Hub 側欄底部的 **?**），展開「**開始使用**」，在「沒有 terminal？用 Claude Desktop」下面按 **複製設定提示**。Claude Desktop 還有內建網路搜尋，可以生成 SVG 圖解。
 
 > **不是 SaaS。** Skills 是在你已有的 AI 工具裡執行的邏輯，不需要額外帳號、不需要訂閱，而且 AI 完全可選。
 
@@ -341,7 +397,7 @@ Anki 解決「何時複習」。EngramQuest 解決「如何真正記住」 — �
 - **Boss Battle** — 章末的整合案例，測判斷、排序、取捨或診斷能力
 - **進度安全** — 分數和完成度與 quest YAML 分開儲存，AI 更新關卡時不會洗掉你的進度
 
-### 🎓 Lesson Academy — AI 打造的課程
+### 🎓 教材（Lesson Academy）— AI 打造的課程
 
 ![Lesson Academy](assets/guide/lesson_academy_中文.webp)
 
@@ -358,7 +414,9 @@ Anki 解決「何時複習」。EngramQuest 解決「如何真正記住」 — �
 
 ▶️ [用 Claude Code 建立課程](https://youtu.be/G8HxBl9Hf9o)
 
-### 🎬 影片學院 — 一句話，做成教學短片（預覽）
+### 🎬 影片學院 — 一句話，做成教學短片
+
+![影片學院](assets/guide/video_academy_中文.webp)
 
 說一句想學或想複習什麼，例如「我的 coding 流程」「SEO」，AI 就把它做成教學短片，長度依要教的內容決定。
 
@@ -368,7 +426,7 @@ Anki 解決「何時複習」。EngramQuest 解決「如何真正記住」 — �
 - **設一次就好** — 老師、畫質（高畫質 1080p，省空間 720p）、旁白語言、配音引擎、字幕、複習卡都在「影片設定」。畫面都在 Engram 攝影棚，AI 依內容選明棚或暗棚
 - 影片存在 vault 的 `engram-quest/videos/`。桌面版可按「標記已看完」旁的資料夾按鈕，直接在系統檔案總管中找到影片檔。想在手機上看，同步工具也要同步這裡的 mp4，不要排除（用 git 的話，每支影片都會留在 git 歷史裡，這個取捨由你決定）
 
-> 預覽版：Hub 分頁、播放器與設定已完成；生成影片的 skill 會另外推出。
+> 影片用 **Claude Code** 製作：在 `設定 → EngramQuest → AI Skills` 安裝 **Animated Course** skill，在影片學院按 **＋ 新系列** 寫下想學什麼，再請 Claude Code 製作。
 
 ### 🧠 Memory Map — 看見全局
 
@@ -380,22 +438,34 @@ Anki 解決「何時複習」。EngramQuest 解決「如何真正記住」 — �
 - 任何命名為 `{筆記名}-memory.canvas` 的檔案會在 Hub → Memory Map 自動偵測
 - 複習途中，Memory Map 按鈕會自動找到並打開對應的 canvas
 
+### 🎞️ 情境回顧 — 回到讀過的東西
+
+![情境回顧](assets/guide/episodic_review_中文.webp)
+
+情境回顧片帶你回到一個月（或連續幾個月）讀過的東西，讓概念在你當初遇到它的情境裡回來。
+
+- **觀看免費** — 回顧片依期間分組，新的在上面，點開就播放
+- **製作新片（Pro）** — 按 **+ 做新的一支**，選期間和長度（短、中、長，可設定預設長度），請求會出現在「等待製作」。複製它的提示詞貼到 Claude Code，由 **Episodic Review** skill 做成影片；請求隨時可以取消
+- 回顧片存在 `engram-quest/videos/episodic-recall/`
+
 ### 🏆 成就系統
 
-![成就](assets/achievements.png)
+![成就](assets/guide/achievements_中文.webp)
 
-用 3D 渲染圖示與稀有度分級追蹤你的學習里程碑 — 從複習次數、連續天數、精熟卡片，到 Lesson Academy 完課與 Quest Map 進度。點任一成就查看你的活動日曆與進度數據。
+用 3D 渲染圖示與稀有度分級追蹤你的學習里程碑 — 從複習次數、連續天數、精熟卡片，到教材完課與 Quest Map 進度。這一頁顯示你的總數、卡片熟悉度，以及最近 7、30 或 90 天的活動。點任一成就查看它的說明與進度。
 
 ### 📖 深入解析 — 難卡的白話救援（Pro）
 
-複習時遇到看不懂的卡，按「**➕ 加入解析佇列**」標記它。AI 會診斷這張卡為什麼難（內容太難？描述太簡略？缺乏脈絡？），生成一頁自包含的圖解深入解析——先講它解決什麼問題，再給宏觀地圖、記憶錨比喻、逐層拆解與常見混淆，最後回到你原本的卡片。解析頁**沒有自己的排程**：原卡照常複習，若持續答錯，解析會自動用更淺的切入點重寫。也可以直接說 — *「幫我做一份資料飛輪的深入解析。」* 閱讀狀態在記憶分頁使用一致的配色：**琥珀 = 未讀、藍 = 已讀、靛 = 已加星、綠 = 已完成** — 只有你自己按 ✓ 標記，才會變成綠色。
+![深入解析](assets/guide/deepdive_中文.webp)
+
+複習時遇到看不懂的卡，按「**➕ 加入解析佇列**」標記它。AI 會診斷這張卡為什麼難（內容太難？描述太簡略？缺乏脈絡？），生成一頁自包含的圖解深入解析——先講它解決什麼問題，再給宏觀地圖、記憶錨比喻、逐層拆解與常見混淆，最後回到你原本的卡片。解析頁**沒有自己的排程**：原卡照常複習，若持續答錯，解析會自動用更淺的切入點重寫。也可以直接說 — *「幫我做一份資料飛輪的深入解析。」* 啟用 Pro 後，深入解析會出現在記憶分組。進度條把解析頁分成**已完成、已讀、未讀**；點開就算已讀，只有你自己按 ✓ 才算完成。值得再看的可以加星。
 
 ---
 
 ## 🚀 決定要用了？安裝後的第一分鐘
 
 1. **安裝插件** — 在 Community Plugins 搜尋 **EngramQuest**（或[在 Obsidian 中開啟](obsidian://show-plugin?id=engram-quest)）。
-2. **打開 Hub** — 點左側的 🗺️ ribbon 圖示。
+2. **打開 Hub** — 點左側 ribbon 的 EngramQuest 圖示。
 3. **選一條路：**
    - **不用 AI？** 任何筆記打上 `#flashcards/主題` tag，寫一張 `Q:/A:` 卡片，它就立刻出現在你的 Review Deck。→ [自己寫卡片](#-自己寫卡片不需要-ai)
    - **有 AI 工具？** 安裝一次 Skills（`設定 → EngramQuest → AI Skills`），然後直接說：*「用我的數學筆記建一副 review deck。」* → [AI 路徑](#-快速開始ai-路徑)
@@ -480,6 +550,23 @@ EngramQuest 建立在認知科學的四根支柱上：
 
 ---
 
+## Pro：四種學習方式
+
+**US$11.99 一次買斷，後續 Pro 功能更新皆包含。** 不升級，也能繼續正常使用既有免費功能。適用稅額於結帳顯示。
+
+| Pro 功能 | 提供什麼 | 狀態 |
+| --- | --- | --- |
+| 記憶錨點 · Synapse | 複習時連結已掌握的相關卡片，幫助回想 | 已提供；需先由 skill 配對錨點 |
+| 深入解析 | 難卡加入佇列，由 skill 生成白話圖解，再回到 Hub 閱讀 | 已提供 |
+| 限時複習 | 選擇 5／10／15 分鐘，優先挑出需要複習的卡片 | 已提供 |
+| 更多老師與情境回顧片 | 教法各不相同的老師、替系列指定老師，以及把筆記做成回顧片 | 已提供；影片用 Claude Code 製作 |
+
+影片學院的管理、Nico，以及觀看任何影片（包括已經做好的回顧片）都維持免費。從 **Hub 側欄底部的 Pro**（手機上是記憶首頁的 Pro 列）或 **設定 → EngramQuest → 看看 Pro** 開啟圖解介紹，不會自動彈出；淺色、深色使用獨立圖片，跟隨 Obsidian 主題。付款後從 Polar 複製 key，在設定啟用，再重新開啟 Hub。
+
+**揭露事項。** Pro 是選購的一次性付款（US$11.99，透過 Polar）。插件只在兩件事用到網路：向 Polar 驗證授權（只傳送 key 與組織／Benefit 識別碼，不傳送筆記內容），以及安裝影片 skill 時從本專案的 GitHub Releases 下載影片素材。key 與成功快取存於 plugin data.json；成功驗證後最多有 14 天離線緩衝，更新後重新連線驗證。移除本機授權保留學習資料。安裝 skill 會寫入 vault 的 `.claude/skills/`（以及其他 AI 工具對應的資料夾）。目前開發版本使用 sandbox，只接受測試 key。
+
+---
+
 ## ☕ 支持
 
 如果 EngramQuest 對你有幫助，歡迎支持它的開發：
@@ -493,34 +580,3 @@ EngramQuest 建立在認知科學的四根支柱上：
 *Built for lifelong learners. Made with ❤️*
 
 </div>
-
-## Pro: four ways to learn
-
-**US$11.99 one-time purchase. Future Pro feature updates included.** All existing free features stay available without upgrading. Applicable taxes appear at checkout.
-
-| Pro feature | What it adds | Availability |
-| --- | --- | --- |
-| Memory anchors · Synapse | Connect review cards to related knowledge you have mastered | Available; the skill prepares matching anchors |
-| Deep dive | Queue difficult cards, generate illustrated explanations with the skill, and read them in the Hub | Available |
-| Time-boxed review | Choose 5 / 10 / 15 minutes to review priority cards | Available |
-| More teachers and recall films | Teachers who each teach in their own way, a teacher per series, and recall films made from your notes | In research; films are made with Claude Code |
-
-Video Academy management, Nico, and watching any video, including recall films you already have, remain free. Open **Pro** in the Hub header or **Settings → EngramQuest → Explore Pro** for the illustrated overview. It opens only when selected; no automatic upgrade popup. Separate light and dark illustrations follow the Obsidian theme. Copy your key from Polar and activate it in Settings, then reopen the Hub.
-
-
-**Disclosures.** Pro is an optional one-time payment (US$11.99, through Polar). The plugin uses the network for two things: license validation with Polar (api.polar.sh; sandbox-api.polar.sh for local tests), which sends the key and organization/benefit identifiers and never note content, and downloading the video assets from this project's GitHub Releases when you install the video skills. Hosted checkout and the customer portal are operated by Polar. The key and a bounded success cache stay in plugin data.json; a successful validation allows up to fourteen days offline, and plugin updates trigger an online recheck. Removing the local license preserves learning data. Installing skills writes files to your vault's `.claude/skills/` (and the matching folders for other AI tools). This development build uses sandbox and accepts only test keys.
-
-### Pro：四種學習方式
-
-**US$11.99 一次買斷，後續 Pro 功能更新皆包含。** 不升級，也能繼續正常使用既有免費功能。適用稅額於結帳顯示。
-
-| Pro 功能 | 提供什麼 | 狀態 |
-| --- | --- | --- |
-| 記憶錨點 · Synapse | 複習時連結已掌握的相關卡片，幫助回想 | 已提供；需先由 skill 配對錨點 |
-| 深入解析 | 難卡加入佇列，由 skill 生成白話圖解，再回到 Hub 閱讀 | 已提供 |
-| 限時複習 | 選擇 5／10／15 分鐘，優先挑出需要複習的卡片 | 已提供 |
-| 更多老師與情境回顧片 | 教法各不相同的老師、替系列指定老師，以及把筆記做成回顧片 | 研究中；影片用 Claude Code 製作 |
-
-影片學院的管理、Nico，以及觀看任何影片（包括已經做好的回顧片）都維持免費。從 **Hub 頂部 Pro** 或 **設定 → EngramQuest → 看看 Pro** 開啟圖解介紹，不會自動彈出；淺色、深色使用獨立圖片，跟隨 Obsidian 主題。付款後從 Polar 複製 key，在設定啟用，再重新開啟 Hub。
-
-**揭露事項。** Pro 是選購的一次性付款（US$11.99，透過 Polar）。插件只在兩件事用到網路：向 Polar 驗證授權（只傳送 key 與組織／Benefit 識別碼，不傳送筆記內容），以及安裝影片 skill 時從本專案的 GitHub Releases 下載影片素材。key 與成功快取存於 plugin data.json；成功驗證後最多有 14 天離線緩衝，更新後重新連線驗證。移除本機授權保留學習資料。安裝 skill 會寫入 vault 的 `.claude/skills/`（以及其他 AI 工具對應的資料夾）。目前開發版本使用 sandbox，只接受測試 key。

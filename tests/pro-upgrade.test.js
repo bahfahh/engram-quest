@@ -30,10 +30,10 @@ function setup(active = false, link = "https://checkout.example/test") {
 }
 
 describe("Pro upgrade overview", () => {
-  it("shows four features, marks video as research, and uses separate theme assets", () => {
+  it("shows four shipped features and uses separate theme assets", () => {
     const { root } = setup();
     expect(root.all().filter(el => el.cls === "eq-pro-feature")).toHaveLength(4);
-    expect(root.querySelector(".eq-pro-research").text).toBe("研究中");
+    expect(root.querySelector(".eq-pro-research")).toBeFalsy();
     const images = root.all().filter(el => el.tag === "img");
     expect(images.map(el => el.src)).toEqual([
       "app://custom/plugins/engram-quest/assets/pro/learning-notebook-light.webp",

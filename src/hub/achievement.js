@@ -193,7 +193,7 @@ async function renderAchievementTab(containerEl, plugin, decks, quests = [], mem
   const { evalCtx, counts, dailyLog, totalReviewed, currentStreak } =
     buildAchievementEvalCtx(t._stats || {}, decks, quests, memories, courses);
 
-  if (!ui.isPhone()) containerEl.createEl("div", { cls: "lh-hd" }).createEl("h1", { cls: "lh-tt", text: c(t, "TAB_ACHIEVEMENT") });
+  if (!ui.isPhone()) ui.pageHeader(containerEl, { app: plugin.app, plugin }, { titleKey: "TAB_ACHIEVEMENT", guide: "achievement" });
   ui.metrics(containerEl, [
     { value: totalReviewed, label: c(t, "ACH_TOTAL_REVIEWED") },
     { value: counts.mastered, label: c(t, "ACH_MASTERED") },

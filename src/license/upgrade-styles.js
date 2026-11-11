@@ -33,7 +33,6 @@ module.exports = `
 .eq-pro-feature-title { font-size:16px; font-weight:700; display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
 .eq-pro-feature-desc { font-size:12px; color:var(--text-muted); line-height:1.65; white-space:normal; }
 .eq-pro-expand { align-self:center; font-size:18px; color:var(--text-faint); }
-.eq-pro-research { font-size:10px; font-weight:500; padding:2px 6px; border-radius:5px; background:var(--background-secondary); color:var(--text-muted); }
 .eq-pro-detail { margin:0 8px 8px 108px; font-size:12px; line-height:1.8; color:var(--text-muted); }
 .eq-pro-detail[hidden] { display:none; }
 .eq-pro-price { margin-top:18px; padding:16px 18px; border-radius:15px; background:#f0edf9; color:#3f345f; }

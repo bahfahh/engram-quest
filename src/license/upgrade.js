@@ -7,7 +7,7 @@ const FEATURES = [
   { id: "anchors", icon: "✦", name: "PRO_ANCHORS", desc: "PRO_ANCHORS_DESC", detail: "PRO_ANCHORS_DETAIL" },
   { id: "explain", icon: "◇", name: "PRO_EXPLAIN", desc: "PRO_EXPLAIN_DESC", detail: "PRO_EXPLAIN_DETAIL" },
   { id: "time", icon: "◷", name: "PRO_TIME", desc: "PRO_TIME_DESC", detail: "PRO_TIME_DETAIL" },
-  { id: "video", icon: "▷", name: "PRO_VIDEO", desc: "PRO_VIDEO_DESC", detail: "PRO_VIDEO_DETAIL", research: true },
+  { id: "video", icon: "▷", name: "PRO_VIDEO", desc: "PRO_VIDEO_DESC", detail: "PRO_VIDEO_DETAIL" },
 ];
 
 function renderUpgradeContent(container, plugin, { close, checkout } = {}) {
@@ -41,7 +41,6 @@ function renderUpgradeContent(container, plugin, { close, checkout } = {}) {
     for (let n = 0; n < 3; n++) mini.createEl("span", { text: feature.id === "time" ? ["5", "10", "15"][n] : "" });
     const copy = button.createEl("span", { cls: "eq-pro-feature-copy" });
     const title = copy.createEl("span", { cls: "eq-pro-feature-title", text: tr(feature.name) });
-    if (feature.research) title.createEl("span", { cls: "eq-pro-research", text: tr("PRO_RESEARCH") });
     copy.createEl("span", { cls: "eq-pro-feature-desc", text: tr(feature.desc) });
     button.createEl("span", { cls: "eq-pro-expand", text: "+", attr: { "aria-hidden": "true" } });
     const detail = item.createEl("p", { cls: "eq-pro-detail", text: tr(feature.detail) });

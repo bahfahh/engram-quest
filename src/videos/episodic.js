@@ -84,7 +84,7 @@ async function renderEpisodicTab(el, hub) {
   if (open && !phone) {
     root.createDiv({ cls: "lh-vid-head-row" }).createEl("button", { cls: "lh-vid-back", text: c(t, "EPISODIC_BACK") }).addEventListener("click", toList);
   } else if (!open && !phone) {
-    const { right } = ui.pageHeader(root, hub, { titleKey: "TAB_EPISODIC", subtitle: c(t, "EPISODIC_DESC") });
+    const { right } = ui.pageHeader(root, hub, { titleKey: "TAB_EPISODIC", guide: "episodic", subtitle: c(t, "EPISODIC_DESC") });
     newButton(right());
   }
 

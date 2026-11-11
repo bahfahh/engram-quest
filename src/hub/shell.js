@@ -8,26 +8,9 @@ const { HelpModal } = require("./help");
 const { attachInfoButton, hasFeatureGuide } = require("./feature-guide");
 const { STAR, PLAY, icon, rawIcon, iconButton, isPhone, metrics, segBar, clearCapsuleActions } = require("./ui");
 const { renderPhoneContinue } = require("../videos/render");
+const { TABS, categories } = require("./categories");
 
-const TABS = {
-  review: { icon: "deck", tone: "mem", key: "TAB_REVIEW" },
-  explainer: { icon: "doc", tone: "mem", key: "TAB_EXPLAINER" },
-  memory: { icon: "map", tone: "mem", key: "TAB_MEMORY" },
-  episodic: { icon: "recall", tone: "mem", key: "TAB_EPISODIC" },
-  lesson: { icon: "book", tone: "lrn", key: "TAB_LESSON" },
-  quest: { icon: "flag", tone: "lrn", key: "TAB_QUEST" },
-  video: { icon: "video", tone: "lrn", key: "TAB_VIDEO" },
-  achievement: { icon: "medal", tone: "ach", key: "TAB_ACHIEVEMENT" },
-};
 const CAT_ICONS = { memory: "deck", learn: "learn", achieve: "medal" };
-
-function categories(t) {
-  return [
-    { id: "memory", label: c(t, "CAT_MEMORY"), tabs: ["review", ...(t.licenseValid ? ["explainer"] : []), "memory", "episodic"] },
-    { id: "learn", label: c(t, "CAT_LEARN"), tabs: ["lesson", "quest", "video"] },
-    { id: "achieve", label: c(t, "CAT_ACHIEVE"), tabs: ["achievement"] },
-  ];
-}
 
 function heroUrl(hub) {
   const dark = activeDocument.body.classList.contains("theme-dark");

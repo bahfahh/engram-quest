@@ -1,798 +1,164 @@
 "use strict";
+// The Hub help dialog, opened by the "?" in the sidebar (or the capsule on a phone): what EngramQuest
+// is, a map of every tab that opens its visual guide, and one collapsible section per topic.
+// The words live in help-content.js; this file only draws them with the Hub's design tokens.
+
 const I = require("obsidian");
 const { ProUpgradeModal } = require("../license/upgrade");
-const { t: c, getLocale: L } = require("../i18n");
+const { t: c, getLocale } = require("../i18n");
 const { registerSelectionCopy } = require("../ui/selection-copy");
-const { FeatureGuideModal, openLightbox } = require("./feature-guide");
+const { FeatureGuideModal } = require("./feature-guide");
+const { TABS } = require("./categories");
+const { icon, iconButton, applyHubVars } = require("./ui");
+const CONTENT = require("./help-content");
 
-var fe=class extends I.Modal{constructor(e,t){super(e),this.plugin=t}onClose(){var e;(e=activeDocument.getElementById("lh-help-styles"))==null||e.remove(),activeDocument.querySelectorAll(".eq-guide-lightbox").forEach(x=>x.remove())}onOpen(){let e=this.plugin.settings,t=L(e),_isDark=activeDocument.body.classList.contains("theme-dark"),_bgPrimary=_isDark?"#1e1e2e":"#ffffff",_bgSecondary=_isDark?"#252538":"#f3f4f6",_textNormal=_isDark?"#e2e8f0":"#1f2937",_textMuted=_isDark?"#94a3b8":"#6b7280",_border=_isDark?"#3a3a5a":"#e5e7eb",_bgCard=_isDark?"#1a1a2e":"#f8faff";let imgInstallSkills=this.app.vault.adapter.getResourcePath(I.normalizePath(`${this.plugin.manifest.dir}/assets/install-skills.png`));this.modalEl.addClass("lh-help"),_isDark&&this.modalEl.addClass("lh-dark"),registerSelectionCopy(this),this.modalEl.style.cssText=`width:min(95vw,800px);max-width:none;height:min(90vh,700px);max-height:none;padding:0;overflow:hidden;border-radius:20px;background:${_bgCard}`,this.modalEl.style.setProperty("--background-primary",_bgPrimary,"important"),this.modalEl.style.setProperty("--background-secondary",_bgSecondary,"important"),this.modalEl.style.setProperty("--text-normal",_textNormal,"important"),this.modalEl.style.setProperty("--text-muted",_textMuted,"important"),this.modalEl.style.setProperty("--background-modifier-border",_border,"important"),this.contentEl.style.cssText=`padding:0;height:100%;display:flex;flex-direction:column;overflow:hidden;background:${_bgCard};color:${_textNormal}`;let{contentEl:r}=this;r.empty();let s=r.createEl("div",{attr:{style:"padding:24px;border-bottom:1px solid var(--background-modifier-border);display:flex;justify-content:space-between;align-items:center"}});s.createEl("h2",{text:c(e,"HELP_TITLE"),attr:{style:"margin:0;font-size:18px;font-weight:700"}}),s.createEl("button",{text:"×",attr:{style:"width:32px;height:32px;background:transparent;border:none;cursor:pointer;font-size:20px;line-height:1;color:var(--text-muted)"}}).addEventListener("click",()=>this.close());let a=activeDocument.createElement("style");a.textContent=`
-      .lh-help-acc { border:1px solid #e5e7eb; border-radius:10px; margin-bottom:10px; overflow:hidden; background:#fff; }
-      .lh-help-acc-hdr { display:flex; align-items:center; gap:10px; padding:14px 16px; cursor:pointer; user-select:none; background:#fff; transition:background 0.15s; }
-      .lh-help-acc-hdr:hover { background:#f8faff; }
-      .lh-help-acc-hdr.open { background:#f0f7ff; }
-      .lh-help-acc-icon { font-size:18px; flex-shrink:0; }
-      .lh-help-acc-title { flex:1; font-weight:600; font-size:14px; color:#1f2937; }
-      .lh-help-acc-tag { font-size:11px; font-weight:500; padding:2px 8px; border-radius:99px; background:#f3f4f6; color:#6b7280; flex-shrink:0; }
-      .lh-help-acc-arrow { color:#9ca3af; transition:transform 0.2s; flex-shrink:0; }
-      .lh-help-acc-hdr.open .lh-help-acc-arrow { transform:rotate(90deg); }
-      .lh-help-acc-body { display:none; padding:0 16px 16px; font-size:13.5px; line-height:1.65; color:#374151; border-top:1px solid #e5e7eb; }
-      .lh-help-acc-body.open { display:block; }
-      .lh-help-acc-body p { margin:8px 0; }
-      .lh-help-acc-body ul, .lh-help-acc-body ol { margin:6px 0 6px 18px; }
-      .lh-help-acc-body li { margin:4px 0; }
-      .lh-help-acc-body code { background:#f3f4f6; padding:1px 6px; border-radius:4px; font-size:12.5px; }
-      .lh-help-acc-body table { width:100%; border-collapse:collapse; margin:10px 0; font-size:13px; }
-      .lh-help-acc-body th { background:#f9fafb; padding:8px 10px; text-align:left; border:1px solid #e5e7eb; font-weight:600; }
-      .lh-help-acc-body td { padding:8px 10px; border:1px solid #e5e7eb; vertical-align:top; }
-      .lh-help-acc-body tr:nth-child(even) td { background:#fafafa; }
-      .lh-help-sub { display:flex; gap:8px; align-items:flex-start; padding:10px 12px; background:#f8faff; border-radius:8px; margin:8px 0; border-left:3px solid #3b82f6; }
-      .lh-help-sub-icon { font-size:20px; flex-shrink:0; line-height:1; }
-      .lh-help-intro { background:linear-gradient(135deg,#f0f7ff,#faf5ff); border-radius:10px; padding:16px; margin-bottom:14px; }
-      .lh-help-intro p { margin:0; font-size:13.5px; color:#374151; line-height:1.6; }
-      .lh-help-chips { display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
-      .lh-help-chip { padding:4px 12px; border-radius:99px; font-size:12px; font-weight:600; }
-      .lh-help-acc-body pre { background:#f3f4f6; padding:8px 10px; border-radius:6px; font-size:12px; margin:6px 0; overflow-x:auto; white-space:pre-wrap; }
-      .lh-help-fmt-chip { padding:2px 6px; border-radius:6px; font-weight:700; }
-      .lh-help-fmt-chip code { background:transparent !important; color:inherit !important; padding:0 !important; }
-      .lh-help.lh-dark .lh-help-acc { border-color:var(--background-modifier-border); background:var(--background-secondary); }
-      .lh-help.lh-dark .lh-help-acc-hdr { background:var(--background-secondary); }
-      .lh-help.lh-dark .lh-help-acc-hdr:hover { background:rgba(99,102,241,0.12); }
-      .lh-help.lh-dark .lh-help-acc-hdr.open { background:rgba(99,102,241,0.18); }
-      .lh-help.lh-dark .lh-help-acc-title { color:var(--text-normal); }
-      .lh-help.lh-dark .lh-help-acc-tag { background:rgba(99,102,241,0.22); color:#c7d2fe; font-weight:600; }
-      .lh-help.lh-dark .lh-help-acc-arrow { color:var(--text-muted); }
-      .lh-help.lh-dark .lh-help-acc-body { color:var(--text-normal); border-top-color:var(--background-modifier-border); }
-      .lh-help.lh-dark .lh-help-acc-body code,
-      .lh-help.lh-dark .lh-help-acc-body pre { background:rgba(255,255,255,0.06); color:var(--text-normal); }
-      .lh-help.lh-dark .lh-help-acc-body th { background:rgba(255,255,255,0.06); border-color:var(--background-modifier-border); color:var(--text-normal); }
-      .lh-help.lh-dark .lh-help-acc-body td { border-color:var(--background-modifier-border); color:var(--text-normal); }
-      .lh-help.lh-dark .lh-help-acc-body tr:nth-child(even) td { background:rgba(255,255,255,0.03); }
-      .lh-help.lh-dark .lh-help-sub { background:rgba(255,255,255,0.04); }
-      .lh-help.lh-dark .lh-help-intro { background:linear-gradient(135deg,rgba(59,130,246,0.16),rgba(124,58,237,0.14)); }
-      .lh-help.lh-dark .lh-help-intro p { color:var(--text-normal); }
-      .lh-help > .modal-close-button, .lh-help > .modal-header-button { display:none !important; }
-    `,a.id="lh-help-styles",activeDocument.head.appendChild(a);let o=r.createEl("div",{attr:{style:"flex:1;overflow-y:auto;padding:20px;font-size:14px;line-height:1.6"}}),i=o.createEl("div",{attr:{class:"lh-help-intro"}});i.innerHTML=t==="zh-tw"?`
-      <p><strong>EngramQuest</strong> 把你的筆記變成完整學習閉環：<strong>學 → 練 → 記 → 連</strong>。每個模組可單獨用，也能串接。</p>
-      <div class="lh-help-chips">
-        <span class="lh-help-chip" style="background:#dbeafe;color:#1d4ed8">📚 記憶 — Review Deck · Memory Map</span>
-        <span class="lh-help-chip" style="background:#d1fae5;color:#065f46">🎓 學習 — 教材 · Quest Map · 影片學院</span>
-        <span class="lh-help-chip" style="background:#fef3c7;color:#92400e">🏆 成就 — 里程碑追蹤</span>
-      </div>
-      <p style="margin-top:10px;font-size:12.5px;line-height:1.6">👉 <strong>第一步</strong>：免 AI 就打 <code>#flashcards/主題</code> + 一張 <code>Q:/A:</code> 卡；用 AI 就到「設定 → AI Skills」安裝後對 AI 說話。每個功能分頁第一次開啟都會跳出圖解說明。</p>
-    `:`
-      <p><strong>EngramQuest</strong> turns your notes into a complete learning loop: <strong>Learn → Practice → Remember → Connect</strong>. Each module works alone or chains into the next.</p>
-      <div class="lh-help-chips">
-        <span class="lh-help-chip" style="background:#dbeafe;color:#1d4ed8">📚 Memory — Review Deck · Memory Map</span>
-        <span class="lh-help-chip" style="background:#d1fae5;color:#065f46">🎓 Learn — Lessons · Quest Map · Video Academy</span>
-        <span class="lh-help-chip" style="background:#fef3c7;color:#92400e">🏆 Achieve — milestone tracking</span>
-      </div>
-      <p style="margin-top:10px;font-size:12.5px;line-height:1.6">👉 <strong>First step</strong>: No AI? Tag a note <code>#flashcards/topic</code> + one <code>Q:/A:</code> card. With AI? Install Skills in Settings → AI Skills, then talk to your AI. Each feature tab pops a visual guide the first time you open it.</p>
-    `;
-    // AI Connect section — three tool tabs shown at the top of the guide
-    {
-      const _assetBase = this.plugin.manifest.dir;
-      const _adapter = this.app.vault.adapter;
-      const _aiSec = o.createEl("div", { attr: { style: `margin:0 0 16px;border:1px solid var(--background-modifier-border);border-radius:12px;overflow:hidden` } });
-      _aiSec.createEl("div", {
-        text: t === "zh-tw" ? "🤖 連接 AI 工具" : "🤖 Connect an AI Tool",
-        attr: { style: `padding:8px 14px;font-size:12px;font-weight:700;color:${_textMuted};background:${_bgSecondary};border-bottom:1px solid var(--background-modifier-border)` }
+const PROMPT_FILE = "assets/claude-desktop-prompt.txt";
+const SUPPORT_URL = "https://ko-fi.com/wen_aidev";
+
+// Section text may name the vault's config folder as {configDir}; it is not always ".obsidian".
+function rich(parent, html, configDir) {
+  parent.appendChild(I.sanitizeHTMLToDom(html.replace(/\{configDir\}/g, () => configDir)));
+  return parent;
+}
+
+// The coloured tile a tab wears in the sidebar; other sections get a neutral one.
+function tile(parent, tab, fallback) {
+  const known = TABS[tab];
+  return icon(parent.createSpan({ cls: known ? `lh-ti ${known.tone}` : "lh-gi" }), known ? known.icon : fallback);
+}
+
+class HelpModal extends I.Modal {
+  constructor(app, plugin) {
+    super(app);
+    this.plugin = plugin;
+  }
+
+  onOpen() {
+    const t = this.plugin.settings;
+    const copy = getLocale(t) === "zh-tw" ? CONTENT.zh : CONTENT.en;
+    const dark = activeDocument.body.classList.contains("theme-dark");
+    this.modalEl.addClass("lh-hub", "lh-help");
+    if (dark) this.modalEl.addClass("lh-dark");
+    applyHubVars(this.modalEl, dark);
+    registerSelectionCopy(this);
+
+    const root = this.contentEl;
+    root.empty();
+    const head = root.createDiv({ cls: "lh-help-head" });
+    head.createEl("h2", { cls: "lh-help-title", text: c(t, "HELP_TITLE") });
+    iconButton(head, "close", c(t, "HUB_CLOSE"), () => this.close());
+
+    const body = root.createDiv({ cls: "lh-help-body" });
+    this.renderIntro(body, copy);
+    body.createEl("h3", { cls: "lh-help-h", text: copy.ui.sectionsHead });
+    const list = body.createDiv({ cls: "lh-help-acc" });
+    copy.sections.forEach((section, at) => this.renderSection(list, section, copy.ui, at === 0));
+
+    const foot = body.createDiv({ cls: "lh-help-foot" });
+    foot.createSpan({ text: copy.ui.supportAsk });
+    foot.createEl("a", { cls: "lh-link", text: "Buy me a coffee", attr: { href: SUPPORT_URL, target: "_blank", rel: "noopener" } });
+  }
+
+  onClose() {
+    this.contentEl.empty();
+    activeDocument.querySelectorAll(".eq-guide-lightbox").forEach(el => el.remove());
+  }
+
+  // The three groups and their tabs, the same shape as the sidebar. Each tab opens its guide.
+  renderIntro(body, copy) {
+    body.createEl("p", { cls: "lh-help-lead", text: copy.ui.intro });
+    const map = body.createDiv({ cls: "lh-help-map" });
+    copy.groups.forEach((group) => {
+      const card = map.createDiv({ cls: "lh-help-grp" });
+      const gh = card.createDiv({ cls: "lh-help-grp-h" });
+      gh.createEl("b", { text: group.name });
+      gh.createSpan({ text: group.desc });
+      group.tabs.forEach((item) => {
+        const btn = card.createEl("button", { cls: "lh-help-tab", attr: { title: copy.ui.openGuide } });
+        tile(btn, item.tab);
+        const text = btn.createSpan({ cls: "lh-help-tab-tx" });
+        const name = text.createSpan({ cls: "lh-help-tab-nm", text: item.name });
+        if (item.pro) name.createSpan({ cls: "lh-help-pro", text: "Pro" });
+        text.createSpan({ cls: "lh-help-tab-sub", text: item.sub });
+        icon(btn, "chevron");
+        btn.addEventListener("click", () => new FeatureGuideModal(this.app, this.plugin, item.tab).open());
       });
-      const _aiTabBar = _aiSec.createEl("div", { attr: { style: `display:flex;background:${_bgSecondary};border-bottom:1px solid var(--background-modifier-border)` } });
-      const _aiPanel = _aiSec.createEl("div", { attr: { style: `padding:12px 14px;background:${_bgCard}` } });
-      const _AI_TABS = [
-        { key: "desktop", zh: "💬 Claude Desktop", en: "💬 Claude Desktop" },
-        { key: "code", zh: "⌨️ Claude Code", en: "⌨️ Claude Code" },
-        { key: "codex", zh: "📦 Codex App", en: "📦 Codex App" },
-      ];
-      const _AI_HTML = {
-        desktop: {
-          zh: `<p style="margin:0 0 8px;font-size:13px;line-height:1.6;color:${_textNormal}">不需要 terminal。貼一段 Setup Prompt，Claude Desktop 自動連上 vault 並載入 EngramQuest skills。內建網路搜尋，可生成 SVG 圖解和 Mermaid 圖表。</p><ol style="margin:0 0 10px 18px;font-size:13px;line-height:1.8;color:${_textNormal}"><li>安裝 <strong>Filesystem MCP</strong>（讓 Claude Desktop 讀寫你的 vault）</li><li>Obsidian：<strong>設定 → EngramQuest → AI Skills → 安裝</strong></li><li>複製下方 Prompt，貼入 Claude Desktop，跟著精靈走一次（約 2 分鐘）</li><li>完成後就可以開始建立內容，例如：<br>「把微積分筆記做成課程」<br>「把 math 筆記建成 Review Deck」<br>「把這篇 .md 做成 quest-map medium」</li></ol>`,
-          en: `<p style="margin:0 0 8px;font-size:13px;line-height:1.6;color:${_textNormal}">No terminal needed. Paste one Setup Prompt — Claude Desktop connects to your vault, loads EngramQuest skills, and remembers the rules. Built-in web search, generates SVG diagrams and Mermaid charts.</p><ol style="margin:0 0 10px 18px;font-size:13px;line-height:1.8;color:${_textNormal}"><li>Install <strong>Filesystem MCP</strong> so Claude Desktop can read your vault</li><li>In Obsidian: <strong>Settings → EngramQuest → AI Skills → Install</strong></li><li>Copy the Setup Prompt below, paste into Claude Desktop, follow the wizard once (~2 min)</li><li>Now build content, e.g.:<br>"Build a course from my calculus notes"<br>"Make a Review Deck from math notes"<br>"Turn this note into a quest-map medium"</li></ol>`,
-        },
-        code: {
-          zh: `<p style="margin:0 0 8px;font-size:13px;line-height:1.6;color:${_textNormal}">從 vault 根目錄開啟 Claude Code，skills 放在 <code>.claude/skills/</code>，直接用自然語言說要做什麼。</p><ol style="margin:0 0 10px 18px;font-size:13px;line-height:1.8;color:${_textNormal}"><li>Obsidian：<strong>設定 → EngramQuest → AI Skills</strong> → 選 <strong>Claude Code</strong> → 安裝</li><li>Terminal 在 vault 根目錄執行：<code>claude</code></li><li>現在就可以開始建立內容，例如：<br>「把 math 筆記做成 Review Deck」<br>「建一套 TypeScript 課程」<br>「把微積分.md 做成 quest-map medium」</li></ol>`,
-          en: `<p style="margin:0 0 8px;font-size:13px;line-height:1.6;color:${_textNormal}">Open Claude Code from your vault root. Skills live in <code>.claude/skills/</code> — just talk naturally.</p><ol style="margin:0 0 10px 18px;font-size:13px;line-height:1.8;color:${_textNormal}"><li>In Obsidian: <strong>Settings → EngramQuest → AI Skills</strong> → select <strong>Claude Code</strong> → Install</li><li>Run <code>claude</code> in a terminal at your vault root</li><li>Now build content, e.g.:<br>"Build a Review Deck from my math notes"<br>"Create a TypeScript course"<br>"Turn calculus.md into a quest-map medium"</li></ol>`,
-        },
-        codex: {
-          zh: `<p style="margin:0 0 8px;font-size:13px;line-height:1.6;color:${_textNormal}">Codex / Antigravity 與 Claude Code 原理相同，安裝 skills 時選對應的工具即可。</p><ol style="margin:0 0 10px 18px;font-size:13px;line-height:1.8;color:${_textNormal}"><li>Obsidian：<strong>設定 → EngramQuest → AI Skills</strong> → 選 <strong>Codex / Antigravity</strong> → 安裝</li><li>從 vault 根目錄開啟 Codex / Antigravity App</li><li>現在就可以開始建立內容，例如：<br>「把 math 筆記做成 Review Deck」<br>「建一套 TypeScript 課程」<br>「把這篇 .md 做成 quest-map medium」</li></ol>`,
-          en: `<p style="margin:0 0 8px;font-size:13px;line-height:1.6;color:${_textNormal}">Codex / Antigravity works the same as Claude Code — just pick the right tool when installing skills.</p><ol style="margin:0 0 10px 18px;font-size:13px;line-height:1.8;color:${_textNormal}"><li>In Obsidian: <strong>Settings → EngramQuest → AI Skills</strong> → select <strong>Codex / Antigravity</strong> → Install</li><li>Open Codex / Antigravity App from your vault root</li><li>Now build content, e.g.:<br>"Build a Review Deck from my math notes"<br>"Create a TypeScript course"<br>"Turn this note into a quest-map medium"</li></ol>`,
-        }
-      };
-      const _showAiTab = (key) => {
-        const lang = t === "zh-tw" ? "zh" : "en";
-        let html = _AI_HTML[key][lang];
-        if (key === "desktop") {
-          const btnLabel = t === "zh-tw" ? "📋 複製 Setup Prompt" : "📋 Copy Setup Prompt";
-          const btnCopied = t === "zh-tw" ? "✓ 已複製！" : "✓ Copied!";
-          html += `<button id="eq-copy-cdprompt" style="display:block;width:100%;margin-top:4px;padding:9px 16px;background:${_isDark ? "#4f46e5" : "#6366f1"};color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer">${btnLabel}</button>`;
-          _aiPanel.innerHTML = html;
-          _aiPanel.querySelector("#eq-copy-cdprompt")?.addEventListener("click", async function() {
-            try {
-              const url = _adapter.getResourcePath(I.normalizePath(`${_assetBase}/assets/claude-desktop-prompt.txt`));
-              const resp = await fetch(url);
-              const text = await resp.text();
-              await navigator.clipboard.writeText(text);
-              this.textContent = btnCopied;
-              window.setTimeout(() => { this.textContent = btnLabel; }, 2000);
-            } catch(e) {
-              this.textContent = t === "zh-tw" ? "請手動複製 Prompt" : "Copy failed — copy manually";
-            }
-          });
-        } else {
-          _aiPanel.innerHTML = html;
-        }
-        _aiTabBar.querySelectorAll(".eq-ai-tab-btn").forEach(b => {
-          b.style.borderBottomColor = "transparent";
-          b.style.color = _textMuted;
-          b.style.fontWeight = "500";
-        });
-        const activeBtn = _aiTabBar.querySelector(`[data-aitab="${key}"]`);
-        if (activeBtn) {
-          activeBtn.style.borderBottomColor = _isDark ? "#818cf8" : "#6366f1";
-          activeBtn.style.color = _isDark ? "#c7d2fe" : "#4f46e5";
-          activeBtn.style.fontWeight = "700";
-        }
-      };
-      _AI_TABS.forEach((tool, idx) => {
-        const btn = _aiTabBar.createEl("button", {
-          attr: {
-            class: "eq-ai-tab-btn",
-            "data-aitab": tool.key,
-            style: `flex:1;padding:8px 4px;font-size:12px;font-weight:${idx === 0 ? "700" : "500"};border:none;border-bottom:2px solid ${idx === 0 ? (_isDark ? "#818cf8" : "#6366f1") : "transparent"};cursor:pointer;background:transparent;color:${idx === 0 ? (_isDark ? "#c7d2fe" : "#4f46e5") : _textMuted};transition:color 0.15s`
-          }
-        });
-        btn.textContent = t === "zh-tw" ? tool.zh : tool.en;
-        btn.addEventListener("click", () => _showAiTab(tool.key));
-      });
-      _showAiTab("desktop");
-    }
-    // Concept-image hero + feature cards that deep-link into each per-feature guide (hybrid global guide).
-    let _cimg = this.app.vault.adapter.getResourcePath(I.normalizePath(`${this.plugin.manifest.dir}/assets/guide/整體概念_${t === "zh-tw" ? "中文" : "英文"}.webp`));
-    let _hero = o.createEl("div", { attr: { style: `position:relative;margin:0 0 16px;border-radius:12px;overflow:hidden;border:1px solid var(--background-modifier-border);cursor:zoom-in;background:${_bgSecondary}` } });
-    let _heroImg = _hero.createEl("img", { attr: { src: _cimg, alt: "EngramQuest", style: "width:100%;display:block;max-height:340px;object-fit:contain" } });
-    _heroImg.addEventListener("error", () => { _hero.style.display = "none"; });
-    _hero.createEl("div", { text: t === "zh-tw" ? "🔍 點擊放大" : "🔍 Click to enlarge", attr: { style: "position:absolute;right:8px;bottom:8px;padding:3px 9px;border-radius:99px;background:rgba(0,0,0,0.62);color:#fff;font-size:11px;font-weight:600;pointer-events:none" } });
-    _hero.addEventListener("click", () => openLightbox(_cimg, "EngramQuest"));
-    o.createEl("div", { text: t === "zh-tw" ? "功能總覽 — 點卡片看圖解說明" : "Features — tap a card for its visual guide", attr: { style: "font-size:12.5px;font-weight:700;color:var(--text-muted);margin:0 0 8px" } });
-    let _featGrid = o.createEl("div", { attr: { style: "display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:20px" } });
-    [
-      { tab: "review", emoji: "🃏", zh: "Review Deck", en: "Review Deck", zhs: "三階回想閃卡", ens: "Three-stage recall flashcards" },
-      { tab: "quest", emoji: "🗺️", zh: "Quest Map", en: "Quest Map", zhs: "把筆記變成遊戲關卡", ens: "Notes into game levels" },
-      { tab: "lesson", emoji: "🎓", zh: "教材", en: "Lessons", zhs: "AI 為你打造課程", ens: "AI-built courses" },
-      { tab: "video", emoji: "🎬", zh: "影片學院", en: "Video Academy", zhs: "一句話做成教學短片", ens: "One sentence into short lessons" },
-      { tab: "memory", emoji: "🧠", zh: "Memory Map", en: "Memory Map", zhs: "看見知識全局", ens: "See the big picture" },
-    ].forEach(cd => {
-      let card = _featGrid.createEl("button", { attr: { style: `text-align:left;display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:12px;border:1px solid var(--background-modifier-border);background:${_bgCard};cursor:pointer;color:${_textNormal}` } });
-      card.createEl("span", { text: cd.emoji, attr: { style: "font-size:22px;flex-shrink:0" } });
-      let cx = card.createEl("div", { attr: { style: "flex:1;min-width:0" } });
-      cx.createEl("div", { text: t === "zh-tw" ? cd.zh : cd.en, attr: { style: "font-size:13.5px;font-weight:700" } });
-      cx.createEl("div", { text: t === "zh-tw" ? cd.zhs : cd.ens, attr: { style: `font-size:11px;color:${_textMuted};margin-top:2px` } });
-      card.createEl("span", { text: t === "zh-tw" ? "看說明 ›" : "Guide ›", attr: { style: `font-size:11px;font-weight:700;color:${_isDark ? "#c7d2fe" : "#4f46e5"};flex-shrink:0` } });
-      card.addEventListener("click", () => { new FeatureGuideModal(this.app, this.plugin, cd.tab).open(); });
     });
-    let d='<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>',f=0,h=[];t==="zh-tw"&&(h=[{icon:"🃏",title:"建立第一個 Review Deck",tag:"手動開始",html:`
-            <p><strong>Step 1：在筆記加上標籤（Deck 名稱）</strong></p>
-            <p>在你的筆記任意位置加上 <code>#flashcards/主題</code>。例如 <code>#flashcards/英文</code> 就會建立一個名為「英文」的 Deck。</p>
-            <p><strong>Step 2：撰寫卡片內容</strong></p>
-            <p>支援三種格式，推薦使用 <code>Q:/A:</code>（支援多行、圖片、表格）：</p>
-            <pre>Q: 誰提出了相對論？
-A: 愛因斯坦
+    body.createEl("p", { cls: "lh-help-note", text: copy.ui.guidesHint });
+    body.createEl("p", { cls: "lh-help-lead", text: copy.ui.introAi });
+  }
 
-Q: 什麼是間隔重複？
-A: 在快忘記時複習，可以用最少時間達到最高記憶保留率。
-   每次成功回想後，下次複習的間隔會自動拉長。
+  renderSection(parent, section, ui, open) {
+    const item = parent.createDiv({ cls: "lh-help-sec" });
+    const panelId = `lh-help-${section.id}`;
+    const btn = item.createEl("h3", { cls: "lh-help-sec-hd" }).createEl("button", { cls: "lh-help-sec-h", attr: { id: `${panelId}-h`, "aria-expanded": String(open), "aria-controls": panelId } });
+    tile(btn, section.tab, section.icon);
+    btn.createSpan({ cls: "lh-help-sec-t", text: section.title });
+    btn.createSpan({ cls: "lh-help-tag" + (section.tag === "Pro" ? " pro" : ""), text: section.tag });
+    icon(btn.createSpan({ cls: "lh-help-chev" }), "chevron");
+    const panel = item.createDiv({ cls: "lh-help-sec-b", attr: { id: panelId } });
+    panel.hidden = !open;
+    btn.addEventListener("click", () => {
+      panel.hidden = !panel.hidden;
+      btn.setAttribute("aria-expanded", String(!panel.hidden));
+    });
+    section.body.forEach(block => this.renderBlock(panel, block, ui));
+    if (section.tab) {
+      const link = panel.createDiv({ cls: "lh-help-acts" }).createEl("button", { cls: "lh-link" });
+      link.createSpan({ text: ui.openGuide });
+      icon(link, "arrow");
+      link.addEventListener("click", () => new FeatureGuideModal(this.app, this.plugin, section.tab).open());
+    }
+  }
 
-{{c1::間隔重複}} 是最有效的學習方法
+  renderBlock(panel, block, ui) {
+    const configDir = this.app.vault.configDir;
+    const put = (el, html) => rich(el, html, configDir);
+    if (block.p) put(panel.createEl("p"), block.p);
+    else if (block.h) put(panel.createEl("h4"), block.h);
+    else if (block.steps || block.list) {
+      const el = panel.createEl(block.steps ? "ol" : "ul");
+      (block.steps || block.list).forEach(line => put(el.createEl("li"), line));
+    } else if (block.code) panel.createEl("pre", { text: block.code });
+    else if (block.say) {
+      const box = panel.createDiv({ cls: "lh-help-say" });
+      block.say.forEach(line => box.createDiv({ cls: "lh-help-say-i", text: line }));
+    } else if (block.table) {
+      const table = panel.createDiv({ cls: "lh-help-tbl" }).createEl("table");
+      block.table.forEach((row, at) => {
+        const tr = table.createEl("tr");
+        row.forEach(cell => put(tr.createEl(at ? "td" : "th"), cell));
+      });
+    } else if (block.note) put(panel.createDiv({ cls: "lh-help-aside" }), block.note);
+    else if (block.first) {
+      const box = panel.createDiv({ cls: "lh-help-first" });
+      box.createDiv({ cls: "lh-help-first-h", text: ui.firstStep });
+      put(box.createDiv(), block.first);
+    } else if (block.action === "pro") this.proButton(panel);
+    else if (block.action === "desktopPrompt") this.promptButton(panel, ui);
+  }
 
-畢氏定理 :: a² + b² = c²</pre>
-            <p><strong>Step 3：到 Hub 開始複習</strong></p>
-            <p>點側邊欄圖示開啟 Hub → <strong>Review Deck</strong> → 你就會看到剛建立的牌組了！</p>
-          `},{icon:"🚀",title:"開始使用 AI",tag:"AI 自動化",html:`
-            <p><strong>Step 1：安裝 AI Skills</strong></p>
-            <ol>
-              <li>Obsidian 設定 → <strong>EngramQuest → AI Skills</strong></li>
-              <li>選你用的工具：Claude Code / Codex / Antigravity / Gemini CLI / Cursor</li>
-              <li>安裝後 AI 就知道怎麼幫你建立三個模組的內容</li>
-            </ol>
-            <img src="${imgInstallSkills}" alt="Install Skills 示意圖" style="width:100%;border-radius:8px;margin:10px 0;border:1px solid #e5e7eb;" />
-            <p><strong>Step 2：跟 AI 說</strong></p>
-            <div class="lh-help-sub" style="border-color:#2563eb"><div class="lh-help-sub-icon">🃏</div><div>「把 tag:math 的筆記都做成 Review Deck」<br>「把和行銷相關的筆記做成 Review Deck」</div></div>
-            <div class="lh-help-sub" style="border-color:#059669"><div class="lh-help-sub-icon">🗺️</div><div>「把微積分.md 做成 quest-map medium」<br>「把 tag:math 的筆記合成一個 quest-map hard」</div></div>
-            <div class="lh-help-sub" style="border-color:#7c3aed"><div class="lh-help-sub-icon">🧠</div><div>「幫作業系統概論.md 建立 memory-map」<br>「把和網路協定相關的筆記做成 memory-map」</div></div>
-            <div class="lh-help-sub" style="border-color:#d97706"><div class="lh-help-sub-icon">🎓</div><div>「教我 SEO，建一套課程」<br>「我想學 .NET，做成教材」</div></div>
-            <p><strong>Step 3：開 Hub 開始學</strong></p>
-            <p style="margin:4px 0">點側邊欄的 EngramQuest 圖示 → 切到對應分頁 → 開始學習。</p>
-          `},{icon:"🃏",title:"Review Deck",tag:c(e,"HELP_REVIEW_TAG"),html:`
-            <ol>
-              <li>跟 AI 說：「把 tag:math 的筆記做成 Review Deck」</li>
-              <li>AI 讀取你的筆記，在 <code>engram-review/ai-cards/</code> 建立卡片檔（含 <code>#flashcards/math</code> tag 和 <code>question :: answer</code> 格式）</li>
-              <li>開 Hub → Review Deck → 開始複習</li>
-            </ol>
-            <div class="lh-help-sub"><div class="lh-help-sub-icon">💡</div><div>你的一般筆記不需要有任何 tag，AI 可以直接讀取。AI <strong>產生的卡片檔</strong>存在 <code>engram-review/ai-cards/</code>，<strong>不會修改你的原始筆記</strong>。你自己手寫的卡片，在複習時使用「編輯」、「高亮」或「引述」功能，變更會直接寫回原始筆記。卡片檔需要有 <code>#flashcards/...</code> tag，插件才能偵測到。</div></div>
-            <p><strong>相容模式：</strong>如果你有舊式 <code>::</code> 卡片筆記，可以到設定中開啟 legacy <code>::</code> 掃描。這是遷移模式，不是新手預設。</p>
-          `},{icon:"🃏",title:"AI 長答案卡片",tag:"%%card%%",html:`
-            <p><strong>Q：如何把 AI 長回答做成 Review Deck 卡片？</strong></p>
-            <p><strong>A：</strong>平常寫卡片仍然用 <span class="lh-help-fmt-chip" style="background:#dcfce7;color:#166534;"><code>Q:/A:</code> 日常格式</span>。如果你要貼上很長的 AI 回答，而且答案裡可能有 <code>---</code>、表格、程式碼區塊或很多空行，就用 <span class="lh-help-fmt-chip" style="background:#fef3c7;color:#92400e;"><code>%%card%%</code> 安全模式</span> 包住一張卡。</p>
-            <pre>#flashcards/ai
+  proButton(panel) {
+    const t = this.plugin.settings;
+    panel.createDiv({ cls: "lh-help-acts" })
+      .createEl("button", { cls: "lh-btn", text: c(t, t.licenseValid ? "PRO_ACTIVE_ACTION" : "PRO_LEARN") })
+      .addEventListener("click", () => new ProUpgradeModal(this.app, this.plugin).open());
+  }
 
-%%card%%
-Q: 如何解釋 agentic testing？
-A:
-Agentic testing 檢查的是 AI 系統能不能可靠完成任務，而不只是某個函式有沒有回傳正確值。
+  promptButton(panel, ui) {
+    const btn = panel.createDiv({ cls: "lh-help-acts" }).createEl("button", { cls: "lh-btn alt", text: ui.copyPrompt });
+    btn.addEventListener("click", async () => {
+      try {
+        const text = await this.app.vault.adapter.read(I.normalizePath(`${this.plugin.manifest.dir}/${PROMPT_FILE}`));
+        await navigator.clipboard.writeText(text);
+        btn.setText(ui.copied);
+      } catch (err) {
+        console.warn("EngramQuest: copying the setup prompt failed", err);
+        btn.setText(ui.copyFailed);
+      }
+      window.setTimeout(() => { if (btn.isConnected) btn.setText(ui.copyPrompt); }, 2000);
+    });
+  }
+}
 
----
-
-範例：
-- 給 agent 一個真實任務
-- 驗證最後產物
-- 檢查 logs、tool calls、失敗復原
-
-&#96;&#96;&#96;js
-expect(result.completed).toBe(true)
-&#96;&#96;&#96;
-%%card%%</pre>
-            <p><strong>重點：</strong><code>A:</code> 後面的內容會一直保留到結尾的 <span class="lh-help-fmt-chip" style="background:#fef3c7;color:#92400e;"><code>%%card%%</code></span>。中間的 <span class="lh-help-fmt-chip" style="background:#dbeafe;color:#1d4ed8;"><code>---</code></span> 不會截斷卡片；既有 <code>---</code> fenced 卡片也仍然支援，不需要重建。</p>
-            <div class="lh-help-sub"><div class="lh-help-sub-icon">⚡</div><div><strong>最快輸入方式：</strong>在空行按 <code>Ctrl+/</code>（Mac 為 <code>Cmd+/</code>），Obsidian 會直接幫你插入 <code>%% %%</code> 並把游標放中間。輸入 <code>card</code> 就成了 <code>%% card %%</code>，可以直接用。空格和大小寫都認，<code>%%card%%</code>、<code>%% card %%</code>、<code>%%CARD%%</code> 三種寫法效果一樣。</div></div>
-          `},{icon:"🗺️",title:"Quest Map",tag:c(e,"HELP_QUEST_TAG"),html:`
-            <ol>
-              <li>跟 AI 說：「把微積分.md 做成 quest-map medium」</li>
-              <li>AI 在 <code>engram-quest/quests/</code> 建立 plugin 內開啟的任務套件與本機 HTML 關卡</li>
-              <li>每個任務 / Boss 可用 self-contained HTML 呈現儀表板、計算、診斷、cascade 決策或互動模擬</li>
-              <li>進度會另外儲存在 <code>engram-quest/state/</code>，AI 更新 quest 時不會清掉已完成節點</li>
-              <li>舊版 YAML 題型 quest 仍可正常開啟</li>
-              <li>開 Hub → Quest Map → 點任務卡，在 plugin viewer 裡依序完成任務、案例與 Boss Battle</li>
-            </ol>
-            <table>
-              <tr><th>難度</th><th>適合</th></tr>
-              <tr><td><strong>easy</strong></td><td>初次接觸</td></tr>
-              <tr><td><strong>medium</strong></td><td>知識鞏固</td></tr>
-              <tr><td><strong>hard</strong></td><td>自我測驗</td></tr>
-            </table>
-          `},{icon:"🧠",title:"Memory Map",tag:c(e,"HELP_MEMORY_TAG"),html:`
-            <p><strong>建立方式（三種都可以）</strong></p>
-            <ol>
-              <li><strong>AI 生成：</strong>跟 AI 說「幫作業系統概論.md 建立 memory-map」，AI 會自動建立 <code>作業系統概論-memory.canvas</code></li>
-              <li><strong>手動建立：</strong>在 Obsidian 新增 Canvas 檔案，命名為 <code>{筆記名}-memory.canvas</code>，插件就會自動偵測</li>
-              <li><strong>存放位置：</strong>預設放在來源筆記同資料夾。也可以在設定中指定 Memory Map 資料夾，集中管理</li>
-            </ol>
-            <p><strong>偵測規則</strong></p>
-            <p>插件會掃描 vault 中所有檔名以 <code>-memory.canvas</code> 結尾的檔案，自動收錄到 Hub → Memory Map 頁籤。</p>
-            <p><strong>與 Review Deck 的關聯</strong></p>
-            <p>複習卡片時，底部的「Memory Map」按鈕會自動尋找對應的 canvas：</p>
-            <ol>
-              <li>先找同名的 <code>-memory.canvas</code>（根據來源筆記名稱）</li>
-              <li>找不到時，會掃描所有 memory canvas 的內容，如果 canvas 裡有指向該筆記的 file node，就會自動關聯</li>
-            </ol>
-            <div class="lh-help-sub" style="border-color:#7c3aed"><div class="lh-help-sub-icon">💡</div><div>建議讓 canvas 裡包含一個指向來源筆記的 file node（AI 生成時會自動加入），這樣即使檔案移動或改名，Obsidian 也會自動更新路徑，關聯不會斷掉。</div></div>
-          `},{icon:"🎓",title:"課程學院（教材）",tag:"AI 教學",html:`
-            <p>告訴 AI 你想學什麼，它會建立一套專屬課程：互動式 HTML 教材，直接在 plugin 裡學習、追蹤進度。</p>
-            <p><strong>運作機制</strong></p>
-            <ol>
-              <li>跟 AI 說：「教我 SEO」或「我想學 .NET，幫我建課程」（Lesson Academy skill）</li>
-              <li>AI 詢問你的目標和程度，設計課程大綱，逐課生成 HTML 教材到 <code>engram-quest/lessons/</code></li>
-              <li>打開 plugin → 學習 → 教材，點任一課時即可閱讀，附互動測驗</li>
-              <li>課程可穿插 🗺️ 概念圖課時（學習地圖、對比、分類…）：點開後按「開啟概念圖」，在 Obsidian 原生 Canvas 分頁自由拖拉、加註記</li>
-              <li>看完按「標記完成」，課程卡會顯示進度；可加星標記重點課時</li>
-              <li>也可以用「匯入 HTML」把其他 AI（如 Gemini）生成的教材加進課程</li>
-              <li>課程多時用卡片上方的「類別／進度／排序」下拉篩選排序，選擇會自動記住</li>
-            </ol>
-            <div class="lh-help-sub"><div class="lh-help-sub-icon">💡</div><div>任何主題都可以：程式、行銷、醫學、瑜珈。學完一套課程後，可以請 AI 把教材轉成 Review Deck 卡片或 Quest Map 繼續鞏固。</div></div>
-          `},{icon:"⚡",title:"Synapse (Pro)",tag:"Pro",html:`
-            <p>複習一張難記的卡時，自動連結到你已掌握的相關卡，作為「記憶錨點」。</p>
-            <p><strong>運作機制</strong></p>
-            <ol>
-              <li>跟 AI 說「跑 engram-synapse」</li>
-              <li>AI 掃描所有 SR 紀錄找出 mastered pool（FSRS stability ≥ 7）</li>
-              <li>對每張卡找出最多 3 張強連結錨點，存進 <code>engram-review/synapse/</code></li>
-              <li>複習時，Review session 看答案前會多一個 ⚡ Synapse 按鈕</li>
-            </ol>
-            <p><strong>三大記憶機制</strong></p>
-            <div class="lh-help-sub"><div class="lh-help-sub-icon">EE</div><div><strong>精緻化編碼</strong> — 把難記的卡掛在已熟悉的卡上</div></div>
-            <div class="lh-help-sub"><div class="lh-help-sub-icon">AR</div><div><strong>主動提取</strong> — 強迫回想錨點答案，雙倍記憶強化</div></div>
-            <div class="lh-help-sub"><div class="lh-help-sub-icon">CA</div><div><strong>情節錨定</strong> — 已掌握的卡作為熟悉的記憶情境</div></div>
-            <p><strong>需要 Pro license</strong>。Mastered pool 至少要 10 張卡才會啟用。</p>
-          `},{icon:"⏱",title:"Time-boxed Review (Pro)",tag:"Pro",html:`
-            <p>沒時間複習全部？選 5 / 10 / 15 分鐘，系統挑出最該複習的 N 張卡（1 卡約 1 分鐘）。</p>
-            <p><strong>挑卡優先順序</strong></p>
-            <ol>
-              <li>從未複習過的新卡（unseen）</li>
-              <li>已過期最久的卡（overdue）</li>
-              <li>最快到期的卡（即將 due）</li>
-            </ol>
-            <p>跟「全部複習」共用同一個 review session UI 與 SR 寫回流程，沒有額外風險。</p>
-            <p><strong>需要 Pro license</strong>。</p>
-          `},{icon:"📖",title:"深入解析 (Pro)",tag:"Pro",html:`
-            <p>複習時遇到看不懂、背不起來的卡，按「➕ 加入解析佇列」標記它。AI 會診斷這張卡為什麼難（內容太難？描述太簡略？缺乏脈絡？），生成一頁白話、圖解式的深入解析——從宏觀到細部，把卡片沒講清楚的事講清楚。</p>
-            <p><strong>一頁解析有什麼</strong></p>
-            <ol>
-              <li><strong>它解決什麼問題</strong> — 先讓你想要這個概念，再解釋它</li>
-              <li><strong>宏觀地圖</strong> — 概念在整張知識地圖的位置</li>
-              <li><strong>記憶錨</strong> — 一個生活比喻 + emoji 圖像，閉眼能重現</li>
-              <li><strong>逐層拆解與常見混淆</strong> — 由淺到深，最後回到你原本的卡片</li>
-            </ol>
-            <p><strong>設計重點</strong></p>
-            <div class="lh-help-sub" style="border-color:#0078d4"><div class="lh-help-sub-icon">NF</div><div><strong>無獨立排程</strong> — 解析頁是原卡的輔助教材，原卡照常在 Review Deck 複習；解析有沒有用，下次複習見真章</div></div>
-            <div class="lh-help-sub" style="border-color:#0078d4"><div class="lh-help-sub-icon">RW</div><div><strong>自動重寫</strong> — 解析後原卡還是一直答錯？skill 下次會用更淺的切入點重寫這頁</div></div>
-            <p><strong>怎麼用</strong></p>
-            <ol>
-              <li>複習時對難卡按「➕ 加入解析佇列」，之後跟 AI 說「處理解析」批次生成</li>
-              <li>也可直接跟 AI 說「幫我做一份 X 的深入解析」</li>
-              <li>到 Hub →「深入解析」分頁閱讀；開啟自動標記已讀，可加 ⭐ 或標記 ✓ 完成，🗑️ 刪除不要的頁</li>
-              <li>顏色一致代表狀態：<strong>琥珀 = 未讀</strong>、<strong>藍 = 已讀</strong>、<strong>靛 = 已加星</strong>、<strong>綠 = 已完成</strong>。只有你自己按 ✓ 標記完成才會變綠，單純讀過不會</li>
-            </ol>
-            <p><strong>需要 Pro license</strong>。</p>
-          `},{icon:"🔬",title:"Learning Science",tag:c(e,"HELP_SCIENCE_TAG"),html:`
-            <div class="lh-help-sub"><div class="lh-help-sub-icon">SR</div><div><strong>Spaced Repetition</strong><br>在快忘記時複習，提升效率。Review Deck 使用 FSRS 自動安排下次複習。</div></div>
-            <div class="lh-help-sub"><div class="lh-help-sub-icon">RP</div><div><strong>Retrieval Practice</strong><br>先回想，再看答案，比重讀更有效。Review Deck 訓練記憶；Quest Map 把記憶放進情境中練習應用。</div></div>
-            <div class="lh-help-sub"><div class="lh-help-sub-icon">EE</div><div><strong>Elaborative Encoding</strong><br>把抽象文字變成具體結構，更容易記住。Memory Map 就是在做這件事。</div></div>
-          `},{icon:"⚙️",title:"設定",tag:c(e,"HELP_SETTINGS_TAG"),html:`
-            <p>到 Obsidian 設定中的 <strong>EngramQuest</strong> 調整。</p>
-            <p><strong>Flashcard tag prefixes</strong>（預設：<code>flashcards</code>）</p>
-            <p>決定哪些筆記會被插件掃描為 Review Deck 卡片。</p>
-            <ul>
-              <li>預設 <code>flashcards</code> → <code>#flashcards/math</code>、<code>#flashcards/行銷</code> 會被偵測到</li>
-              <li>改成 <code>cards</code> → 只有 <code>#cards/math</code> 會被偵測，<code>#flashcards/math</code> 就不會</li>
-              <li>可以設多個，用逗號分隔，例如 <code>flashcards, cards, anki</code></li>
-            </ul>
-            <p><strong>讓插件偵測到的條件（兩個都要滿足）：</strong></p>
-            <ol>
-              <li>筆記裡有卡片（<code>::</code>、<code>Q:/A:</code>、Cloze 三種格式均支援），例如：<pre>#flashcards/數學
-
-畢氏定理是什麼 :: 直角三角形中，a² + b² = c²
-
-Q: 導數的定義？
-A: 函數在某點的瞬時變化率
-
-{{c1::微積分}} 是高中數學最重要的一門學科</pre></li>
-              <li>筆記有符合前綴的 tag，例如 <code>#flashcards/數學</code>（如上例第一行）</li>
-            </ol>
-            <p><strong>Include legacy <code>::</code> notes</strong>（預設：Off）</p>
-            <p>開啟後，沒有任何 tag 的舊式 <code>::</code> 筆記也會被掃描。遷移模式，新手不需要開。</p>
-            <p><strong>Max review interval</strong>（預設：36525 天）</p>
-            <p>FSRS 排程的最大間隔上限。調小可以讓熟悉的卡片仍保持定期出現。</p>
-            <p><strong>Requested retention</strong>（預設：0.9）</p>
-            <p>FSRS 目標記憶保留率。越高複習越頻繁，越低間隔越長。</p>
-          `},{icon:"❓",title:"FAQ",tag:c(e,"HELP_FAQ_TAG"),html:`
-            <p><strong>Q1：沒有安裝 Skills 也能用嗎？</strong></p>
-            <p>可以。你可以手動建立 <code>question :: answer</code> 卡片，並加上像 <code>#flashcards/math</code> 這種 tag。</p>
-            <p><strong>Q2：如果來源筆記沒有任何 tag，AI 還讀得到嗎？</strong></p>
-            <p>可以。AI 讀來源筆記時，不要求來源筆記先有 <code>flashcards</code> tag。AI 產生的卡片會存到 <code>engram-review/ai-cards/</code>，不會動你的原始筆記。</p>
-            <p><strong>Q3：為什麼我看不到 Review Deck？</strong></p>
-            <p>常見原因有：還沒有建立卡片筆記、卡片筆記沒有符合目前設定的 tag prefix，或你期待的是舊式 <code>::</code> 掃描但 legacy 模式還沒開。</p>
-            <p><strong>Q4：我有一般筆記，沒有任何 tag。要怎麼做 Review Deck？</strong></p>
-            <p>直接對 AI 說：「把和[主題]相關的筆記做成 Review Deck」。AI 會讀取你的筆記，在 <code>engram-review/ai-cards/</code> 建立含 tag 的卡片檔，不會動你的原始筆記。回到 Hub 的 Review Deck 就能看到。</p>
-            <p><strong>Q5：我想手動做卡片，不靠 AI。要怎麼做？</strong></p>
-            <p><strong>Step 1：加 tag（決定放到哪個 Deck）</strong></p>
-            <p>在筆記任意位置加上 <code>#flashcards/主題</code>。斜線後面的名稱就是 Deck 的名字。</p>
-            <ul>
-              <li><code>#flashcards/英文</code> → 建立「英文」Deck</li>
-              <li><code>#flashcards/math</code> → 建立「math」Deck</li>
-              <li>前綴預設是 <code>flashcards</code>，可在設定中改成其他名稱（如 <code>cards</code>、<code>anki</code>）</li>
-            </ul>
-            <p><strong>Step 2：寫卡片（支援三種格式，可自由混用）</strong></p>
-            <pre>#flashcards/學習科學
-
-畢氏定理 :: a² + b² = c²
-
-Q: 間隔重複的原理是什麼？
-A:
-1.在快忘記時複習，效果最佳
-2.每次成功回想後，下次複習的間隔自動拉長
-
-{{c1::間隔重複}} 是最有效的長期記憶方法之一
-法國首都 {{c1::巴黎}}，日本首都 {{c2::東京}}</pre>
-            <table>
-              <tr><th>格式</th><th>適合</th><th>寫法</th></tr>
-              <tr><td><span class="lh-help-fmt-chip" style="background:#dcfce7;color:#166534;"><code>Q:/A:</code> 問答</span> ⭐</td><td>日常推薦格式。多行答案、圖片、表格</td><td><code>Q: 問題</code> 換行 <code>A: 答案</code>（答案可以從下一行開始，可有多行）</td></tr>
-              <tr><td><span class="lh-help-fmt-chip" style="background:#dbeafe;color:#1d4ed8;"><code>---</code> fenced</span> ⭐</td><td>既有長答案筆記、一般 Markdown 友善用法</td><td>前後各加一行 <code>---</code> 包住卡片，裡面的空行永遠不會被當成卡片邊界</td></tr>
-              <tr><td><span class="lh-help-fmt-chip" style="background:#fef3c7;color:#92400e;"><code>%%card%%</code> 長答案</span></td><td>貼上 AI 長答案的安全模式，適合內容可能包含 <code>---</code></td><td>前後各一行 <code>%%card%%</code> 包住一張卡；<code>A:</code> 後面直到結束標記前都會保留為答案</td></tr>
-              <tr><td>Cloze 填空</td><td>填空記憶，同 Anki 語法</td><td><code>{{c1::答案}}</code> 或 <code>{{c1::答案::提示}}</code></td></tr>
-              <tr><td><code>::</code> 問答</td><td>簡短答案，僅限一行</td><td><code>問題 :: 答案</code></td></tr>
-            </table>
-            <p><strong>Q:/A: 邊界規則：</strong></p>
-            <ul>
-              <li><code>A:</code> 後面可以不寫任何東西，答案從下一行開始</li>
-              <li>答案裡有一個空行沒關係，會繼續收集</li>
-              <li><strong>連續兩個空行</strong>代表卡片結束</li>
-              <li>遇到下一個 <code>Q:</code> 或 Cloze 行也會自動結束</li>
-              <li><strong>Fenced 模式：</strong>前後各加一行 <code>---</code> 包住，裡面不管幾個空行都不會截斷 — 適合貼上 ChatGPT / AI 的長答案：<pre>---
-Q: Stripe 的核心模型是什麼？
-A: Stripe 本質是一個 Saga System。
-
-   它處理：
-   - payment_intent 狀態機
-   - retry / failure handling
-
-   你只要「接結果」。
----
-
----
-Q: 什麼是 Saga 模式？
-A: 一連串的本地交易。
-
-   每個步驟發布一個事件。
-   失敗時，補償交易負責回滾。
----</pre>
-              <strong>注意：</strong>筆記裡普通的 <code>---</code> 水平線（後面不接 <code>Q:</code>）會自動被忽略，不會誤觸發。</li>
-            </ul>
-            <p><strong>Cloze 補充說明：</strong></p>
-            <ul>
-              <li>每個 <code>{{cX::答案}}</code> 自動產生一張卡，正面顯示 <code>[...]</code>，背面顯示答案</li>
-              <li>同一行有多個填空（c1、c2…），每個各自產生一張卡</li>
-              <li>有提示版：<code>{{c1::巴黎::首都}}</code> → 正面顯示 <code>[首都]</code></li>
-            </ul>
-            <p>回到 Hub 的 Review Deck 就能看到所有卡片。</p>
-            <p><strong>Q6：我有很多舊 <code>::</code> 卡片，但沒有 tag。要怎麼遷移？</strong></p>
-            <p>到設定打開 <code>Include legacy :: notes</code>，保留原本的 <code>question :: answer</code> 格式，再回到 Hub 的 Review Deck 檢查是否已被納入。若要長期維護，建議之後慢慢補上 <code>#flashcards/...</code> tag。</p>
-            <p><strong>Q7：Review Deck 進度存在哪裡？</strong></p>
-            <p>複習排程資料存放在 <code>engram-review/sr/{筆記名稱}.json</code>，AI 生成的卡片存在 <code>engram-review/ai-cards/</code>，兩者都不會寫入你的原始筆記。你自己手寫的卡片，在複習時使用「編輯」、「高亮」或「引述」功能，變更會直接寫回原始筆記。</p>
-            <p><strong>Q8：手機可以用嗎？</strong></p>
-            <p>Review Deck 可以。Quest Map 與 Memory Map 目前仍較適合桌面版。</p>
-            <p><strong>Q9：手機上的插件不會自動更新怎麼辦？</strong></p>
-            <p>插件的 <code>main.js</code> 存在 vault 的 <code>.obsidian/plugins/engram-quest/</code> 裡。只要 vault 有用 git 同步（Obsidian Git 插件），電腦端更新後 push，手機端 pull 就會自動拿到新版本。如果手機沒更新，請確認：</p>
-            <ol>
-              <li>vault 的 <code>.gitignore</code> 沒有把 <code>/.obsidian/plugins/engram-quest/</code> 整個排除</li>
-              <li>手機的 Obsidian Git 插件有開啟 auto-pull</li>
-              <li>pull 完後在 Obsidian 設定中停用再啟用插件，或重啟 App</li>
-            </ol>
-            <p><strong>Q10：筆記很雜亂或內容非常多，不知道從哪裡開始怎麼辦？</strong></p>
-            <p>不用先整理。直接請 AI 幫你掃描並列出筆記的主題分類，再從列表中挑你想學的方向：</p>
-            <div class="lh-help-sub"><div class="lh-help-sub-icon">💬</div><div>「幫我列出 vault 裡所有筆記的主題分類」<br>「列出和[科目]相關的所有筆記標題」</div></div>
-            <p>看到列表後，直接指定你要的筆記讓 AI 建立內容：</p>
-            <div class="lh-help-sub"><div class="lh-help-sub-icon">💬</div><div>「用第 3 項的筆記做成 Quest Map medium」<br>「把行銷相關的那幾篇做成 Review Deck」</div></div>
-            <p>如果筆記本身也很零散，可以先請 AI 整理分類再建立：</p>
-            <div class="lh-help-sub"><div class="lh-help-sub-icon">💬</div><div>「先把這些筆記整理成結構化的大綱，再建立 Quest Map」</div></div>
-            <p><strong>Q11：AI 產生的內容我不滿意，想要客製化怎麼做？</strong></p>
-            <p>可以在 AI 設定檔（<code>CLAUDE.md</code>、<code>GEMINI.md</code>、<code>AGENTS.md</code>）裡加入自訂指令，AI 就會照著你的規則產生內容。</p>
-            <pre>建立 Review Deck 時，每張卡片都必須附上一個實際應用的例句。
-字卡難度不要太基礎，需包含分析與應用層次的問題。
-所有卡片問題請用繁體中文撰寫。</pre>
-            <p><strong>Q12：如何讓 AI 每次建立 Review Deck 時都依照我想要的固定模式？</strong></p>
-            <p>用你習慣的任何語法在筆記中標記重要答案，例如 Obsidian 高亮 <code>==文字==</code>、引用區塊 <code>&gt; 文字</code>，或任何自訂記號都可以。接著在 AI 設定檔（<code>CLAUDE.md</code>、<code>GEMINI.md</code> 或 <code>AGENTS.md</code>）中加入對應指令，告訴 AI 把那個記號當作卡片答案：</p>
-            <pre>IMPORTANT: When building a Review Deck, every highlighted ==text== must be turned into a review card.</pre>
-            <p>用你自己最順手的標記方式就好，AI 會照著規則一致執行。</p>
-            <p><strong>Q13：EngramQuest 支援 Anki 嗎？</strong></p>
-            <p>部分支援。<code>::</code> 和 <code>{{c1::}}</code> 格式與 Anki 相容，可搭配 <strong>Obsidian_to_Anki</strong> 社群插件使用。只需安裝 Obsidian_to_Anki + AnkiConnect，在設定中開啟 RemNote style（<code>::</code> 語法），同步後卡片就會自動出現在 Anki 中。</p>
-            <p><code>Q:/A:</code> 格式是 EngramQuest 專屬，<strong>不會</strong>同步到 Anki — 它是為多行答案、圖片、表格設計的，這些內容無法直接對應到 Anki 的卡片模型。如果你需要同時在兩邊使用，請改用 <code>::</code> 或 <code>{{c1::}}</code>。</p>
-            <p><strong>Q14：AI 產生的 Map 我想放在特定資料夾，怎麼做？</strong></p>
-            <p>同樣在 AI 設定檔中加入路徑規則，AI 建立檔案時就會遵守。</p>
-            <pre>建立 Quest Map 時，請建立在 engram-quest/quests/{questSlug}/，並使用 meta.json + HTML nodes。
-所有 Memory Map 請存到 Maps/Memory/ 目錄。</pre>
-            <p><strong>Q15：除了建立內容，AI 還能提供什麼幫助？</strong></p>
-            <p>AI 不只能幫你「產出」卡片。它還能讀取你的 Review Deck，進行互動式複習或針對錯誤點進行教學解說。此外，它也能幫你整理、分類既有的牌組，或根據現有內容延伸出更有挑戰性的新題目。</p>
-          `}]),t==="en"&&(h=[{icon:"🃏",title:"Create Your First Review Deck",tag:"Manual Start",html:`
-            <p><strong>Step 1: Add a tag to your note (Deck name)</strong></p>
-            <p>Add <code>#flashcards/topic</code> anywhere in your note. For example, <code>#flashcards/english</code> creates a Deck named "english".</p>
-            <p><strong>Step 2: Write your cards</strong></p>
-            <p>Three formats are supported. Recommended: <code>Q:/A:</code> (supports multi-line, images, tables):</p>
-            <pre>Q: Who proposed the theory of relativity?
-A: Albert Einstein
-
-Q: What is spaced repetition?
-A: Reviewing just before you forget — maximizes retention with minimal time.
-   Each successful recall automatically extends the next review interval.
-
-{{c1::Spaced repetition}} is the most effective way to learn
-
-Pythagorean theorem :: a² + b² = c²</pre>
-            <p><strong>Step 3: Start reviewing in Hub</strong></p>
-            <p>Click the ribbon icon to open Hub → <strong>Review Deck</strong> → Your new deck is ready!</p>
-          `},{icon:"🚀",title:"Get Started AI",tag:"AI Automation",html:`
-            <p><strong>Step 1: Install AI Skills</strong></p>
-            <ol>
-              <li>Open Obsidian Settings → <strong>EngramQuest → AI Skills</strong></li>
-              <li>Choose your tool: Claude Code / Codex / Antigravity / Gemini CLI / Cursor</li>
-              <li>After install, AI knows how to build content for all three modules</li>
-            </ol>
-            <img src="${imgInstallSkills}" alt="Install Skills screenshot" style="width:100%;border-radius:8px;margin:10px 0;border:1px solid #e5e7eb;" />
-            <p><strong>Step 2: Ask AI</strong></p>
-            <div class="lh-help-sub" style="border-color:#2563eb"><div class="lh-help-sub-icon">🃏</div><div>"Turn notes tagged with math into a Review Deck"<br>"Make a Review Deck from all notes about marketing"</div></div>
-            <div class="lh-help-sub" style="border-color:#059669"><div class="lh-help-sub-icon">🗺️</div><div>"Turn calculus.md into a quest-map medium"<br>"Combine tag:math notes into a quest-map hard"</div></div>
-            <div class="lh-help-sub" style="border-color:#7c3aed"><div class="lh-help-sub-icon">🧠</div><div>"Create a memory-map for OS-overview.md"<br>"Make a memory-map from notes about network protocols"</div></div>
-            <div class="lh-help-sub" style="border-color:#d97706"><div class="lh-help-sub-icon">🎓</div><div>"Run engram-macro-review tag:azure"<br>"I have a pile of unseen azure cards — teach me through them"</div></div>
-            <p><strong>Step 3: Open Hub and learn</strong></p>
-            <p style="margin:4px 0">Click the EngramQuest ribbon icon → switch tabs → start learning.</p>
-          `},{icon:"🃏",title:"Review Deck",tag:c(e,"HELP_REVIEW_TAG"),html:`
-            <ol>
-              <li>Ask AI: "Turn notes tagged with math into a Review Deck"</li>
-              <li>AI reads your notes and creates card files in <code>engram-review/ai-cards/</code> (with <code>#flashcards/math</code> tag and <code>question :: answer</code> format)</li>
-              <li>Open Hub → Review Deck → start reviewing</li>
-            </ol>
-            <div class="lh-help-sub"><div class="lh-help-sub-icon">💡</div><div>Your source notes don't need any tag — AI can read them directly. Card files AI generates are saved to <code>engram-review/ai-cards/</code> and <strong>never touch your source notes</strong>. Cards you write yourself: Edit, Highlight, and Emphasis tools in the review session write changes back to your source note. Card files need a <code>#flashcards/...</code> tag for the plugin to detect them.</div></div>
-            <p><strong>Migration mode:</strong> if you have old plain <code>::</code> flashcard notes, enable legacy <code>::</code> scanning in Settings. Optional, off by default.</p>
-          `},{icon:"🃏",title:"Long AI Answer Cards",tag:"%%card%%",html:`
-            <p><strong>Q: How do I turn a long AI answer into a Review Deck card?</strong></p>
-            <p><strong>A:</strong> Use normal <span class="lh-help-fmt-chip" style="background:#dcfce7;color:#166534;"><code>Q:/A:</code> everyday format</span>. If you paste a long AI answer that may contain <code>---</code>, tables, code blocks, or many blank lines, wrap one card with <span class="lh-help-fmt-chip" style="background:#fef3c7;color:#92400e;"><code>%%card%%</code> safe mode</span>.</p>
-            <pre>#flashcards/ai
-
-%%card%%
-Q: How should I explain agentic testing?
-A:
-Agentic testing checks whether an AI system can complete a task reliably, not just whether one function returns the right value.
-
----
-
-Example:
-- Give the agent a realistic task
-- Verify the final artifact
-- Check logs, tool calls, and failure recovery
-
-&#96;&#96;&#96;js
-expect(result.completed).toBe(true)
-&#96;&#96;&#96;
-%%card%%</pre>
-            <p><strong>Key point:</strong> everything after <code>A:</code> stays in the answer until the closing <span class="lh-help-fmt-chip" style="background:#fef3c7;color:#92400e;"><code>%%card%%</code></span>. The <span class="lh-help-fmt-chip" style="background:#dbeafe;color:#1d4ed8;"><code>---</code></span> line above will not cut the card early. Existing <code>---</code> fenced cards still work and do not need to be rebuilt.</p>
-            <div class="lh-help-sub"><div class="lh-help-sub-icon">⚡</div><div><strong>Quickest way to type the fence:</strong> press <code>Ctrl+/</code> (or <code>Cmd+/</code>) on an empty line — Obsidian inserts <code>%% %%</code> with the cursor between the markers. Type <code>card</code> and you have <code>%% card %%</code>, ready to use. Spacing and case are tolerated, so <code>%%card%%</code>, <code>%% card %%</code>, and <code>%%CARD%%</code> all work the same.</div></div>
-          `},{icon:"🗺️",title:"Quest Map",tag:c(e,"HELP_QUEST_TAG"),html:`
-            <ol>
-              <li>Ask AI: "Turn calculus.md into a quest-map medium"</li>
-              <li>AI builds a plugin-native quest package under <code>engram-quest/quests/</code> plus local HTML mission files</li>
-              <li>Each mission / boss can use self-contained HTML for dashboards, calculations, diagnosis, cascade decisions, or simulations</li>
-              <li>Progress is saved separately in <code>engram-quest/state/</code>, so AI can update a quest without clearing completed nodes</li>
-              <li>Legacy YAML challenge quests still open normally</li>
-              <li>Open Hub → Quest Map → click a quest card and complete missions, cases, and Boss Battles inside the plugin viewer</li>
-            </ol>
-            <table>
-              <tr><th>Difficulty</th><th>Best for</th></tr>
-              <tr><td><strong>easy</strong></td><td>First exposure</td></tr>
-              <tr><td><strong>medium</strong></td><td>Reinforcing knowledge</td></tr>
-              <tr><td><strong>hard</strong></td><td>Self-testing mastery</td></tr>
-            </table>
-          `},{icon:"🧠",title:"Memory Map",tag:c(e,"HELP_MEMORY_TAG"),html:`
-            <p><strong>How to create (three ways)</strong></p>
-            <ol>
-              <li><strong>AI-generated:</strong> Ask AI "Create a memory-map for OS-overview.md" — it produces <code>OS-overview-memory.canvas</code> automatically</li>
-              <li><strong>Manual:</strong> Create a Canvas file in Obsidian and name it <code>{note-name}-memory.canvas</code> — the plugin detects it automatically</li>
-              <li><strong>Save location:</strong> Defaults to the same folder as the source note. You can also set a dedicated Memory Map folder in Settings</li>
-            </ol>
-            <p><strong>Detection rule</strong></p>
-            <p>The plugin scans all files ending with <code>-memory.canvas</code> in your vault and lists them in Hub → Memory Map.</p>
-            <p><strong>Link to Review Deck</strong></p>
-            <p>During review, the "Memory Map" button on each card automatically finds the matching canvas:</p>
-            <ol>
-              <li>First, it looks for a <code>-memory.canvas</code> with the same name as the source note</li>
-              <li>If not found, it scans all memory canvases — if a canvas contains a file node pointing to that note, it links automatically</li>
-            </ol>
-            <div class="lh-help-sub" style="border-color:#7c3aed"><div class="lh-help-sub-icon">💡</div><div>Tip: include a file node in your canvas that points back to the source note (AI does this automatically). This way, even if files are moved or renamed, Obsidian updates the path and the link stays intact.</div></div>
-          `},{icon:"🎓",title:"Lesson Academy",tag:"AI teaching",html:`
-            <p>Tell the AI what you want to learn and it builds you a course: interactive HTML lessons you study right inside the plugin, with progress tracking.</p>
-            <p><strong>How it works</strong></p>
-            <ol>
-              <li>Ask AI: "Teach me SEO" or "I want to learn .NET — build me a course" (Lesson Academy skill)</li>
-              <li>AI asks about your goal and level, designs an outline, then generates HTML lessons into <code>engram-quest/lessons/</code></li>
-              <li>Open the plugin → Learn → Lessons; click any lesson to read it, with built-in quizzes</li>
-              <li>Courses can mix in 🗺️ concept-map steps (learning maps, comparisons, classifications…): open one and press "Open concept map" to view it in a native Obsidian Canvas tab — drag nodes and add your own notes</li>
-              <li>Press "Mark done" when finished — the course card shows your progress; star key lessons</li>
-              <li>You can also "Import HTML" to add lessons generated elsewhere (e.g. by Gemini)</li>
-              <li>With many courses, use the tag / progress / sort dropdowns above the cards — your picks are remembered</li>
-            </ol>
-            <div class="lh-help-sub"><div class="lh-help-sub-icon">💡</div><div>Any topic works: programming, marketing, medicine, yoga. After finishing a course, ask the AI to turn the lessons into Review Deck cards or a Quest Map to consolidate.</div></div>
-          `},{icon:"⚡",title:"Synapse (Pro)",tag:"Pro",html:`
-            <p>While reviewing a hard card, automatically surface 1–3 cards you have already mastered that link conceptually — memory anchors that make the new card easier to remember.</p>
-            <p><strong>How it works</strong></p>
-            <ol>
-              <li>Tell your AI assistant: "run engram-synapse"</li>
-              <li>The skill scans every SR file and builds a "mastered pool" (FSRS stability ≥ 7)</li>
-              <li>For each card in the vault, the AI picks up to 3 strong anchors and writes them to <code>engram-review/synapse/</code></li>
-              <li>During review, a ⚡ Synapse button appears before you reveal the answer</li>
-            </ol>
-            <p><strong>Three memory mechanisms triggered</strong></p>
-            <div class="lh-help-sub"><div class="lh-help-sub-icon">EE</div><div><strong>Elaborative encoding</strong> — hang new knowledge onto an existing network</div></div>
-            <div class="lh-help-sub"><div class="lh-help-sub-icon">AR</div><div><strong>Active recall</strong> — recalling the anchor doubles the review effect</div></div>
-            <div class="lh-help-sub"><div class="lh-help-sub-icon">CA</div><div><strong>Contextual anchoring</strong> — mastered cards serve as familiar memory hooks</div></div>
-            <p><strong>Requires a Pro license.</strong> Needs at least 10 mastered cards before it activates.</p>
-          `},{icon:"⏱",title:"Time-boxed Review (Pro)",tag:"Pro",html:`
-            <p>Short on time? Pick 5 / 10 / 15 minutes — the plugin selects the N cards you most need to review (~1 card per minute).</p>
-            <p><strong>Picking priority</strong></p>
-            <ol>
-              <li>Unseen cards (new content)</li>
-              <li>Most-overdue cards</li>
-              <li>Cards closest to their due date</li>
-            </ol>
-            <p>Reuses the regular review session UI and SR write-back path, so there is no risk to your scheduling data.</p>
-            <p><strong>Requires a Pro license.</strong></p>
-          `},{icon:"📖",title:"Deep Dive (Pro)",tag:"Pro",html:`
-            <p>When a flashcard is too hard to understand, hit <strong>➕ Queue deep dive</strong> during review. The AI diagnoses why the card failed you (too hard? too terse? missing context?) and generates a plain-language, illustrated deep-dive page — from the big picture down to the details.</p>
-            <p><strong>What's on a deep dive page</strong></p>
-            <ol>
-              <li><strong>The problem it solves</strong> — make you want the concept before defining it</li>
-              <li><strong>The map</strong> — where the concept lives in the bigger picture</li>
-              <li><strong>A memory anchor</strong> — one everyday metaphor + emoji visual you can replay with closed eyes</li>
-              <li><strong>Layered deep-dive & common confusions</strong> — ending back at your original card</li>
-            </ol>
-            <p><strong>Design notes</strong></p>
-            <div class="lh-help-sub" style="border-color:#0078d4"><div class="lh-help-sub-icon">NF</div><div><strong>No own schedule</strong> — a deep dive supports the original card; that card keeps reviewing in your Review Deck, and its next reviews are the real test</div></div>
-            <div class="lh-help-sub" style="border-color:#0078d4"><div class="lh-help-sub-icon">RW</div><div><strong>Auto-rewrite</strong> — still failing the card after the deep dive? The skill rewrites the page from a shallower entry point next run</div></div>
-            <p><strong>How to use it</strong></p>
-            <ol>
-              <li>Queue hard cards with ➕ during review, then tell the AI to "process the deep dive queue"</li>
-              <li>Or ask directly: "make a deep dive about X"</li>
-              <li>Read them in Hub → Deep Dive tab; opening marks them read, add ⭐ or ✓ complete, 🗑️ deletes a page</li>
-              <li>Colours mean the same thing everywhere: <strong>amber = unread</strong>, <strong>blue = read</strong>, <strong>indigo = starred</strong>, <strong>green = completed</strong>. Only your own ✓ turns a deck green — reading alone never does</li>
-            </ol>
-            <p><strong>Requires a Pro license.</strong></p>
-          `},{icon:"🔬",title:"Why It Works",tag:c(e,"HELP_SCIENCE_TAG"),html:`
-            <div class="lh-help-sub"><div class="lh-help-sub-icon">SR</div><div><strong>Spaced Repetition</strong><br>Review at the point of near-forgetting. FSRS calculates the next interval automatically.</div></div>
-            <div class="lh-help-sub"><div class="lh-help-sub-icon">RP</div><div><strong>Retrieval Practice</strong><br>Active recall is more effective than re-reading. Review Deck trains memory; Quest Map puts that memory into applied scenarios.</div></div>
-            <div class="lh-help-sub"><div class="lh-help-sub-icon">EE</div><div><strong>Elaborative Encoding</strong><br>Concrete images and structures are easier to remember than abstract text. Memory Map turns concepts into visual structure.</div></div>
-          `},{icon:"⚙️",title:"Settings",tag:c(e,"HELP_SETTINGS_TAG"),html:`
-            <p>Open Obsidian Settings → <strong>EngramQuest</strong> to configure.</p>
-            <p><strong>Flashcard tag prefixes</strong> (default: <code>flashcards</code>)</p>
-            <p>Determines which notes are scanned as Review Deck cards.</p>
-            <ul>
-              <li>Default <code>flashcards</code> → <code>#flashcards/math</code>, <code>#flashcards/marketing</code> are detected</li>
-              <li>Change to <code>cards</code> → only <code>#cards/math</code> is detected; <code>#flashcards/math</code> is not</li>
-              <li>Multiple prefixes: comma-separated, e.g. <code>flashcards, cards, anki</code></li>
-            </ul>
-            <p><strong>To be detected, a note needs both:</strong></p>
-            <ol>
-              <li>Cards in any supported format (<code>::</code>, <code>Q:/A:</code>, or Cloze), for example:<pre>#flashcards/math
-
-What is the Pythagorean theorem? :: In a right triangle, a² + b² = c²
-
-Q: What is a derivative?
-A: The instantaneous rate of change of a function at a point.
-   Formally: lim(h→0) [f(x+h) − f(x)] / h
-
-{{c1::Calculus}} is built on limits, derivatives, and integrals</pre></li>
-              <li>A matching tag prefix, e.g. <code>#flashcards/math</code> (first line of the example above)</li>
-            </ol>
-            <p><strong>Include legacy <code>::</code> notes</strong> (default: Off)</p>
-            <p>When on, untagged <code>::</code> notes are also scanned. Migration mode, not needed for new users.</p>
-            <p><strong>Max review interval</strong> (default: 36525 days)</p>
-            <p>Cap on FSRS scheduling. Lower it to keep well-known cards appearing periodically.</p>
-            <p><strong>Requested retention</strong> (default: 0.9)</p>
-            <p>FSRS target retention rate. Higher = more frequent reviews; lower = longer intervals.</p>
-          `},{icon:"❓",title:"FAQ",tag:c(e,"HELP_FAQ_TAG"),html:`
-            <p><strong>Q1. Can I use this without installing Skills?</strong></p>
-            <p>Yes. You can write cards manually using <code>question :: answer</code> and add a matching tag such as <code>#flashcards/math</code>.</p>
-            <p><strong>Q2. Can AI read source notes that do not have tags?</strong></p>
-            <p>Yes. AI can read ordinary source notes without <code>flashcards</code> tags. The generated cards are saved to <code>engram-review/ai-cards/</code> — your original notes are never modified.</p>
-            <p><strong>Q3. Why can't I see a Review Deck?</strong></p>
-            <p>Common reasons: no card note has been created yet, the card note does not match the current tag prefix setting, or you expected old plain <code>::</code> notes to be included without enabling legacy scan.</p>
-            <p><strong>Q4. I have general notes with no tags. How do I make a Review Deck?</strong></p>
-            <p>Ask AI: "Make a Review Deck from notes about [topic]". AI reads your notes and creates card files in <code>engram-review/ai-cards/</code> with the correct tags — your original notes are never modified. Open Hub → Review Deck to see them.</p>
-            <p><strong>Q5. I want to make cards manually without AI. How?</strong></p>
-            <p><strong>Step 1: Add a tag (sets the Deck name)</strong></p>
-            <p>Add <code>#flashcards/topic</code> anywhere in your note. The name after the slash becomes the Deck name.</p>
-            <ul>
-              <li><code>#flashcards/english</code> → creates an "english" Deck</li>
-              <li><code>#flashcards/math</code> → creates a "math" Deck</li>
-              <li>Default prefix is <code>flashcards</code>; change it in Settings (e.g. <code>cards</code>, <code>anki</code>)</li>
-            </ul>
-            <p><strong>Step 2: Write cards (3 formats, freely mixable)</strong></p>
-            <pre>#flashcards/learning-science
-
-Pythagorean theorem :: a² + b² = c²
-
-Q: What is spaced repetition?
-A:
-1. Review just before you forget — best timing for retention
-2. Each successful recall pushes the next review further out
-
-%%card%%
-Q: When should I use %%card%%?
-A:
-Use it only for long pasted AI answers that may contain their own --- separators.
-
----
-
-This separator stays inside the answer.
-%%card%%
-
-{{c1::Spaced repetition}} is one of the most effective memory techniques
-Capitals: France {{c1::Paris}}, Japan {{c2::Tokyo}}</pre>
-            <table>
-              <tr><th>Format</th><th>Best for</th><th>Syntax</th></tr>
-              <tr><td><span class="lh-help-fmt-chip" style="background:#dcfce7;color:#166534;"><code>Q:/A:</code> Q&amp;A</span> ⭐</td><td>Recommended everyday format. Multi-line, images, tables</td><td><code>Q: question</code> → <code>A: answer</code> (answer can start on the next line; multiple lines ok)</td></tr>
-              <tr><td><code>Q:/A:</code> fenced ⭐</td><td>Long answers with many blank lines (e.g. pasted AI output)</td><td>Wrap with <code>---</code> on its own line before and after — blank lines inside never end the card</td></tr>
-              <tr><td><span class="lh-help-fmt-chip" style="background:#fef3c7;color:#92400e;"><code>%%card%%</code> long answer</span></td><td>Safe mode for pasted AI answers that may include <code>---</code></td><td>Wrap one card between two <code>%%card%%</code> lines; everything after <code>A:</code> stays in the answer until the closing marker</td></tr>
-              <tr><td>Cloze</td><td>Fill-in-the-blank, same as Anki</td><td><code>{{c1::answer}}</code> or <code>{{c1::answer::hint}}</code></td></tr>
-              <tr><td><code>::</code> Q&amp;A</td><td>Short answers, one line only</td><td><code>question :: answer</code></td></tr>
-            </table>
-            <p><strong>Q:/A: boundary rules:</strong></p>
-            <ul>
-              <li><code>A:</code> can be empty — the answer starts on the next line</li>
-              <li>A single blank line inside the answer is fine; collection continues</li>
-              <li><strong>Two consecutive blank lines</strong> end the card</li>
-              <li>The next <code>Q:</code> line or a Cloze line also ends the answer automatically</li>
-              <li><strong>Fenced mode:</strong> wrap the card with <code>---</code> on its own line before and after — any number of blank lines inside are safe. Ideal for pasting ChatGPT / AI answers:<pre>---
-Q: What is Stripe's core model?
-A: Stripe is essentially a Saga System.
-
-   It handles:
-   - payment_intent state machine
-   - retry / failure handling
-
-   You only receive the result.
----
-
----
-Q: What is a Saga pattern?
-A: A sequence of local transactions.
-
-   Each step publishes an event.
-   On failure, compensating transactions roll back.
----</pre>
-              <strong>Note:</strong> a plain <code>---</code> horizontal rule in your note (not followed by <code>Q:</code>) is automatically ignored — no false triggers.</li>
-            </ul>
-            <p><strong>Cloze notes:</strong></p>
-            <ul>
-              <li>Each <code>{{cX::answer}}</code> generates one card — front shows <code>[...]</code>, back reveals the answer</li>
-              <li>Multiple clozes on one line (c1, c2…) each produce their own card</li>
-              <li>Optional hint: <code>{{c1::Paris::capital}}</code> → front shows <code>[capital]</code> instead of <code>[...]</code></li>
-            </ul>
-            <p>Open Hub → Review Deck to see all cards.</p>
-            <p><strong>Q6. I already have many old <code>::</code> cards without tags. How do I migrate?</strong></p>
-            <p>Turn on <code>Include legacy :: notes</code> in Settings, keep the existing <code>question :: answer</code> format, and reopen Hub → Review Deck. For long-term maintenance, gradually add <code>#flashcards/...</code> tags.</p>
-            <p><strong>Q7. Where is review progress stored?</strong></p>
-            <p>Review scheduling data is stored in <code>engram-review/sr/{note-name}.json</code>. AI-generated cards live in <code>engram-review/ai-cards/</code> — neither touches your source notes. Cards you write yourself: Edit, Highlight, and Emphasis tools in the review session write changes directly back to your note.</p>
-            <p><strong>Q8. Does this work on mobile?</strong></p>
-            <p>Review Deck works on mobile. Quest Map and Memory Map are still best on desktop.</p>
-            <p><strong>Q9. Why doesn't the plugin update on my phone?</strong></p>
-            <p>The plugin's <code>main.js</code> lives inside your vault at <code>.obsidian/plugins/engram-quest/</code>. As long as your vault is synced via git (Obsidian Git plugin), updates pushed from desktop will be pulled to mobile automatically. If your phone isn't getting updates, check:</p>
-            <ol>
-              <li>Your vault <code>.gitignore</code> is not excluding <code>/.obsidian/plugins/engram-quest/</code> entirely</li>
-              <li>The Obsidian Git plugin on mobile has auto-pull enabled</li>
-              <li>After pulling, disable and re-enable the plugin in Settings, or restart the app</li>
-            </ol>
-            <p><strong>Q10. My notes are messy or there's way too much content. Where do I even start?</strong></p>
-            <p>No need to tidy up first. Ask AI to scan and list the topics across your notes, then pick what you want to learn:</p>
-            <div class="lh-help-sub"><div class="lh-help-sub-icon">💬</div><div>"List all the topic categories in my vault"<br>"List all note titles related to [subject]"</div></div>
-            <p>Once you have the list, point AI at what you want:</p>
-            <div class="lh-help-sub"><div class="lh-help-sub-icon">💬</div><div>"Turn item 3 from that list into a Quest Map medium"<br>"Make a Review Deck from the marketing-related notes"</div></div>
-            <p>If the notes themselves are fragmented, ask AI to organize them first:</p>
-            <div class="lh-help-sub"><div class="lh-help-sub-icon">💬</div><div>"Organize these notes into a structured outline, then build a Quest Map"</div></div>
-            <p><strong>Q11. I'm not satisfied with the AI output. How do I customize it?</strong></p>
-            <p>Add custom instructions to your AI config files (<code>CLAUDE.md</code>, <code>GEMINI.md</code>, <code>AGENTS.md</code>). AI will follow your rules when generating content.</p>
-            <pre>When building a Review Deck, every card must include a real-world application example.
-Keep card difficulty at an advanced level — include analysis and application questions.
-Write all card questions in formal academic English.</pre>
-            <p><strong>Q12. How can I make AI always follow a specific pattern when building a Review Deck?</strong></p>
-            <p>Mark key answers in your notes using any syntax you prefer — for example, Obsidian's highlight <code>==text==</code>, blockquote <code>&gt; text</code>, or any custom marker. Then add a rule to your AI config file (<code>CLAUDE.md</code>, <code>GEMINI.md</code>, or <code>AGENTS.md</code>) telling it to treat that marker as a card answer:</p>
-            <pre>IMPORTANT: When building a Review Deck, every highlighted ==text== must be turned into a review card.</pre>
-            <p>Use whatever convention fits your note-taking style — the AI will follow it consistently.</p>
-            <p><strong>Q13. Does EngramQuest support Anki?</strong></p>
-            <p>Partially. The <code>::</code> and <code>{{c1::}}</code> formats are Anki-compatible. Pair them with the <strong>Obsidian_to_Anki</strong> community plugin — install Obsidian_to_Anki + AnkiConnect, enable RemNote-style (<code>::</code>) syntax in its settings, and sync. Your cards will appear in Anki automatically.</p>
-            <p>The <code>Q:/A:</code> format is EngramQuest-native and does <strong>not</strong> sync to Anki — it's designed for rich multi-line answers, images, and tables that don't map cleanly to Anki's card model. Use <code>::</code> or <code>{{c1::}}</code> for cards you want in both places.</p>
-            <p><strong>Q14. I want AI-generated maps saved to a specific folder. How?</strong></p>
-            <p>Add a path rule to your AI config files and AI will respect it when creating files.</p>
-            <pre>All Quest Maps must be saved under engram-quest/quests/{questSlug}/ with meta.json + HTML nodes.
-Store all Memory Maps in the Maps/Memory/ directory.</pre>
-            <p><strong>Q15. What other assistance can AI provide?</strong></p>
-            <p>Beyond content creation, AI can interact with your Review Decks to provide personalized tutoring and guided review sessions. It can also help organize and categorize existing decks, or generate more challenging new questions based on your current knowledge.</p>
-          `}]),h.splice(Math.max(h.length-1,0),0,{icon:"🤖",title:t==="zh-tw"?"AI 設定":"AI Setup",tag:c(e,"HELP_AI_SETUP_TAG"),html:t==="zh-tw"?`
-        <p><strong>AI 完全可選。</strong>Skills 是「執行邏輯」，安裝一次後，你用<strong>自己已在用的 AI 工具</strong>對它說話即可 — 不需要訂閱另一個服務。</p>
-        <ol>
-          <li><strong>安裝 Skills</strong> — 設定 → EngramQuest → AI Skills，選你的工具按「安裝」。</li>
-          <li><strong>用 AI 工具跑對應 skill</strong> — 從<strong>這個 vault 資料夾</strong>開啟 Claude Code / Codex / Antigravity / Gemini CLI / Cursor，直接用自然語言說，例如「把 math 筆記做成 review deck」「把 微積分.md 做成 quest-map medium」。</li>
-          <li><strong>回 Hub 學習</strong> — 生成的內容會出現在對應分頁。</li>
-        </ol>
-        <table>
-          <tr><th>工具</th><th>Skills 路徑</th></tr>
-          <tr><td>Claude Code</td><td><code>.claude/skills</code></td></tr>
-          <tr><td>Codex / Antigravity</td><td><code>.agents/skills</code></td></tr>
-          <tr><td>Gemini CLI</td><td><code>.gemini/skills</code></td></tr>
-          <tr><td>Cursor</td><td><code>.cursor/skills</code></td></tr>
-        </table>
-        <div class="lh-help-sub"><div class="lh-help-sub-icon">💡</div><div><strong>Codex 與 Antigravity 共用 <code>.agents/skills</code></strong>：安裝 Codex 目標，Antigravity 從同一 vault 開啟時就會自動讀到，不需另外安裝。</div></div>
-        <div class="lh-help-sub"><div class="lh-help-sub-icon">🔄</div><div><strong>Skills 會自動保持最新</strong>：插件更新後載入時會自動更新已安裝的 skills（可在設定關閉）。若偵測到已安裝的 skills 過期，Hub 也會顯示提醒橫幅，按「更新 Skills」即可一鍵更新。</div></div>
-      `:`
-        <p><strong>AI is fully optional.</strong> Skills are the execution logic — install once, then talk to them using the <strong>AI tool you already have</strong>. No extra subscription.</p>
-        <ol>
-          <li><strong>Install Skills</strong> — Settings → EngramQuest → AI Skills, pick your tool and click Install.</li>
-          <li><strong>Run the skill from your AI tool</strong> — open Claude Code / Codex / Antigravity / Gemini CLI / Cursor <strong>from this vault folder</strong> and just say it in plain language, e.g. "Build a review deck from my math notes" or "Turn calculus.md into a quest-map medium".</li>
-          <li><strong>Back to the Hub</strong> — generated content shows up in the matching tab.</li>
-        </ol>
-        <table>
-          <tr><th>Tool</th><th>Skills path</th></tr>
-          <tr><td>Claude Code</td><td><code>.claude/skills</code></td></tr>
-          <tr><td>Codex / Antigravity</td><td><code>.agents/skills</code></td></tr>
-          <tr><td>Gemini CLI</td><td><code>.gemini/skills</code></td></tr>
-          <tr><td>Cursor</td><td><code>.cursor/skills</code></td></tr>
-        </table>
-        <div class="lh-help-sub"><div class="lh-help-sub-icon">💡</div><div><strong>Codex and Antigravity share <code>.agents/skills</code></strong>: install the Codex target and Antigravity picks it up automatically when opened from the same vault — no separate install.</div></div>
-        <div class="lh-help-sub"><div class="lh-help-sub-icon">🔄</div><div><strong>Skills stay up to date automatically</strong>: installed skills are refreshed when the plugin loads after an update (can be turned off in Settings). If outdated skills are detected, the Hub also shows a reminder banner — click "Update skills" to update in one step.</div></div>
-      `}),h.push({icon:"🔑",title:t==="zh-tw"?"Pro 授權":"Pro license",tag:"Pro",html:t==="zh-tw"?`<p><strong>US$11.99 一次買斷，後續 Pro 功能更新皆包含。</strong>不升級，也能繼續正常使用免費功能。</p><ul><li><strong>記憶錨點（Synapse）</strong>：用已掌握的相關卡片幫助回想。</li><li><strong>深入解析</strong>：難卡加入佇列，由 skill 生成白話圖解，再回到 Hub 閱讀。</li><li><strong>限時複習</strong>：5／10／15 分鐘，優先挑選最需要複習的卡片。</li><li><strong>影片進階風格（研究中）</strong>：更多實測過的影片風格，也能從喜歡的影片建立自己的風格。影片 skill 尚未完成；影片管理、播放與免費風格維持免費。</li></ul><p>在 Hub 頂部點 Pro，或設定 → EngramQuest → 看看 Pro，開啟圖解介紹。付款後從 Polar 購買頁複製 key，在設定啟用，接著重新開啟 Hub。</p><p>驗證只傳送 key 與商品識別碼，不傳筆記；成功後最多 14 天離線緩衝。移除本機授權不刪除學習資料。Sandbox 僅接受測試 key。</p>`:`<p><strong>US$11.99 one-time purchase. Future Pro feature updates included.</strong> All free features remain available without upgrading.</p><ul><li><strong>Memory anchors (Synapse)</strong>: recall through related cards you have mastered.</li><li><strong>Deep dive</strong>: queue a difficult card, generate an illustrated explanation with the skill, then read it in the Hub.</li><li><strong>Time-boxed review</strong>: choose 5, 10 or 15 minutes to review priority cards.</li><li><strong>Advanced video styles (in research)</strong>: more tested video styles, plus styles of your own built from videos you like. The video skill is not complete; video management and playback stay free.</li></ul><p>Select Pro in the Hub header or Explore Pro in Settings for the illustrated overview. Purchase through Polar, copy the key and activate it in Settings, then reopen the Hub.</p><p>Validation sends only the key and product identifiers, never notes. Successful checks allow up to 14 days offline. Removing the local license preserves learning data. Sandbox accepts only test keys.</p>`}),h=h.filter(u=>!new Set(["建立第一個 Review Deck","Create Your First Review Deck","Review Deck","Quest Map","Memory Map","課程學院（教材）","Lesson Academy","Synapse (Pro)","Time-boxed Review (Pro)","深入解析 (Pro)","Deep Dive (Pro)"]).has(u.title)),h.forEach((u,v)=>{let p=o.createEl("div",{attr:{class:"lh-help-acc"}}),g=p.createEl("div",{attr:{class:"lh-help-acc-hdr"+(v===f?" open":"")}});g.createEl("span",{text:u.icon,attr:{class:"lh-help-acc-icon"}}),g.createEl("span",{text:u.title,attr:{class:"lh-help-acc-title"}}),g.createEl("span",{text:u.tag,attr:{class:"lh-help-acc-tag"}});let E=g.createEl("span",{attr:{class:"lh-help-acc-arrow"}});E.innerHTML=d;let m=p.createEl("div",{attr:{class:"lh-help-acc-body"+(v===f?" open":"")}});m.innerHTML=u.html;if(u.title==="Pro 授權"||u.title==="Pro license"){let pb=m.createEl("button",{text:c(e,"PRO_LEARN"),cls:"lh-btn-primary"});pb.addEventListener("click",()=>new ProUpgradeModal(this.app,this.plugin).open());}g.addEventListener("click",()=>{let x=m.classList.contains("open");o.querySelectorAll(".lh-help-acc-body").forEach(S=>S.classList.remove("open")),o.querySelectorAll(".lh-help-acc-hdr").forEach(S=>S.classList.remove("open")),x||(m.classList.add("open"),g.classList.add("open"))})});let _coffeeFoot=o.createEl("div",{attr:{style:"margin-top:28px;padding:20px 16px 8px;border-top:1px solid var(--background-modifier-border);text-align:center;"}});_coffeeFoot.createEl("div",{text:t==="zh-tw"?"覺得 EngramQuest 對你有幫助？":"Find EngramQuest helpful?",attr:{style:"font-size:13px;color:var(--text-muted);margin-bottom:10px;"}});let _coffeeBtn=_coffeeFoot.createEl("a",{attr:{href:"https://ko-fi.com/wen_aidev",target:"_blank",rel:"noopener",style:"display:inline-flex;align-items:center;gap:8px;padding:10px 20px;border-radius:8px;background:#fcd34d;color:#1f2937;text-decoration:none;font-size:14px;font-weight:600;"}});_coffeeBtn.createEl("span",{text:"☕"});_coffeeBtn.createEl("span",{text:"Buy me a coffee"});}};
-
-module.exports = { HelpModal: fe };
+module.exports = { HelpModal };

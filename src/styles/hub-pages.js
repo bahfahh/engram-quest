@@ -233,4 +233,111 @@ body.is-phone .lh-acs { margin-left:0; width:100%; justify-content:space-between
 body.is-phone .lh-acg { grid-template-columns:repeat(2,minmax(0,1fr)); }
 `;
 
-module.exports = session + library + lessons + achievements;
+// The Help dialog and the first-run feature guides (src/hub/help.js, src/hub/feature-guide.js).
+const help = `
+.modal.lh-hub.lh-help { width:min(94vw,780px); height:min(90vh,800px); }
+.lh-help-head { display:flex; align-items:center; gap:8px; flex:none; padding:16px 14px 8px 24px; }
+.lh-help-title { flex:1; min-width:0; margin:0; font-size:22px; line-height:28px; font-weight:700; letter-spacing:-.01em; color:var(--text); }
+.lh-help-body { flex:1; min-height:0; overflow-y:auto; display:flex; flex-direction:column; gap:12px; padding:4px 24px 28px; }
+.lh-help-body > * { flex:none; }
+.lh-help-lead { margin:0; font-size:15px; line-height:23px; color:var(--text2); }
+.lh-help-note { margin:0; font-size:13px; line-height:19px; color:var(--text3); }
+.lh-help-h { margin:10px 0 0; font-size:17px; line-height:22px; font-weight:600; color:var(--text); }
+.lh-help-map { display:flex; flex-wrap:wrap; align-items:flex-start; gap:12px; }
+.lh-help-grp { flex:1 1 220px; min-width:0; background:var(--card); box-shadow:var(--cshadow); border-radius:16px; padding:4px 0; overflow:hidden; }
+.lh-help-grp-h { display:flex; align-items:baseline; gap:8px; padding:10px 14px 6px; }
+.lh-help-grp-h b { font-size:13px; font-weight:600; color:var(--text); }
+.lh-help-grp-h span { font-size:12px; color:var(--text3); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.lh-hub .lh-help-tab { display:flex; align-items:center; gap:10px; width:100%; min-height:48px; padding:6px 10px 6px 14px; position:relative; color:var(--text); text-align:left; cursor:pointer; }
+.lh-hub .lh-help-tab:hover { background:var(--fill2); }
+.lh-hub .lh-help-tab:focus-visible,.lh-hub .lh-help-sec-h:focus-visible,.lh-hub .lh-guide-opt:focus-visible { outline:2px solid var(--tint); outline-offset:-2px; }
+:is(.lh-help,.lh-guide) :is(.lh-link,.lh-guide-back,.lh-guide-zoom,.lh-guide-yt):focus-visible { outline:2px solid var(--tint); outline-offset:2px; border-radius:4px; }
+.lh-help-tab + .lh-help-tab::before { content:""; position:absolute; left:50px; right:0; top:0; height:.5px; background:var(--sep); }
+.lh-help-tab > .lh-i { width:16px; height:16px; color:var(--text3); }
+.lh-help-tab-tx { flex:1; min-width:0; display:flex; flex-direction:column; }
+.lh-help-tab-nm { display:flex; align-items:center; gap:6px; font-size:14px; line-height:19px; font-weight:600; }
+.lh-help-tab-sub { font-size:12px; line-height:16px; color:var(--text3); }
+.lh-help-pro { font-size:11px; line-height:16px; font-weight:600; color:var(--text2); background:var(--fill); padding:0 6px; border-radius:6px; }
+.lh-help-acc { background:var(--card); box-shadow:var(--cshadow); border-radius:16px; overflow:hidden; }
+.lh-help-sec + .lh-help-sec { border-top:.5px solid var(--sep); }
+.lh-hub .lh-help-sec-hd { margin:0; font:inherit; }
+.lh-hub .lh-help-sec-h { display:flex; align-items:center; gap:12px; width:100%; min-height:52px; padding:8px 14px; color:var(--text); text-align:left; cursor:pointer; }
+.lh-hub .lh-help-sec-h:hover { background:var(--fill2); }
+.lh-hub .lh-help-sec-h .lh-gi { width:26px; height:26px; border-radius:7px; }
+.lh-hub .lh-help-sec-h .lh-gi .lh-i { width:15px; height:15px; }
+.lh-help-sec-t { flex:1; min-width:0; font-size:15px; line-height:20px; font-weight:600; }
+.lh-help-tag { flex:none; max-width:45%; font-size:12px; line-height:16px; color:var(--text3); text-align:right; }
+.lh-help-tag.pro { color:var(--text2); background:var(--fill); padding:1px 7px; border-radius:6px; font-weight:600; }
+.lh-help-chev { display:grid; flex:none; color:var(--text3); transition:transform .15s; }
+.lh-help-chev .lh-i { width:16px; height:16px; }
+.lh-help-sec-h[aria-expanded="true"] .lh-help-chev { transform:rotate(90deg); }
+.lh-help-sec-b { padding:0 20px 18px 52px; font-size:14px; line-height:22px; color:var(--text); }
+.lh-help-sec-b[hidden] { display:none; }
+.lh-help-sec-b p { margin:8px 0; }
+.lh-help-sec-b h4 { margin:16px 0 4px; font-size:14px; line-height:20px; font-weight:600; color:var(--text); }
+.lh-help-sec-b ol,.lh-help-sec-b ul { margin:6px 0; padding-left:20px; }
+.lh-help-sec-b li { margin:4px 0; }
+.lh-help-sec-b li::marker { color:var(--text3); }
+.lh-help-sec-b strong,.lh-guide-body strong { font-weight:600; color:var(--text); }
+:is(.lh-help-sec-b,.lh-guide-body) code { font-family:var(--font-monospace,ui-monospace,monospace); font-size:.9em; background:var(--fill); color:var(--text); padding:1px 5px; border-radius:5px; }
+.lh-help-sec-b pre { margin:8px 0; padding:10px 12px; border-radius:10px; background:var(--fill2); color:var(--text); font-family:var(--font-monospace,ui-monospace,monospace); font-size:12.5px; line-height:19px; white-space:pre-wrap; overflow-wrap:anywhere; }
+.lh-help-tbl { margin:8px 0; overflow-x:auto; border-radius:10px; background:var(--fill2); }
+.lh-help-tbl table { width:100%; border-collapse:collapse; font-size:13px; line-height:19px; }
+.lh-help-tbl th { padding:7px 10px; text-align:left; vertical-align:bottom; font-size:12px; font-weight:600; color:var(--text3); border-bottom:.5px solid var(--sep); }
+.lh-help-tbl td { padding:8px 10px; vertical-align:top; color:var(--text); border-bottom:.5px solid var(--sep); }
+.lh-help-tbl tr:last-child td { border-bottom:0; }
+.lh-help-tbl code { white-space:nowrap; }
+.lh-help-say { display:flex; flex-direction:column; align-items:flex-start; gap:6px; margin:8px 0; }
+.lh-help-say-i { max-width:100%; padding:7px 12px; border-radius:14px 14px 14px 4px; background:var(--fill); color:var(--text); font-size:13.5px; line-height:20px; }
+.lh-help-aside { margin:12px 0 4px; padding:10px 12px; border-radius:12px; background:var(--fill2); color:var(--text2); font-size:13px; line-height:20px; }
+.lh-help-first,.lh-guide-first { margin:12px 0 4px; padding:10px 12px; border-radius:12px; box-shadow:inset 0 0 0 1px var(--sep); font-size:13.5px; line-height:21px; color:var(--text); }
+.lh-help-first-h,.lh-guide-first-h { margin-bottom:2px; font-size:12px; line-height:16px; font-weight:600; color:var(--tint); }
+.lh-help-acts { display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; }
+.lh-help-foot { display:flex; flex-wrap:wrap; justify-content:center; align-items:center; gap:8px; padding-top:8px; font-size:13px; color:var(--text3); }
+body.is-phone .lh-help-head { padding:calc(env(safe-area-inset-top,0px) + 8px) 8px 6px 18px; }
+body.is-phone .lh-help-title { font-size:20px; }
+body.is-phone .lh-help-body { padding:4px 16px calc(env(safe-area-inset-bottom,0px) + 24px); }
+body.is-phone .lh-help-sec-b { padding:0 14px 16px; }
+body.is-phone .lh-help-tag:not(.pro) { display:none; }
+
+.modal.lh-hub.lh-guide { width:min(92vw,520px); height:auto; max-height:min(88vh,780px); display:flex; flex-direction:column; }
+.lh-hub.lh-guide > .modal-content { height:auto; flex:1 1 auto; min-height:0; }
+.lh-guide-hero { position:relative; flex:none; background:var(--fill2); border-bottom:.5px solid var(--sep); cursor:zoom-in; }
+.lh-guide-hero[hidden],.lh-guide-fig[hidden] { display:none; }
+.lh-guide-hero img { display:block; width:100%; max-height:32vh; object-fit:contain; }
+.lh-hub .lh-guide-zoom { position:absolute; right:8px; bottom:8px; padding:3px 10px; border-radius:99px; background:var(--glass); -webkit-backdrop-filter:blur(14px); backdrop-filter:blur(14px); color:var(--text); font-size:11px; line-height:16px; font-weight:600; cursor:zoom-in; }
+.lh-guide-body { flex:1 1 auto; min-height:0; overflow-y:auto; padding:16px 22px 12px; font-size:14px; line-height:22px; color:var(--text); }
+.lh-guide-body > p,.lh-guide-p { margin:8px 0; color:var(--text); }
+.lh-guide-title { display:flex; align-items:center; gap:10px; margin-bottom:6px; }
+.lh-guide-title h2,.lh-guide-ptitle { margin:0; min-width:0; font-size:17px; line-height:23px; font-weight:600; color:var(--text); }
+.lh-guide-ptitle { margin:4px 0 8px; }
+.lh-guide-pick { margin:16px 0 6px; font-size:12px; line-height:16px; font-weight:600; color:var(--text3); }
+.lh-guide-opts { background:var(--card); box-shadow:var(--cshadow); border-radius:14px; overflow:hidden; }
+.lh-hub .lh-guide-opt { display:flex; align-items:center; gap:10px; width:100%; min-height:52px; padding:8px 12px 8px 14px; position:relative; color:var(--text); text-align:left; cursor:pointer; }
+.lh-hub .lh-guide-opt:hover { background:var(--fill2); }
+.lh-guide-opt + .lh-guide-opt::before { content:""; position:absolute; left:14px; right:0; top:0; height:.5px; background:var(--sep); }
+.lh-guide-opt b { display:block; font-size:15px; line-height:20px; font-weight:600; }
+.lh-guide-opt span span { display:block; font-size:12px; line-height:16px; color:var(--text3); }
+.lh-guide-opt > .lh-i { width:16px; height:16px; color:var(--text3); }
+.lh-hub .lh-guide-back { min-height:32px; color:var(--tint); font-size:14px; font-weight:500; cursor:pointer; }
+.lh-guide-fig { position:relative; margin:12px 0; }
+.lh-guide-cap { margin-bottom:5px; font-size:12px; line-height:16px; font-weight:600; color:var(--text3); }
+.lh-guide-img { cursor:zoom-in; }
+.lh-guide-img img { display:block; width:100%; max-height:30vh; object-fit:contain; border-radius:10px; background:var(--fill2); }
+.lh-guide-vid { position:relative; aspect-ratio:16/9; border-radius:10px; overflow:hidden; background:var(--fill); }
+.lh-guide-vid iframe { position:absolute; inset:0; width:100%; height:100%; border:0; }
+.lh-hub .lh-guide-yt { display:inline-block; margin-top:5px; font-size:12px; color:var(--tint); text-decoration:none; }
+.lh-hub .lh-guide-yt:hover { text-decoration:underline; }
+.lh-guide-foot { flex:none; display:flex; align-items:center; justify-content:space-between; gap:10px; padding:10px 22px; border-top:.5px solid var(--sep); }
+.lh-guide-hint { min-width:0; font-size:12px; line-height:16px; color:var(--text3); }
+body.is-phone .lh-guide-body { padding:calc(env(safe-area-inset-top,0px) + 12px) 18px 12px; }
+body.is-phone .lh-guide-hero { padding-top:env(safe-area-inset-top,0px); }
+body.is-phone .lh-guide-hero:not([hidden]) + .lh-guide-body { padding-top:14px; }
+body.is-phone .lh-guide-foot { padding:10px 18px calc(env(safe-area-inset-bottom,0px) + 12px); }
+body.is-phone .lh-hub .lh-guide-back { min-height:44px; font-size:17px; }
+
+.eq-guide-lightbox { position:fixed; inset:0; z-index:99999; display:flex; align-items:center; justify-content:center; padding:24px; background:rgba(0,0,0,.88); cursor:zoom-out; -webkit-tap-highlight-color:transparent; }
+.eq-guide-lightbox img { max-width:96vw; max-height:96vh; object-fit:contain; border-radius:8px; }
+`;
+
+module.exports = session + library + lessons + achievements + help;
