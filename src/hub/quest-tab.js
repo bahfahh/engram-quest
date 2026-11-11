@@ -93,8 +93,14 @@ function addProgress(parent, t, q) {
   ui.track(parent, q.progressPct || 0, q.completed);
 }
 
+const CTA_ICON = { cleared: "reset", boss: "bolt", progress: "play", idle: "play" };
+
+// The quest's state picks the button's weight: start/continue is primary, Boss is warm, cleared is quiet green.
 function addCta(parent, hub, q) {
-  const btn = parent.createEl("button", { cls: "lh-get", text: c(hub.plugin.settings, CTA_LABEL[questStatus(q)]) });
+  const status = questStatus(q);
+  const btn = parent.createEl("button", { cls: `lh-get is-${status}` });
+  ui.icon(btn, CTA_ICON[status]);
+  btn.createEl("span", { text: c(hub.plugin.settings, CTA_LABEL[status]) });
   btn.addEventListener("click", (ev) => { ev.stopPropagation(); openQuest(hub, q); });
 }
 

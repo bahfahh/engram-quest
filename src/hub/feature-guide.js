@@ -376,7 +376,7 @@ const CONTENT = {
         "外層是系列書架（可篩選、搜尋），點進系列就是播放器；看到哪裡都會記住，下次<strong>從上次的位置續播</strong>。",
         "在「影片設定」<strong>選老師</strong>，每位老師教法不同：Nico 免費，其他老師和替每個系列指定老師需要 <strong>Pro</strong>。畫質、語言這些設一次就好。",
       ],
-      first: "按「<strong>＋ 新系列</strong>」寫下想學什麼，例如「架設網站」，再把插件給你的提示貼進 <strong>Claude Code</strong>，影片做好就會出現在這裡。",
+      first: "按「<strong>新系列</strong>」寫下想學什麼，例如「架設網站」，再把插件給你的提示貼進 <strong>Claude Code</strong>，影片做好就會出現在這裡。",
     },
     en: {
       title: "Video Academy — one sentence, AI turns it into short lessons",
@@ -385,7 +385,7 @@ const CONTENT = {
         "The outer view is a shelf of series (filter and search); open one to watch. Your place is remembered, so you <strong>resume where you stopped</strong>.",
         "<strong>Pick a teacher</strong> in Video settings; each one teaches differently. Nico is free; the other teachers, and a different teacher for each series, need <strong>Pro</strong>. Quality and language only need setting once.",
       ],
-      first: "Press <strong>+ New series</strong> and write what you want to learn, e.g. \"build a website\"; paste the prompt the plugin gives you into <strong>Claude Code</strong> and the videos appear here when they are done.",
+      first: "Press <strong>New series</strong> and write what you want to learn, e.g. \"build a website\"; paste the prompt the plugin gives you into <strong>Claude Code</strong> and the videos appear here when they are done.",
     },
   },
   explainer: {
@@ -393,7 +393,7 @@ const CONTENT = {
     "zh-tw": {
       title: "深入解析 — 難卡的白話救援",
       lines: [
-        "複習時看不懂的卡，顯示答案後按「<strong>➕ 加入解析佇列</strong>」，AI 會生成一頁<strong>白話、圖解</strong>的深入解析。這是 <strong>Pro</strong> 功能。",
+        "複習時看不懂的卡，顯示答案後按「<strong>加入解析佇列</strong>」，AI 會生成一頁<strong>白話、圖解</strong>的深入解析。這是 <strong>Pro</strong> 功能。",
         "解析頁<strong>沒有自己的排程</strong>：原卡照常複習；若一直答錯，AI 下次會用更淺的方式重寫這頁。",
       ],
       pickPrompt: "你想了解什麼？",
@@ -405,11 +405,11 @@ const CONTENT = {
         build: {
           title: "如何生成深入解析",
           body: [
-            { h: "① 複習時顯示答案後，對看不懂的卡按「<strong>➕ 加入解析佇列</strong>」（手機在「更多動作」選單裡）。" },
+            { h: "① 複習時顯示答案後，對看不懂的卡按「<strong>加入解析佇列</strong>」（手機在「更多動作」選單裡）。" },
             { h: "② 跟你的 AI 工具說「<strong>處理解析</strong>」：engram-explainer skill 會讀佇列、判斷這張卡為什麼難（太難？太簡略？缺脈絡？），批次生成解析頁。" },
             { h: "也可以不經佇列直接說：「幫我做一份 HTTPS 的深入解析」。" },
           ],
-          first: "複習時按「➕ 加入解析佇列」，之後跟 AI 說「處理解析」。",
+          first: "複習時按「加入解析佇列」，之後跟 AI 說「處理解析」。",
         },
         read: {
           title: "閱讀與狀態",
@@ -424,7 +424,7 @@ const CONTENT = {
     en: {
       title: "Deep Dive — plain-language help for hard cards",
       lines: [
-        "When a card is too hard to understand, show the answer and press \"<strong>➕ Queue deep dive</strong>\"; the AI writes a <strong>plain-language, illustrated</strong> page about it. This is a <strong>Pro</strong> feature.",
+        "When a card is too hard to understand, show the answer and press \"<strong>Queue deep dive</strong>\"; the AI writes a <strong>plain-language, illustrated</strong> page about it. This is a <strong>Pro</strong> feature.",
         "Deep dives have <strong>no schedule of their own</strong>: the original card keeps reviewing, and if it keeps failing the AI rewrites the page from a simpler starting point.",
       ],
       pickPrompt: "What do you want to know?",
@@ -436,11 +436,11 @@ const CONTENT = {
         build: {
           title: "How to generate a Deep Dive",
           body: [
-            { h: "① While reviewing, show the answer and press \"<strong>➕ Queue deep dive</strong>\" on a hard card (on a phone it is in the More actions menu)." },
+            { h: "① While reviewing, show the answer and press \"<strong>Queue deep dive</strong>\" on a hard card (on a phone it is in the More actions menu)." },
             { h: "② Tell your AI tool to \"<strong>process the deep dive queue</strong>\": the engram-explainer skill reads the queue, works out why each card failed you (too hard? too terse? missing context?) and writes the pages." },
             { h: "You can also skip the queue: \"Make a deep dive about HTTPS.\"" },
           ],
-          first: "Press ➕ during review, then tell your AI to \"process the deep dive queue\".",
+          first: "Press \"Queue deep dive\" during review, then tell your AI to \"process the deep dive queue\".",
         },
         read: {
           title: "Reading and status",
@@ -494,10 +494,8 @@ class FeatureGuideModal extends I.Modal {
     if (!def) { this.close(); return; }
     this.def = def;
     this.locale = L(this.plugin.settings) === "zh-tw" ? "zh-tw" : "en";
-    const dark = activeDocument.body.classList.contains("theme-dark");
     this.modalEl.addClass("lh-hub", "lh-guide");
-    if (dark) this.modalEl.addClass("lh-dark");
-    hubUi().applyHubVars(this.modalEl, dark);
+    hubUi().watchTheme(this, { vars: true });
     this.render();
   }
 
@@ -557,7 +555,7 @@ class FeatureGuideModal extends I.Modal {
     const body = this.contentEl.createDiv({ cls: "lh-guide-body" });
     const head = body.createDiv({ cls: "lh-guide-title" });
     const meta = TABS[this.tab];
-    hubUi().icon(head.createSpan({ cls: `lh-ti ${meta.tone}` }), meta.icon);
+    hubUi().featureIcon(head, this.plugin, this.tab, { size: 36, fallback: meta.icon });
     head.createEl("h2", { text: copy.title });
     copy.lines.forEach(line => body.createEl("p").appendChild(I.sanitizeHTMLToDom(line)));
 

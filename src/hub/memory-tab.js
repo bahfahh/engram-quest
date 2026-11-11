@@ -14,12 +14,20 @@ function bindOpen(el, hub, item) {
   el.addEventListener("click", () => { hub._minimize(); hub.app.workspace.openLinkText(item.file.path, "", false); });
 }
 
-function mapIcon(parent) { ui.icon(parent.createEl("span", { cls: "lh-gi" }), "map"); }
+function mapIcon(parent, hub) { ui.featureIcon(parent.createEl("span", { cls: "lh-gi" }), hub.plugin, "memory", { size: 26, fallback: "map" }); }
 
-function openLink(parent, t) {
-  const link = parent.createEl("button", { cls: "lh-link" });
-  link.createEl("span", { text: c(t, "OPEN_MAP") });
-  ui.icon(link, "arrow");
+function openButton(parent, t) {
+  const btn = parent.createEl("button", { cls: "lh-btn alt lh-open" });
+  btn.createEl("span", { text: c(t, "OPEN_MAP") });
+  ui.icon(btn, "external");
+  return btn;
+}
+
+function tagChips(parent, item) {
+  if (!item.tags || !item.tags.length) return;
+  const row = parent.createEl("div", { cls: "lh-chips" });
+  item.tags.slice(0, 3).forEach(tag => row.createEl("span", { cls: "lh-chip", text: tag }));
+  if (item.tags.length > 3) row.createEl("span", { cls: "lh-chip", text: "+" + (item.tags.length - 3), attr: { title: item.tags.join("  ") } });
 }
 
 function deleteAction(parent, hub, item) {
@@ -29,26 +37,32 @@ function deleteAction(parent, hub, item) {
 function renderCard(parent, hub, item) {
   const t = hub.plugin.settings;
   const card = parent.createEl("div", { cls: "lh-dc lh-mc" });
-  deleteAction(card, hub, item);
   const head = card.createEl("div", { cls: "lh-dh" });
-  mapIcon(head);
+  mapIcon(head, hub);
   const name = head.createEl("div", { attr: { style: "min-width:0" } });
   name.createEl("div", { cls: "lh-nm", text: item.baseName });
-  name.createEl("div", { cls: "lh-pth", text: folderOf(item) });
+  name.createEl("div", { cls: "lh-pth", text: folderOf(item) || "/" });
+  tagChips(card, item);
+  // The card has two separate controls: open the canvas, and delete it.
   const foot = card.createEl("div", { cls: "lh-mf" });
-  foot.createEl("span", { cls: "lh-pth lh-grow", text: tagsOf(item) });
-  openLink(foot, t);
-  bindOpen(card, hub, item);
+  openButton(foot, t);
+  // A click anywhere on the card opens it, except on the delete button.
+  card.addEventListener("click", (ev) => {
+    if (ev.target.closest("button") && !ev.target.closest(".lh-open")) return;
+    hub._minimize();
+    hub.app.workspace.openLinkText(item.file.path, "", false);
+  });
+  ui.iconButton(foot, "trash", c(t, "DELETE"), () => hub._confirmDelete(item, "memory"));
 }
 
 function renderRow(parent, hub, item, showFolder) {
   const t = hub.plugin.settings;
   const row = parent.createEl("div", { cls: "lh-trow" });
-  mapIcon(row);
+  mapIcon(row, hub);
   const main = row.createEl("div", { cls: "lh-trow-main" });
   main.createEl("div", { cls: "lh-nm", text: item.baseName });
   main.createEl("div", { cls: "lh-pth", text: showFolder ? [tagsOf(item), folderOf(item)].filter(Boolean).join(" · ") : tagsOf(item) });
-  openLink(row, t);
+  openButton(row, t);
   deleteAction(row, hub, item);
   bindOpen(row, hub, item);
 }
@@ -76,7 +90,7 @@ function renderItems(el, hub, tag) {
 
 function renderMemoryTab(e, hub) {
   const t = hub.plugin.settings;
-  ui.pageHeader(e, hub, { titleKey: "TAB_MEMORY", guide: "memory", subtitle: `${hub.memories.length} ${c(t, "CARD_COUNT_UNIT")}` });
+  ui.pageHeader(e, hub, { titleKey: "TAB_MEMORY", guide: "memory", subtitle: c(t, "MAP_COUNT", { count: hub.memories.length }) });
   if (hub.memories.length === 0) {
     e.createEl("div", { cls: "lh-empty2" }).appendChild(I.sanitizeHTMLToDom(c(t, "EMPTY_MEMORIES").replace(/\n/g, "<br>")));
     return;

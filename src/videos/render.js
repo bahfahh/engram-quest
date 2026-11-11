@@ -82,10 +82,14 @@ async function renderVideoTab(el, hub) {
   const toShelf = () => { hub._vTopic = null; refresh(); };
   ui.setPhoneNav(hub, open ? { label: c(t, "VIDEO_BACK"), title: "", onBack: toShelf } : null);
   const actions = (parent) => {
-    parent.createEl("button", { cls: "lh-vid-btn", text: c(t, "VIDEO_SETTINGS") })
-      .addEventListener("click", () => openVideoSettingsModal(hub, t));
-    parent.createEl("button", { cls: "lh-vid-btn", text: c(t, "VIDEO_NEW") })
-      .addEventListener("click", () => openNewVideoModal(hub, t, (slug) => {
+    const settings = parent.createEl("button", { cls: "lh-vid-btn" });
+    ui.icon(settings, "gear");
+    settings.createEl("span", { text: c(t, "VIDEO_SETTINGS") });
+    settings.addEventListener("click", () => openVideoSettingsModal(hub, t));
+    const add = parent.createEl("button", { cls: "lh-vid-btn lh-vid-btn-primary" });
+    ui.icon(add, "plus");
+    add.createEl("span", { text: c(t, "VIDEO_NEW") });
+    add.addEventListener("click", () => openNewVideoModal(hub, t, (slug) => {
         hub._vTopic = null; hub._vFlash = slug; hub._vFilter = "all"; hub._vQuery = ""; hub._vTag = "";
         refresh();
       }));

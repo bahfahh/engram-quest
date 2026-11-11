@@ -10,7 +10,7 @@ const { registerSelectionCopy } = require("../ui/selection-copy");
 const { normalizeMarkdown } = require("../ui/markdown");
 const { addToQueue, readQueue, isQueued } = require("../explainer/data");
 const { addRewatchButton, rewatchTarget, openRewatch } = require("../videos/rewatch");
-const { applyHubVars, themedModal, icon: _uiIcon, iconButton: _uiIconButton, isPhone: _isPhone } = require("../hub/ui");
+const { watchTheme, themedModal, restoreButton: _restoreButton, featureIcon: _featureIcon, icon: _uiIcon, iconButton: _uiIconButton, isPhone: _isPhone } = require("../hub/ui");
 const W_ref = { get locale() { try { return I.moment && I.moment.locale && I.moment.locale(); } catch(e) { return "en"; } } };
 function L(s) { return _getLocale(s, W_ref.locale); }
 
@@ -218,11 +218,9 @@ var Q=class extends I.Modal{
     // Save initial progress on open
     this._saveResumePoint();
     this._preSessionEvalCtx = buildEvalContext(this.plugin.settings._stats);
-    const _isDark=activeDocument.body.classList.contains("theme-dark");
     this.modalEl.addClass("lh-hub","lh-session");
-    if(_isDark)this.modalEl.addClass("lh-dark");
     registerSelectionCopy(this);
-    applyHubVars(this.modalEl,_isDark);
+    watchTheme(this,{vars:true});
     if(this._timeboxMinutes>0) this._sessionStartMs=Date.now();
     this.renderCard();
     this._loadSynapseAsync();
@@ -385,9 +383,7 @@ var Q=class extends I.Modal{
           this._disablePillBtn(btn);
           return;
         }
-        btn.disabled=false;
-        btn.style.opacity="";
-        btn.style.cursor="";
+        this._enablePillBtn(btn);
         memoryMapAction=()=>this._openMemoryMapChooser(candidates);
       };
       btn.addEventListener("click",()=>{ if(memoryMapAction) memoryMapAction(); });
@@ -439,25 +435,28 @@ var Q=class extends I.Modal{
     } else {
       // Nav
       let r=this.contentEl.createEl("div",{attr:{class:"lh-review-nav"}});
-      r.createEl("span",{text:c(t,"HUB_TITLE"),attr:{class:"lh-review-logo"}});
-      let s=r.createEl("div",{attr:{class:"lh-review-tabs"}});
-      [{label:c(t,"TAB_REVIEW"),key:"review"},{label:c(t,"TAB_MEMORY"),key:"memory"},{label:c(t,"TAB_QUEST"),key:"quest"}].forEach(p=>{
-        let g=s.createEl("button",{text:p.label,attr:{class:"lh-review-tab"+(p.key==="review"?" active":"")}});
-        p.key!=="review"&&(g.style.opacity="0.6");
+      const brand=r.createEl("span",{attr:{class:"lh-review-logo"}});
+      _featureIcon(brand,this.plugin,"logo",{size:28});
+      brand.createEl("span",{text:c(t,"HUB_TITLE")});
+      // Review Deck is where we are; the other two leave the session (progress is already saved) and open the Hub there.
+      let s=r.createEl("div",{attr:{class:"lh-review-tabs",role:"group",["aria-label"]:c(t,"HUB_NAV")}});
+      [{label:c(t,"TAB_REVIEW"),key:"review",fb:"deck"},{label:c(t,"TAB_MEMORY"),key:"memory",fb:"map"},{label:c(t,"TAB_QUEST"),key:"quest",fb:"flag"}].forEach(p=>{
+        let g=s.createEl("button",{attr:{class:"lh-review-tab"+(p.key==="review"?" active":""),...(p.key==="review"?{"aria-current":"page"}:{})}});
+        _featureIcon(g,this.plugin,p.key,{size:24,fallback:p.fb});
+        g.createEl("span",{text:p.label});
+        if(p.key!=="review") g.addEventListener("click",()=>this._openHubTab(p.key));
       });
-      // Task 6: back button → always go back to Hub (not close)
-      let a=r.createEl("button",{attr:{class:"lh-review-back"}});
-      a.textContent="← "+c(t,"BACK");
-      a.addEventListener("click",goBack);
-      // Minimize button
-      let minBtn=r.createEl("button",{attr:{class:"lh-review-back",style:"font-size:16px;padding:4px 8px;margin-left:4px;"}});
-      minBtn.textContent="⏬";
-      minBtn.title="Minimize";
-      minBtn.addEventListener("click",()=>this._minimize());
       if(this._timeboxMinutes>0){
         this._timerEl=r.createEl("span",{attr:{class:"lh-timebox-clock"}});
         this._tickTimer();
       }
+      let a=r.createEl("button",{attr:{class:"lh-review-back"}});
+      _uiIcon(a,"back");
+      a.createEl("span",{text:c(t,"BACK")});
+      a.addEventListener("click",goBack);
+      const cap=r.createEl("div",{cls:"lh-review-cap"});
+      _uiIconButton(cap,"minimize",c(t,"HUB_MINIMIZE"),()=>this._minimize());
+      _uiIconButton(cap,"close",c(t,"HUB_CLOSE"),()=>this.close());
     }
 
     // Card body
@@ -466,53 +465,43 @@ var Q=class extends I.Modal{
       if(this.browseOnly) i.createEl("span",{text:c(t,"BROWSE_ONLY"),attr:{class:"lh-rc-badge"}});
     } else {
       let d=i.createEl("div",{attr:{class:"lh-rc-top"}});
-      d.createEl("span",{text:this.deckName,attr:{class:"lh-rc-badge"}});
+      const deck=d.createEl("span",{attr:{class:"lh-rc-deck",title:this.deckName}});
+      _uiIcon(deck,"layers");
+      deck.createEl("span",{text:this.deckName});
       this.browseOnly&&d.createEl("span",{text:c(t,"BROWSE_ONLY"),attr:{class:"lh-rc-badge"}});
       // Source note buttons — for AI cards show sourceNotePaths only, for hand-written show notePath
       if(notePaths.length>0){
         let srcWrap=d.createEl("div",{attr:{style:"display:flex;align-items:center;gap:4px;margin-left:auto;flex-shrink:1;min-width:0;"}});
         notePaths.forEach(np=>{
           let name=np.split("/").pop().replace(/\.md$/i,"");
-          let btn=srcWrap.createEl("button",{attr:{class:"lh-rc-edit-btn",style:"font-size:11px;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--tint);",title:np}});
-          btn.textContent="📄 "+name;
-          btn.addEventListener("click",(ev)=>{ev.stopPropagation();openNote(np);});
-        });
-      }
-      if(notePaths.length>0){
-        d.querySelectorAll(".lh-rc-top .lh-rc-edit-btn").forEach(btn=>{
-          if(btn.dataset.feedbackBound==="1") return;
-          let defaultLabel=btn.textContent;
-          btn.dataset.feedbackBound="1";
-          btn.addEventListener("click",()=>{
-            btn.textContent="✓ "+_openedSourceLabel;
-            btn.style.color="var(--mstt)";
+          let btn=srcWrap.createEl("button",{attr:{class:"lh-rc-edit-btn lh-rc-src",title:np}});
+          _uiIcon(btn,"doc");
+          const label=btn.createEl("span",{text:name});
+          _uiIcon(btn,"external");
+          btn.addEventListener("click",(ev)=>{
+            ev.stopPropagation();
+            openNote(np);
+            label.textContent=_openedSourceLabel;
+            btn.classList.add("is-done");
             if(btn._feedbackTimer) window.clearTimeout(btn._feedbackTimer);
-            btn._feedbackTimer=window.setTimeout(()=>{
-              btn.textContent=defaultLabel;
-              btn.style.color="var(--tint)";
-              btn._feedbackTimer=null;
-            },1200);
+            btn._feedbackTimer=window.setTimeout(()=>{ label.textContent=name; btn.classList.remove("is-done"); btn._feedbackTimer=null; },1200);
           });
         });
       }
       // Right-side button group
-      let btnGroup=d.createEl("div",{attr:{style:"display:flex;align-items:center;gap:4px;flex-shrink:0;"}});
-      // Copy button
-      let copyTopBtn=btnGroup.createEl("button",{attr:{class:"lh-rc-edit-btn"}});
-      copyTopBtn.textContent="📋 Copy";
-      copyTopBtn.title="Copy";
+      let btnGroup=d.createEl("div",{attr:{class:"lh-rc-acts"}});
+      const topBtn=(name,label,cls="")=>{
+        const b=btnGroup.createEl("button",{attr:{class:"lh-rc-edit-btn"+cls,title:label}});
+        _uiIcon(b,name);
+        return [b,b.createEl("span",{text:label})];
+      };
+      // Copy: the label changes in place for a moment; the button keeps its width.
+      const [copyTopBtn,copyLabel]=topBtn("copy",c(t,"COPY"));
       copyTopBtn.addEventListener("click",()=>{
-        copyCard().then(()=>{ copyTopBtn.textContent="✅ Copied"; window.setTimeout(()=>copyTopBtn.textContent="📋 Copy",1500); });
+        copyCard().then(()=>{ copyLabel.textContent=c(t,"COPY_CARD_DONE"); copyTopBtn.classList.add("is-done"); window.setTimeout(()=>{ copyLabel.textContent=c(t,"COPY"); copyTopBtn.classList.remove("is-done"); },1500); });
       });
-      // Edit button
-      let editTopBtn=btnGroup.createEl("button",{attr:{class:"lh-rc-edit-btn"}});
-      editTopBtn.textContent="✏️ "+c(t,"EDIT_CARD");
-      editTopBtn.addEventListener("click",editCard);
-      // Delete button
-      let delTopBtn=btnGroup.createEl("button",{attr:{class:"lh-rc-edit-btn",style:"color:var(--newt);"}});
-      delTopBtn.textContent="🗑️";
-      delTopBtn.title=c(t,"DELETE");
-      delTopBtn.addEventListener("click",deleteCard);
+      topBtn("pencil",c(t,"EDIT_CARD"))[0].addEventListener("click",editCard);
+      topBtn("trash",c(t,"DELETE")," is-danger")[0].addEventListener("click",deleteCard);
     }
     if(e.emoji){ i.createEl("span",{attr:{class:"lh-rc-emoji"}}).textContent=e.emoji; }
     let qEl=i.createEl("div",{attr:{class:"lh-rc-question"+(phone&&this.answerShown?" is-done":"")}});
@@ -521,7 +510,7 @@ var Q=class extends I.Modal{
     // Stable containers for hints + synapse — refreshed in-place so toggling
     // doesn't rebuild the whole card (preserves scroll, avoids flash).
     // Mutex: hints render only when synapse is closed; clicking a hint closes synapse.
-    let f=[{key:"hint_l1",cls:"lh-hint-l1",label:phone?c(t,"HINT_LABEL_L1"):"L1 · Active Recall"},{key:"hint_l2",cls:"lh-hint-l2",label:phone?c(t,"HINT_LABEL_L2"):"L2 · Contextual Anchor"},{key:"hint_l3",cls:"lh-hint-l3",label:phone?c(t,"HINT_LABEL_L3"):"L3 · Narrowing Hint"}];
+    let f=[{key:"hint_l1",cls:"lh-hint-l1",label:phone?c(t,"HINT_LABEL_L1"):"L1 · "+c(t,"HINT_LABEL_L1")},{key:"hint_l2",cls:"lh-hint-l2",label:phone?c(t,"HINT_LABEL_L2"):"L2 · "+c(t,"HINT_LABEL_L2")},{key:"hint_l3",cls:"lh-hint-l3",label:phone?c(t,"HINT_LABEL_L3"):"L3 · "+c(t,"HINT_LABEL_L3")}];
     const hintsContainer=i.createEl("div",{attr:{class:"lh-hints-container"}});
     const synapseContainer=i.createEl("div",{attr:{class:"lh-synapse-container"}});
     const refreshHintsContainer=()=>{
@@ -529,7 +518,9 @@ var Q=class extends I.Modal{
       if(this.synapseOpen) return;
       for(let p=0;p<this.hintLevel;p++){
         let g=f[p],E=hintsContainer.createEl("div",{attr:{class:`lh-hint ${g.cls}`}});
-        E.createEl("div",{text:g.label,attr:{class:"lh-hint-label"}});
+        const hl=E.createEl("div",{attr:{class:"lh-hint-label"}});
+        if(!phone) _featureIcon(hl,this.plugin,"hint",{size:18});
+        hl.createEl("span",{text:g.label});
         let hintEl=E.createEl("div",{attr:{class:"lh-hint-text"}});
         renderMd(hintEl,e[g.key]||C("NO_HINT",t));
       }
@@ -567,7 +558,9 @@ var Q=class extends I.Modal{
       // Post-reveal Synapse access: ⚡ toggle next to Highlight/Blockquote.
       const _syAnchors=Array.isArray(e.synapseAnchors)?e.synapseAnchors:[];
       if(!phone&&synapseEnabled&&_syAnchors.length>0){
-        const syHeaderBtn=fmtBtns.createEl("button",{text:"⚡",attr:{class:"lh-rc-edit-btn lh-fmt-btn",title:c(t,"SYNAPSE_HINT")}});
+        const syHeaderBtn=fmtBtns.createEl("button",{attr:{class:"lh-rc-edit-btn lh-fmt-btn",title:c(t,"SYNAPSE_HINT")}});
+        _featureIcon(syHeaderBtn,this.plugin,"synapse",{size:18});
+        syHeaderBtn.createEl("span",{text:c(t,"SYNAPSE")});
         syHeaderBtn.addEventListener("click",()=>{ this.synapseOpen=!this.synapseOpen; refreshSynapseContainer(); });
       }
       if(e.notePath){
@@ -627,6 +620,14 @@ var Q=class extends I.Modal{
         bqBtn.addEventListener("mousedown",(ev)=>{captureAnswerSelection();ev.preventDefault();});
         bqBtn.addEventListener("click",applyBlockquoteToBack);
       }
+      if(t.licenseValid&&!phone&&!this.browseOnly){
+        const qBtn=fmtBtns.createEl("button",{attr:{class:"lh-rc-edit-btn lh-fmt-btn lh-queue-btn"}});
+        _uiIcon(qBtn,"plus");
+        const qLabel=qBtn.createEl("span",{text:c(t,"EXPLAINER_MARK_BTN")});
+        const markQueued=()=>{ qLabel.textContent=c(t,"EXPLAINER_ALREADY"); qBtn.disabled=true; };
+        qBtn.addEventListener("click",async()=>{try{const _r=await addToQueue(this.app.vault.adapter,{source:e.notePath,q:e.front,a:e.back,deck:this.deckName||null});new I.Notice(_r.added?c(t,"EXPLAINER_MARKED"):c(t,"EXPLAINER_ALREADY"));markQueued();}catch(err){console.error("EngramQuest: explainer queue failed",err);}});
+        readQueue(this.app.vault.adapter).then(_q=>{if(isQueued(_q,e.notePath,e.front))markQueued();}).catch(()=>{});
+      }
       answerEl=p.createEl("div",{attr:{class:"lh-answer-text"+(String(e.back||"").length<=90?" is-short":"")}});
       renderMd(answerEl,e.back);
       answerEl.addEventListener("mouseup",captureAnswerSelection);
@@ -655,12 +656,12 @@ var Q=class extends I.Modal{
         let p=e.srMeta||null;
         let _gradeBar=phone?this.contentEl.createEl("div",{cls:"lh-sbar lh-glass"}):null;
         if(_gradeBar) _gradeBar.createEl("div",{cls:"lh-sbar-title",text:c(t,"RATE_PROMPT")});
-        let g=(_gradeBar||this.contentEl).createEl("div",{attr:{class:"lh-rating-row"}}); if(t.licenseValid&&!phone){let _uq=this.contentEl.createEl("div",{attr:{style:"display:flex;justify-content:center;margin-top:8px;"}});let _ub=_uq.createEl("button",{text:c(t,"EXPLAINER_MARK_BTN"),attr:{class:"lh-rc-edit-btn",style:"font-size:12px;"}});_ub.addEventListener("click",async()=>{try{const _r=await addToQueue(this.app.vault.adapter,{source:e.notePath,q:e.front,a:e.back,deck:this.deckName||null});new I.Notice(_r.added?c(t,"EXPLAINER_MARKED"):c(t,"EXPLAINER_ALREADY"));_ub.disabled=true;_ub.style.opacity="0.6";}catch(err){console.error("EngramQuest: explainer queue failed",err);}});readQueue(this.app.vault.adapter).then(_q=>{if(isQueued(_q,e.notePath,e.front)){_ub.textContent=c(t,"EXPLAINER_ALREADY");_ub.disabled=true;_ub.style.opacity="0.6";}}).catch(()=>{});}
-        [{q:1,label:C("AGAIN",t),icon:"AG",cls:"lh-rb-again"},{q:2,label:C("HARD",t),icon:"HD",cls:"lh-rb-hard"},{q:3,label:C("GOOD",t),icon:"GD",cls:"lh-rb-good"},{q:4,label:C("EASY",t),icon:"OK",cls:"lh-rb-easy"}].forEach(E=>{
+        let g=(_gradeBar||this.contentEl).createEl("div",{attr:{class:"lh-rating-row"}});
+        [{q:1,label:C("AGAIN",t),icon:"reset",cls:"lh-rb-again"},{q:2,label:C("HARD",t),icon:"pulse",cls:"lh-rb-hard"},{q:3,label:C("GOOD",t),icon:"check",cls:"lh-rb-good"},{q:4,label:C("EASY",t),icon:"sparkle",cls:"lh-rb-easy"}].forEach(E=>{
           let m=P(E.q,p,t);
           let x=g.createEl("button",{attr:{class:`lh-rating-btn ${E.cls}`}});
           let S=x.createEl("div",{attr:{class:"lh-rb-top"}});
-          S.createEl("span",{attr:{class:"lh-rb-icon"}}).textContent=E.icon;
+          _uiIcon(S.createEl("span",{attr:{class:"lh-rb-icon"}}),E.icon);
           S.createEl("span",{attr:{class:"lh-rb-label"}}).textContent=E.label;
           x.createEl("div",{text:`${m.interval}${C("DAYS",t)}`,attr:{class:"lh-rb-days"}});
           x.addEventListener("click",async()=>{
@@ -737,24 +738,30 @@ var Q=class extends I.Modal{
       let p=this.contentEl.createEl("div",{attr:{class:"lh-review-footer"}});
       let g=p.createEl("div",{attr:{class:"lh-pill-row"}});
       let E=g.createEl("button",{attr:{class:"lh-pill-btn lh-pill-show"}});
-      E.textContent="TIP "+C("SHOW_ANSWER",t);
+      _uiIcon(E,"eye");
+      E.createEl("span",{text:C("SHOW_ANSWER",t)});
       E.addEventListener("click",showAnswer);
 
       let x=g.createEl("button",{attr:{class:"lh-pill-btn lh-pill-recall"}});
-      x.textContent="L1 "+(this.hintLevel===0?C("RECALL",t):C("HINT_NEXT",t));
-      if(!hasHints||this.hintLevel>=3) this._disablePillBtn(x);
+      _featureIcon(x,this.plugin,"hint",{size:22,fallback:"info"});
+      x.createEl("span",{text:`L${Math.min(this.hintLevel+1,3)} `+(this.hintLevel===0?C("RECALL",t):C("HINT_NEXT",t))});
+      if(!hasHints) this._disablePillBtn(x,c(t,"NO_HINT"));
+      else if(this.hintLevel>=3) this._disablePillBtn(x,c(t,"HINTS_USED_UP"));
       else x.addEventListener("click",nextHint);
 
       let k=g.createEl("button",{attr:{class:"lh-pill-btn lh-pill-memory"}});
-      k.textContent=c(t,"MEMORY_MAP");
+      _featureIcon(k,this.plugin,"memory",{size:22,fallback:"map"});
+      k.createEl("span",{text:c(t,"MEMORY_MAP")});
       bindMemoryMap(k);
 
       // Three states: hidden (feature off / not Pro), dim (no anchors), active.
       if(synapseEnabled){
         g.classList.add("lh-pill-row-4");
         let syBtn=g.createEl("button",{attr:{class:"lh-pill-btn lh-pill-synapse"}});
-        syBtn.textContent="⚡ "+c(t,"SYNAPSE");
+        _featureIcon(syBtn,this.plugin,"synapse",{size:22,fallback:"bolt"});
+        const syLabel=syBtn.createEl("span",{text:c(t,"SYNAPSE")});
         if(anchorCount===0){
+          syLabel.textContent=c(t,"SYNAPSE_NONE");
           this._disablePillBtn(syBtn,c(t,"SYNAPSE_EMPTY"));
         }else{
           syBtn.title=c(t,"SYNAPSE_HINT");
@@ -764,7 +771,8 @@ var Q=class extends I.Modal{
 
       let y=p.createEl("div",{attr:{class:"lh-footer-meta"}});
       let b=y.createEl("button",{attr:{class:"lh-pill-reset"}});
-      b.textContent="Reset";
+      _uiIcon(b,"reset");
+      b.createEl("span",{text:c(t,"RESET_HINTS")});
       b.addEventListener("click",resetHints);
       let T=y.createEl("div",{attr:{class:"lh-dots"}});
       for(let _=0;_<3;_++) T.createEl("div",{attr:{class:"lh-dot"+(_<this.hintLevel?" lit":"")}});
@@ -781,9 +789,13 @@ var Q=class extends I.Modal{
 
   _disablePillBtn(btn,title){
     btn.disabled=true;
-    btn.style.opacity="0.38";
-    btn.style.cursor="not-allowed";
+    btn.classList.add("is-off");
     if(title) btn.title=title;
+  }
+
+  _enablePillBtn(btn){
+    btn.disabled=false;
+    btn.classList.remove("is-off");
   }
 
   _renderSynapsePanel(parent,card,t,renderMd,refresh){
@@ -868,6 +880,16 @@ var Q=class extends I.Modal{
     modal.open();
   }
 
+  // Leave the session for another Hub tab, keeping the resume point so the review can continue.
+  _openHubTab(tab){
+    this._saveResumePoint();
+    this.close();
+    const { HubModal } = require("../hub/modal");
+    const hub=new HubModal(this.app,this.plugin);
+    hub.activeTab=tab;
+    hub.open();
+  }
+
   _minimize(){
     if(this._minimized) return;
     this._minimized=true;
@@ -875,16 +897,7 @@ var Q=class extends I.Modal{
     // Release modal keymap scope so global hotkeys (Ctrl+P / Ctrl+O) work while minimized
     try{this.app.keymap.popScope(this.scope);}catch(e){}
     if(this._fab) return; // already exists
-    let fab=activeDocument.createElement("div");
-    fab.className="engram-fab";
-    fab.textContent="📖";
-    fab.title="Resume review";
-    fab.style.cssText="position:fixed;bottom:calc(env(safe-area-inset-bottom, 0px) + 88px);right:20px;width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#4f46e5,#818cf8);color:#fff;display:flex;align-items:center;justify-content:center;font-size:22px;cursor:pointer;z-index:9999;box-shadow:0 4px 16px rgba(79,70,229,0.45);user-select:none;-webkit-tap-highlight-color:transparent;transition:transform 0.15s;";
-    fab.addEventListener("mouseenter",()=>{fab.style.transform="scale(1.12)";});
-    fab.addEventListener("mouseleave",()=>{fab.style.transform="scale(1)";});
-    fab.addEventListener("click",()=>this._restore());
-    activeDocument.body.appendChild(fab);
-    this._fab=fab;
+    this._fab=_restoreButton(this.plugin,c(this.plugin.settings,"RESUME_REVIEW"),()=>this._restore());
   }
   _restore(){
     if(!this._minimized) return;

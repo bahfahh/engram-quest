@@ -98,7 +98,7 @@ function renderHeader(parent, hub, t, courses, state, refresh) {
       refresh();
     }, { alt: true, small: true });
   }
-  const add = ui.primaryButton(actions, c(t, "LESSON_NEW_COURSE"), () => openCreateCourseModal(hub, t, state, refresh), { small: true });
+  const add = ui.primaryButton(actions, c(t, "LESSON_NEW_COURSE"), () => openCreateCourseModal(hub, t, state, refresh), { small: true, icon: "plus" });
   add.title = c(t, "LESSON_NEW_COURSE_HINT");
 }
 
@@ -341,7 +341,7 @@ function renderCourseHead(main, hub, t, course, state, refresh) {
     { value: "starred", label: "★", title: c(t, "FILTER_STARRED") },
     { value: "done", label: c(t, "LESSON_FILTER_DONE") },
   ], state.filter, (v) => { state.filter = v; refresh(); });
-  ui.primaryButton(head, c(t, "LESSON_IMPORT"), () => pickAndImportHtml(hub, t, slug, refresh), { alt: true, small: true });
+  ui.primaryButton(head, c(t, "LESSON_IMPORT"), () => pickAndImportHtml(hub, t, slug, refresh), { alt: true, small: true, icon: "upload" });
   const archive = ui.primaryButton(head, meta.archived ? c(t, "LESSON_UNARCHIVE") : c(t, "LESSON_ARCHIVE"), async () => {
     try {
       const archived = await toggleCourseArchive(hub.app.vault.adapter, slug);
@@ -351,7 +351,7 @@ function renderCourseHead(main, hub, t, course, state, refresh) {
       new I.Notice(c(t, "LESSON_ARCHIVE_FAILED"));
     }
     refresh();
-  }, { alt: true, small: true });
+  }, { alt: true, small: true, icon: "archive" });
   archive.title = c(t, meta.archived ? "LESSON_UNARCHIVE_HINT" : "LESSON_ARCHIVE_HINT");
   ui.iconButton(head, "trash", c(t, "DELETE"), () => confirmDeleteCourse(hub, t, slug, meta, refresh), "lh-ib lh-ib-sm");
 }
@@ -376,9 +376,11 @@ function renderLessonRow(list, hub, t, course, lesson, refresh) {
     mid.createEl("div", { cls: "lh-ls-goal", text: lesson.goal, attr: { title: lesson.goal } });
   }
   if (comp.starred) ui.icon(row.createEl("span", { cls: "lh-xstar", attr: { title: c(t, "FILTER_STARRED"), "aria-label": c(t, "FILTER_STARRED") } }), "star");
-  row.createEl("span", { cls: "lh-ls-s", text: visual.label });
+  row.createEl("span", { cls: "lh-st " + (visual.tone || (lesson.file ? "td" : "")), text: visual.label });
   ui.rowActions(row, [{ name: "trash", label: c(t, "DELETE"), run: () => confirmDeleteLesson(hub, t, slug, lesson, refresh) }]);
-  ui.icon(row.createEl("span", { cls: "lh-ls-chev" }), "chevron");
+  // A planned lesson has nothing to open yet, so it gets no "open" chevron.
+  const chev = row.createEl("span", { cls: "lh-ls-chev" });
+  if (lesson.file) ui.icon(chev, "chevron");
 }
 
 // Appends a planned lesson (title only) that the Lesson Academy skill fills in later.

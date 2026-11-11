@@ -105,12 +105,12 @@ module.exports = {
         body: [
           { p: "背不起來、看不懂的卡，交給 AI 寫成一頁白話圖解：先說這個概念解決什麼問題，再由淺到深拆開，最後回到你原本的卡片。" },
           { steps: [
-            "複習時顯示答案後，按「➕ 加入解析佇列」（手機在「更多動作」選單裡）。",
+            "複習時顯示答案後，按「加入解析佇列」（手機在「更多動作」選單裡）。",
             "跟 AI 工具說「處理解析」，engram-explainer skill 會讀佇列、判斷這張卡難在哪，批次寫好解析頁。也可以直接說「幫我做一份 X 的深入解析」。",
             "到 Hub 的「深入解析」分頁閱讀。頁面依牌組分組；開過就算已讀，可加星號、按 ✓ 標記完成，不要的可以刪除。",
           ] },
           { p: "解析頁沒有自己的複習排程：原卡照常在 Review Deck 複習，懂了沒有，下次複習見真章。原卡一直答錯時，skill 會換更淺的切入點重寫這頁。" },
-          { first: "複習時對一張難卡按「➕ 加入解析佇列」，再跟 AI 說「處理解析」。" },
+          { first: "複習時對一張難卡按「加入解析佇列」，再跟 AI 說「處理解析」。" },
           { note: "需要 Pro。沒有授權時這個分頁不會出現在側邊欄。" },
         ],
       },
@@ -173,12 +173,12 @@ module.exports = {
         body: [
           { p: "說一句想學或想複習什麼，AI 會自己決定要讀哪些筆記、拆成幾支短片。外層是系列書架，點進系列就是播放器；看到哪裡都會記住，下次從上次的位置續播。" },
           { steps: [
-            "按「＋ 新系列」寫下想學什麼，可以補充細節、讓 AI 自動挑筆記或指定筆記，也可以不用筆記。",
+            "按「新系列」寫下想學什麼，可以補充細節、讓 AI 自動挑筆記或指定筆記，也可以不用筆記。",
             "插件記下需求並給你一段提示，貼進 Claude Code，animated-course skill 就會開始做。",
             "做好的影片出現在書架上，可用觀看中、未開始、已看完、待製作篩選，也能搜尋或依 tag 找。",
           ] },
           { p: "「影片設定」設一次就好：老師、畫質、旁白語言、配音、字幕，以及要不要替每支影片附上複習卡。" },
-          { first: "按「＋ 新系列」，例如寫「架設網站」，再把提示貼進 Claude Code。" },
+          { first: "按「新系列」，例如寫「架設網站」，再把提示貼進 Claude Code。" },
           { note: "觀看與管理影片免費，Nico 老師免費。其他老師、替每個系列指定不同老師需要 Pro。做影片要用 Claude Code。" },
         ],
       },
@@ -396,12 +396,12 @@ module.exports = {
         body: [
           { p: "A card you can't understand or can't remember gets a page of plain-language, illustrated explanation: what problem the idea solves, then layer by layer from simple to detailed, ending back at your original card." },
           { steps: [
-            "While reviewing, show the answer and press \"➕ Queue deep dive\" (on a phone it is in the More actions menu).",
+            "While reviewing, show the answer and press \"Queue deep dive\" (on a phone it is in the More actions menu).",
             "Tell your AI tool to \"process the deep dive queue\". The engram-explainer skill reads the queue, works out why each card is hard and writes the pages. You can also ask directly: \"make a deep dive about X\".",
             "Read them in the Deep Dive tab. Pages are grouped by deck; opening one marks it read, and you can star it, press ✓ to mark it done or delete it.",
           ] },
           { p: "A deep dive has no review schedule of its own: the original card keeps its place in the Review Deck, and its next review shows whether it worked. If the card keeps failing, the skill rewrites the page from a simpler starting point." },
-          { first: "Press \"➕ Queue deep dive\" on a hard card while reviewing, then tell your AI to \"process the deep dive queue\"." },
+          { first: "Press \"Queue deep dive\" on a hard card while reviewing, then tell your AI to \"process the deep dive queue\"." },
           { note: "Needs Pro. Without a licence the tab does not appear in the sidebar." },
         ],
       },
@@ -464,12 +464,12 @@ module.exports = {
         body: [
           { p: "Say what you want to learn or review; the AI decides which notes to use and splits it into short videos. The outer view is a shelf of series; open one to watch. Your place is remembered, so you resume where you stopped." },
           { steps: [
-            "Press \"+ New series\" and write what you want to learn. Add details if you like, and let the AI pick relevant notes, drop in notes yourself, or use none.",
+            "Press \"New series\" and write what you want to learn. Add details if you like, and let the AI pick relevant notes, drop in notes yourself, or use none.",
             "The plugin saves the request and gives you a prompt. Paste it into Claude Code and the animated-course skill makes the videos.",
             "Finished videos appear on the shelf. Filter by Watching, Not started, Finished or In the queue, search, or browse by tag.",
           ] },
           { p: "Video settings only need setting once: teacher, quality, narration language, voice, subtitles, and whether each video comes with review cards." },
-          { first: "Press \"+ New series\", write something like \"build a website\", and paste the prompt into Claude Code." },
+          { first: "Press \"New series\", write something like \"build a website\", and paste the prompt into Claude Code." },
           { note: "Watching and managing videos is free, and so is the teacher Nico. The other teachers, and a different teacher for each series, need Pro. Making videos needs Claude Code." },
         ],
       },

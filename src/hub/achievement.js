@@ -227,13 +227,14 @@ async function renderAchievementTab(containerEl, plugin, decks, quests = [], mem
   ACHIEVEMENTS.forEach((ach) => {
     const val = evalCtx[ach.field] || 0;
     const isUnlocked = val >= ach.threshold;
-    const card = grid.createEl("div", { cls: "lh-ac" + achievementClass(ach, isUnlocked) });
+    const card = grid.createEl("div", { cls: "lh-ac" + achievementClass(ach, isUnlocked), attr: { role: "button", tabindex: "0" } });
     card.createEl("span", { cls: "lh-ach-rar", text: ach.rarity });
     addAchievementIcon(card, plugin, ach);
     card.createEl("b", { text: c(t, ach.nameKey) });
     card.createEl("small", { text: c(t, ach.descKey) });
-    card.createEl("small", { text: isUnlocked ? `✓ ${c(t, "ACH_UNLOCKED")}` : `${val} / ${ach.threshold}` });
+    card.createEl("small", { cls: isUnlocked ? "tm" : "", text: isUnlocked ? `✓ ${c(t, "ACH_UNLOCKED")}` : `${val} / ${ach.threshold}` });
     card.addEventListener("click", () => openAchievementDetail(plugin, ach, val));
+    card.addEventListener("keydown", (ev) => { if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); openAchievementDetail(plugin, ach, val); } });
   });
 }
 

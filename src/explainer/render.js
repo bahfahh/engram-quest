@@ -321,18 +321,22 @@ function renderTreeView(content, hub, t, decks, refresh) {
 }
 
 function pageStatus(page) {
-  if (page._completed) return { name: "check", tone: "tm" };
-  if (page._viewed) return { name: "book", tone: "tl" };
-  return { name: "doc", tone: "td" };
+  if (page._completed) return { name: "check", tone: "tm", key: "FILTER_DONE" };
+  if (page._viewed) return { name: "book", tone: "tl", key: "EXPLAINER_STAT_READ" };
+  return { name: "doc", tone: "td", key: "EXPLAINER_STAT_UNREAD" };
 }
 
 function renderDeckPages(content, hub, t, deck, refresh) {
   const s = deckStats(deck);
   const head = content.createEl("div", { cls: "lh-xhead" });
-  const back = head.createEl("button", { cls: "lh-link", text: `‹ ${c(t, "BACK")}` });
+  const back = head.createEl("button", { cls: "lh-btn alt lh-back" });
+  ui.icon(back, "back");
+  back.createEl("span", { text: c(t, "BACK") });
   back.addEventListener("click", () => { hub._xDeck = null; refresh(); });
-  head.createEl("span", { cls: "lh-nm lh-grow", text: deck.name });
-  head.createEl("span", { cls: "lh-pth", text: `${K(c(t, "EXPLAINER_READ_RATE"), { percent: s.readPct })} · ${K(c(t, "EXPLAINER_DONE_RATE"), { percent: s.donePct })}` });
+  ui.icon(head.createEl("span", { cls: "lh-dc-ic" }), "layers");
+  const title = head.createEl("div", { cls: "lh-grow" });
+  title.createEl("div", { cls: "lh-xdeck", text: deck.name });
+  title.createEl("div", { cls: "lh-pth", text: `${K(c(t, "EXPLAINER_READ_RATE"), { percent: s.readPct })} · ${K(c(t, "EXPLAINER_DONE_RATE"), { percent: s.donePct })}` });
 
   const list = content.createEl("div", { cls: "lh-tbl" });
   sortPages(deck.pages, hub._xSort).forEach((page) => {
@@ -341,13 +345,14 @@ function renderDeckPages(content, hub, t, deck, refresh) {
     ui.icon(row.createEl("span", { cls: `lh-gi ${status.tone}` }), status.name);
     const main = row.createEl("div", { cls: "lh-trow-main" });
     const title = main.createEl("div", { cls: "lh-xpt" });
-    if (!page._viewed) title.createEl("span", { cls: "lh-unread", attr: { title: c(t, "EXPLAINER_STAT_UNREAD"), "aria-label": c(t, "EXPLAINER_STAT_UNREAD") } });
     title.createEl("span", { cls: "lh-nm", text: page.title || page.id });
     if (page._starred) ui.icon(title.createEl("span", { cls: "lh-xstar", attr: { title: c(t, "FILTER_STARRED"), "aria-label": c(t, "FILTER_STARRED") } }), "star");
     if (Number(page.rewriteCount) > 0) title.createEl("span", { cls: "lh-xbadge", text: K(c(t, "EXPLAINER_REWRITTEN"), { count: page.rewriteCount }) });
     const sub = [page.sourceCard && page.sourceCard.front, page.created].filter(Boolean).join(" · ");
     main.createEl("div", { cls: "lh-pth", text: sub, attr: { title: sub } });
+    row.createEl("span", { cls: `lh-st ${status.tone}`, text: c(t, status.key) });
     trashAction(row, t, () => confirmDeletePage(hub, t, page, refresh));
+    ui.icon(row.createEl("span", { cls: "lh-dc-go" }), "chevron");
     row.addEventListener("click", () => new ExplainerViewerModal(hub.app, hub.plugin, page, refresh, hub).open());
   });
 }

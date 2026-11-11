@@ -77,7 +77,7 @@ async function renderEpisodicTab(el, hub) {
     else new ProUpgradeModal(hub.app, hub.plugin).open();
   };
   const newButton = (parent) => {
-    const btn = ui.primaryButton(parent, c(t, "EPISODIC_NEW"), addNew, { alt: !isPro });
+    const btn = ui.primaryButton(parent, c(t, "EPISODIC_NEW"), addNew, { alt: !isPro, icon: "plus" });
     if (!isPro) btn.createSpan({ cls: "lh-vid-pro-tag", text: "Pro" });
     return btn;
   };
@@ -146,12 +146,17 @@ function renderRequests(body, hub, t, series, refresh) {
   for (const request of open) {
     const row = list.createDiv({ cls: "lh-vid-ep-request" });
     const failed = request.status === "failed";
+    ui.icon(row.createSpan({ cls: "lh-vid-ep-request-ic" }), "recall");
     const label = row.createSpan({ cls: "lh-vid-ep-request-text", text: `${periodText(request.period)} · ${c(t, LENGTH_KEY[request.length])}` });
     if (failed) { label.appendText(" · "); label.createSpan({ cls: "tn", text: `${c(t, "VIDEO_STATUS_FAILED")}${request.note ? `：${request.note}` : ""}` }); }
-    row.createEl("button", { cls: "lh-vid-btn", text: c(t, "VIDEO_COPY_PROMPT") })
-      .addEventListener("click", () => openPromptModal(hub, t, { prompt: promptFor(t, request), module: MODULE }));
-    row.createEl("button", { cls: "lh-vid-btn lh-vid-btn-danger-text", text: c(t, "EPISODIC_CANCEL") })
-      .addEventListener("click", () => {
+    const copy = row.createEl("button", { cls: "lh-vid-btn" });
+    ui.icon(copy, "copy");
+    copy.createSpan({ text: c(t, "VIDEO_COPY_PROMPT") });
+    copy.addEventListener("click", () => openPromptModal(hub, t, { prompt: promptFor(t, request), module: MODULE }));
+    const cancel = row.createEl("button", { cls: "lh-vid-btn" });
+    ui.icon(cancel, "close");
+    cancel.createSpan({ text: c(t, "EPISODIC_CANCEL") });
+    cancel.addEventListener("click", () => {
         queueWrite(data.EPISODIC_SLUG, () => data.cancelEpisodicRequest(hub.app.vault.adapter, request.id))
           .catch((e) => console.error("EngramQuest: cancel recall request failed", e))
           .then(refresh);

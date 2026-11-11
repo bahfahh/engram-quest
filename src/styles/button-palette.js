@@ -21,7 +21,7 @@ body:not(.theme-dark) .lh-review-tab.active,
 body:not(.theme-dark) .lh-quest-open-primary,
 body:not(.theme-dark) .lh-pill-recall,
 body:not(.theme-dark) .lh-edit-save-btn { box-shadow:0 4px 12px rgba(109,91,208,.28) !important; }
-.theme-dark .lh-btn-primary { background:#6366f1 !important; border-color:#6366f1 !important; color:#ffffff !important; }
-.theme-dark .lh-btn-primary:hover { background:#818cf8 !important; border-color:#818cf8 !important; }
+.theme-dark .lh-btn-primary { background:#5B5BD6 !important; border-color:#5B5BD6 !important; color:#ffffff !important; }
+.theme-dark .lh-btn-primary:hover { background:#6C6CE0 !important; border-color:#6C6CE0 !important; }
 .theme-dark .lh-quest-open-primary { color:#ffffff !important; }
 `;

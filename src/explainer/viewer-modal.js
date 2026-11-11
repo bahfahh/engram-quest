@@ -9,7 +9,8 @@ const { t: c, interpolate: K } = require("../i18n");
 const { deleteExplainer, markViewed, toggleStateFlag, queueRegenerate, EXPLAINER_DIR } = require("./data");
 const { composeSpecPage, specPath } = require("./compose");
 
-const TRASH_SVG = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>';
+// Hub UI helpers, loaded lazily: hub/ui pulls in modules that open this viewer.
+function hubUi() { return require("../hub/ui"); }
 
 class ExplainerViewerModal extends I.Modal {
   constructor(app, plugin, page, onChanged, hub) {
@@ -30,7 +31,8 @@ class ExplainerViewerModal extends I.Modal {
     const t = this.plugin.settings;
     const { contentEl, modalEl } = this;
     this._isOpen = true;
-    modalEl.style.cssText = "width:min(96vw,760px);max-height:95vh;padding:0;border-radius:16px;overflow:hidden;display:flex;flex-direction:column;";
+    hubUi().themedModal(this);
+    modalEl.style.cssText = "width:min(96vw,760px);max-height:95vh;padding:0;border-radius:18px;overflow:hidden;display:flex;flex-direction:column;";
     contentEl.style.cssText = "padding:12px;display:flex;flex-direction:column;gap:6px;overflow-y:auto;flex:1;min-height:0;";
 
     // Title row — right padding reserves space for Obsidian's built-in close (X) button.
@@ -40,19 +42,20 @@ class ExplainerViewerModal extends I.Modal {
     const titleText = this.page.title || this.page.id;
     titleRow.createEl("div", {
       text: titleText,
-      attr: { style: "flex:1;min-width:0;font-size:15px;font-weight:700;color:var(--text-normal);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;", title: titleText },
+      attr: { style: "flex:1;min-width:0;font-size:16px;font-weight:700;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;", title: titleText },
     });
 
-    const headerBtnStyle = "flex-shrink:0;font-size:12px;padding:3px 8px;border-radius:8px;border:1px solid var(--background-modifier-border);background:var(--background-secondary);color:var(--text-muted);cursor:pointer;white-space:nowrap;";
+    const ui = hubUi();
+    const headerBtn = (cls = "") => titleRow.createEl("button", { cls: "lh-btn alt lh-vtog" + cls });
 
     // Source-note link — opens the flashcard's note this page explains.
     const srcPath = this.page.sourceCard && this.page.sourceCard.note;
     if (srcPath) {
       const name = String(srcPath).split("/").pop().replace(/\.md$/i, "");
-      const srcBtn = titleRow.createEl("button", {
-        attr: { style: headerBtnStyle + "max-width:130px;overflow:hidden;text-overflow:ellipsis;color:#6366f1;", title: srcPath },
-      });
-      srcBtn.textContent = "📄 " + name;
+      const srcBtn = headerBtn(" lh-vsrc");
+      srcBtn.title = srcPath;
+      ui.icon(srcBtn, "doc");
+      srcBtn.createSpan({ text: name });
       srcBtn.addEventListener("click", () => {
         const file = this.app.vault.getAbstractFileByPath(srcPath);
         if (file) {
@@ -65,16 +68,18 @@ class ExplainerViewerModal extends I.Modal {
       });
     }
 
-    // ⭐ star + ✓ complete toggles (Lesson Academy pattern). Fire-and-forget persistence; the
-    // list refreshes on close via _dirty → onChanged.
-    const mkToggle = (flag, onGlyph, offGlyph, onTip, offTip) => {
-      const btn = titleRow.createEl("button", { attr: { style: headerBtnStyle } });
+    // Star + complete toggles (Lesson Academy pattern): icon-only, the pressed state is a tinted
+    // face plus aria-pressed. Fire-and-forget persistence; the list refreshes on close via _dirty.
+    const mkToggle = (flag, onGlyph, offGlyph, onTip, offTip, cls) => {
+      const btn = headerBtn(" is-icon" + cls);
+      btn.setAttribute("aria-label", onTip);
       const paint = () => {
         const active = !!this.page["_" + flag];
-        btn.textContent = active ? onGlyph : offGlyph;
+        btn.empty();
+        ui.icon(btn, active ? onGlyph : offGlyph);
         btn.title = active ? offTip : onTip;
-        btn.setAttribute("aria-label", btn.title);
-        btn.style.opacity = active ? "1" : "0.65";
+        btn.setAttribute("aria-pressed", String(active));
+        btn.classList.toggle("is-on", active);
       };
       paint();
       btn.addEventListener("click", async () => {
@@ -86,13 +91,13 @@ class ExplainerViewerModal extends I.Modal {
         } catch (err) { console.warn("EngramQuest: explainer state toggle failed", err); }
       });
     };
-    mkToggle("starred", "⭐", "☆", c(t, "EXPLAINER_STAR_TIP"), c(t, "EXPLAINER_UNSTAR_TIP"));
-    mkToggle("completed", "✅", "✓", c(t, "EXPLAINER_COMPLETE_TIP"), c(t, "EXPLAINER_UNCOMPLETE_TIP"));
+    mkToggle("starred", "star", "star", c(t, "EXPLAINER_STAR_TIP"), c(t, "EXPLAINER_UNSTAR_TIP"), " is-star");
+    mkToggle("completed", "circle-check", "circle", c(t, "EXPLAINER_COMPLETE_TIP"), c(t, "EXPLAINER_UNCOMPLETE_TIP"), "");
 
-    const delBtn = titleRow.createEl("button", {
-      attr: { class: "lh-delete-btn", title: c(t, "DELETE"), "aria-label": c(t, "DELETE"), style: "opacity:1;flex-shrink:0;" },
-    });
-    delBtn.appendChild(I.sanitizeHTMLToDom(TRASH_SVG));
+    const delBtn = headerBtn(" is-icon is-danger");
+    delBtn.setAttribute("aria-label", c(t, "DELETE"));
+    delBtn.title = c(t, "DELETE");
+    ui.icon(delBtn, "trash");
     delBtn.addEventListener("click", () => this._confirmDelete());
 
     // Auto-mark viewed on open (Lesson Academy behavior). Only dirties the list the first time.
@@ -104,7 +109,7 @@ class ExplainerViewerModal extends I.Modal {
     }
 
     const box = contentEl.createEl("div", {
-      attr: { style: "border:1px solid var(--background-modifier-border);border-radius:14px;overflow:hidden;background:var(--background-secondary)" },
+      attr: { style: "border-radius:14px;overflow:hidden;background:var(--card);box-shadow:inset 0 0 0 1px var(--line)" },
     });
     const showError = (message) => {
       box.empty();
@@ -209,44 +214,23 @@ class ExplainerViewerModal extends I.Modal {
 
   _confirmDelete() {
     const t = this.plugin.settings;
-    const modal = new I.Modal(this.app);
-    modal.modalEl.style.cssText = "width:min(92vw,420px);padding:0;border-radius:16px;overflow:hidden;";
-    const wrap = modal.contentEl;
-    wrap.style.cssText = "padding:24px;display:flex;flex-direction:column;gap:14px;";
-    wrap.createEl("div", {
-      text: K(c(t, "DELETE_CONFIRM_TITLE"), { name: this.page.title || this.page.id }),
-      attr: { style: "font-size:16px;font-weight:700;color:var(--text-normal);" },
+    hubUi().confirmDialog(this.app, t, {
+      title: K(c(t, "DELETE_CONFIRM_TITLE"), { name: this.page.title || this.page.id }),
+      body: c(t, "EXPLAINER_DELETE_BODY"),
+      onConfirm: async () => {
+        try {
+          await deleteExplainer(this.app.vault.adapter, this.page.id);
+        } catch (err) {
+          console.error("EngramQuest: explainer delete failed", err);
+          new I.Notice(c(t, "EXPLAINER_DELETE_FAILED"));
+          return;
+        }
+        new I.Notice(c(t, "EXPLAINER_DELETED"));
+        this._dirty = false; // onChanged fires here; avoid a second refresh from onClose
+        this.close();
+        if (this.onChanged) this.onChanged();
+      },
     });
-    wrap.createEl("div", {
-      text: c(t, "EXPLAINER_DELETE_BODY"),
-      attr: { style: "font-size:13px;color:var(--text-muted);line-height:1.6;" },
-    });
-    const btnRow = wrap.createEl("div", { attr: { style: "display:flex;gap:8px;justify-content:flex-end;padding-top:4px;" } });
-    btnRow.createEl("button", {
-      text: c(t, "DELETE_CANCEL_BTN"),
-      attr: { style: "padding:7px 16px;border-radius:8px;border:1px solid var(--background-modifier-border);background:var(--background-secondary);color:var(--text-normal);cursor:pointer;font-size:13px;" },
-    }).addEventListener("click", () => modal.close());
-    const confirmBtn = btnRow.createEl("button", {
-      text: c(t, "DELETE_CONFIRM_BTN"),
-      attr: { style: "padding:7px 16px;border-radius:8px;border:none;background:#ef4444;color:#fff;cursor:pointer;font-size:13px;font-weight:600;" },
-    });
-    confirmBtn.addEventListener("click", async () => {
-      if (confirmBtn.disabled) return; // single-flight: avoid double delete on rapid clicks
-      confirmBtn.disabled = true;
-      modal.close();
-      try {
-        await deleteExplainer(this.app.vault.adapter, this.page.id);
-      } catch (err) {
-        console.error("EngramQuest: explainer delete failed", err);
-        new I.Notice(c(t, "EXPLAINER_DELETE_FAILED"));
-        return;
-      }
-      new I.Notice(c(t, "EXPLAINER_DELETED"));
-      this._dirty = false; // onChanged fires here; avoid a second refresh from onClose
-      this.close();
-      if (this.onChanged) this.onChanged();
-    });
-    modal.open();
   }
 
   onClose() {

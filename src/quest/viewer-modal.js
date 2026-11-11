@@ -20,7 +20,7 @@ const {
   retriggerShake,
 } = require("./helpers");
 const { openQuestChapterModal, renderQuestChallenge } = require("./modal");
-const { applyHubVars } = require("../hub/ui");
+const { watchTheme, icon: hubIcon } = require("../hub/ui");
 
 const DIFFICULTY_TONE = { easy: "--mstt", medium: "--lrnt", hard: "--newt" };
 
@@ -169,9 +169,9 @@ class QuestViewerModal extends I.Modal {
   async onOpen() {
     this.modalEl.addClass("qm-modal");
     this.modalEl.addClass("lh-hub");
-    if (isDarkTheme()) this.modalEl.addClass("lh-dark");
-    applyHubVars(this.modalEl, isDarkTheme());
     this.modalEl.style.cssText = "width:min(96vw,1040px);max-width:none;height:min(92vh,760px);max-height:none;padding:0;border-radius:18px;overflow:hidden;display:flex;flex-direction:column;";
+    // The map art is picked per theme, so a theme switch redraws it.
+    watchTheme(this, { vars: true, onChange: () => { if (this.state) this.render(); } });
     this.contentEl.style.cssText = "padding:0;display:flex;flex-direction:column;min-height:0;flex:1;background:var(--background-primary);color:var(--text-normal);";
     await this.reload();
     this.render();
@@ -552,19 +552,21 @@ class QuestViewerModal extends I.Modal {
       text: getNodeDescription(node) || (zh ? "點擊可用節點開始任務。" : "Click an available node to begin."),
       attr: { style: "font-size:13px;color:var(--text-muted);line-height:1.6;margin-bottom:16px;" },
     });
-    const nextBtn = side.createEl("button", {
-      text: zh ? "開始目前節點" : "Start Current Node",
-      attr: { style: "width:100%;border:0;border-radius:9px;padding:9px 14px;background:var(--btn);color:var(--onbtn);font-size:13px;font-weight:600;cursor:pointer;" },
-    });
+    const nextBtn = side.createEl("button", { cls: "lh-btn", attr: { style: "width:100%;" } });
+    hubIcon(nextBtn, "play");
+    nextBtn.createSpan({ text: zh ? "開始目前節點" : "Start Current Node" });
     nextBtn.addEventListener("click", () => this.openNode(progress.activeIndex || 0));
     const list = side.createEl("div", { attr: { style: "display:flex;flex-direction:column;gap:8px;margin-top:18px;" } });
     (this.quest.nodes || []).forEach((item, index) => {
       const done = Boolean(progress.state.nodes[item.id]?.completed);
       const locked = index > progress.activeIndex && !done;
       const row = list.createEl("button", {
-        text: `${done ? "✅" : locked ? "🔒" : "▶"} ${item.title || item.id}`,
+        cls: "lh-qrow" + (done ? " is-done" : ""),
         attr: {
           style: [
+            "display:flex",
+            "align-items:center",
+            "gap:8px",
             "text-align:left",
             "border-radius:10px",
             "padding:8px 10px",
@@ -578,6 +580,8 @@ class QuestViewerModal extends I.Modal {
           ].join(";"),
         },
       });
+      hubIcon(row, done ? "circle-check" : locked ? "lock" : "play");
+      row.createSpan({ text: item.title || item.id });
       row.addEventListener("click", () => this.openNode(index));
     });
   }

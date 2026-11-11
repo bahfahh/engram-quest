@@ -1,24 +1,22 @@
 "use strict";
-// The Hub frame: frosted sidebar on desktop, icon rail in narrow windows, and on a phone a
-// three-tab home with sub-pages. Tab ids, load order and guards are unchanged from the old nav.
+// The Hub frame: sidebar on desktop, icon rail in narrow windows, and on a phone a three-tab
+// home with sub-pages. Tab ids, load order and guards are unchanged from the old nav.
 
 const { t: c } = require("../i18n");
 const { ProUpgradeModal } = require("../license/upgrade");
 const { HelpModal } = require("./help");
 const { attachInfoButton, hasFeatureGuide } = require("./feature-guide");
-const { STAR, PLAY, icon, rawIcon, iconButton, isPhone, metrics, segBar, clearCapsuleActions } = require("./ui");
+const { STAR, PLAY, rawIcon, iconButton, featureIcon, isPhone, metrics, segBar, clearCapsuleActions } = require("./ui");
 const { renderPhoneContinue } = require("../videos/render");
 const { TABS, categories } = require("./categories");
 
-const CAT_ICONS = { memory: "deck", learn: "learn", achieve: "medal" };
+// Phone tab bar: each group shows the icon of its first feature (glass icon, line-icon fallback).
+const CAT_ICONS = { memory: ["review", "deck"], learn: ["lesson", "book"], achieve: ["achievement", "medal"] };
 
-function heroUrl(hub) {
-  const dark = activeDocument.body.classList.contains("theme-dark");
-  return hub.app.vault.adapter.getResourcePath(`${hub.app.vault.configDir}/plugins/engram-quest/${dark ? "stats_bg_dark.webp" : "bg.png"}`);
-}
-function addHero(parent, hub) {
-  parent.createEl("div", { cls: "lh-hero", attr: { style: `background-image:url('${hub._heroUrl || (hub._heroUrl = heroUrl(hub))}')` } });
-}
+// Soft light along the top of the window, drawn in CSS.
+function addAmbient(parent) { parent.createEl("div", { cls: "lh-amb", attr: { "aria-hidden": "true" } }); }
+
+function tabIcon(parent, hub, id, size) { return featureIcon(parent, hub.plugin, id, { size, fallback: TABS[id].icon }); }
 
 function readyCount(hub) { return hub.decks.reduce((n, d) => n + d.due + d.unseen, 0); }
 
@@ -52,13 +50,13 @@ async function showTab(hub, content, tab) {
 function renderDesktop(hub, root) {
   const t = hub.plugin.settings;
   const shell = root.createEl("div", { cls: "lh-shell" });
-  addHero(shell, hub);
+  addAmbient(shell);
   hub.setHero = (on) => shell.classList.toggle("no-hero", !on);
 
-  const side = shell.createEl("nav", { cls: "lh-side lh-glass", attr: { "aria-label": c(t, "HUB_NAV") } });
-  const brand = side.createEl("div", { cls: "lh-brand" });
+  const side = shell.createEl("nav", { cls: "lh-side", attr: { "aria-label": c(t, "HUB_NAV") } });
+  const brand = side.createEl("div", { cls: "lh-brand", attr: { title: c(t, "HUB_TITLE") } });
+  featureIcon(brand, hub.plugin, "logo", { size: 32 });
   brand.createEl("span", { cls: "lh-brand-full", text: c(t, "HUB_TITLE") });
-  brand.createEl("span", { cls: "lh-brand-short", text: "EQ" });
 
   const main = shell.createEl("div", { cls: "lh-main" });
   const buttons = new Map();
@@ -73,7 +71,7 @@ function renderDesktop(hub, root) {
     cat.tabs.forEach((id) => {
       const meta = TABS[id], label = c(t, meta.key), full = `${cat.label}：${label}`;
       const btn = side.createEl("button", { cls: "lh-nv" + (id === hub.activeTab ? " on" : ""), attr: { "data-tab": id, "aria-label": full, title: full } });
-      icon(btn.createEl("span", { cls: "lh-ti " + meta.tone }), meta.icon);
+      tabIcon(btn, hub, id, 32);
       btn.createEl("span", { cls: "lh-nv-label", text: label });
       if (id === "review") {
         const count = btn.createEl("em");
@@ -90,7 +88,7 @@ function renderDesktop(hub, root) {
   pro.addEventListener("click", () => openPro(hub));
   iconButton(foot, "help", c(t, "HELP_OPEN"), () => new HelpModal(hub.app, hub.plugin).open());
 
-  const capsule = shell.createEl("div", { cls: "lh-capsule lh-glass" });
+  const capsule = shell.createEl("div", { cls: "lh-capsule" });
   hub.capsuleEl = capsule;
   iconButton(capsule, "minimize", c(t, "HUB_MINIMIZE"), () => hub._minimize());
   iconButton(capsule, "close", c(t, "HUB_CLOSE"), () => hub.close());
@@ -103,7 +101,7 @@ function renderDesktop(hub, root) {
 // a feature just to show its number.
 function phoneHint(hub, id) {
   const t = hub.plugin.settings;
-  if (id === "memory" && hub._libraryLoaded) return `${hub.memories.length} ${c(t, "CARD_COUNT_UNIT")}`;
+  if (id === "memory" && hub._libraryLoaded) return c(t, "MAP_COUNT", { count: hub.memories.length });
   if (id === "quest" && hub._libraryLoaded) return `${hub.quests.filter(q => !q.completed && q.progressPct > 0).length} ${c(t, "QUEST_IN_PROGRESS")}`;
   return (hub._entryHints && hub._entryHints[id]) || "";
 }
@@ -114,7 +112,7 @@ function phoneEntries(parent, hub, tabs) {
   tabs.forEach((id) => {
     const meta = TABS[id];
     const row = list.createEl("button", { cls: "lh-pr", attr: { "data-tab": id } });
-    icon(row.createEl("span", { cls: "lh-ti " + meta.tone }), meta.icon);
+    tabIcon(row, hub, id, 32);
     row.createEl("span", { cls: "lh-grow" }).createEl("b", { text: c(t, meta.key) });
     if (id === "review") row.createEl("span", { cls: "lh-val", text: String(readyCount(hub)) });
     else {
@@ -166,10 +164,10 @@ function renderPhone(hub, root) {
     shell.empty();
     const page = hub._phonePage;
     shell.classList.toggle("is-home", !page);
+    addAmbient(shell);
     if (page) { renderPhoneSub(hub, shell, page, cats); return; }
-    addHero(shell, hub);
     const cat = cats.find(x => x.id === hub.activeCategory) || cats[0];
-    const capsule = shell.createEl("div", { cls: "lh-capsule lh-glass" });
+    const capsule = shell.createEl("div", { cls: "lh-capsule" });
     hub.capsuleEl = capsule;
     iconButton(capsule, "help", c(t, "HELP_OPEN"), () => new HelpModal(hub.app, hub.plugin).open());
     iconButton(capsule, "minimize", c(t, "HUB_MINIMIZE"), () => hub._minimize());
@@ -186,7 +184,7 @@ function renderPhone(hub, root) {
     const bar = shell.createEl("nav", { cls: "lh-tabg lh-glass", attr: { "aria-label": c(t, "HUB_NAV") } });
     cats.forEach((x) => {
       const btn = bar.createEl("button", { cls: x.id === cat.id ? "on" : "", attr: x.id === cat.id ? { "aria-current": "page" } : {} });
-      icon(btn, CAT_ICONS[x.id]);
+      featureIcon(btn, hub.plugin, CAT_ICONS[x.id][0], { size: 26, fallback: CAT_ICONS[x.id][1] });
       btn.createEl("span", { text: x.label });
       btn.addEventListener("click", () => { hub.activeCategory = x.id; paint(); });
     });

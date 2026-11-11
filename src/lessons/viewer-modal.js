@@ -8,6 +8,9 @@ const I = require("obsidian");
 const { t: c, interpolate: K, getLocale: _getLocale } = require("../i18n");
 const { LESSONS_DIR, markLesson, lessonCompletion } = require("./data");
 
+// Hub UI helpers, loaded lazily: hub/ui pulls in the feature guide, which pulls in this file's callers.
+function hubUi() { return require("../hub/ui"); }
+
 const W = I.moment;
 function L(s) { return _getLocale(s, W && W.locale && W.locale()); }
 
@@ -58,13 +61,19 @@ function buildCompletionFooter(parentEl, t, meta, lesson, mark) {
     attr: { style: "flex:1;min-width:0;font-size:11px;color:var(--text-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" },
   });
 
-  const btnStyle = "flex-shrink:0;font-size:12px;padding:5px 14px;border-radius:8px;border:1px solid var(--background-modifier-border);background:var(--background-secondary);color:var(--text-normal);cursor:pointer;white-space:nowrap;";
-
-  const starBtn = footer.createEl("button", { attr: { style: btnStyle } });
-  const paintStar = (on) => {
-    starBtn.textContent = (on ? "★ " : "☆ ") + c(t, "LESSON_MARK_STAR");
-    starBtn.style.color = on ? "#f59e0b" : "var(--text-normal)";
+  // Two toggles. The pressed state is a tinted face plus aria-pressed, not a full colour fill.
+  const toggle = () => footer.createEl("button", { cls: "lh-btn alt lh-vtog", attr: { "aria-pressed": "false" } });
+  const paintToggle = (btn, on, glyph, label) => {
+    btn.empty();
+    hubUi().icon(btn, glyph);
+    btn.createSpan({ text: label });
+    btn.classList.toggle("is-on", on);
+    btn.setAttribute("aria-pressed", String(on));
   };
+
+  const starBtn = toggle();
+  starBtn.classList.add("is-star");
+  const paintStar = (on) => paintToggle(starBtn, on, "star", c(t, "LESSON_MARK_STAR"));
   paintStar(completion.starred);
   let starred = completion.starred;
   starBtn.addEventListener("click", () => {
@@ -73,13 +82,8 @@ function buildCompletionFooter(parentEl, t, meta, lesson, mark) {
     mark({ starred });
   });
 
-  const doneBtn = footer.createEl("button", { attr: { style: btnStyle } });
-  const paintDone = (on) => {
-    doneBtn.textContent = on ? "✓ " + c(t, "LESSON_MARKED_DONE") : c(t, "LESSON_MARK_DONE");
-    doneBtn.style.background = on ? "#22c55e" : "var(--background-secondary)";
-    doneBtn.style.color = on ? "#fff" : "var(--text-normal)";
-    doneBtn.style.borderColor = on ? "#22c55e" : "var(--background-modifier-border)";
-  };
+  const doneBtn = toggle();
+  const paintDone = (on) => paintToggle(doneBtn, on, on ? "circle-check" : "circle", c(t, on ? "LESSON_MARKED_DONE" : "LESSON_MARK_DONE"));
   paintDone(completion.completed);
   let completed = completion.completed;
   doneBtn.addEventListener("click", () => {
@@ -122,7 +126,8 @@ class LessonViewerModal extends I.Modal {
     this._isOpen = true;
     // A lesson is a long-form portrait document — give the modal nearly the whole viewport and
     // keep the chrome (title + footer) tight so the iframe gets the rest.
-    modalEl.style.cssText = "width:min(96vw,900px);max-height:96vh;padding:0;border-radius:16px;overflow:hidden;display:flex;flex-direction:column;";
+    hubUi().themedModal(this);
+    modalEl.style.cssText = "width:min(96vw,900px);max-height:96vh;padding:0;border-radius:18px;overflow:hidden;display:flex;flex-direction:column;";
     contentEl.style.cssText = "padding:12px;display:flex;flex-direction:column;gap:8px;overflow-y:auto;flex:1;min-height:0;";
 
     // Title row (padding-right clears Obsidian's absolute-positioned modal close X).
@@ -250,7 +255,8 @@ class CanvasLessonModal extends I.Modal {
   onOpen() {
     const t = this.plugin.settings;
     const { contentEl, modalEl } = this;
-    modalEl.style.cssText = "width:min(94vw,440px);padding:0;border-radius:16px;overflow:hidden;";
+    hubUi().themedModal(this);
+    modalEl.style.cssText = "width:min(94vw,440px);padding:0;border-radius:18px;overflow:hidden;";
     contentEl.style.cssText = "padding:20px;display:flex;flex-direction:column;gap:14px;";
 
     const titleRow = contentEl.createEl("div", {

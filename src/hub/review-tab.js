@@ -42,11 +42,14 @@ function renderGrid(parent, hub, decks, refresh) {
   const grid = parent.createEl("div", { cls: "lh-deck-cards" });
   decks.forEach((deck) => {
     const s = deckStats(deck), { name, path } = deckName(deck);
-    const card = grid.createEl("div", { cls: "lh-dc" + (s.ready === 0 ? " is-idle" : ""), attr: { title: s.ready === 0 ? idleHint(deck, t) : deck.name } });
+    const card = grid.createEl("div", { cls: "lh-dc" + (s.ready === 0 ? " is-idle" : ""), attr: { title: s.ready === 0 ? idleHint(deck, t) : deck.name, role: "button", tabindex: "0", "aria-label": `${name}: ${s.ready} ${c(t, "READY_NOW")}` } });
     deckActions(card, hub, deck, refresh);
-    const head = card.createEl("div", { attr: { style: "min-width:0" } });
+    const top = card.createEl("div", { cls: "lh-dc-top" });
+    ui.icon(top.createEl("span", { cls: "lh-dc-ic" }), "layers");
+    const head = top.createEl("div", { cls: "lh-dc-hd" });
     head.createEl("div", { cls: "lh-nm", text: name });
     head.createEl("div", { cls: "lh-pth", text: path });
+    ui.icon(top.createEl("span", { cls: "lh-dc-go" }), "chevron");
     const nr = card.createEl("div", { cls: "lh-nr" });
     nr.createEl("b", { text: String(s.ready) });
     nr.createEl("span", { text: s.ready > 0 ? c(t, "READY_NOW") : interpolate(c(t, "ALL_SCHEDULED"), { total: deck.total }) });
@@ -57,6 +60,11 @@ function renderGrid(parent, hub, decks, refresh) {
     meta.createEl("span", { text: `${c(t, "FILTER_NEW")} ${deck.unseen}`, cls: deck.unseen ? "tn" : "" });
     meta.createEl("span", { text: `${c(t, "TOTAL")} ${deck.total}` });
     card.addEventListener("click", () => hub._startDeckReview(deck));
+    card.addEventListener("keydown", (ev) => {
+      if (ev.target !== card || (ev.key !== "Enter" && ev.key !== " ")) return;
+      ev.preventDefault();
+      hub._startDeckReview(deck);
+    });
   });
 }
 

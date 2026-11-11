@@ -26,7 +26,7 @@ const SURFACES = ["base", "card"];
 
 describe("design token contrast", () => {
   const light = themeTokens(/\.lh-hub,[^{]*\{([^}]*--base:#F5F5F7[^}]*)\}/);
-  const dark = { ...light, ...themeTokens(/\{([^}]*--base:#161618[^}]*)\}/) };
+  const dark = { ...light, ...themeTokens(/\{([^}]*--base:#18181B[^}]*)\}/) };
 
   for (const [name, tokens] of [["light", light], ["dark", dark]]) {
     it(`keeps every text colour at 4.5:1 on ${name} surfaces`, () => {

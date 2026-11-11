@@ -9,7 +9,7 @@ const { t: c, getLocale } = require("../i18n");
 const { registerSelectionCopy } = require("../ui/selection-copy");
 const { FeatureGuideModal } = require("./feature-guide");
 const { TABS } = require("./categories");
-const { icon, iconButton, applyHubVars } = require("./ui");
+const { icon, iconButton, watchTheme, featureIcon } = require("./ui");
 const CONTENT = require("./help-content");
 
 const PROMPT_FILE = "assets/claude-desktop-prompt.txt";
@@ -21,10 +21,11 @@ function rich(parent, html, configDir) {
   return parent;
 }
 
-// The coloured tile a tab wears in the sidebar; other sections get a neutral one.
-function tile(parent, tab, fallback) {
+// A tab's glass icon from the sidebar; other sections get a neutral tile.
+function tile(parent, plugin, tab, fallback) {
   const known = TABS[tab];
-  return icon(parent.createSpan({ cls: known ? `lh-ti ${known.tone}` : "lh-gi" }), known ? known.icon : fallback);
+  if (known) return featureIcon(parent, plugin, tab, { size: 28, fallback: known.icon });
+  return icon(parent.createSpan({ cls: "lh-gi" }), fallback);
 }
 
 class HelpModal extends I.Modal {
@@ -36,10 +37,8 @@ class HelpModal extends I.Modal {
   onOpen() {
     const t = this.plugin.settings;
     const copy = getLocale(t) === "zh-tw" ? CONTENT.zh : CONTENT.en;
-    const dark = activeDocument.body.classList.contains("theme-dark");
     this.modalEl.addClass("lh-hub", "lh-help");
-    if (dark) this.modalEl.addClass("lh-dark");
-    applyHubVars(this.modalEl, dark);
+    watchTheme(this, { vars: true });
     registerSelectionCopy(this);
 
     const root = this.contentEl;
@@ -75,7 +74,7 @@ class HelpModal extends I.Modal {
       gh.createSpan({ text: group.desc });
       group.tabs.forEach((item) => {
         const btn = card.createEl("button", { cls: "lh-help-tab", attr: { title: copy.ui.openGuide } });
-        tile(btn, item.tab);
+        tile(btn, this.plugin, item.tab);
         const text = btn.createSpan({ cls: "lh-help-tab-tx" });
         const name = text.createSpan({ cls: "lh-help-tab-nm", text: item.name });
         if (item.pro) name.createSpan({ cls: "lh-help-pro", text: "Pro" });
@@ -92,7 +91,7 @@ class HelpModal extends I.Modal {
     const item = parent.createDiv({ cls: "lh-help-sec" });
     const panelId = `lh-help-${section.id}`;
     const btn = item.createEl("h3", { cls: "lh-help-sec-hd" }).createEl("button", { cls: "lh-help-sec-h", attr: { id: `${panelId}-h`, "aria-expanded": String(open), "aria-controls": panelId } });
-    tile(btn, section.tab, section.icon);
+    tile(btn, this.plugin, section.tab, section.icon);
     btn.createSpan({ cls: "lh-help-sec-t", text: section.title });
     btn.createSpan({ cls: "lh-help-tag" + (section.tag === "Pro" ? " pro" : ""), text: section.tag });
     icon(btn.createSpan({ cls: "lh-help-chev" }), "chevron");
