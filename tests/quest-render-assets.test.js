@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { renderQuestMap } from "../src/quest/render.js";
+import { assetUrl } from "../src/assets/index.js";
 
 function appMock() {
   return {
@@ -40,10 +41,9 @@ describe("quest map generated assets", () => {
       { completedCount: 1, progressPct: 33 }
     );
 
-    expect(html).toContain("generated/crown-current-node.webp");
-    expect(html).toContain("generated/node-number-frame.webp");
-    expect(html).toContain("generated/boss-gate.webp");
-    expect(html).toContain("generated/boss-lock-badge.webp");
+    for (const name of ["crown-current-node", "node-number-frame", "boss-gate", "boss-lock-badge"]) {
+      expect(html).toContain(assetUrl(appMock(), `assets/quest-map/generated/${name}.webp`));
+    }
     expect(html).toContain('class="qm-node-number"');
     expect(html).toContain(">2</span>");
     expect(html).not.toContain("island_light_");

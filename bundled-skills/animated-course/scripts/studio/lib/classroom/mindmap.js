@@ -14,7 +14,7 @@ export const COLORS = {
   a: '#7fd6c9', b: C.CHALK.orange, red: C.CHALK.pink,          // Concept A = teal, Concept B = orange (same meaning as the DOM kit)
 };
 const col = c => COLORS[c] || c || COLORS.white;
-const FONT = 'LXGW WenKai TC';
+const FONT = 'LXGW WenKai TC';   // its variant-shaped characters come from /lib/kit/tc-variants.css (S.loadFonts adds it)
 // English chalk (spec.lang: 'en'): a handwriting font with big, open letters; see /lib/classroom/EN.md
 export const CHALK_EN = { family: 'Kalam', weight: '700', css: '/node_modules/@fontsource/kalam/700.css' };
 const clamp = S.clamp, lerp = S.lerp;
@@ -209,6 +209,7 @@ const RADIAL = {
  *   spec.nodes   [{id, text, t, parent:'center'|id, color, size, icon, iconSize, photo:{src|img, w, h, crop, rot}, doodle:{w,h,draw}, pic:'top'|'left', frame, pos:[x,y], dx, dy, side:'left'|'right', head,
  *                 edge:{label, style:'line'|'arrow'|'dashed'|'dashedArrow'|'none', color, t, bend, from}}]
  *   spec.edges   extra links [{from, to, label, style, color, t, bend, fromSide, toSide}]
+ *   spec.divider true (vertical, the compare default) | false | {x} | {y} | {pts: [[x,y],[x,y]]}, plus {t}
  *   spec.area    {x,y,w,h} the usable area of the board; spec.screenScale board px → screen px (BC shot = 0.9), to check text reaches 50 px
  *   spec.wipe    {at, dur:0.6, prev:(ctx)=>{…}}: before at, draw prev (your own board); at at, the eraser wipes it, then the mindmap draws
  *   spec.lang    'en': English chalk (CHALK_EN = Kalam 700); writing speed and lint count English words; spec.font / spec.fontWeight set any font
@@ -222,6 +223,7 @@ export async function makeMindmap(board, spec = {}) {
   const all = center ? [center, ...nodes] : nodes;
   const byId = Object.fromEntries(all.map(n => [n.id, n]));
   for (const n of nodes) if (n.parent === undefined && center && layout !== 'compare' && layout !== 'flow') n.parent = 'center';
+  let divider = spec.divider ?? (layout === 'compare');
 
   // ---------- assets: fonts, icons, photos, doodles
   const EN = spec.lang === 'en';
@@ -241,6 +243,10 @@ export async function makeMindmap(board, spec = {}) {
     const p = n.photo; p.img = p.img || (p.src ? await loadImg(p.src) : null);
     if (p.img) { const [, , sw, sh] = p.crop || [0, 0, p.img.width, p.img.height]; p.w = p.w || 320; p.h = p.h || Math.round((p.w - 24) * sh / sw + 24); }
   }
+
+  // radial centre over the one-line limit (CENTER_MAX) and without its own '\n': wrap it onto two balanced lines
+  if (layout === 'radial' && center && center.text && !String(center.text).includes('\n') && units(center.text) > CENTER_MAX[EN ? 'en' : 'zh'])
+    center.text = wrapTwo(String(center.text), center.size || DEF.center, F);
 
   // ---------- node boxes
   for (const n of all) {
@@ -266,6 +272,9 @@ export async function makeMindmap(board, spec = {}) {
     const cpos = slots ? A(...slots.c) : A(0.5, 0.5);
     if (center && !center.pos) center.pos = cpos;
     br.forEach((n, i) => {
+      // three branches under a high centre: the three label midpoints sit almost on one row, so slide the middle label
+      // down its line and the side labels up theirs (only for slot positions; labelDx / labelDy turn this off)
+      if (!n.pos && center && br.length === 3) n._labelAt = i === 1 ? 0.7 : 0.4;
       if (!n.pos) n.pos = slots ? A(...slots.b[i]) : (() => { const a = -2.6 + i / br.length * 6.283; return [cpos[0] + Math.cos(a) * area.w * 0.36, cpos[1] + Math.sin(a) * area.h * 0.38]; })();
       placeKids(n);
     });
@@ -306,7 +315,7 @@ export async function makeMindmap(board, spec = {}) {
       const x = area.x + area.w * (side === 'left' ? 0.25 : 0.75);
       for (const n of col) { if (!n.pos) n.pos = [x, y + n.h / 2]; y += n.h + gap; if (!n.edge) n.edge = { style: 'none' }; }
     }
-    spec._divider = [[area.x + area.w / 2, y0 - 10], [area.x + area.w / 2, Math.min(area.y + area.h - 10, yMax + 60)]];
+    if (divider === true) divider = { pts: [[area.x + area.w / 2, y0 - 10], [area.x + area.w / 2, Math.min(area.y + area.h - 10, yMax + 60)]] };
   }
   function placeKids(p) {   // children of a branch: stacked under it (or set pos yourself)
     const k = kids(p.id); let y = p.pos[1] + p.h / 2 + 64;
@@ -319,6 +328,9 @@ export async function makeMindmap(board, spec = {}) {
     if (n.frame === 'ellipse') { n.rx = n.w / 2 + 56; n.ry = n.h / 2 + 40; }
     else if (n.frame === 'box') { n.rx = n.w / 2 + 34; n.ry = n.h / 2 + 24; }
   }
+  if (divider && !divider.pts) divider = divider === true ? { pts: [[area.x + area.w / 2, area.y], [area.x + area.w / 2, area.y + area.h]] }
+    : divider.y != null ? { ...divider, pts: [[area.x + 20, divider.y], [area.x + area.w - 20, divider.y]] }
+    : divider.x != null ? { ...divider, pts: [[divider.x, area.y], [divider.x, area.y + area.h]] } : null;
 
   // ---------- times (auto when missing: one after another)
   {
@@ -351,7 +363,8 @@ export async function makeMindmap(board, spec = {}) {
     let parts = [pts], lab = null;
     if (e.label) {
       const size = e.labelSize || DEF.label, ts = textSize(e.label, size, F.family, F.weight);
-      const mid = pts[Math.floor(pts.length / 2)];
+      const at = e._auto && e.labelDx == null && e.labelDy == null && e.from === 'center' ? b._labelAt : null;
+      const mid = pts[at != null ? Math.round(at * (pts.length - 1)) : Math.floor(pts.length / 2)];
       lab = { x: mid[0] + (e.labelDx || 0), y: mid[1] + (e.labelDy || 0), size, ts };
       const inGap = ([x, y]) => Math.abs(x - lab.x) < ts.w / 2 + 12 && Math.abs(y - lab.y) < ts.h / 2 + 4;
       if (e.labelMode !== 'beside') {
@@ -372,7 +385,7 @@ export async function makeMindmap(board, spec = {}) {
     } });
     if (lab) els.push({ t0: e.labelT ?? e.t + dur * 0.6, dur: tDur(e.label), bb: { x: lab.x - lab.ts.w / 2 - 30, y: lab.y - lab.ts.h / 2 - 30, w: lab.ts.w + 60, h: lab.ts.h + 60 }, draw: (c, k) => writeLines(c, e.label, lab.x, lab.y, k, { size: lab.size, color: col(e.labelColor || e.color || 'yellow'), align: 'center', font: F.family, weight: F.weight }) });
   });
-  if (spec._divider) els.push({ t0: (center ? center.t + 0.6 : 0), dur: 0.5, bb: bbOf(spec._divider, 30), draw: (c, k) => S.drawStroke(c, spec._divider, k, { color: COLORS.grey, width: 6, seed: 33 }) });
+  if (divider) { const d = divider; els.push({ t0: d.t ?? (center ? center.t + 0.6 : 0), dur: 0.5, bb: bbOf(d.pts, 30), draw: (c, k) => S.drawStroke(c, d.pts, k, { color: COLORS.grey, width: 6, seed: 33 }) }); }
   // nodes
   all.forEach((n, i) => {
     const { cx, cy } = n.box;
@@ -396,17 +409,18 @@ export async function makeMindmap(board, spec = {}) {
 
   // ---------- lint (printed as console.error so render.cjs shows it; nothing breaks)
   const warnings = [];
-  const units = s => (String(s).match(/[㐀-鿿]|[A-Za-z0-9$+.,%]+/g) || []).length;
   let total = 0;
   for (const n of all) {
     if (!n.text) continue;
     const u = units(n.text); total += (String(n.text).match(/[㐀-鿿]|[A-Za-z]+/g) || []).length;
+    // the centre may take two lines; the one-line limit applies to each line
+    const cMax = CENTER_MAX[EN ? 'en' : 'zh'], cLines = String(n.text).split('\n'), cOver = n.isCenter && (cLines.length > 2 || cLines.some(l => units(l) > cMax));
     if (EN) {   // English: count words
       if (!n.isCenter && u > 5) warnings.push(`node "${n.text}": ${u} words, keep it to 5`);
-      if (n.isCenter && u > 7) warnings.push(`centre "${n.text}": ${u} words, keep it to 7`);
+      if (cOver) warnings.push(`centre "${n.text}": ${u} words, keep it to ${cMax} per line, two lines at most`);
     } else {
     if (!n.isCenter && u > 8) warnings.push(`節點「${n.text}」${u} 個字，建議 8 字以內`);
-    if (n.isCenter && u > 12) warnings.push(`中心「${n.text}」${u} 個字，建議 12 字以內`);
+    if (cOver) warnings.push(`中心「${n.text}」${u} 個字，建議每行 ${cMax} 字以內、最多兩行`);
     }
     if (n.size * screenScale < 50) warnings.push(`節點「${n.text}」字只有 ${(n.size * screenScale).toFixed(0)}px（螢幕上），至少 50px`);
   }
@@ -483,6 +497,23 @@ export async function makeMindmap(board, spec = {}) {
     /** board-canvas point of a node (for the chopstick): mm.point('goal') -> [x, y] (side: 'top'|'bottom'|'left'|'right') */
     point(id, side) { const n = byId[id]; const b = n.box; return side === 'top' ? [b.cx, b.y] : side === 'bottom' ? [b.cx, b.y + b.h] : side === 'left' ? [b.x, b.cy] : side === 'right' ? [b.x + b.w, b.cy] : [b.cx, b.cy]; },
   };
+}
+
+/** one-line length limit of the centre text (Chinese characters / English words); a radial centre over it wraps to two lines */
+const CENTER_MAX = { zh: 12, en: 7 };
+/** length units the lint counts: one per CJK character, one per run of Latin letters / digits (an English word) */
+const units = s => (String(s).match(/[㐀-鿿]|[A-Za-z0-9$+.,%]+/g) || []).length;
+/** split one line into two of about equal width; prefers a break after punctuation or at a space, never inside a Latin word */
+function wrapTwo(str, size, F) {
+  const ch = [...str], w = s => textSize(s, size, F.family, F.weight).w;
+  let best = null;
+  for (let i = 1; i < ch.length; i++) {
+    if (/[A-Za-z0-9]/.test(ch[i - 1]) && /[A-Za-z0-9'’]/.test(ch[i])) continue;
+    const a = ch.slice(0, i).join('').trim(), b = ch.slice(i).join('').trim(); if (!a || !b) continue;
+    const score = Math.abs(w(a) - w(b)) - (/[，、：；。！？,;:!?—]/.test(ch[i - 1]) ? size * 4 : /[\s\u3000]/.test(ch[i - 1] + ch[i]) ? size * 1.5 : 0);
+    if (!best || score < best.score) best = { score, text: a + '\n' + b };
+  }
+  return best ? best.text : str;
 }
 
 /** point where a line from node n towards `to` leaves its frame / box, plus a gap */

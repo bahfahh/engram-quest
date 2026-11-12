@@ -28,6 +28,9 @@ const LID_LO = new THREE.SphereGeometry(1, 20, 8, 0, Math.PI * 2, Math.PI / 2, M
 const lerp = (a, b, k) => a + (b - a) * k;
 const clamp01 = v => Math.max(0, Math.min(1, v));
 const smooth = (a, b, x) => { const k = clamp01((x - a) / (b - a)); return k * k * (3 - 2 * k); };
+// every pose field at rest: pose() merges these first so a partial pose object never produces NaN (CAST.md)
+const DEF = { t: 0, blink: 0, lookX: 0, lookY: 0, talk: 0, armL: 0, armR: 0, point: 0, wave: 0, hop: 0, squash: 0, tilt: 0, turn: 0, state: 'idle', stateK: 0 };
+const fill = (s = {}) => { const o = { ...DEF }; for (const k in s) if (s[k] !== undefined) o[k] = s[k]; return o; };
 
 function gloss(color, o = {}) {
   return new THREE.MeshPhysicalMaterial({
@@ -202,6 +205,7 @@ function rig(P) {
   return {
     root: P.root, height: P.H,
     pose(s) {
+      s = fill(s);
       const t = s.t, st = s.state || 'idle', K = clamp01(s.stateK || 0);
       const th = st === 'think' ? K : 0, ah = st === 'aha' ? K : 0, db = st === 'doubt' ? K : 0;
       P.root.rotation.y = s.turn * 0.6;
@@ -757,6 +761,7 @@ function buildOwl() {
   return {
     root, height: H, classroomScale: 0.78,   // the wings and the held pencil make it wide: sized so the studio frame keeps a margin on its side
     pose(s) {
+      s = fill(s);
       const t = s.t, st = s.state || 'idle', K = clamp01(s.stateK || 0);
       const th = st === 'think' ? K : 0, ah = st === 'aha' ? K : 0, db = st === 'doubt' ? K : 0;
       root.rotation.y = (s.turn || 0) * 0.6;

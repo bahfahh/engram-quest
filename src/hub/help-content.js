@@ -1,4 +1,5 @@
 "use strict";
+const { price: PRICE } = require("../license/config");
 // Text of the Hub help dialog (the "?" button). help.js draws it; nothing here is code.
 // Keep the Chinese object first and the English one second: tests read the text between the two keys.
 //
@@ -192,7 +193,7 @@ module.exports = {
         ],
       },
       {
-        id: "pro", icon: "star", title: "Pro", tag: "US$11.99 一次買斷",
+        id: "pro", icon: "star", title: "Pro", tag: `${PRICE} 一次買斷`,
         body: [
           { p: "一次買斷，之後的 Pro 功能更新都包含。不升級也能繼續使用所有免費功能。Pro 加的是這四件事：" },
           { list: [
@@ -483,7 +484,7 @@ module.exports = {
         ],
       },
       {
-        id: "pro", icon: "star", title: "Pro", tag: "US$11.99 one-time",
+        id: "pro", icon: "star", title: "Pro", tag: `${PRICE} one-time`,
         body: [
           { p: "One purchase, with future Pro feature updates included. Every free feature keeps working without it. Pro adds four things:" },
           { list: [

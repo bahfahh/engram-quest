@@ -18,10 +18,15 @@ async function readJson(adapter, path) {
   }
 }
 
-/** Fill in any missing meta fields so renderers never need null checks. */
+/**
+ * Fill in any missing meta fields so renderers never need null checks. meta.json is shared with the
+ * lesson-academy skill, and every plugin write goes through here, so fields the plugin doesn't know
+ * (at course and lesson level) are carried through unchanged.
+ */
 function normalizeMeta(meta) {
   if (!meta || typeof meta !== "object") return null;
   return {
+    ...meta,
     title: String(meta.title || ""),
     topic: String(meta.topic || ""),
     icon: String(meta.icon || "📘"),
@@ -31,13 +36,12 @@ function normalizeMeta(meta) {
     starred: !!meta.starred,
     archived: !!meta.archived,
     createdAt: meta.createdAt || null,
-    // Skill-owned plan data: the course's `mission` and each lesson's `goal` are what later
-    // lessons get generated from. The plugin never edits them, so every load→save carries them
-    // through exactly as written.
-    ...(meta.mission ? { mission: meta.mission } : {}),
     lessons: Array.isArray(meta.lessons)
-      ? meta.lessons.filter((l) => l && l.id).map((l) => ({
-          id: String(l.id),
+      ? meta.lessons.filter((l) => l && typeof l === "object").map((l, i) => ({
+          ...l,
+          // An entry without an id would have no place in the completion map; it gets one derived
+          // from its file (or position) instead of being dropped.
+          id: String(l.id || (l.file ? `file-${l.file}` : `entry-${i + 1}`)),
           title: String(l.title || l.file || ""),
           // No file = a planned outline entry (user- or AI-authored) whose HTML the lesson-academy
           // skill hasn't generated yet. It still renders in the list as "pending".
@@ -46,8 +50,6 @@ function normalizeMeta(meta) {
           // Anything else collapses to "html" so a bogus value can't break the click branch.
           type: l.type === "canvas" ? "canvas" : "html",
           source: l.source === "import" ? "import" : "skill",
-          ...(l.goal ? { goal: l.goal } : {}),
-          ...(l.importedAt ? { importedAt: l.importedAt } : {}),
         }))
       : [],
     completion: meta.completion && typeof meta.completion === "object" ? meta.completion : {},
@@ -299,20 +301,20 @@ async function deleteLesson(adapter, slug, lessonId) {
 }
 
 /**
- * Delete a whole course: trash every lesson HTML, the meta.json, then the folder itself.
- * Best-effort per file — a failed HTML trash doesn't block removing the rest.
+ * Delete a whole course: the course folder goes to the trash as one piece, so everything in it —
+ * including files meta.json doesn't list (images, the skill's working files) — can be restored.
+ * Throws when it could not be trashed; nothing is then removed.
  */
 async function deleteCourse(adapter, slug) {
-  const meta = await loadCourse(adapter, slug);
-  if (meta) {
-    for (const lesson of meta.lessons) {
-      if (lesson.file) await trashPath(adapter, `${LESSONS_DIR}/${slug}/${lesson.file}`);
-    }
+  const dir = `${LESSONS_DIR}/${slug}`;
+  if (!(await adapter.exists(dir))) return;
+  for (const trash of [adapter.trashSystem, adapter.trashLocal]) {
+    if (typeof trash !== "function") continue;
+    try {
+      if ((await trash.call(adapter, dir)) !== false) return;
+    } catch (e) { console.warn("EngramQuest: course trash failed", e); }
   }
-  await trashPath(adapter, `${LESSONS_DIR}/${slug}/meta.json`);
-  try {
-    if (typeof adapter.rmdir === "function") await adapter.rmdir(`${LESSONS_DIR}/${slug}`, true);
-  } catch (e) { console.warn("EngramQuest: course folder cleanup failed", e); }
+  throw new Error(`could not move ${dir} to the trash`);
 }
 
 /**

@@ -6,7 +6,8 @@ import * as K from '/lib/kit/kit.js';
 
 // transparent: true → no background colour, floor or wash: the characters float over the page's own DOM
 // (put your scene behind the stage frame, or append your elements into frame below layer2d).
-export async function makeStage({ card = true, cardAt = { x: 920, y: 380 }, floor: floorSrc = '/lib/cast/floor.jpg', transparent = false } = {}) {
+// card: true draws a demo UI panel (the skin test page lab.html points at it); off by default so a scene shows only its own content.
+export async function makeStage({ card = false, cardAt = { x: 920, y: 380 }, floor: floorSrc = '/lib/cast/floor.jpg', transparent = false } = {}) {
   if (transparent) floorSrc = null;
   await K.init(['wallet']);
   const css = document.createElement('style');
@@ -67,10 +68,30 @@ export async function makeStage({ card = true, cardAt = { x: 920, y: 380 }, floo
       ch.el.style.transform = `translate(${(x - ch.w * s / 2).toFixed(1)}px, ${(y - ch.height * s).toFixed(1)}px) scale(${s.toFixed(4)})`;
     }
   }
-  /** add a 3D cast to the scene once */
-  function adopt(cast) { for (const k of ['teacher', 'student', 'embodiment']) { const c = cast[k]; if (c && c.root && !c.root.parent) scene.add(c.root); } }
+  /** add a 3D cast to the scene once, and make every member's pose() accept a partial object:
+   *  missing fields get POSE_DEFAULTS, the same defaults classroom.js poseNative fills in (CAST.md "Tolerate missing fields") */
+  function adopt(cast) {
+    for (const k of ['teacher', 'student', 'embodiment']) {
+      const c = cast[k]; if (!c) continue;
+      if (c.root && !c.root.parent) scene.add(c.root);
+      if (typeof c.pose === 'function' && !c.pose.withDefaults) {
+        const raw = c.pose.bind(c), pose = (s = {}) => raw(fillPose(s));
+        pose.withDefaults = true; c.pose = pose;
+      }
+    }
+  }
   const env = { THREE, K, rng: K.rng, layer2d };
   return { frame, env, place, adopt, render: () => renderer.render(scene, cam), scene, cam, cardEl, toggleEl };
+}
+
+/** Every pose field at rest (CAST.md field table). */
+export const POSE_DEFAULTS = Object.freeze({ t: 0, blink: 0, lookX: 0, lookY: 0, talk: 0, armL: 0, armR: 0, point: 0, wave: 0, hop: 0, squash: 0, tilt: 0, turn: 0, state: 'idle', stateK: 0 });
+
+/** A full pose from a partial one: fields that are missing or undefined (e.g. `{ lookX: opts.lookX }`) get POSE_DEFAULTS. */
+export function fillPose(s = {}) {
+  const out = { ...POSE_DEFAULTS };
+  for (const k in s) if (s[k] !== undefined) out[k] = s[k];
+  return out;
 }
 
 /** The test sequence every style must handle (lab.html uses it; scene.html uses the same idea). Returns pose objects. */

@@ -68,7 +68,7 @@ Reuse across runs is weak: the fingerprint covers the whole page, so an edit to 
 ## 3. Checking before the full render
 
 1. `READING` in `film-data.json` (also printed by `--data`): every text that is on screen for less than it needs. A text leaves when it, its card or its chapter leaves. Fix the timing or cut words.
-   `--data` also prints layout problems: text outside the frame, and two texts whose boxes overlap, measured in the browser at each fullest moment and in the middle of every text's time on screen. Zero problems does not mean the frame is good, only that nothing collides.
+   `--data` also prints layout problems: text outside the frame (or within a few pixels of its edge), text running past the card or sheet it sits on, and two texts whose boxes overlap, measured in the browser at each fullest moment and in the middle of every text's time on screen. Zero problems does not mean the frame is good, only that nothing collides.
 2. `--stills auto` takes a still just before each beat is cleared and each chapter ends, when the frame is fullest. Look at them at full size: overlaps, text outside its card, type too small, an empty half of the frame. The patterns place things by rule; long names and long relations are where the rules run out.
 3. Read the on-screen text in order as a stranger would (`onscreen` in `film-data.json`). Then look at the `--notext` stills. For medium and long tiers give both to a fresh agent that has not seen the notes.
 4. Every question: was its answer on screen before it was asked?

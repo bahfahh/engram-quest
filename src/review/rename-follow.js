@@ -1,0 +1,138 @@
+"use strict";
+// When a note is renamed or moved, data that points at it by path has to follow, or memory anchors,
+// Deep Dive links and video sources quietly stop resolving. Review schedules and quest state are moved
+// by the rename handler in main.js, which also calls followCardFilesRename for hints and AI cards;
+// followNoteRenames covers the rest.
+//
+// Moving a folder fires one rename event per note. They are collected for a moment and applied as one
+// batch, one at a time, so each data file is read and written once per batch and two events never
+// rewrite the same file at the same time.
+
+const { srFileName, HINTS_DIR, AI_CARDS_DIR } = require("./helpers");
+
+const SYNAPSE_DIR = "engram-review/synapse";
+const EXPLAINER_META_DIR = "engram-quest/explainer/meta";
+const EXPLAINER_QUEUE = "engram-quest/explainer/queue.json";
+const VIDEOS_DIR = "engram-quest/videos";
+const BATCH_MS = 500;
+
+/** `value` with every string that is a key of `moves` replaced by its new path; `changed` says whether any was. */
+function replacePaths(value, moves) {
+  if (typeof value === "string") return moves.has(value) ? { value: moves.get(value), changed: true } : { value, changed: false };
+  if (Array.isArray(value)) {
+    let changed = false;
+    const out = value.map((v) => { const r = replacePaths(v, moves); changed = changed || r.changed; return r.value; });
+    return { value: changed ? out : value, changed };
+  }
+  if (value && typeof value === "object") {
+    let changed = false;
+    const out = {};
+    for (const [k, v] of Object.entries(value)) { const r = replacePaths(v, moves); changed = changed || r.changed; out[k] = r.value; }
+    return { value: changed ? out : value, changed };
+  }
+  return { value, changed: false };
+}
+
+async function readJson(adapter, path) {
+  try { return JSON.parse(await adapter.read(path)); } catch { return undefined; }
+}
+
+async function listJson(adapter, dir) {
+  if (!(await adapter.exists(dir))) return [];
+  return (await adapter.list(dir)).files.filter((p) => p.endsWith(".json"));
+}
+
+// Rewrites one JSON file when it mentions a moved path (to `target` when the file itself moves);
+// unreadable files are left alone.
+async function rewrite(adapter, path, moves, target = path) {
+  const data = await readJson(adapter, path);
+  if (data === undefined) return;
+  const r = replacePaths(data, moves);
+  if (!r.changed && target === path) return;
+  await adapter.write(target, JSON.stringify(r.value, null, 2));
+  if (target !== path) await adapter.remove(path);
+}
+
+/** Apply a set of note moves (old path → new path) to every file that cites notes by path. */
+async function followNoteRenames(adapter, moves) {
+  if (!moves.size) return;
+  // A note's own anchors file is named after its path; it moves with the note unless the new name is taken.
+  for (const [from, to] of moves) {
+    const ownOld = `${SYNAPSE_DIR}/${srFileName(from)}.json`;
+    const ownNew = `${SYNAPSE_DIR}/${srFileName(to)}.json`;
+    if (ownOld !== ownNew && (await adapter.exists(ownOld)) && !(await adapter.exists(ownNew))) {
+      await rewrite(adapter, ownOld, moves, ownNew);
+    }
+  }
+  const files = [...(await listJson(adapter, SYNAPSE_DIR)), ...(await listJson(adapter, EXPLAINER_META_DIR)), EXPLAINER_QUEUE];
+  if (await adapter.exists(VIDEOS_DIR)) {
+    for (const folder of (await adapter.list(VIDEOS_DIR)).folders) files.push(`${folder}/meta.json`);
+  }
+  for (const path of files) {
+    if (await adapter.exists(path)) await rewrite(adapter, path, moves);
+  }
+}
+
+async function moveFile(adapter, from, to, edit) {
+  if (!(await adapter.exists(from))) return false;
+  let data = await adapter.read(from);
+  if (edit) data = edit(data);
+  if (from === to && !edit) return true;
+  await adapter.write(to, data);
+  if (from !== to) await adapter.remove(from);
+  return true;
+}
+
+/**
+ * A renamed note's hints and the AI card file made from it follow the note. Both are named by the
+ * note's full path (`A__note`) or, when written before that, by its name alone (`note`); each kind
+ * moves to the same kind of name, so a note and its AI cards keep sharing one hints file. An AI card
+ * file takes its review schedule along.
+ */
+async function followCardFilesRename(adapter, oldPath, newPath) {
+  const swap = (v) => (Array.isArray(v) ? v.map((e) => (e === oldPath ? newPath : e)) : v === oldPath ? newPath : v);
+  const fixHints = (raw) => {
+    try {
+      const hints = JSON.parse(raw);
+      hints.note = swap(hints.note);
+      for (const entry of Object.values(hints.cards && typeof hints.cards === "object" ? hints.cards : {})) {
+        if (entry && Object.prototype.hasOwnProperty.call(entry, "source")) entry.source = swap(entry.source);
+      }
+      return JSON.stringify(hints, null, 2);
+    } catch { return raw; }
+  };
+  const name = (p) => p.split("/").pop().replace(/\.md$/i, "");
+  const keys = new Map([[srFileName(oldPath), srFileName(newPath)], [name(oldPath), name(newPath)]]);
+  for (const [from, to] of keys) {
+    await moveFile(adapter, `${HINTS_DIR}/${from}.json`, `${HINTS_DIR}/${to}.json`, fixHints);
+    const card = `${AI_CARDS_DIR}/${from}.md`;
+    const cardTo = `${AI_CARDS_DIR}/${to}.md`;
+    if (card !== cardTo && (await moveFile(adapter, card, cardTo))) {
+      for (const dir of ["engram-review/sr", SYNAPSE_DIR]) {
+        await moveFile(adapter, `${dir}/${srFileName(card)}.json`, `${dir}/${srFileName(cardTo)}.json`);
+      }
+    }
+  }
+}
+
+// One pending batch per adapter; batches run one after another.
+let pending = null;
+let chain = Promise.resolve();
+
+/** Record a note move; it is applied with any others that arrive within BATCH_MS. */
+function queueNoteRename(adapter, from, to) {
+  if (!pending || pending.adapter !== adapter) pending = { adapter, moves: new Map(), timer: null };
+  const batch = pending;
+  // A → B then B → C in one batch means A → C.
+  for (const [k, v] of batch.moves) if (v === from) batch.moves.set(k, to);
+  if (!batch.moves.has(from)) batch.moves.set(from, to);
+  if (batch.timer) window.clearTimeout(batch.timer);
+  batch.timer = window.setTimeout(() => {
+    if (pending === batch) pending = null;
+    chain = chain
+      .then(() => followNoteRenames(batch.adapter, batch.moves))
+      .catch((e) => console.warn("EngramQuest: failed to update note paths after a rename", e));
+  }, BATCH_MS);
+}
+
+module.exports = { followNoteRenames, followCardFilesRename, queueNoteRename, replacePaths };

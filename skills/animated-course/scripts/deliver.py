@@ -17,7 +17,8 @@ Review cards (module `cards`, on by default; reference/12-modules.md §3): if pr
 module is not turned off (settings.json course.off, or --no-cards), each card's front/back frames are cut from final.mp4
 into <series>/cards/ and an EngramQuest ai-cards deck is written to <vault>/engram-review/ai-cards/video-<series>-<id>.md
 (tag <flashcardTags prefix>/videos/<series>; frontmatter video = the delivered film, video_times = the second to rewatch
-for each card, in card order); the meta.json entry gets "cards" pointing at it.
+for each card, in card order; each answer ends with a line back into the film: `Video: <title> (m:ss)` when the narration
+is English, `影片：<title>（m:ss）` otherwise); the meta.json entry gets "cards" pointing at it.
 Re-delivering keeps the entry's other fields (e.g. cast); "cast" is taken from projects/<id>/cast.json when present.
 settings.json quality "compact" delivers a 720p film (the render stays 1920x1080); "high" or unset keeps the full size."""
 import json, os, shutil, subprocess, sys, tempfile
@@ -82,6 +83,20 @@ if dry:
 dur = float(subprocess.run(["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", out],
                            capture_output=True, text=True, check=True).stdout)
 
+def narration_lang():
+    """Language of the narration ('en', 'zh', ...): script.json's `lang` or its teacher voice's prefix (the same rule
+    voice.py uses to speak it), else the project's cast.json `lang` (resolve.cjs), else settings.json narrationLang;
+    Chinese when none says."""
+    for name in ("script.json", "cast.json"):
+        try: j = json.load(open(os.path.join(src, name), encoding="utf-8"))
+        except (OSError, ValueError): continue
+        if not isinstance(j, dict): continue
+        if j.get("lang"): return str(j["lang"]).split("-")[0].lower()
+        voice = str(((j.get("voices") or {}).get("teacher") or {}).get("voice") or "")
+        if "-" in voice: return voice.split("-")[0].lower()
+    nl = settings.get("narrationLang")
+    return str(nl).split("-")[0].lower() if nl and nl != "follow" else "zh"
+
 def make_cards():
     """Module `cards`: recap pictures -> an EngramQuest image-card deck. Returns the vault path of the deck or None."""
     cp = os.path.join(src, "cards.json")
@@ -105,6 +120,9 @@ def make_cards():
         out_ = os.path.join(cdir, name)
         subprocess.run(["ffmpeg", "-v", "error", "-y", "-ss", f"{float(t):.3f}", "-i", final, "-frames:v", "1", "-vf", "scale=1280:-2", "-q:v", "3", out_], check=True)
         return rel(out_)
+    en = narration_lang() == "en"
+    # the line under each answer that points back into the film; the plugin reads both forms
+    stamp = lambda tt: (f"Video: {title} ({int(tt // 60)}:{int(tt % 60):02d})" if en else f"影片：{title}（{int(tt // 60)}:{int(tt % 60):02d}）")
     hold = float(opt('solo', '3'))  # bgm2.py holds the first frame for --solo s (default 3): delivered time = final.mp4 time + hold
     times = [round(float(c.get("back", c["front"])) + hold, 1) for c in cards]
     body = [f"---\ntags: [{prefix}/videos/{sname}]\nvideo: {rel(out)}\nvideo_times: [{', '.join(str(x) for x in times)}]\n---\nTARGET DECK: videos/{sname}\n"]
@@ -112,7 +130,7 @@ def make_cards():
         q_img = grab(c["front"], f"{pid}-{i}-q.jpg")
         a_img = grab(c.get("back", c["front"]), f"{pid}-{i}-a.jpg")
         tt = float(c.get("back", c["front"])) + hold
-        body.append(f"%%card%%\nQ: ![[{q_img}]] {c['q'].strip()}\nA:\n{c['a'].strip()}\n\n![[{a_img}]]\n\n影片：{title}（{int(tt // 60)}:{int(tt % 60):02d}）\n%%card%%\n")
+        body.append(f"%%card%%\nQ: ![[{q_img}]] {c['q'].strip()}\nA:\n{c['a'].strip()}\n\n![[{a_img}]]\n\n{stamp(tt)}\n%%card%%\n")
     ddir = os.path.join(vault, "engram-review", "ai-cards"); os.makedirs(ddir, exist_ok=True)
     deck = os.path.join(ddir, f"video-{sname}-{pid}.md")
     open(deck, "w", encoding="utf-8").write("\n".join(body))

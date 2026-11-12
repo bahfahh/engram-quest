@@ -63,7 +63,7 @@ film = dict(
 out = f"""// Written by scripts/month_film.py from {os.path.basename(a.pack)} and {os.path.basename(a.links)}. Edit the data, not the patterns.
 import {{ opening, monthMap, recall, closing }} from './patterns.js';
 export const FILM = {{
-  id: {J(a.id or 'month-' + pack['period'])}, topicId: '', crumb: {J([month])}, badge: '',
+  id: {J(a.id or 'month-' + pack['period'])}, topicId: '', lang: {J('zh-Hant' if a.lang == 'zh-tw' else a.lang)}, crumb: {J([month])}, badge: '',
   chapters: [
     {{ name: '', run: opening({J(film['opening'])}) }},
     {{ name: {J(t['month'])}, run: monthMap({J(film['map'])}) }},

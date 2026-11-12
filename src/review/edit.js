@@ -1,6 +1,6 @@
 "use strict";
 
-const { loadSrData, saveSrData, srFileName, parseCommentCardBlock, cardFencePattern, CARD_FENCE, isFencedQaOpener } = require("./helpers");
+const { loadSrData, saveSrData, srFileName, loadHints, hintsPath, parseCommentCardBlock, cardFencePattern, CARD_FENCE, isFencedQaOpener } = require("./helpers");
 
 const isCardFence = (line) => cardFencePattern.test(line);
 
@@ -335,14 +335,16 @@ async function saveTagSourceCard(app, card, newData) {
 
   await app.vault.modify(file, result.content);
 
-  // 2. Update hints JSON
-  const noteName = card.notePath.split("/").pop().replace(/\.md$/i, "");
-  const hintPath = `engram-review/hints/${noteName}.json`;
+  // 2. Update hints JSON (always written under the full-path name; an old name-only file is read, not changed)
   try {
-    let hints = { note: card.notePath, generated: new Date().toISOString().split("T")[0], cards: {} };
-    if (await app.vault.adapter.exists(hintPath)) {
-      hints = JSON.parse(await app.vault.adapter.read(hintPath));
-    }
+    const target = hintsPath(card.notePath);
+    const loaded = await loadHints(app.vault.adapter, card.notePath);
+    // A hints file that exists but can't be parsed is left for repair rather than replaced.
+    if (!loaded && (await app.vault.adapter.exists(target))) throw new Error(`unreadable ${target}`);
+    const hints = loaded ? loaded.data : { note: card.notePath, generated: new Date().toISOString().split("T")[0], cards: {} };
+    if (!hints.cards || typeof hints.cards !== "object") hints.cards = {};
+    // Splitting a note off an old name-only file: its own file names the note itself.
+    if (loaded && loaded.path !== target && !card.notePath.startsWith("engram-review/ai-cards/")) hints.note = card.notePath;
     const oldHint = hints.cards[card.front] || {};
     delete hints.cards[card.front];
     hints.cards[newData.front] = {
@@ -350,7 +352,7 @@ async function saveTagSourceCard(app, card, newData) {
       l2: newData.hint_l2 !== undefined ? newData.hint_l2 : (oldHint.l2 || ""),
       l3: newData.hint_l3 !== undefined ? newData.hint_l3 : (oldHint.l3 || ""),
     };
-    await app.vault.adapter.write(hintPath, JSON.stringify(hints, null, 2));
+    await app.vault.adapter.write(target, JSON.stringify(hints, null, 2));
   } catch (e) {
     console.warn("review-edit: hints update failed", e);
   }
@@ -551,11 +553,21 @@ async function deleteDeckCards(app, deck) {
       if (srFile) await app.fileManager.trashFile(srFile);
     } catch (e) { console.warn('deleteDeckCards: sr cleanup failed', e); }
 
-    // Clean hints
+    // Clean hints: a hints file can also serve another note (a note and its AI cards share one; an old
+    // name-only file may belong to a same-name note), so only this deck's cards are removed from it,
+    // and the file goes to the trash only once nothing is left in it.
     try {
-      const nn = p.split('/').pop().replace(/\.md$/i, '');
-      const hintFile = app.vault.getAbstractFileByPath(`engram-review/hints/${nn}.json`);
-      if (hintFile) await app.fileManager.trashFile(hintFile);
+      const loaded = await loadHints(app.vault.adapter, p);
+      const hints = loaded && loaded.data;
+      if (hints && hints.cards && typeof hints.cards === 'object') {
+        for (const c of deck.cards) if (c.notePath === p) delete hints.cards[c.front];
+        if (Object.keys(hints.cards).length) {
+          await app.vault.adapter.write(loaded.path, JSON.stringify(hints, null, 2));
+        } else {
+          const hintFile = app.vault.getAbstractFileByPath(loaded.path);
+          if (hintFile) await app.fileManager.trashFile(hintFile);
+        }
+      }
     } catch (e) { console.warn('deleteDeckCards: hints cleanup failed', e); }
   }
 }
@@ -589,16 +601,13 @@ async function deleteTagSourceCard(app, card) {
     console.warn("review-edit: sr delete failed", e);
   }
 
-  // 3. Remove hints key
-  const noteName = card.notePath.split("/").pop().replace(/\.md$/i, "");
-  const hintPath = `engram-review/hints/${noteName}.json`;
+  // 3. Remove hints key (written back under the full-path name, like every hints write)
   try {
-    if (await app.vault.adapter.exists(hintPath)) {
-      const hints = JSON.parse(await app.vault.adapter.read(hintPath));
-      if (hints.cards && hints.cards[card.front]) {
-        delete hints.cards[card.front];
-        await app.vault.adapter.write(hintPath, JSON.stringify(hints, null, 2));
-      }
+    const loaded = await loadHints(app.vault.adapter, card.notePath);
+    const hints = loaded && loaded.data;
+    if (hints && hints.cards && hints.cards[card.front]) {
+      delete hints.cards[card.front];
+      await app.vault.adapter.write(hintsPath(card.notePath), JSON.stringify(hints, null, 2));
     }
   } catch (e) {
     console.warn("review-edit: hints delete failed", e);

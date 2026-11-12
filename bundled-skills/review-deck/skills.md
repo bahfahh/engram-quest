@@ -19,7 +19,7 @@ description:
 ## Terminology
 
 - **source note**: the user's original note in the vault — content source, read-only for AI
-- **ai-cards file**: a card file AI creates at `engram-review/ai-cards/{note-name}.md`
+- **ai-cards file**: a card file AI creates at `engram-review/ai-cards/{note-key}.md`
 
 For full plugin architecture details (scanning logic, tag matching, data paths), read `references/plugin-architecture.md`.
 
@@ -45,16 +45,18 @@ For full scanning logic, see `references/plugin-architecture.md`.
 | Data | Path |
 |---|---|
 | Plugin settings | `.obsidian/plugins/engram-quest/data.json` |
-| Hints | `engram-review/hints/{note-name}.json` |
+| Hints | `engram-review/hints/{note-key}.json` |
 | Scan record | `engram-review/scan-record.json` |
-| AI-generated cards | `engram-review/ai-cards/{note-name}.md` |
-| SR schedules | `engram-review/sr/{note-name}.json` |
+| AI-generated cards | `engram-review/ai-cards/{note-key}.md` |
+| SR schedules | `engram-review/sr/{card-file path with / replaced by __, no .md}.json` (written by the plugin) |
+
+`{note-key}` is the source note's vault path with `/` replaced by `__` and `.md` dropped (`Study/Azure Notes.md` → `Study__Azure Notes`), the same key `sr/` uses. Two notes with the same name in different folders therefore never share a file. Files written before this rule are named `{note-name}` only; the plugin still reads them, so when looking for a note's hints or ai-cards file, try `{note-key}` first, then `{note-name}`, and write back under `{note-key}`.
 
 ## Output Scope
 
 CRITICAL: When completing any Setup Flow or Single Note Flow, strictly limit your output to:
-- Generating AI card files at `engram-review/ai-cards/{note-name}.md`
-- Generating hint JSON files at `engram-review/hints/{note-name}.json`
+- Generating AI card files at `engram-review/ai-cards/{note-key}.md`
+- Generating hint JSON files at `engram-review/hints/{note-key}.json`
 
 PROHIBITED — do not do any of the following:
 - Modifying source notes to insert card content
@@ -103,7 +105,7 @@ Schema:
 - `notes[path].mtime`: file mtime in milliseconds at time of processing
 - `notes[path].cards`: number of cards found in that note at time of processing
 
-To get a file's current mtime in milliseconds: `bash scripts/get_mtime.sh "path/to/note.md"`
+To get a file's current mtime in milliseconds: `bash scripts/get_mtime.sh "path/to/note.md"`. If the script fails, stop and report the error; never estimate or invent an mtime, because a wrong value makes later scans skip or redo notes silently.
 
 ## Setup Flow
 
@@ -134,7 +136,7 @@ CRITICAL: Follow these steps in order. Do not skip any step.
    d. Whether the note contains embedded images (`![[...]]` or `![](...)` referring to png/jpg/jpeg/gif/bmp/svg/webp/avif). If it does AND the user has not opted out of image testing, follow `references/image-cards.md` (mandatory image-reading + `%%card%%` format) for those cards. This applies in addition to — not instead of — the rest of step 8.
 
    - If the note already has user-written cards → only read them, proceed to generate hints
-   - If the note has no cards → AI generates cards, saves to `engram-review/ai-cards/{note-name}.md`
+   - If the note has no cards → AI generates cards, saves to `engram-review/ai-cards/{note-key}.md`
      - frontmatter must include a tag matching the prefix from step 1 (e.g. `flashcards/topic`)
      - frontmatter must also include `TARGET DECK: {topic}` where `{topic}` is the sub-path after the prefix (e.g. tag `flashcards/backend/architecture` → `TARGET DECK: backend/architecture`). This enables Obsidian_to_Anki compatibility.
      - do NOT insert cards into the source note
@@ -163,7 +165,7 @@ CRITICAL: Follow these steps in order. Do not skip any step.
    `bash scripts/search_vault.sh "<kw1 kw2 kw3 ...>" 50`
    One call covers all cards. Split into 2–3 batches only if keywords exceed 15.
    Match results back to each card's concept before writing L2.
-10. Generate `engram-review/hints/{note-name}.json`.
+10. Generate `engram-review/hints/{note-key}.json`.
     If the file already exists (re-run), overwrite it entirely with fresh hints based on current cards.
     Do NOT merge with old hints — the card set may have changed.
     CRITICAL: `cards` MUST be an object (dict/map), NOT an array.
@@ -223,22 +225,22 @@ Use when the user wants to fix or change an existing card's front text, back tex
 1. Identify the target card. If the user doesn't specify, ask which note/deck the card is in.
 2. Determine card type:
    - **User-written card**: the `question :: answer` line lives in the source note.
-   - **AI-generated card**: the `question :: answer` line lives in `engram-review/ai-cards/{note-name}.md`.
+   - **AI-generated card**: the `question :: answer` line lives in `engram-review/ai-cards/{note-key}.md`.
    Check `engram-review/ai-cards/` first; if the card is found there, it is AI-generated.
 3. Find and update the `question :: answer` line in the correct file (ai-cards file or source note):
    - If editing front text: replace the text before `::`.
    - If editing back text: replace the text after `::`.
    - SR scheduling data is stored in `engram-review/sr/` — do NOT look for or modify SR comments in the markdown file.
-4. Read `engram-review/hints/{note-name}.json`.
+4. Read `engram-review/hints/{note-key}.json`.
    - If the front text changed: rename the key in `cards` to match the new front text exactly.
    - Update `l1`, `l2`, `l3` values if the user requested hint changes, or if the front change makes existing hints inaccurate.
 5. Write both the updated card file and the updated hints JSON.
-6. If the front text changed: read `engram-review/sr/{note-name}.json`, rename the key matching the old front text to the new front text, and write the file back. Skip if the file does not exist or the key is not present.
+6. If the front text changed: read `engram-review/sr/{note-key}.json`, rename the key matching the old front text to the new front text, and write the file back. Skip if the file does not exist or the key is not present.
    CRITICAL: card front text may contain `"`, `\`, newlines, or other special characters. Always use a proper JSON library to parse and serialize — never construct the JSON string manually. Python: `json.loads` / `json.dumps(data, ensure_ascii=False, indent=2)`. Node.js: `JSON.parse` / `JSON.stringify(data, null, 2)`.
 7. Update `engram-review/scan-record.json`: update `mtime` for the affected note.
 8. Report: which card was changed, what changed (front / back / hints), and confirm all files were updated.
 
-CRITICAL: The key in `engram-review/hints/{note-name}.json` must always exactly match the front text in the card file. If they diverge, the plugin cannot load the hint.
+CRITICAL: The key in `engram-review/hints/{note-key}.json` must always exactly match the front text in the card file. If they diverge, the plugin cannot load the hint.
 
 ## Delete Flow
 
@@ -249,19 +251,19 @@ Use when the user wants to remove one or more cards entirely, or remove hints fo
 1. Identify the target card(s) to delete.
 2. Determine card type (same as Edit Flow step 2): check `engram-review/ai-cards/` first.
 3. Remove the `question :: answer` line from the correct file:
-   - **AI-generated card**: remove the line from `engram-review/ai-cards/{note-name}.md`. If the file becomes empty (no cards left), delete the entire ai-cards file.
+   - **AI-generated card**: remove the line from `engram-review/ai-cards/{note-key}.md`. If the file becomes empty (no cards left), delete the entire ai-cards file.
    - **User-written card**: remove the line from the source note. There are no SR comments in markdown files — do NOT look for them.
 4. Write the updated file.
-5. Read `engram-review/hints/{note-name}.json`. Remove the key matching the deleted card's front text. If no keys remain in `cards`, delete the entire hint file.
+5. Read `engram-review/hints/{note-key}.json`. Remove the key matching the deleted card's front text. If no keys remain in `cards`, delete the entire hint file.
    CRITICAL: Always use a proper JSON library to parse and serialize — never construct JSON strings manually. Python: `json.loads` / `json.dumps(data, ensure_ascii=False, indent=2)`. Node.js: `JSON.parse` / `JSON.stringify(data, null, 2)`.
-6. Read `engram-review/sr/{note-name}.json`. Remove the key matching the deleted card's front text. If the file exists and the key is present, write it back without that key.
+6. Read `engram-review/sr/{note-key}.json`. Remove the key matching the deleted card's front text. If the file exists and the key is present, write it back without that key.
    CRITICAL: Same serialization rule — use a JSON library, not string manipulation.
 7. Update `engram-review/scan-record.json`: update `mtime` and `cards` count for the affected note. If the note now has 0 cards, remove its entry from `notes`.
 8. Report: which card(s) were deleted, whether the hint file was updated or removed.
 
 ### Remove all hints for a note
 
-1. Delete `engram-review/hints/{note-name}.json`.
+1. Delete `engram-review/hints/{note-key}.json`.
 2. Remove the note's entry from `engram-review/scan-record.json`.
 3. Report: hint file removed, scan-record updated.
 
@@ -317,8 +319,8 @@ CRITICAL: Image cards are useless if AI does not actually look at the image. Ski
    - Distinctive visual tokens that an answer can quote for verification
 5. Decide which images become cards (default 1 image = 1 card; skip purely decorative images). Confirm count with the user if it differs from what they asked for.
 6. Run a single batched `bash scripts/search_vault.sh "<keywords>" 50` covering all cards' L2 anchors (same batching rule as Setup Flow step 9).
-7. Generate the ai-cards file at `engram-review/ai-cards/{note-name}.md` using `%%card%%` format. Frontmatter must include a tag matching the prefix from step 1 and `TARGET DECK: {topic}` (same rules as Setup Flow step 8). Follow `references/image-cards.md` for question design, answer requirements, and embed placement.
-8. Generate the hints JSON at `engram-review/hints/{note-name}.json`. CRITICAL: copy the parsed `front` text verbatim from the ai-cards file as the JSON key (see hint-key trap in `references/image-cards.md`).
+7. Generate the ai-cards file at `engram-review/ai-cards/{note-key}.md` using `%%card%%` format. Frontmatter must include a tag matching the prefix from step 1 and `TARGET DECK: {topic}` (same rules as Setup Flow step 8). Follow `references/image-cards.md` for question design, answer requirements, and embed placement.
+8. Generate the hints JSON at `engram-review/hints/{note-key}.json`. CRITICAL: copy the parsed `front` text verbatim from the ai-cards file as the JSON key (see hint-key trap in `references/image-cards.md`).
 9. Update `engram-review/scan-record.json` for the affected note.
 10. Report: how many images were processed, how many became cards, how many were skipped as decorative.
 

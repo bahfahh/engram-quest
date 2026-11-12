@@ -41,10 +41,12 @@ window.renderAt = t => {
 ## Layouts `layout`
 | Layout | Use for | How positions are computed |
 |---|---|---|
-| `radial` mindmap | Center = the lesson's question or its one-liner; branches = the segment key points | 2–6 branches at fixed, balanced positions (3 = center on top, branches left / bottom / right, reading order left → right); a branch's children stack below it |
+| `radial` mindmap | Center = the lesson's question or its one-liner; branches = the segment key points | 2–6 branches at fixed, balanced positions (3 = center on top, branches left / bottom / right, reading order left → right); a branch's children stack below it. With 3 branches the edge labels are staggered (middle label further down its line, side labels higher) so they do not form one crowded row. A center longer than one line's limit (below) wraps onto two balanced lines by itself |
 | `tree` decision tree (top-down) | "Ask A first? yes → … no → …" | Root on top, each level split evenly, subtree width proportional to leaf count; edges default to arrows |
 | `flow` process (left → right) | first… then… next… (steps, decision sequence) | `center` becomes a title on top; `nodes` in order in one row, each auto-linked to the next by an arrow (`edge.label` e.g. "then") |
-| `compare` side by side | this vs that, before vs after | `center` is the title; nodes split into two columns by `side: 'left'\|'right'`, a chalk divider in between |
+| `compare` side by side | this vs that, before vs after | `center` is the title; nodes split into two columns by `side: 'left'\|'right'`, a chalk divider in between (`divider`, below) |
+
+`divider` (any layout): `true` = a vertical line down the middle (the `compare` default, sized to the columns there), `false` = none, `{ x }` = vertical at x, `{ y }` = horizontal at y, `{ pts: [[x, y], [x, y]] }` = your own line; add `t` to set when it is drawn (default: 0.6 s after the center). Board px.
 
 Give any node `pos: [x, y]` (board px, node center) to use your coordinates; `dx/dy` nudge an auto position. `area: {x, y, w, h}` (default `{x:80, y:56, w:1888, h:956}`) restricts the usable region, e.g. to keep the top-left free.
 
@@ -65,6 +67,8 @@ Give any node `pos: [x, y]` (board px, node center) to use your coordinates; `dx
 - **Photos**: render a still from a DOM scene (`node render.cjs projects/<yours> --stills 82` → `stills/t-82.jpg`), copy it into your folder, and cut the region with `crop` (source px). At 300–360px wide on the board, UI text inside is only recognizable, not readable; put the point in the chalk text.
 - **Edges**: `style` = `line` (radial default), `arrow` (tree / flow default), `dashed`, `dashedArrow`, `none`. Radial edges from the center curve slightly. `label` sits at the middle of the edge and the line breaks around it (`labelMode: 'beside'` puts it next to the line). An edge starts drawing 0.5 s before its node by default; change with `edge.t`.
 - **Extra edges** (cross-branch cause, contrast): `edges: [{ from: 'budget', to: 'test', label: 'so', style: 'dashedArrow', bend: 0.2, t }]`.
+- **Which side an edge leaves / enters**: `fromSide` / `toSide` = `'top' | 'bottom' | 'left' | 'right'` (on an extra edge, or in a node's `edge`) pins the end to the middle of that side of the node's frame or box. Without them the end sits where the straight line between the two centers crosses the frame. Use them when two links would leave a node at the same point, or a link should enter a column from above.
+- **Label position**: `labelDx` / `labelDy` (board px) nudge the label from the middle of the edge; setting either one also turns off the automatic 3-branch stagger for that edge. `labelMode: 'beside'` keeps the line whole and moves the label off it, perpendicular to the straight line from start to end, always to the right-hand side of the travel direction (a left → right edge gets its label below, a top → bottom edge to its left). The side is not chosen for free space, and on a strongly bent edge the label may land on or across the curve: check the still, then swap `from` / `to`, change `bend`, or nudge with `labelDx` / `labelDy` (applied before the sideways move).
 
 ## Chalk doodles `doodle` (redraw a key-point figure small)
 `draw` runs once at build time and records every stroke; playback draws them in order (finished in `dur` seconds). Coordinates are the doodle's own `0..w, 0..h`.
@@ -96,7 +100,7 @@ const oneVarDoodle = { w: 300, h: 180, dur: 1.3, draw: d => {        // two grou
   - The usual ending **BC shot** (`P([0, 1.652, BZ + 4.703], [0, 1.652, BZ], 32)`, board y 40–1050 → screen 16–925): 1 board px ≈ 0.9 screen px → text ≥ 56. Default sizes (84 / 64 / 56) pass.
   - The B shot (upper half of the board, about 0.8): `screenScale: 0.8`, text ≥ 64.
   - The BFULL shot (whole board fills the frame, about 1.07): `screenScale: 1.07`.
-- Warnings are printed as `console.error('[mindmap 警告] …')` (警告 = "warning"); `render.cjs` lists them at the end, and they do **not** fail the render. Triggers: node over 8 characters (center 12; one per Chinese character, one per English word — in `lang: 'en'` see EN.md for word limits), whole board over 60 (numbers not counted), text under 50px, overlapping nodes / edge labels, anything off the board. Length counts are references — judge whether the board reads at a glance; the rest are real faults. Shorten the text or move it with `pos`.
+- Warnings are printed as `console.error('[mindmap 警告] …')` (警告 = "warning"); `render.cjs` lists them at the end, and they do **not** fail the render. Triggers: node over 8 characters (center: 12 per line, at most two lines, so up to 24 in all; one per Chinese character, one per English word — in `lang: 'en'` see EN.md for word limits), whole board over 60 (numbers not counted), text under 50px, overlapping nodes / edge labels, anything off the board. Length counts are references — judge whether the board reads at a glance; the rest are real faults. Shorten the text or move it with `pos`.
 
 ## Timing
 - All times are absolute seconds; get them from `T.word()` / `T.line()`. Nodes without `t` start at 0 and follow every 1.4 s (drafting only).
@@ -113,7 +117,7 @@ const oneVarDoodle = { w: 300, h: 180, dur: 1.3, draw: d => {        // two grou
 - Child nodes auto-stack below their parent; when there is no room below (e.g. the radial branch at the bottom), give `pos` yourself.
 - Edge labels sit at the exact middle of the edge; on a very short edge the label covers the whole line (an overlap warning is printed). Spread the nodes or use `labelDx/labelDy`.
 - `tree` splits width by leaf count and does not shrink text; more than 4 nodes on one level tend to overlap.
-- Text is written line by line (`\n` breaks); no automatic wrapping.
+- Text is written line by line (`\n` breaks). Only a `radial` center wraps by itself (to two lines, when it is over one line's limit and has no `\n` of its own); every other text needs your `\n`.
 - lucide icons are stroke outlines; rare filled parts are not traced.
 
 ## English mode

@@ -57,6 +57,7 @@ folder name; the human-readable title lives in meta.json).
 | `tags` | string[] | 1–2 short tags, user's language |
 | `colorScheme` | string | One of: `indigo` `green` `amber` `rose` `cyan` `violet` `blue` `teal` `lime` `orange` `fuchsia` `slate`. The plugin sets it when the user creates a course there; keep an existing value |
 | `starred` | bool | Course-level star — plugin-owned, initialize `false`, never reset on update |
+| `archived` | bool | Course hidden from the main list by the user — plugin-owned; may be absent; never set or reset it |
 | `createdAt` | string | `YYYY-MM-DD`, set once at course creation |
 | `mission` | string | Optional. What the course is for, in the learner's words and language: why they are learning this, where they start from, and whatever in their situation changes how a lesson should be built. See "The plan" below |
 | `lessons` | array | **Array order = display order.** No order field exists. |
@@ -74,8 +75,9 @@ The skill and the plugin share this file, so writes must merge, not replace:
 
 - **Skill owns**: `title`, `topic`, `icon`, `description`, `tags`, `colorScheme`,
   `createdAt`, `mission`, and `lessons[]` entries with `source:"skill"` (their `goal` included).
-- **Plugin owns**: `starred`, the entire `completion` map, and `lessons[]` entries with
+- **Plugin owns**: `starred`, `archived`, the entire `completion` map, and `lessons[]` entries with
   `source:"import"` (user-imported HTML).
+- Fields the plugin doesn't know are carried through its writes unchanged, so the skill can add its own.
 
 When updating an existing course:
 1. Read the current meta.json.

@@ -1,6 +1,6 @@
 # Engram Quest Plugin License
 
-Version 1.0, April 2026
+Version 1.1, November 2026
 
 This license ("License") governs the use, copying, modification, and distribution of the Engram Quest Obsidian plugin and its associated source code ("the Software").
 
@@ -24,15 +24,20 @@ You may **NOT** use the Software, its source code, or any derivative works to cr
 - You may NOT sell the Software or any derivative works based on the Software.
 - Redistribution as part of a commercial service or paid collection requires explicit written permission from the author.
 
-## 4. No Warranty
+## 4. EngramQuest Pro
+
+Some features require a paid EngramQuest Pro license key. Their source is published in this repository so it can be read; that does not license their use without a key.
+- You may NOT distribute a build, patch, script, or modified copy of the Software that enables Pro features without a valid license key, or that removes, bypasses, or disables the license check.
+
+## 5. No Warranty
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-## 5. Intellectual Property
+## 6. Intellectual Property
 
 All trademarks, service marks, and trade names associated with the Software are the property of the author. Nothing in this License grants you any right to use the author's trademarks or trade names.
 
-## 6. Governing Terms
+## 7. Governing Terms
 
 If any provision of this License is found to be unenforceable, the remaining provisions will continue in full force and effect.
 

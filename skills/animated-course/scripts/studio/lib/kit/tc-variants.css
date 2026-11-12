@@ -1,0 +1,28 @@
+/* Taiwan-standard forms for the chalk font.
+   LXGW WenKai TC draws some common Traditional characters in a variant shape that Taiwanese readers take for a typo
+   (為 drawn as 爲, 真 as 眞, 教 as 敎, 值 as 値, 內 as 内, 青 as 靑 …). The faces below add those code points to the
+   "LXGW WenKai TC" family itself, drawn by Noto Sans TC (already shipped), so every DOM font stack and every canvas
+   font string that names LXGW WenKai TC gets the standard form with no other change.
+   Rule order matters: when faces of one family overlap, the face defined last wins, so this file must load after
+   @fontsource/lxgw-wenkai-tc (kit.css imports it right after; S.loadFonts() adds it again for canvas-only pages).
+
+   How the list was made (@fontsource/lxgw-wenkai-tc 5.3, weights 400 and 700, all slices merged with fontTools):
+   1. Group CJK code points whose glyph outlines are identical: the font unified a standard character with a variant.
+   2. In each group keep the member in Big5 (lowest level), when another member is outside Big5 or in a rarer level;
+      that member is the Taiwan-standard character and the shared outline is the variant shape.
+   3. Groups whose only partner is a CJK compatibility ideograph (U+F900–FAFF) were checked by eye against Noto Sans TC;
+      the ones drawn in the non-Taiwan shape are included (欄 益 神 福 精 蘭 都 隆 類), the rest (契 糖 蓮 連 館) are fine.
+   4. Dropped: code points missing from the Noto Sans TC chinese-traditional file (彔 挩 敻 溈; rare).
+   A variant drawn on its own glyph (not shared with another code point) is not found this way; add it here when seen.
+   101 code points: 丟侶俞值偷偽兌內冊別刪剝勻即吞吳吶呂告喻噓囪填奧妍姍娛宮尚彙彝彥悅慍慎戶搖搵教既晚暨朮枴查柵概榆槙橫欄歿殼毀氳
+   沒清溉溫為熙瑤產益真研神祿福禿稅粵精絕綠緒緣脫蘊蘭虛蛻說謠遙郎都鄉醞銳錄鎮閱隆青頹顏顛類飲黃 */
+@font-face {
+  font-family: 'LXGW WenKai TC'; font-style: normal; font-display: swap; font-weight: 400;
+  src: url('/node_modules/@fontsource/noto-sans-tc/files/noto-sans-tc-chinese-traditional-400-normal.woff2') format('woff2');
+  unicode-range: U+4E1F, U+4FB6, U+4FDE, U+503C, U+5077, U+507D, U+514C, U+5167, U+518A, U+5225, U+522A, U+525D, U+52FB, U+5373, U+541E, U+5433, U+5436, U+5442, U+544A, U+55BB, U+5653, U+56EA, U+586B, U+5967, U+598D, U+59CD, U+5A1B, U+5BAE, U+5C1A, U+5F59, U+5F5D, U+5F65, U+6085, U+614D-614E, U+6236, U+6416, U+6435, U+6559, U+65E2, U+665A, U+66A8, U+672E, U+67B4, U+67E5, U+67F5, U+6982, U+6986, U+69D9, U+6A6B, U+6B04, U+6B7F, U+6BBC, U+6BC0, U+6C33, U+6C92, U+6E05, U+6E89, U+6EAB, U+70BA, U+7199, U+7464, U+7522, U+76CA, U+771F, U+7814, U+795E, U+797F, U+798F, U+79BF, U+7A05, U+7CB5, U+7CBE, U+7D55, U+7DA0, U+7DD2, U+7DE3, U+812B, U+860A, U+862D, U+865B, U+86FB, U+8AAA, U+8B20, U+9059, U+90CE, U+90FD, U+9109, U+919E, U+92B3, U+9304, U+93AE, U+95B1, U+9686, U+9752, U+9839, U+984F, U+985B, U+985E, U+98F2, U+9EC3;
+}
+@font-face {
+  font-family: 'LXGW WenKai TC'; font-style: normal; font-display: swap; font-weight: 700;
+  src: url('/node_modules/@fontsource/noto-sans-tc/files/noto-sans-tc-chinese-traditional-700-normal.woff2') format('woff2');
+  unicode-range: U+4E1F, U+4FB6, U+4FDE, U+503C, U+5077, U+507D, U+514C, U+5167, U+518A, U+5225, U+522A, U+525D, U+52FB, U+5373, U+541E, U+5433, U+5436, U+5442, U+544A, U+55BB, U+5653, U+56EA, U+586B, U+5967, U+598D, U+59CD, U+5A1B, U+5BAE, U+5C1A, U+5F59, U+5F5D, U+5F65, U+6085, U+614D-614E, U+6236, U+6416, U+6435, U+6559, U+65E2, U+665A, U+66A8, U+672E, U+67B4, U+67E5, U+67F5, U+6982, U+6986, U+69D9, U+6A6B, U+6B04, U+6B7F, U+6BBC, U+6BC0, U+6C33, U+6C92, U+6E05, U+6E89, U+6EAB, U+70BA, U+7199, U+7464, U+7522, U+76CA, U+771F, U+7814, U+795E, U+797F, U+798F, U+79BF, U+7A05, U+7CB5, U+7CBE, U+7D55, U+7DA0, U+7DD2, U+7DE3, U+812B, U+860A, U+862D, U+865B, U+86FB, U+8AAA, U+8B20, U+9059, U+90CE, U+90FD, U+9109, U+919E, U+92B3, U+9304, U+93AE, U+95B1, U+9686, U+9752, U+9839, U+984F, U+985B, U+985E, U+98F2, U+9EC3;
+}

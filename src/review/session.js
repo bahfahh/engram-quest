@@ -5,6 +5,8 @@ const { t: c, tAlt: C, getLocale: _getLocale } = require("../i18n");
 const { anySrPattern: ge, getReviewStatus: $, loadSrData, saveSrData, buildSrRecord } = require("./helpers");
 const { loadSynapseStatus, loadSynapseBatch, attachSynapseToCards, isSynapseEnabled } = require("./synapse");
 const { ACHIEVEMENTS, RARITY_DARK, RARITY_LIGHT } = require("../hub/achievement");
+const { assetUrl } = require("../assets");
+const { wrapSelection, selectionLines } = require("./format");
 const { saveTagSourceCard, saveInlineCard, deleteTagSourceCard, applyFormatToCardBack, refreshTagSourceCard } = require("./edit");
 const { registerSelectionCopy } = require("../ui/selection-copy");
 const { normalizeMarkdown } = require("../ui/markdown");
@@ -202,7 +204,8 @@ var Q=class extends I.Modal{
     super(e);
     this.cards=t; this.deckName=r; this.plugin=s;
     this.idx=0; this.hintLevel=0; this.answerShown=false;
-    this.onBack=l||null; this.browseOnly=!!a.browseOnly; this.noResume=!!a.noResume;
+    // A timed session is a pick across decks under a made-up name, so it never becomes the resume point.
+    this.onBack=l||null; this.browseOnly=!!a.browseOnly; this.noResume=!!a.noResume||!!a.timeboxMinutes;
     this._rating_locked=false; // Task 4: lock flag
     this.synapseOpen=false;
     this._synapseStatus=null;
@@ -322,7 +325,7 @@ var Q=class extends I.Modal{
         card.createEl("div",{attr:{style:`font-size:9px;font-weight:800;color:${rs.badge};background:${rs.badge}22;padding:2px 8px;border-radius:99px;`}}).textContent=ach.rarity;
         const iconWrap=card.createEl("div",{attr:{style:"position:relative;margin:4px 0;"}});
         iconWrap.createEl("div",{attr:{style:`position:absolute;inset:-10px;border-radius:50%;background:radial-gradient(circle,${rs.glow} 0%,transparent 70%);pointer-events:none;`}});
-        const iconSrc=this.plugin.app.vault.adapter.getResourcePath(this.plugin.app.vault.configDir+"/plugins/engram-quest/"+ach.icon);
+        const iconSrc=assetUrl(this.plugin.app,ach.icon);
         const img=iconWrap.createEl("img",{attr:{src:iconSrc,width:"56",height:"56",style:"object-fit:contain;display:block;position:relative;z-index:1;"}});
         img.onerror=()=>{iconWrap.empty();iconWrap.createEl("span",{attr:{style:"font-size:36px;line-height:1;"}}).textContent="🏆";};
         card.createEl("div",{attr:{style:`font-size:10px;font-weight:700;color:var(--text);text-align:center;line-height:1.3;padding:0 2px;`}}).textContent=c(t,ach.nameKey);
@@ -571,17 +574,10 @@ var Q=class extends I.Modal{
         const applyAnswerFmt=async(wrap)=>{
           const rawSel=(captureAnswerSelection()||selectedAnswerText).replace(/\r\n/g,"\n");
           if(!rawSel){new I.Notice(c(t,"FORMAT_SELECT_TEXT"));return;}
-          // Markdown renders soft line breaks (\n) as spaces; if exact match fails,
-          // find the actual substring in e.back using a whitespace-flexible regex.
-          let matchedSel=rawSel;
-          if(!e.back.includes(rawSel)){
-            const escaped=rawSel.replace(/[.*+?^${}()|[\]\\]/g,"\\$&").replace(/ /g,"\\s+");
-            const m=new RegExp(escaped).exec(e.back);
-            if(!m){new I.Notice(c(t,"FORMAT_SELECT_TEXT"));return;}
-            matchedSel=m[0];
-          }
+          // The selection is rendered text; the source also holds hidden markup and line breaks.
           const oldBack=e.back;
-          const newBack=e.back.replace(matchedSel,wrap+matchedSel+wrap);
+          const newBack=wrapSelection(e.back,rawSel,wrap);
+          if(newBack===null){new I.Notice(c(t,"FORMAT_NOT_FOUND"));return;}
           try{
             const saved=await applyFormatToCardBack(this.app,e,oldBack,newBack);
             if(!saved){new I.Notice(c(t,"CREATE_CARD_SAVE_FAILED"));return;}
@@ -596,15 +592,10 @@ var Q=class extends I.Modal{
           const selectedText=(captureAnswerSelection()||selectedAnswerText||'').trim();
           if(!selectedText){new I.Notice(c(t,"FORMAT_SELECT_PARA"));return;}
           const lines=e.back.split('\n');
-          const selParts=selectedText.split('\n').map(p=>p.trim()).filter(Boolean);
-          let startIdx=-1,endIdx=-1;
-          for(let i=0;i<lines.length;i++){
-            const raw=lines[i].replace(/^>\s*/,'').trim();
-            if(startIdx===-1&&selParts[0]&&raw.includes(selParts[0])){startIdx=i;}
-            if(startIdx!==-1&&selParts[selParts.length-1]&&raw.includes(selParts[selParts.length-1])){endIdx=i;break;}
-          }
-          if(startIdx===-1){startIdx=0;endIdx=lines.length-1;}
-          if(endIdx===-1)endIdx=startIdx;
+          // Quote only the lines the selection covers; a selection that cannot be found changes nothing.
+          const span=selectionLines(e.back,selectedText);
+          if(!span){new I.Notice(c(t,"FORMAT_NOT_FOUND"));return;}
+          const startIdx=span.first,endIdx=span.last;
           const oldBack=e.back;
           const newLines=lines.map((line,i)=>(i>=startIdx&&i<=endIdx&&!line.startsWith('> '))?'> '+line:line);
           const newBack=newLines.join('\n');

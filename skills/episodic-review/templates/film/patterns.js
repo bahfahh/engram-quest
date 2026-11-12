@@ -13,6 +13,10 @@ export const rt = (...s) => s.reduce((a, x) => a + secs(x), 0);                 
 export const hold = (...s) => wait(Math.max(2.2, rt(...s)));                           // wait long enough to read them
 export const colour = (c) => COL[c] || c || COL.ink;                                   // a palette name, or any css colour
 export const clear = (list, lines = []) => { list.forEach(r => off(r)); lines.forEach(l => { l.out = T; }); };   // a beat leaves the frame
+// a tighter line height, only for a text expected to wrap in width w (one-line text keeps the font's own line box)
+const lh = (s, fs, w, v = 1.25) => tw(s, fs) > w ? `line-height:${v};` : '';
+// the film's language (FILM.lang on <html>): Chinese and Japanese keep their full-width punctuation and spacing
+const cjk = () => /^(zh|ja)/i.test(document.documentElement.lang);
 
 // ------------------------------------------------------------------ opening: a few points, then one question
 // { year, month, count, areasTitle, areas: [[name, n]], pick: { index, line, topic }, history: { title, stops: [[when, title, sub, isNow]], note }, question }
@@ -23,20 +27,24 @@ export const opening = (d) => (t0) => {
   wait(2.4); const s0 = on(el(c, 'a h2 c', d.count, 'left:0;right:0;top:640px;color:#b9bac2;font-weight:400')); hold(d.count); wait(1); [a, b, s0].forEach(r => off(r)); wait(0.5);
   if (d.areas) { const n = d.areas.length, gap = Math.min(300, 1400 / n), x0 = 960 - gap * (n - 1) / 2;
     const hd = on(el(c, 'a h2 c', d.areasTitle, 'left:0;right:0;top:300px'));
-    const dots = d.areas.map(([name, k], i) => on(node(c, x0 + i * gap, 540, name, `${k}`, { side: 'below', r: 8 + Math.min(4, parseInt(k) || 1) * 3.5, fs: 34 }), { t: T + 0.4 + i * 0.55, dy: 10 }));
+    const dots = d.areas.map(([name, k], i) => on(node(c, x0 + i * gap, 540, name, `${k}`, { side: 'below', r: 8 + Math.min(4, parseInt(k) || 1) * 3.5, fs: 34, w: gap - 20 }), { t: T + 0.4 + i * 0.55, dy: 10 }));
     hold(d.areasTitle, ...d.areas.map(x => x[0])); wait(1.5); off(hd);
     if (d.pick) { const h2 = on(el(c, 'a h2 c', d.pick.line, 'left:0;right:0;top:300px')); dots.forEach((r, i) => { if (i !== d.pick.index) r.dim.push([T, 1e9, 0.22]); });
       const nm = on(el(c, 'a h3 c', d.pick.topic, `left:${x0 + d.pick.index * gap - 250}px;width:500px;top:690px`), { t: T + 1.2 }); hold(d.pick.line, d.pick.topic); wait(1.5); off(h2); off(nm); }
     dots.forEach(r => off(r)); wait(0.6); }
-  if (d.history) { const st = d.history.stops, n = st.length, gap = Math.min(380, 1500 / n), x0 = 960 - gap * (n - 1) / 2;
+  let flow = null;
+  if (d.history) { const st = d.history.stops, n = st.length, gap = Math.min(380, 1500 / n), x0 = 960 - gap * (n - 1) / 2, sw = Math.min(380, gap - 24);
+    // under the line, the stop names, the note and the question stack in one column (a hidden piece keeps its place):
+    // a name that wraps pushes the rest down instead of running into the next stop or the note
+    flow = el(c, 'a', '', 'left:0;right:0;top:610px'); const names = el(flow, 'a f', '', `display:flex;justify-content:center;gap:${gap - sw}px;min-height:134px`);
     on(el(c, 'a h2', d.history.title, 'left:140px;top:230px')); line(W, 'M140 560 L1780 560', { t: T + 0.4, dur: 2.0, color: 'rgba(255,255,255,.3)', w: 2 });
     st.forEach(([m, name, sub, now], i) => { const x = x0 + i * gap, t = T + 1.4 + i * 2.4;
       on(el(c, 'dot', '', `left:${x - 8}px;top:552px;width:16px;height:16px;` + (now ? 'background:#fff;box-shadow:0 0 0 7px rgba(255,255,255,.22)' : 'background:#0f0f15;border:2px solid #9a9ca6')), { t, dy: 0 });
       on(el(c, 'a s nw c', m, `left:${x - 150}px;width:300px;top:496px;color:${now ? COL.ink : COL.mute}`), { t, dy: 0 });
-      on(el(c, 'a nw c', `<div style="font-size:33px;font-weight:500">${name}</div><div class="s" style="margin-top:8px;font-size:26px">${sub || ''}</div>`, `left:${x - 190}px;width:380px;top:610px`), { t: t + 0.2 }); });
-    if (d.history.note) on(el(c, 'a s it', d.history.note, 'right:140px;top:760px;color:#b9bac2'), { t: T + 1.4 + n * 2.4, dy: 0 });
+      on(el(names, 'a f c', `<div style="font-size:33px;font-weight:500;${lh(name, 33, sw)}text-wrap:balance">${name}</div><div class="s" style="margin-top:8px;font-size:26px;text-wrap:balance">${sub || ''}</div>`, `width:${sw}px;flex:none`), { t: t + 0.2 }); });
+    if (d.history.note) on(el(flow, 'a f s it', d.history.note, 'margin-top:16px;text-align:right;padding-right:140px;min-height:60px;color:#b9bac2'), { t: T + 1.4 + n * 2.4, dy: 0 });
     wait(1.4 + n * 2.4 + 3.5); }
-  on(el(c, 'a h1 c', d.question, `left:0;right:0;top:${d.history ? 820 : 440}px;font-size:60px`)); hold(d.question); wait(2.5);
+  on(flow ? el(flow, 'a f h1 c', d.question, `font-size:60px;margin-top:${d.history.note ? 0 : 76}px`) : el(c, 'a h1 c', d.question, 'left:0;right:0;top:440px;font-size:60px')); hold(d.question); wait(2.5);
   end(T); return T + 0.6;
 };
 
@@ -50,7 +58,8 @@ export const skeleton = (d) => (t0) => {
   SK.q.forEach(([name, sub, col], i) => { const x = x0 + i * gap, t = T + 1.6 + i * 2.7;
     R[i].push(on(el(c, 'a s c', `0${i + 1}`, `left:${x - 100}px;width:200px;top:452px;color:${col};letter-spacing:.2em`), { t, dy: 0 }));
     R[i].push(on(el(c, 'dot', '', `left:${x - 11}px;top:529px;width:22px;height:22px;background:${col}`), { t, dy: 0 }));
-    R[i].push(on(el(c, 'a c nw', `<div style="font-size:${tw(name, 50) > gap - 30 ? 38 : 50}px;font-weight:500;letter-spacing:.04em">${name}</div><div class="s" style="margin-top:14px;font-size:27px;color:#b9bac2">${sub}</div>`, `left:${x - gap / 2}px;width:${gap}px;top:590px`), { t: t + 0.15 }));
+    const fs = tw(name, 50) > gap - 30 ? 38 : 50;
+    R[i].push(on(el(c, 'a c', `<div style="font-size:${fs}px;font-weight:500;letter-spacing:.04em;${lh(name, fs, gap - 24, 1.2)}text-wrap:balance">${name}</div><div class="s" style="margin-top:14px;font-size:27px;color:#b9bac2;text-wrap:balance">${sub}</div>`, `left:${x - gap / 2 + 12}px;width:${gap - 24}px;top:590px`), { t: t + 0.15 }));
     if (i < n - 1) line(W, `M${x + 30} 540 L${x + gap - 30} 540`, { t: t + 1.5, dur: 1.0, arrow: true, w: 2 }); });
   wait(1.6 + n * 2.7 + 2.5);
   if (SK.q.some(q => !q[3])) { SK.q.forEach((q, i) => { if (!q[3]) R[i].forEach(r => r.dim.push([T, 1e9, 0.3])); });
@@ -63,7 +72,7 @@ export const skeleton = (d) => (t0) => {
 // { index (which skeleton question), title, beats: [beat, ...] }
 export const chapter = (d) => (t0) => {
   const { c, end } = chap(t0), W = wire(c), q = SK.q[d.index] || []; at(t0 + 0.5);
-  header(c, d.index != null ? `0${d.index + 1}` : '', d.title || q[0] + '？', q[2] || '#fff', T); wait(1.4);
+  header(c, d.index != null ? `0${d.index + 1}` : '', d.title || q[0] + (cjk() ? '？' : '?'), q[2] || '#fff', T); wait(1.4);   // the question mark of the film's language
   d.beats.forEach((b, i) => { b(c, W, q); if (i < d.beats.length - 1) wait(0.6); });
   end(T); return T + 0.6;
 };
@@ -95,8 +104,11 @@ export const table = (d) => (c, W) => { const A = [], L = [];
   A.push(on(el(c, 'a h2', d.title, 'left:130px;top:290px'))); d.heads.forEach((s, i) => A.push(on(el(c, 'a s', s, `left:${[130, 520, 1130][i]}px;top:390px;letter-spacing:.14em`), { t: T + 0.8, dy: 0 })));
   wait(1.6); d.rows.forEach((r, i) => { const y = 450 + i * 130;
     L.push(line(W, `M130 ${y - 16} L1790 ${y - 16}`, { dur: 0.8, color: 'rgba(255,255,255,.12)', w: 1 }));
-    A.push(on(el(c, 'a nw', `<span style="font-size:36px;font-weight:500">${r.name}</span><span class="s" style="margin-left:16px">${r.when || ''}</span>`, `left:130px;top:${y + 14}px`)));
-    A.push(on(el(c, 'a nw', r.mid, `left:506px;top:${y + 12}px;font-size:38px`), { t: T + 0.8 }));
+    // the columns are fixed: `when` goes under the name when both do not fit before the second column, and `mid` wraps before the third
+    // (a name too long for its column wraps in it, with `when` under it)
+    const under = tw(r.name, 36) + 16 + tw(r.when || '', 27) > 370, name = under ? `<div style="font-size:36px;font-weight:500;white-space:normal;width:360px;${lh(r.name, 36, 360)}">${r.name}</div>` : `<span style="font-size:36px;font-weight:500">${r.name}</span>`;
+    A.push(on(el(c, 'a nw', name + `<span class="s" style="${under ? 'display:block;margin-top:2px' : 'margin-left:16px'}">${r.when || ''}</span>`, `left:130px;top:${y + 14}px`)));
+    A.push(on(el(c, 'a' + (tw(r.mid, 38) > 594 ? '' : ' nw'), r.mid, `left:506px;top:${y + 12}px;width:594px;font-size:38px;${lh(r.mid, 38, 594)}`), { t: T + 0.8 }));
     A.push(on(el(c, 'a nw', r.tags.map(([s, col]) => `<span class="tag" style="color:${colour(col)};font-size:28px;margin-right:14px">${s}</span>`).join(''), `left:1130px;top:${y + 16}px`), { t: T + 1.8 }));
     wait(1.8 + rt(r.name, r.mid, ...r.tags.map(x => x[0]))); });
   const cp = d.caption && caption(c, d.caption, T, undefined, 880); if (cp) hold(d.caption); wait(1.5); clear(cp ? [...A, cp] : A, L); };
@@ -122,12 +134,16 @@ export const optionCards = (d) => (c) => { const A = [], n = d.cards.length, w =
 // { title, questions: [{ q, ex, yes, to, why, color }], extra: { lead, q, ex, a: [[label, text, color]] }, caption }
 // extra is a boxed question that sits apart from the ladder (an exception, a tie-break). caption states the point; use one or the other.
 export const ladder = (d) => (c, W) => { const A = [], L = [], n = d.questions.length, gap = Math.min(148, 440 / n);
-  A.push(on(el(c, 'a h2', d.title, 'left:130px;top:280px'))); L.push(line(W, `M176 390 L176 ${370 + n * gap}`, { t: T + 0.8, dur: 2.0, color: 'rgba(255,255,255,.22)', w: 2 })); wait(1.4);
-  d.questions.forEach((x, i) => { const y = 380 + i * gap, col = colour(x.color);
+  // a question that wraps (it wraps before the arrow, 660 px) makes its step taller, so its example does not touch the next question
+  const ys = []; d.questions.reduce((y, x) => { ys.push(y); return y + gap + (Math.ceil(tw(x.q, 40) / 660) - 1) * 50; }, 380);
+  A.push(on(el(c, 'a h2', d.title, 'left:130px;top:280px'))); L.push(line(W, `M176 390 L176 ${ys[n - 1] - 10 + gap}`, { t: T + 0.8, dur: 2.0, color: 'rgba(255,255,255,.22)', w: 2 })); wait(1.4);
+  d.questions.forEach((x, i) => { const y = ys[i], col = colour(x.color);
     A.push(on(el(c, 'dot', '', `left:167px;top:${y + 18}px;width:18px;height:18px`), { dy: 0 }));
-    A.push(on(el(c, 'a nw', `<div style="font-size:40px;font-weight:500">${x.q}</div><div class="s" style="margin-top:8px">${x.ex || ''}</div>`, `left:220px;top:${y}px`)));
+    // the question wraps before the arrow; `why` goes under `to` when both do not fit on one line before the right edge
+    A.push(on(el(c, 'a', `<div style="font-size:40px;font-weight:500;${lh(x.q, 40, 660)}text-wrap:balance">${x.q}</div><div class="s" style="margin-top:8px">${x.ex || ''}</div>`, `left:220px;top:${y}px;width:660px`)));
     L.push(line(W, `M900 ${y + 28} L1050 ${y + 28}`, { t: T + 1.6, dur: 0.6, arrow: true, color: col, w: 2.5 })); A.push(label(c, 944, y - 12, x.yes || '', T + 1.6, { color: col }));
-    A.push(on(el(c, 'a nw', `<span style="font-size:${x.to.length > 4 ? 38 : 48}px;font-weight:500;color:${col}">${x.to}</span><span style="font-size:30px;margin-left:22px;color:#b9bac2">${x.why || ''}</span>`, `left:1080px;top:${y - 2}px`), { t: T + 2.0 }));
+    const fs = tw(x.to, 48) > 200 ? 38 : 48, under = tw(x.to, fs) + 22 + tw(x.why || '', 30) > 740;
+    A.push(on(el(c, 'a nw', `<span style="font-size:${fs}px;font-weight:500;color:${col}">${x.to}</span><span style="font-size:30px;color:#b9bac2;${under ? 'display:block;margin-top:4px' : 'margin-left:22px'}">${x.why || ''}</span>`, `left:1080px;top:${y - 2}px`), { t: T + 2.0 }));
     wait(2.0 + rt(x.q, x.ex || '', x.to, x.why || '')); });
   if (d.extra) { const k = box(c, 130, 836, 1660, 150, '', COL.coral); A.push(on(k));
     on(el(k, 'a nw', `<span class="s coral" style="letter-spacing:.12em">${d.extra.lead}</span><div style="font-size:38px;font-weight:500;margin-top:6px">${d.extra.q}<span class="s" style="margin-left:16px">${d.extra.ex || ''}</span></div>`, 'left:34px;top:22px'), { t: T + 0.4, dy: 0 });
@@ -139,9 +155,13 @@ export const ladder = (d) => (c, W) => { const A = [], L = [], n = d.questions.l
 // beat: two or three flows drawn as lanes of steps, so their difference is visible
 // { lanes: [{ name, sub, steps: [[text, color]], bypass: { from, to, text }, tag: [text, color] }], quote, rule }
 export const lanes = (d) => (c, W) => { const A = [], L = [], gap = Math.min(260, 520 / d.lanes.length);
+  // steps are as wide as their words; when the longest lane (with its tag) does not fit the frame, every lane gets the same smaller type
+  const sw = (s, fs) => Math.ceil(tw(s, fs) * 16 / 15) + 62;      // a step: its words with room around them (a CJK character takes 32 px at 30 px type)
+  const fs = Math.max(22, Math.min(30, ...d.lanes.map(ln => { const n = ln.steps.length, room = 1790 - 480 - (ln.tag ? tw(ln.tag[0], 25) + 80 : 0) - n * 62 - (n - 1) * 60;
+    return 30 * room / ln.steps.reduce((a, [s]) => a + tw(s, 30) * 16 / 15, 0); })));
   d.lanes.forEach((ln, j) => { const y = 340 + j * gap; A.push(on(el(c, 'a nw', `<div style="font-size:40px;font-weight:500">${ln.name}</div><div class="s" style="margin-top:6px">${ln.sub || ''}</div>`, `left:130px;top:${y - 8}px`)));
-    let x = 480; const xs = []; ln.steps.forEach(([s, col], i) => { const w = strip(s).length * 32 + 62, cc = col ? colour(col) : 'rgba(255,255,255,.2)'; xs.push([x, w]);
-      A.push(on(el(c, 'a c nw', s, `left:${x}px;top:${y}px;width:${w}px;height:70px;line-height:68px;border-radius:16px;border:1.5px solid ${cc};background:${col ? cc + '14' : 'rgba(255,255,255,.05)'};font-size:30px`), { t: T + 0.8 + i * 1.1, dy: 0, dx: -14 }));
+    let x = 480; const xs = []; ln.steps.forEach(([s, col], i) => { const w = sw(s, fs), cc = col ? colour(col) : 'rgba(255,255,255,.2)'; xs.push([x, w]);
+      A.push(on(el(c, 'a c nw', s, `left:${x}px;top:${y}px;width:${w}px;height:70px;line-height:68px;border-radius:16px;border:1.5px solid ${cc};background:${col ? cc + '14' : 'rgba(255,255,255,.05)'};font-size:${fs.toFixed(1)}px`), { t: T + 0.8 + i * 1.1, dy: 0, dx: -14 }));
       if (i < ln.steps.length - 1) L.push(line(W, `M${x + w + 8} ${y + 35} L${x + w + 52} ${y + 35}`, { t: T + 1.3 + i * 1.1, dur: 0.4, arrow: true, w: 2 })); x += w + 60; });
     let tt = 0.8 + ln.steps.length * 1.1;
     if (ln.bypass) { const [a, aw] = xs[ln.bypass.from], [b, bw] = xs[ln.bypass.to]; L.push(line(W, `M${a + aw / 2} ${y + 80} C${a + aw / 2} ${y + 140} ${b + bw / 2} ${y + 140} ${b + bw / 2} ${y + 80}`, { t: T + tt, dur: 0.9, arrow: true, color: COL.coral, w: 2.5, dash: '3 10' }));
@@ -231,10 +251,12 @@ export const figure = (d) => (c) => { const A = [], w = d.w || 1000, h = d.h || 
 export const relationMap = (d) => (t0) => {
   const { c, end } = chap(t0), W = wire(c), Q = SK.q, n = Q.length, gap = Math.min(360, 1200 / n), QY = 610, QX = Q.map((_, i) => 960 - gap * (n - 1) / 2 + i * gap); at(t0 + 0.5);
   on(el(c, 'a h2', d.title, 'left:100px;top:136px')); if (d.legend) on(el(c, 'a s nw', d.legend, 'right:100px;top:150px'), { t: T + 2.4, dy: 0 }); wait(1.4);
-  const qn = Q.map(([name, s, col, inFilm], i) => { const r = on(node(c, QX[i], QY, name, '', { side: 'below', r: 13, color: col, fs: tw(name, 38) > gap - 24 ? 30 : 38 }), { t: T + i * 0.4, dy: 0 }); if (!inFilm) r.dim.push([T, 1e9, 0.3]); return r; });
+  const qn = Q.map(([name, s, col, inFilm], i) => { const r = on(node(c, QX[i], QY, name, '', { side: 'below', r: 13, color: col, fs: tw(name, 38) > gap - 24 ? 30 : 38, w: gap - 24 }), { t: T + i * 0.4, dy: 0 }); if (!inFilm) r.dim.push([T, 1e9, 0.3]); return r; });
   const keys = Object.keys(d.sources), top = keys.filter((_, i) => i % 2 === 0), bot = keys.filter((_, i) => i % 2 === 1), P = {};
-  [[top, 380, 'above'], [bot, 860, 'below']].forEach(([ks, y, side]) => ks.forEach((k, i) => { P[k] = [300 + (ks.length > 1 ? i * (1250 / (ks.length - 1)) : 625), y, side]; }));
-  const sn = {}; keys.forEach((k, i) => { const [name, when, now] = d.sources[k], [x, y, side] = P[k]; sn[k] = on(node(c, x, y, name, when, { side, r: 9, mark: now ? 'ring' : 'hollow', color: now ? '#fff' : '#9a9ca6', fs: 32 }), { t: T + 2.0 + i * 0.35, dy: 0 }); });
+  // a name wraps in the width its row leaves it; the lower row moves up by the extra lines, so it never reaches the caption
+  const wOf = (ks) => ks.length > 1 ? Math.min(560, 1250 / (ks.length - 1) - 30) : 560, extra = Math.max(0, ...bot.map(k => Math.ceil(tw(d.sources[k][0], 32) / wOf(bot)) - 1));
+  [[top, 380, 'above'], [bot, 860 - extra * 46, 'below']].forEach(([ks, y, side]) => ks.forEach((k, i) => { P[k] = [300 + (ks.length > 1 ? i * (1250 / (ks.length - 1)) : 625), y, side, wOf(ks)]; }));
+  const sn = {}; keys.forEach((k, i) => { const [name, when, now] = d.sources[k], [x, y, side, wd] = P[k]; sn[k] = on(node(c, x, y, name, when, { side, r: 9, mark: now ? 'ring' : 'hollow', color: now ? '#fff' : '#9a9ca6', fs: 32, w: wd }), { t: T + 2.0 + i * 0.35, dy: 0 }); });
   wait(2.0 + keys.length * 0.35 + 2.0);
   const all = [], steps = d.links.map(ls => ls.length ? 3.0 + ls.length * 0.9 + rt(...ls.map(x => x[1])) : 0), tAll = T + steps.reduce((a, b) => a + b, 0); let ts = T;
   d.links.forEach((ls, qi) => { if (!ls.length) return; const te = ts + steps[qi], placed = [];
@@ -247,8 +269,12 @@ export const relationMap = (d) => (t0) => {
     qn.forEach((r, i) => { if (i !== qi) r.dim.push([ts, te, 0.35]); }); keys.forEach(k => { if (!ls.some(([kk]) => kk === k)) sn[k].dim.push([ts, te, 0.3]); }); ts = te; });
   at(tAll); if (d.caption) { caption(c, d.caption, T, T + rt(d.caption) + 3, 990); wait(rt(d.caption) + 3.5); }
   if (d.outs && d.outs.length) { all.forEach(l => l.dim.push([T, 1e9, 0.3])); const used = {}, X = 1610, XV = X - 34;
+    // labels that wrap to more lines than the 120 px between two outs push the next one further away (down from the upper row, up from the lower)
+    const shift = { 1: 0, '-1': 0 }, tall = (name, rel) => Math.ceil(tw(name, 32) / 264) * 40 + 4 + Math.ceil(tw(rel, 25) / 264) * 34 + 20 - 120;
     d.outs.forEach(([k, name, rel, col, pos]) => { const [sx, sy] = P[k], t = T + 0.6, dir = sy < QY ? 1 : -1, m = used[dir] = (used[dir] || 0) + 1, yc = sy + dir * (46 + (m - 1) * 16);
-      let x = X, y = dir > 0 ? yc + (m - 1) * 104 : 778 - (m - 1) * 120, path; if (pos) [x, y] = pos;
+      if (dir < 0 && m > 1 && !pos) shift[dir] += Math.max(0, tall(name, rel));
+      let x = X, y = dir > 0 ? yc + (m - 1) * 104 + shift[dir] : 778 - (m - 1) * 120 - shift[dir], path; if (pos) [x, y] = pos;
+      if (dir > 0 && !pos) shift[dir] += Math.max(0, tall(name, rel));
       const v = Math.sign(y - yc);
       if (pos || sx > XV - 60) path = `M${sx} ${sy + dir * 18} C${sx} ${y} ${x - 60} ${y} ${x - 22} ${y}`;                      // close by, or placed by hand: one curve
       else path = `M${sx} ${sy + dir * 18} Q${sx} ${yc} ${sx + 30} ${yc} ` + (Math.abs(y - yc) < 4 ? `L${x - 22} ${yc}` : `L${XV - 20} ${yc} Q${XV} ${yc} ${XV} ${yc + v * 20} L${XV} ${y - v * 14} Q${XV} ${y} ${x - 22} ${y}`);
@@ -313,17 +339,22 @@ export const recall = (d) => (t0) => {
   const think = 8, tReveal = T + rt(d.clue || '', ...rows.map(r => r[1])) * 0.8 + think, blanks = [];
   rows.forEach(([qi, s], i) => { const y = y0 + i * 132, q = Q[qi] || [], col = q[2] || '#fff';
     A.push(on(el(c, 'dot', '', `left:150px;top:${y + 18}px;width:20px;height:20px;background:${col}`), { t: T + i * 0.5, dy: 0 }));
-    A.push(on(el(c, 'a nw', q[0] || '', `left:196px;top:${y}px;font-size:${tw(q[0] || '', 38) > 250 ? 28 : 38}px;font-weight:500;color:${col}`), { t: T + i * 0.5, dy: 0 }));
-    const e = el(c, 'a nw', s.replace(/｛(.+?)｝/g, (m, w) => `<span class="bk" style="display:inline-block;padding:0 14px;margin:0 6px;border-radius:10px;font-weight:500">${w}</span>`), `left:480px;top:${y - 4}px;font-size:${tw(s, 42) > 1330 ? 34 : 42}px`);
+    // the question's name wraps in its column before the line starts; a blank in a language written with spaces needs no outer margin
+    const nfs = tw(q[0] || '', 38) > 270 ? 28 : 38;
+    A.push(on(el(c, 'a', q[0] || '', `left:196px;top:${y}px;width:270px;${lh(q[0] || '', nfs, 270, 1.2)}text-wrap:balance;font-size:${nfs}px;font-weight:500;color:${col}`), { t: T + i * 0.5, dy: 0 }));
+    const e = el(c, 'a nw', s.replace(/｛(.+?)｝/g, (m, w) => `<span class="bk" style="display:inline-block;border-radius:10px;font-weight:500;${cjk() ? 'padding:0 14px;margin:0 6px' : 'padding:0 10px'}">${w}</span>`), `left:480px;top:${y - 4}px;font-size:${tw(s, 42) > 1330 ? 34 : 42}px`);
     A.push(on(e, { t: T + 0.3 + i * 0.5, read: false })); e.querySelectorAll('.bk').forEach(b => blanks.push([b, tReveal + i * 2.0, col])); });
   fn((t) => blanks.forEach(([b, tr, col]) => { const open = t >= tr; b.style.color = open ? col : 'transparent'; b.style.background = open ? 'transparent' : 'rgba(242,184,75,.16)'; b.style.outline = open ? 'none' : '1.5px dashed #f2b84b'; }));
   ring(c, 1760, 190, tReveal - think, tReveal); cue('recall', tReveal - think, tReveal); at(tReveal + rows.length * 2.0 + 4.5); A.forEach(r => off(r)); }
   if (d.cases && d.cases.length) { on(el(c, 'a h1', d.casesTitle, 'left:98px;top:150px'), { t: T + 0.6 });
     d.cases.forEach(([q, a1, a2, clue, lab, tid], i) => { wait(0.6); const B = [], tq = rt(q, clue || '') + 1.5, t0c = T;
-      B.push(on(el(c, 'a s nw', `${i + 1} / ${d.cases.length}` + (lab ? `<span style="margin-left:24px;color:#f3f3f5;letter-spacing:.06em">${lab}</span>` : ''), 'left:150px;top:300px;letter-spacing:.14em;color:#6fdc9b'), { dy: 0 })); B.push(on(el(c, 'a h1', q, 'left:150px;top:350px;right:300px;font-size:56px')));
-      if (clue) B.push(on(el(c, 'a nw', clue, 'left:150px;top:520px;font-size:30px;color:#b9bac2'), { t: T + rt(q) * 0.6, dy: 0 }));
-      B.push(on(el(c, 'a p', d.ask, `left:150px;top:${clue ? 580 : 560}px;font-size:38px;color:#f2b84b`), { t: T + tq - 1.2 })); ring(c, 1700, 420, T + tq, T + tq + 6); cue('recall', T + tq, T + tq + 6);
-      B.push(on(el(c, 'a', a1, 'left:150px;top:660px;right:200px;font-size:44px;font-weight:500'), { t: T + tq + 6.2 })); B.push(on(el(c, 'a p', a2 || '', 'left:150px;top:744px;right:200px;font-size:36px;color:#f3f3f5'), { t: T + tq + 6.2 + rt(a1) }));
+      B.push(on(el(c, 'a s nw', `${i + 1} / ${d.cases.length}` + (lab ? `<span style="margin-left:24px;color:#f3f3f5;letter-spacing:.06em">${lab}</span>` : ''), 'left:150px;top:300px;letter-spacing:.14em;color:#6fdc9b'), { dy: 0 }));
+      // the pieces stack in one column (a hidden piece keeps its place): a question that wraps to more lines pushes the rest down
+      const col = el(c, 'a', '', 'left:150px;top:350px;right:300px');
+      B.push(on(el(col, 'a f h1', q, 'font-size:56px;min-height:152px')));
+      if (clue) B.push(on(el(col, 'a f', clue, 'margin-top:18px;font-size:30px;color:#b9bac2'), { t: T + rt(q) * 0.6, dy: 0 }));
+      B.push(on(el(col, 'a f p', d.ask, `margin-top:${clue ? 16 : 58}px;font-size:38px;color:#f2b84b`), { t: T + tq - 1.2 })); ring(c, 1700, 420, T + tq, T + tq + 6); cue('recall', T + tq, T + tq + 6);
+      B.push(on(el(col, 'a f', a1, `margin-top:${clue ? 21 : 41}px;margin-right:-100px;font-size:44px;font-weight:500`), { t: T + tq + 6.2 })); B.push(on(el(col, 'a f p', a2 || '', 'margin-top:20px;margin-right:-100px;font-size:36px;color:#f3f3f5'), { t: T + tq + 6.2 + rt(a1) }));
       wait(tq + 6.2 + rt(a1, a2 || '') + 2.5); B.forEach(r => off(r)); if (tid) segment(lab || q, tid, t0c, T); }); }
   end(T); return T + 0.6;
 };
@@ -343,7 +374,7 @@ export const closing = (d) => (t0) => {
     if (d.openDetail) B.push(on(el(c, 'a p c', d.openDetail, 'left:200px;right:200px;top:600px;font-size:36px;color:#f3f3f5'), { t: T + 1 + rt(d.open) }));
     wait(rt(d.open, d.openDetail || '') + 4); B.forEach(r => off(r)); wait(0.6); }
   if (d.areas) { const n = d.areas.length, gap = Math.min(300, 1400 / n), x0 = 960 - gap * (n - 1) / 2;
-    d.areas.forEach(([name, k], i) => { const me = d.pick && i === d.pick.index, r = on(node(c, x0 + i * gap, 440, name, me ? d.pick.done : '', { side: 'below', r: 8 + Math.min(4, parseInt(k) || 1) * 3.5, fs: 34, mark: me ? 'ring' : '' }), { t: T + i * 0.2, dy: 0, read: false }); if (!me) r.dim.push([T, 1e9, 0.3]); }); }
+    d.areas.forEach(([name, k], i) => { const me = d.pick && i === d.pick.index, r = on(node(c, x0 + i * gap, 440, name, me ? d.pick.done : '', { side: 'below', r: 8 + Math.min(4, parseInt(k) || 1) * 3.5, fs: 34, mark: me ? 'ring' : '', w: gap - 20 }), { t: T + i * 0.2, dy: 0, read: false }); if (!me) r.dim.push([T, 1e9, 0.3]); }); }
   on(el(c, 'a h2 c', d.last, `left:120px;right:120px;top:${d.areas ? 700 : 500}px`), { t: T + 2.0 });
   if (d.credits) on(el(c, 'a s c', d.credits, 'left:0;right:0;bottom:50px;font-size:22px;letter-spacing:.02em'), { t: T + 4.0, dy: 0, read: false });
   wait(rt(d.last) + 7); end(T); return T + 0.2;

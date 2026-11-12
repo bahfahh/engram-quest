@@ -100,13 +100,13 @@ A three-stage recall system that builds real memory, not just familiarity:
 
 ![Quest Map](assets/guide/questmap_english.webp)
 
-Transforms any note into a game-like practice map: briefings, scenario missions, decisions under constraints, and Boss Battles embedded in your vault as a `.md` file.
+Turns a note, a topic or a Lesson Academy course into a practice map where you find out whether you can **use** what you know. Each mission puts you in a situation you have not seen, with the real material in front of you, and asks you to do what someone with the skill would do — then scores it.
 
-- **15 challenge types** — quiz, true/false, cloze, input, ordering, matching, countdown, snapshot, **auction (bet coins on your confidence)**, timeline, chain, **memory palace**, image quiz, image occlusion, and interactive iframe HTML simulations
+- **One package per quest** — a map and one self-contained interactive page per mission, saved in `engram-quest/quests/` and opened from the Quest Map page
 - **Difficulty tiers** — Easy / Medium / Hard, ask your AI for the level you need
-- **5 visual themes** — Sky Island, Sci-Fi, RPG, Ocean, Minimal
 - **Boss Battle** — a final applied case that tests judgment, sequencing, tradeoffs, or diagnosis
-- **Progress is safe** — scores and completion live apart from the quest YAML, so AI can update a quest without wiping your progress
+- **Progress is safe** — scores and completion live in `engram-quest/state/`, apart from the quest, so AI can update a quest without wiping your progress
+- Older quests written as a `quest-map` block inside a note still open
 
 ### 🎓 Lesson Academy — AI-Built Courses
 
@@ -153,7 +153,7 @@ Visualizes abstract concepts using Obsidian Canvas.
 
 ![Recall Films](assets/guide/episodic_review_english.webp)
 
-A recall film takes you back to what you read over a month, or a range of months, so the ideas come back in the context you met them.
+A recall film takes you back to what you read over a month, or a range of months, so the ideas come back in the context you met them. Every topic first gets a **recall pack** — a one-line overview plus retrieval questions that go into your Review Deck — and only the topics worth it get a film.
 
 - **Watch for free** — films are grouped by period, newest first; open one to play it
 - **Make a new film (Pro)** — click **+ New film**, pick the period and a length (short, medium or long; set a default once), and the request waits in *Waiting to be made*. Copy its prompt into Claude Code, which makes the film with the **Episodic Review** skill; you can cancel a request any time
@@ -169,7 +169,7 @@ Track your learning milestones with 3D-rendered icons and rarity tiers — from 
 
 ![Deep Dive](assets/guide/deepdive_english.webp)
 
-When a flashcard is too hard to understand, hit **Queue deep dive** during review. The AI diagnoses why the card failed you (too hard? too terse? missing context?) and generates a self-contained, illustrated deep-dive page — problem first, then the big-picture map, a memory anchor metaphor, a layered walkthrough, and common confusions, ending back at your original card. Deep dives carry **no schedule of their own**: the original card keeps reviewing, and if it keeps failing, the page is automatically rewritten from a shallower entry point. You can also ask directly — *"Make a deep dive about the data flywheel."* The Deep Dive page appears in the Memory group once Pro is active. Its progress bar splits pages into **completed, read and unread**; opening a page marks it read, and only your own ✓ marks it completed. Star the ones worth revisiting.
+When a flashcard is too hard to understand, hit **Queue deep dive** during review. The AI diagnoses why the card failed you (too hard? too terse? missing context?) and generates a self-contained, illustrated deep-dive page — problem first, then the big-picture map, a memory anchor metaphor, a layered walkthrough, and common confusions, ending back at your original card. Deep dives carry **no schedule of their own**: the original card keeps reviewing, and if it keeps failing, the page is automatically rewritten from a shallower entry point. You can also ask directly — *"Make a deep dive about the data flywheel."* The same skill makes **Insight** pages: point it at a topic, a course or a folder of notes and it shows how the pieces fit together and what follows from them. The Deep Dive page appears in the Memory group once Pro is active. Its progress bar splits pages into **completed, read and unread**; opening a page marks it read, and only your own ✓ marks it completed. Star the ones worth revisiting.
 
 ---
 
@@ -389,13 +389,13 @@ Anki 解決「何時複習」。EngramQuest 解決「如何真正記住」 — �
 
 ![Quest Map](assets/guide/questmap_中文.webp)
 
-把任何筆記轉成遊戲化應用地圖：任務簡報、情境案例、限制下的決策，以及嵌入 `.md` 的 Boss Battle。
+把筆記、主題或教材課程變成練習地圖，看你能不能真的**用上**學到的東西。每個任務把你放進沒看過的情境，真實的資料就在眼前，要你做出懂這件事的人會做的判斷，然後計分。
 
-- **15 種挑戰類型** — 選擇題、是非、克漏字、輸入、排序、配對、倒數計時、快照記憶、**競標（用籌碼押注你的信心）**、時間軸、序列接龍、**記憶宮殿**、圖片題、圖片遮罩，以及互動式 iframe HTML 模擬
+- **一個任務地圖一個資料夾** — 一張地圖，每個任務一頁獨立的互動頁面，存在 `engram-quest/quests/`，從 Quest Map 頁打開
 - **難度分級** — Easy / Medium / Hard，跟 AI 要你需要的程度
-- **5 種視覺主題** — 天空島、科幻、RPG、海洋、極簡
 - **Boss Battle** — 章末的整合案例，測判斷、排序、取捨或診斷能力
-- **進度安全** — 分數和完成度與 quest YAML 分開儲存，AI 更新關卡時不會洗掉你的進度
+- **進度安全** — 分數和完成度存在 `engram-quest/state/`，和任務本身分開，AI 更新關卡時不會洗掉你的進度
+- 以前寫在筆記裡的 `quest-map` 區塊照樣能打開
 
 ### 🎓 教材（Lesson Academy）— AI 打造的課程
 
@@ -442,7 +442,7 @@ Anki 解決「何時複習」。EngramQuest 解決「如何真正記住」 — �
 
 ![情境回顧](assets/guide/episodic_review_中文.webp)
 
-情境回顧片帶你回到一個月（或連續幾個月）讀過的東西，讓概念在你當初遇到它的情境裡回來。
+情境回顧片帶你回到一個月（或連續幾個月）讀過的東西，讓概念在你當初遇到它的情境裡回來。每個主題都會先有一份**回想包**——一句話總覽，加上放進 Review Deck 的回想題——值得的主題才做成影片。
 
 - **觀看免費** — 回顧片依期間分組，新的在上面，點開就播放
 - **製作新片（Pro）** — 按 **+ 做新的一支**，選期間和長度（短、中、長，可設定預設長度），請求會出現在「等待製作」。複製它的提示詞貼到 Claude Code，由 **Episodic Review** skill 做成影片；請求隨時可以取消
@@ -458,7 +458,7 @@ Anki 解決「何時複習」。EngramQuest 解決「如何真正記住」 — �
 
 ![深入解析](assets/guide/deepdive_中文.webp)
 
-複習時遇到看不懂的卡，按「**加入解析佇列**」標記它。AI 會診斷這張卡為什麼難（內容太難？描述太簡略？缺乏脈絡？），生成一頁自包含的圖解深入解析——先講它解決什麼問題，再給宏觀地圖、記憶錨比喻、逐層拆解與常見混淆，最後回到你原本的卡片。解析頁**沒有自己的排程**：原卡照常複習，若持續答錯，解析會自動用更淺的切入點重寫。也可以直接說 — *「幫我做一份資料飛輪的深入解析。」* 啟用 Pro 後，深入解析會出現在記憶分組。進度條把解析頁分成**已完成、已讀、未讀**；點開就算已讀，只有你自己按 ✓ 才算完成。值得再看的可以加星。
+複習時遇到看不懂的卡，按「**加入解析佇列**」標記它。AI 會診斷這張卡為什麼難（內容太難？描述太簡略？缺乏脈絡？），生成一頁自包含的圖解深入解析——先講它解決什麼問題，再給宏觀地圖、記憶錨比喻、逐層拆解與常見混淆，最後回到你原本的卡片。解析頁**沒有自己的排程**：原卡照常複習，若持續答錯，解析會自動用更淺的切入點重寫。也可以直接說 — *「幫我做一份資料飛輪的深入解析。」* 同一個 skill 也做**洞見**頁：指定一個主題、一門課或一個資料夾的筆記，它會整理出這些內容怎麼連在一起、可以推出什麼。啟用 Pro 後，深入解析會出現在記憶分組。進度條把解析頁分成**已完成、已讀、未讀**；點開就算已讀，只有你自己按 ✓ 才算完成。值得再看的可以加星。
 
 ---
 

@@ -105,6 +105,21 @@ describe("installer script path rewriting", () => {
     expect(skillMd.content).not.toContain("bash scripts/");
   });
 
+  it("installs Cursor as skill folders with their scripts, and marks the old .mdc rules for removal", async () => {
+    const files = makeAllBundledFiles({
+      ".obsidian/plugins/engram-quest/bundled-skills/review-deck/skills.md": "Run `bash scripts/get_mtime.sh \"note.md\"`",
+    });
+    const entries = await installer.getInstallEntries("cursor", makeAdapter(files), ".obsidian");
+    const paths = entries.map(e => e.path);
+    const skillMd = entries.find(e => e.path === ".cursor/skills/engram-quest-review-deck/SKILL.md");
+
+    expect(skillMd.content).toContain("bash .cursor/skills/engram-quest-review-deck/scripts/get_mtime.sh");
+    expect(paths).toContain(".cursor/skills/engram-quest-review-deck/scripts/get_mtime.sh");
+    expect(paths.some(p => p.endsWith(".mdc"))).toBe(false);
+    expect(installer.getLegacyPaths("cursor")).toContain(".cursor/skills/engram-quest-review-deck.mdc");
+    expect(installer.getLegacyPaths("claude")).toEqual([]);
+  });
+
   it("does not rewrite scripts/ in non-SKILL.md assets", async () => {
     const shContent = "#!/bin/bash\necho scripts/something";
     const files = {
@@ -218,6 +233,9 @@ describe("installer explainer (Pro)", () => {
         entries.some((e) => e.path === `.claude/skills/engram-quest-explainer/assets/examples/${ex}`),
       ).toBe(true);
     }
+
+    // the fallback search that references/obsidian-cli.md tells the agent to run
+    expect(entries.some((e) => e.path === ".claude/skills/engram-quest-explainer/scripts/search_vault.sh")).toBe(true);
 
     for (const ref of ["spec-guide.md", "obsidian-cli.md"]) {
       expect(

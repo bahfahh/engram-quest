@@ -5,7 +5,7 @@
 import * as S from '/lib/stage.js';
 import * as C from './cast.js';
 
-const FONT = 'LXGW WenKai TC';
+const FONT = 'LXGW WenKai TC';   // load with S.loadFonts([FONT], text): it also adds /lib/kit/tc-variants.css (Taiwan-standard forms)
 const WH = C.CHALK.white, YE = C.CHALK.yellow, PK = C.CHALK.pink, OR = C.CHALK.orange;
 
 // ---------------------------------------------------------------- element builders (each: {t0, dur, draw(ctx,k)})

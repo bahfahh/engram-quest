@@ -7,6 +7,7 @@
 
 const I = require("obsidian");
 const { getLocale: L } = require("../i18n");
+const { assetUrl } = require("../assets");
 
 // The icon and colour each tab wears in the sidebar (spec-design.md §3).
 const { TABS } = require("./categories");
@@ -519,21 +520,18 @@ class FeatureGuideModal extends I.Modal {
     else this.renderMenu(copy);
   }
 
-  // A picture from the plugin's assets, shown only once it has loaded; a missing file leaves nothing behind.
-  _picture(parent, path, alt, cls) {
-    const adapter = this.app.vault.adapter;
+  // A picture from the plugin's assets (`rel` is its path inside the plugin folder), shown only once it
+  // has loaded; a missing file leaves nothing behind.
+  _picture(parent, rel, alt, cls) {
     const wrap = parent.createDiv({ cls });
     wrap.hidden = true;
-    adapter.exists(path).then((found) => {
-      if (!found || !wrap.isConnected) { wrap.remove(); return; }
-      const src = adapter.getResourcePath(path);
-      const img = wrap.createEl("img", { attr: { src, alt } });
-      img.addEventListener("load", () => { wrap.hidden = false; });
-      img.addEventListener("error", () => wrap.remove());
-      const zoom = wrap.createEl("button", { cls: "lh-guide-zoom", text: this.zh() ? "點擊放大" : "Click to enlarge", attr: { "aria-label": `${this.zh() ? "放大" : "Enlarge"}: ${alt}` } });
-      wrap.addEventListener("click", () => openLightbox(src, alt));
-      zoom.addEventListener("click", (ev) => { ev.stopPropagation(); openLightbox(src, alt); });
-    }).catch((err) => { console.debug("EngramQuest: guide picture skipped", path, err); wrap.remove(); });
+    const src = assetUrl(this.app, rel);
+    const img = wrap.createEl("img", { attr: { src, alt } });
+    img.addEventListener("load", () => { wrap.hidden = false; });
+    img.addEventListener("error", () => wrap.remove());
+    const zoom = wrap.createEl("button", { cls: "lh-guide-zoom", text: this.zh() ? "點擊放大" : "Click to enlarge", attr: { "aria-label": `${this.zh() ? "放大" : "Enlarge"}: ${alt}` } });
+    wrap.addEventListener("click", () => openLightbox(src, alt));
+    zoom.addEventListener("click", (ev) => { ev.stopPropagation(); openLightbox(src, alt); });
     return wrap;
   }
 
@@ -550,8 +548,7 @@ class FeatureGuideModal extends I.Modal {
   }
 
   renderMenu(copy) {
-    const dir = this.plugin.manifest.dir;
-    this._picture(this.contentEl, I.normalizePath(`${dir}/assets/guide/${this.def.img}_${this.zh() ? "中文" : "english"}.webp`), copy.title, "lh-guide-hero");
+    this._picture(this.contentEl, `assets/guide/${this.def.img}_${this.zh() ? "中文" : "english"}.webp`, copy.title, "lh-guide-hero");
     const body = this.contentEl.createDiv({ cls: "lh-guide-body" });
     const head = body.createDiv({ cls: "lh-guide-title" });
     const meta = TABS[this.tab];
@@ -586,7 +583,7 @@ class FeatureGuideModal extends I.Modal {
     page.body.forEach(item => {
       if (item.v) videoEmbed(body, item.v, item.label, this.locale);
       else if (item.img) {
-        const fig = this._picture(body, I.normalizePath(`${this.plugin.manifest.dir}/assets/${item.img}`), item.label || "", "lh-guide-fig lh-guide-img");
+        const fig = this._picture(body, `assets/${item.img}`, item.label || "", "lh-guide-fig lh-guide-img");
         if (item.label) fig.createDiv({ cls: "lh-guide-cap", text: item.label });
       } else if (item.h) body.createDiv({ cls: "lh-guide-p" }).appendChild(I.sanitizeHTMLToDom(item.h));
     });

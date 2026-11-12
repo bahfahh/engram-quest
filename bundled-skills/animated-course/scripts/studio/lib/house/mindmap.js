@@ -122,7 +122,7 @@ const DEF = { center: 66, node: 52, leaf: 46, label: 40 };
  *   spec.nodes   [{id, text, t, parent, color, tone, size, icon, iconSize, photo, doodle, pic: 'top'|'left', pos, dx, dy, side, edge: {label, style, color, t, bend, from}}]
  *   spec.edges   extra links [{from, to, label, style, color, t, bend, fromSide, toSide}]
  *   spec.area    {x, y, w, h}   spec.screenScale  board px → screen px (lint: text ≥ 28 px on screen)
- *   spec.divider true (vertical, the compare default) | false | {x} | {y} | {pts: [[x,y],[x,y]]}, plus {t, label}
+ *   spec.divider true (vertical, the compare default) | false | {x} | {y} | {pts: [[x,y],[x,y]]}, plus {t}
  *   spec.picScale   doodles drawn at this scale (1); a doodle may set its own `scale`
  *   spec.typeScale  sizes given in the chalk format are multiplied by this (0.86: typeset text reads bigger than chalk)
  *   spec.wipe    {at, dur, prev(c, L, t)}: your board before `at`, a scan band wipes it into the mindmap

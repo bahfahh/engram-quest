@@ -223,7 +223,8 @@ export function keypoint(parent, opts = {}) {
   // ------------------------------------------------------------------ backdrop
   const back = opts.backdrop === false ? null : (opts.backdrop || (st ? st.frame.querySelector('.k-viewport') : null));
   const self = {};
-  if (back) { if (!BACKDROPS.has(back)) BACKDROPS.set(back, []); BACKDROPS.get(back).push(self); back.style.transformOrigin = '50% 46%'; }
+  // the backdrop's own inline transform-origin / scale, put back whenever no card is up (the page may move a camera on it)
+  if (back) { if (!BACKDROPS.has(back)) BACKDROPS.set(back, Object.assign([], { orig: { origin: back.style.transformOrigin, scale: back.style.scale } })); BACKDROPS.get(back).push(self); }
 
   const kAt = t => {
     if (t < at || t >= (outAt === Infinity ? Infinity : outAt + OUT)) return 0;
@@ -251,7 +252,11 @@ export function keypoint(parent, opts = {}) {
   }
   function update(t) {
     // backdrop: strongest keypoint on it at t (pure: every keypoint is evaluated at t)
-    if (back) { const m = Math.max(...BACKDROPS.get(back).map(o => o.kAt(t))); back.style.scale = (1 - 0.05 * m).toFixed(4); }
+    if (back) {
+      const list = BACKDROPS.get(back), m = Math.max(...list.map(o => o.kAt(t)));
+      if (m > 0) { back.style.transformOrigin = '50% 46%'; back.style.scale = (1 - 0.05 * m).toFixed(4); }
+      else { back.style.transformOrigin = list.orig.origin; back.style.scale = list.orig.scale; }
+    }
     const k = kAt(t);
     const vis = k > 0.001;
     wash.style.visibility = card.style.visibility = vis ? 'visible' : 'hidden';

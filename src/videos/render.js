@@ -2,7 +2,7 @@
 // Hub "Video Academy" tab (影片學院). Two views (ADR-12): the shelf — a continue-watching bar, filter
 // chips and a card grid of every series (ADR-20) — and the topic view — inline player + playlist. Watching writes
 // position / completed back into the topic's meta.json. The plugin never generates videos: "+ New series"
-// only records a pending topic for the video skill (doc/開發計劃/影片學院/contract.md).
+// only records a pending topic for the video skill (doc/features/video-academy/contract.md).
 // View state lives on the hub: hub._vTopic = { slug, videoId, autoplay } | null.
 
 const I = require("obsidian");
@@ -412,7 +412,11 @@ function mountPlayer(stage, hub, t, slug, meta, video, autoplay, save, playable,
   const vid = stage.createEl("video", { cls: "lh-vid-player", attr: { controls: "", preload: "metadata", playsinline: "" } });
   vid.src = fileUrl(hub, slug, video.file);
   if (video.subtitles) {
-    vid.createEl("track", { attr: { kind: "subtitles", src: fileUrl(hub, slug, video.subtitles), srclang: "und", label: c(t, "VIDEO_SET_SUBS"), default: "" } });
+    const track = vid.createEl("track", { attr: { kind: "subtitles", src: fileUrl(hub, slug, video.subtitles), srclang: "und", label: c(t, "VIDEO_SET_SUBS"), default: "" } });
+    // Subtitles start on unless Video settings turn them off; the player's own menu can still switch them.
+    data.readSettings(hub.app.vault.adapter, !!hub.plugin.settings.licenseValid)
+      .then((s) => { if (!s.subtitles && track.track) track.track.mode = "hidden"; })
+      .catch((e) => console.warn("EngramQuest: video settings unreadable, subtitles left on", e));
   }
   setPlayer(vid);
   // A synced vault can carry meta.json without the unsynced mp4, and a file can exist yet fail to

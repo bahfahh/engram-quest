@@ -16,6 +16,7 @@ describe("rewatchTarget", () => {
 
   it("offers nothing for cards that didn't come from a video", () => {
     expect(rewatchTarget(appWith({}), card("影片：第一課（2:05）"))).toBe(null);
+    expect(rewatchTarget(appWith({ video: "v/a.mp4" }), card("Answer\n\nVideo: Lesson one (12:07)"))).toEqual({ path: "v/a.mp4", at: 727 });
     expect(rewatchTarget(appWith({ video: "v/a.mp4" }), card("一般答案"))).toBe(null);
   });
 });

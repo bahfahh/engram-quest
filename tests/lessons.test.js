@@ -30,7 +30,13 @@ function makeAdapter(initial = {}) {
   const files = { ...initial };
   return {
     files,
-    async exists(p) { return Object.prototype.hasOwnProperty.call(files, p); },
+    async exists(p) { return Object.prototype.hasOwnProperty.call(files, p) || Object.keys(files).some((k) => k.startsWith(p + "/")); },
+    // Vault-local trash: moves a file or a whole folder under .trash/, like Obsidian's adapter.
+    async trashLocal(p) {
+      for (const k of Object.keys(files)) {
+        if (k === p || k.startsWith(p + "/")) { files[".trash/" + k] = files[k]; delete files[k]; }
+      }
+    },
     async read(p) {
       if (!(p in files)) throw new Error("ENOENT " + p);
       return files[p];
@@ -88,10 +94,11 @@ describe("normalizeMeta", () => {
       lessons: [
         { id: "a", title: "with file", file: "a.html" },
         { id: "b", title: "planned only" },
-        { title: "no id — dropped", file: "x.html" },
+        { title: "no id — kept with a derived id", file: "x.html" },
       ],
     });
-    expect(meta.lessons).toHaveLength(2);
+    expect(meta.lessons).toHaveLength(3);
+    expect(meta.lessons[2].id).toBe("file-x.html");
     expect(meta.lessons[0].file).toBe("a.html");
     expect(meta.lessons[1].file).toBe(null);
     expect(meta.icon).toBe("📘");
@@ -337,14 +344,25 @@ describe("deleteLesson / deleteCourse", () => {
     expect(updated.lessons).toEqual([]);
   });
 
-  it("deleteCourse trashes every lesson file and the meta.json", async () => {
+  it("deleteCourse moves the whole course folder to the trash, unlisted files included", async () => {
     const adapter = makeAdapter({
       ...seedCourse("c", courseMeta()),
       [`${LESSONS_DIR}/c/lsn-1-a.html`]: "1",
       [`${LESSONS_DIR}/c/lsn-2-b.html`]: "2",
+      [`${LESSONS_DIR}/c/assets/diagram.png`]: "img", // not listed in meta.json
     });
     await deleteCourse(adapter, "c");
-    expect(Object.keys(adapter.files).filter((k) => k.includes("/c/"))).toEqual([]);
+    expect(Object.keys(adapter.files).filter((k) => k.startsWith(`${LESSONS_DIR}/c/`))).toEqual([]);
+    expect(adapter.files[`.trash/${LESSONS_DIR}/c/assets/diagram.png`]).toBe("img");
+    expect(adapter.files[`.trash/${LESSONS_DIR}/c/meta.json`]).toBeDefined();
+  });
+
+  it("deleteCourse removes nothing and throws when the folder can't be trashed", async () => {
+    const adapter = makeAdapter({ ...seedCourse("c", courseMeta()), [`${LESSONS_DIR}/c/x.png`]: "img" });
+    delete adapter.trashLocal;
+    await expect(deleteCourse(adapter, "c")).rejects.toThrow();
+    expect(adapter.files[`${LESSONS_DIR}/c/x.png`]).toBe("img");
+    expect(adapter.files[`${LESSONS_DIR}/c/meta.json`]).toBeDefined();
   });
 });
 
@@ -388,6 +406,22 @@ describe("skill-owned plan fields (mission / goal)", () => {
     await toggleCourseStar(adapter, "c");
     expect("mission" in onDisk(adapter)).toBe(false);
     expect(onDisk(adapter).lessons.some((l) => "goal" in l)).toBe(false);
+  });
+
+  it("keeps fields the plugin doesn't know, at course and lesson level, through a plugin write", async () => {
+    const adapter = makeAdapter(seedCourse("c", courseMeta({
+      level: { now: "beginner" },
+      lessons: [
+        { id: "lsn-1", title: "L1", file: "lsn-1-a.html", source: "skill", minutes: 12, practice: ["q1"] },
+        { title: "no id yet", file: "extra.html" },
+      ],
+    })));
+    await toggleCourseStar(adapter, "c");
+    const meta = onDisk(adapter);
+    expect(meta.level).toEqual({ now: "beginner" });
+    expect(meta.lessons[0]).toMatchObject({ id: "lsn-1", minutes: 12, practice: ["q1"] });
+    expect(meta.lessons).toHaveLength(2);
+    expect(meta.lessons[1]).toMatchObject({ title: "no id yet", file: "extra.html", id: "file-extra.html" });
   });
 
   it("carries a mission through as written, whatever its shape", () => {

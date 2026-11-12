@@ -10,6 +10,7 @@ const AREAS = [['學習', '2 個主題'], ['生活', '1 個主題']];
 export const FILM = {
   id: 'example-study-method',
   topicId: 't-study-method',
+  lang: 'zh-Hant',                         // the film's language (scripts/film_lang.py); the stage sets it on the page
   crumb: ['十月', '學習', '讀書方法'],
   badge: '示範・人物與筆記為虛構',
   chapters: [

@@ -1,19 +1,16 @@
 ﻿"use strict";
 const I = require("obsidian");
+const { assetUrl } = require("../assets");
 
 function renderQuestMap(nodes, styleName, activeIndex, visitedSet, app, getNodePositions, questProgress) {
 
-  let configDir = app.vault.configDir;
-  let assetRoot = configDir + "/plugins/engram-quest/assets/quest-map/";
   let isDark = activeDocument.body.classList.contains("theme-dark");
 
-  let bgFile = isDark ? "bg_dark.png" : "bg_light.png";
-  let background = app.vault.adapter.getResourcePath(assetRoot + bgFile);
-  let generatedRoot = assetRoot + "generated/";
-  let crownAsset = app.vault.adapter.getResourcePath(generatedRoot + "crown-current-node.webp");
-  let nodeFrameAsset = app.vault.adapter.getResourcePath(generatedRoot + "node-number-frame.webp");
-  let bossGateAsset = app.vault.adapter.getResourcePath(generatedRoot + "boss-gate.webp");
-  let bossLockAsset = app.vault.adapter.getResourcePath(generatedRoot + "boss-lock-badge.webp");
+  let background = assetUrl(app, `assets/quest-map/${isDark ? "bg_dark.png" : "bg_light.png"}`);
+  let crownAsset = assetUrl(app, "assets/quest-map/generated/crown-current-node.webp");
+  let nodeFrameAsset = assetUrl(app, "assets/quest-map/generated/node-number-frame.webp");
+  let bossGateAsset = assetUrl(app, "assets/quest-map/generated/boss-gate.webp");
+  let bossLockAsset = assetUrl(app, "assets/quest-map/generated/boss-lock-badge.webp");
 
   let positions = getNodePositions(nodes.length);
   let width = Math.max(900, nodes.length > 1 ? positions[nodes.length - 1].cx + 160 : 900);

@@ -79,7 +79,7 @@ function createInstaller(embeddedOverride) {
     cursor: {
       id: "cursor",
       label: "Cursor",
-      kind: "rules",
+      kind: "skills",
       baseDir: ".cursor/skills",
       summary: "Project-local Cursor skills."
     }
@@ -144,6 +144,8 @@ function createInstaller(embeddedOverride) {
       { source: "explainer/skills.md", target: "SKILL.md" },
       { source: "explainer/references/spec-guide.md", target: "references/spec-guide.md" },
       { source: "explainer/references/obsidian-cli.md", target: "references/obsidian-cli.md" },
+      // obsidian-cli.md falls back to this grep search when the Obsidian CLI is unavailable.
+      { source: "review-deck/scripts/search_vault.sh", target: "scripts/search_vault.sh" },
       { source: "explainer/assets/examples/machine.spec.json", target: "assets/examples/machine.spec.json" },
       { source: "explainer/assets/examples/contrast.spec.json", target: "assets/examples/contrast.spec.json" },
       { source: "explainer/assets/examples/map.spec.json", target: "assets/examples/map.spec.json" },
@@ -190,36 +192,12 @@ function createInstaller(embeddedOverride) {
     return entries;
   }
 
-  async function buildCursorRuleEntries(toolTarget, adapter, bundledSkillsRoot, modules) {
-    const entries = [];
-    for (const moduleDefinition of modules) {
-      const source = await readBundledSkill(adapter, bundledSkillsRoot, `${moduleDefinition.id}/skills.md`);
-      entries.push({
-        path: joinPath(toolTarget.baseDir, `engram-quest-${moduleDefinition.id}.mdc`),
-        content: [
-          "---",
-          `description: Use when the user asks to create or update an EngramQuest ${moduleDefinition.id}.`,
-          "globs:",
-          "alwaysApply: false",
-          "---",
-          `<!-- engram-quest-installer:${INSTALLER_VERSION};tool:cursor;module:${moduleDefinition.id};source:${bundledSkillsRoot}/${moduleDefinition.id}/skills.md -->`,
-          "",
-          source.trim(),
-          ""
-        ].join("\n")
-      });
-    }
-    return entries;
-  }
-
   async function getInstallEntries(toolId, adapter, configDir, { isPro = false } = {}) {
     const toolTarget = TOOL_TARGETS[toolId];
     if (!toolTarget || !adapter) return [];
     const bundledSkillsRoot = configDir + "/plugins/engram-quest/bundled-skills";
     const modules = MODULES.filter(m => (isPro || !m.pro) && (toolId === "claude" || !m.claudeOnly));
-    return toolTarget.kind === "rules"
-      ? buildCursorRuleEntries(toolTarget, adapter, bundledSkillsRoot, modules)
-      : buildSkillEntries(toolTarget, adapter, bundledSkillsRoot, modules, isPro);
+    return buildSkillEntries(toolTarget, adapter, bundledSkillsRoot, modules, isPro);
   }
 
   /** Paths of the Pro video content that must not stay on disk once a licence has ended (ADR-30). */
@@ -235,12 +213,23 @@ function createInstaller(embeddedOverride) {
     return paths;
   }
 
+  /**
+   * Files an older installer wrote that the current one no longer uses. Cursor once got a single
+   * `.mdc` rule per module, which Cursor never reads from `.cursor/skills/` and which carried no
+   * scripts; it now gets the same skill folders as the other tools.
+   */
+  function getLegacyPaths(toolId) {
+    if (toolId !== "cursor") return [];
+    return MODULES.map(m => joinPath(TOOL_TARGETS.cursor.baseDir, `engram-quest-${m.id}.mdc`));
+  }
+
   return {
     INSTALLER_VERSION,
     MODULES,
     TOOL_TARGETS,
     getInstallEntries,
-    getProPaths
+    getProPaths,
+    getLegacyPaths
   };
 }
 

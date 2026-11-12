@@ -13,6 +13,9 @@ const { icon, iconButton, watchTheme, featureIcon } = require("./ui");
 const CONTENT = require("./help-content");
 
 const PROMPT_FILE = "assets/claude-desktop-prompt.txt";
+// The release build carries the prompt text in main.js (a store install has no assets/ folder);
+// a test or dev run without it reads the file.
+const BUNDLED_PROMPT = typeof __SETUP_PROMPT__ === "undefined" ? null : __SETUP_PROMPT__;
 const SUPPORT_URL = "https://ko-fi.com/wen_aidev";
 
 // Section text may name the vault's config folder as {configDir}; it is not always ".obsidian".
@@ -148,7 +151,7 @@ class HelpModal extends I.Modal {
     const btn = panel.createDiv({ cls: "lh-help-acts" }).createEl("button", { cls: "lh-btn alt", text: ui.copyPrompt });
     btn.addEventListener("click", async () => {
       try {
-        const text = await this.app.vault.adapter.read(I.normalizePath(`${this.plugin.manifest.dir}/${PROMPT_FILE}`));
+        const text = BUNDLED_PROMPT ?? await this.app.vault.adapter.read(I.normalizePath(`${this.plugin.manifest.dir}/${PROMPT_FILE}`));
         await navigator.clipboard.writeText(text);
         btn.setText(ui.copied);
       } catch (err) {

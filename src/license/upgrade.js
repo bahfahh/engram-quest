@@ -2,6 +2,8 @@
 
 const { Modal } = require("obsidian");
 const { t } = require("../i18n");
+const { assetUrl } = require("../assets");
+const { price: PRICE } = require("./config");
 
 const FEATURES = [
   { id: "anchors", icon: "✦", name: "PRO_ANCHORS", desc: "PRO_ANCHORS_DESC", detail: "PRO_ANCHORS_DETAIL" },
@@ -19,11 +21,10 @@ function renderUpgradeContent(container, plugin, { close, checkout } = {}) {
   // Brand name retains its official capitalization.
   // eslint-disable-next-line obsidianmd/ui/sentence-case
   brand.createEl("span", { text: "EngramQuest Pro" });
-  const base = plugin.manifest.dir || `${plugin.app.vault.configDir}/plugins/${plugin.manifest.id}`;
   for (const theme of ["light", "dark"]) {
     const image = art.createEl("img", { cls: `eq-pro-notebook eq-pro-notebook-${theme}`, attr: { alt: tr("PRO_ART_ALT") } });
     image.addEventListener("error", () => { image.hidden = true; art.addClass("eq-pro-art-missing"); });
-    image.src = plugin.app.vault.adapter.getResourcePath(`${base}/assets/pro/learning-notebook-${theme}.webp`);
+    image.src = assetUrl(plugin.app, `assets/pro/learning-notebook-${theme}.webp`);
   }
   art.createEl("p", { cls: "eq-pro-art-caption", text: tr("PRO_ART_CAPTION") });
 
@@ -54,7 +55,7 @@ function renderUpgradeContent(container, plugin, { close, checkout } = {}) {
   }
   const price = body.createEl("div", { cls: "eq-pro-price" });
   const priceTop = price.createEl("div", { cls: "eq-pro-price-top" });
-  priceTop.createEl("strong", { text: "US$11.99" });
+  priceTop.createEl("strong", { text: PRICE });
   priceTop.createEl("span", { cls: "eq-pro-buyout", text: tr("PRO_BUYOUT") });
   price.createEl("p", { text: `✓ ${tr("PRO_FUTURE")}` });
   price.createEl("p", { text: `✓ ${tr("PRO_FREE_PROMISE")}` });

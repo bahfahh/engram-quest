@@ -1,5 +1,5 @@
 "use strict";
-// Light-mode primary-button palette (ADR-09 in doc/開發計劃/影片學院/ADR.md): soft violet #6D5BD0,
+// Light-mode primary-button palette (ADR-09 in doc/features/video-academy/ADR.md): soft violet #6D5BD0,
 // hover #5B48B8, white text. Dark mode keeps its indigo buttons; the Boss button is untouched.
 // !important is required: Obsidian's own button rules (and some inline styles) out-rank plain
 // class selectors, which is how "Continue mission" ended up with dark text on a violet fill.

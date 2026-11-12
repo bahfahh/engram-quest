@@ -5,11 +5,13 @@ Each skill is installed as an independent module with its own `references/` and 
 
 | Module | Skill file | Purpose |
 |---|---|---|
-| quest-map | `quest-map/skills.md` | Generate `quest-map` markdown files |
+| quest-map | `quest-map/skills.md` | Generate HTML quest packages (`engram-quest/quests/{slug}/`) for the Quest Map tab |
 | review-deck | `review-deck/skills.md` | Generate or update review-deck cards and hints |
 | memory-map | `memory-map/skills.md` | Generate `.canvas` memory maps |
 | lesson-academy | `lesson-academy/skills.md` | Build interactive HTML lesson courses for the Lesson Academy tab |
-| explainer | `explainer/skills.md` | Generate plain-language visual explainer pages for failing flashcards (Pro) |
+| animated-course | `animated-course/skills.md` | Make animated lesson videos for the Video Academy tab (Claude Code) |
+| synapse | `synapse/skills.md` | Suggest memory anchors that connect hard cards to mastered ones (Pro) |
+| explainer | `explainer/skills.md` | Write Deep Dive pages for failing flashcards and Insight pages for a body of notes (Pro) |
 | episodic-review | `episodic-review/skills.md` | Turn a period of notes into a recall pack (overview + Review Deck questions for every topic) and full-frame recall films built on maps and diagrams (Pro, Claude Code) |
 
 ---

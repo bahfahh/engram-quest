@@ -6,7 +6,7 @@
 import { makeStage, labPoses } from '/lib/cast/stage.js';
 const id = new URLSearchParams(location.search).get('style') || '_sample3d';
 const mod = await import(`/lib/cast/skins/${id}.js`);
-const st = await makeStage();
+const st = await makeStage({ card: true });   // the demo UI panel the teacher points at
 const cast = await mod.create(st.env, { variant: new URLSearchParams(location.search).get('variant') });
 st.adopt(cast);
 const tag = document.createElement('div');

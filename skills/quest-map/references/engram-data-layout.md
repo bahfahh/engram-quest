@@ -32,9 +32,11 @@ engram-quest/
 └── explainer/{id}.html ← explainer pages (Pro; metadata in explainer/meta/)
 
 engram-review/
-├── ai-cards/{note}.md     ← AI-generated flashcards (`question :: answer` lines)
-└── hints/{note}.json      ← L1/L2/L3 hints
+├── ai-cards/{note-key}.md ← AI-generated flashcards (`question :: answer` lines)
+└── hints/{note-key}.json  ← L1/L2/L3 hints
 ```
+
+`{note-key}` = the source note's path with `/` replaced by `__`, no `.md`. Older files are named by the note name alone and are still read.
 
 ## Reading a Lesson Academy course as source material
 

@@ -87,5 +87,6 @@ export const ico = (n, size = 44, color = 'currentColor') => `<span class="ico" 
 export async function fontsReady() {
   await document.fonts.ready; const used = document.body.textContent + '0123456789／・：？，。「」→↔';
   await Promise.all(['300', '400', '500', '700'].map(w => document.fonts.load(`${w} 40px "Noto Sans TC"`, used)));
-  await Promise.all([document.fonts.load('600 40px Inter', used), document.fonts.load('400 40px "LXGW WenKai TC"', used)]); await document.fonts.ready;
+  await Promise.all([document.fonts.load('600 40px Inter', used), document.fonts.load('400 40px "LXGW WenKai TC"', used)]);
+  await Promise.all(['300', '400', '500', '700'].map(w => document.fonts.load(`${w} 40px "Latin Punct"`, used))); await document.fonts.ready;
 }

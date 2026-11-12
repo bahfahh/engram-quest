@@ -4,7 +4,7 @@
 // plus the mp4 / vtt / poster files the video skill renders. settings.json in the same root holds
 // the generation settings the skill reads. The plugin never runs AI: "new topic" only writes a
 // pending topic the skill picks up later. Pure of Obsidian UI — every function takes a vault
-// adapter so the logic is unit-testable. Contract: doc/開發計劃/影片學院/contract.md.
+// adapter so the logic is unit-testable. Contract: doc/features/video-academy/contract.md.
 
 const { safeSlugPart, trashPath } = require("../lessons/data");
 

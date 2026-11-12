@@ -8,8 +8,12 @@
 @import url('/node_modules/@fontsource/noto-sans-tc/700.css');
 @import url('/node_modules/@fontsource/lxgw-wenkai-tc/400.css');
 @import url('/node_modules/@fontsource/lxgw-wenkai-tc/700.css');
+@import url('/lib/kit/tc-variants.css');   /* after LXGW: its variant-shaped characters drawn in Taiwan-standard form (see the file) */
 @import url('/node_modules/@fontsource/kalam/400.css');   /* English hand font (K.setLang('en')) */
 @import url('/node_modules/@fontsource/kalam/700.css');
+@import url('/node_modules/@fontsource/jetbrains-mono/400.css');   /* monospace (terminals, code, query editors): shipped, not a system font */
+@import url('/node_modules/@fontsource/jetbrains-mono/500.css');
+@import url('/node_modules/@fontsource/jetbrains-mono/700.css');
 
 :root {
   --bg: #F4F2EE; --card: #FFFFFF; --ink: #1C1E21; --muted: #65676B; --line: #E4E6EB; --line2: #CED0D4;
@@ -20,6 +24,7 @@
   --font: Inter, "Noto Sans TC", system-ui, sans-serif;
   --font-tc: "Noto Sans TC", Inter, sans-serif;
   --font-hand: "LXGW WenKai TC", "Noto Sans TC", serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
 }
 /* English mode (K.setLang('en') puts .k-en on <html>): the Chinese-first stacks become Latin-first */
 html.k-en { --font-tc: Inter, "Noto Sans TC", sans-serif; --font-hand: Kalam, "LXGW WenKai TC", serif; }

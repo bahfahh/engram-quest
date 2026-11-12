@@ -4,6 +4,7 @@
 const I = require("obsidian");
 const { t: c } = require("../i18n");
 const { attachInfoButton } = require("./feature-guide");
+const { assetUrl } = require("../assets");
 
 const PATHS = {
   deck: '<rect x="4" y="8" width="16" height="12" rx="2.5"/><path d="M7 5h10"/>',
@@ -89,7 +90,7 @@ function watchTheme(modal, { vars = false, onChange } = {}) {
 // one that matches `.lh-dark`, so a theme switch needs no re-render. A missing file falls back
 // to the line icon.
 function iconUrl(plugin, theme, id, px) {
-  return plugin.app.vault.adapter.getResourcePath(I.normalizePath(`${plugin.manifest.dir}/assets/hub-icons/${theme}/${id}-${px}.webp`));
+  return assetUrl(plugin.app, `assets/hub-icons/${theme}/${id}-${px}.webp`);
 }
 function featureIcon(parent, plugin, id, { size = 32, fallback } = {}) {
   const wrap = parent.createEl("span", { cls: "lh-fi", attr: { style: `--fi:${size}px`, "aria-hidden": "true" } });

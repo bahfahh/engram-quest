@@ -62,9 +62,20 @@ export function mouth(T, speaker, t) {
 
 /** Wait until the given font families have the glyphs for `text` loaded (needed before drawing on a canvas). */
 export async function loadFonts(families, text, weights = ['400', '700']) {
+  if (families.includes('LXGW WenKai TC')) await addStylesheet(TC_VARIANTS);
   await document.fonts.ready;
   for (const f of families) for (const w of weights) await document.fonts.load(`${w} 64px "${f}"`, text);
   await document.fonts.ready;
+}
+
+// Taiwan-standard forms for LXGW WenKai TC's variant-shaped characters (the file says how the list was made). kit.css
+// imports it; added here too so a canvas-only page that names the chalk font gets them. Loading it again is harmless.
+const TC_VARIANTS = '/lib/kit/tc-variants.css';
+const added = new Set();
+async function addStylesheet(href) {
+  if (added.has(href)) return; added.add(href);
+  const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = href; document.head.appendChild(l);
+  await new Promise(r => { l.onload = r; l.onerror = r; });
 }
 
 /**

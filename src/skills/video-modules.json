@@ -83,6 +83,7 @@
       "scripts/studio/lib/kit/keypoint.js",
       "scripts/studio/lib/kit/kit.css",
       "scripts/studio/lib/kit/kit.js",
+      "scripts/studio/lib/kit/tc-variants.css",
       "scripts/studio/lib/stage.js",
       "scripts/studio/livecheck.py",
       "scripts/studio/pacecheck.py",

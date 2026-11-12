@@ -98,7 +98,7 @@ So every text can be finished, each block (map name tags, labels, recap cards, q
 ## 8. Length
 
 Course lessons run 5–7 minutes (reference 5:30–6:30), modules included (`12-modules.md`: they fit inside it, not on top); a single-concept lesson may be shorter. First drafts run 7–8 minutes — cut at the storyboard, cheaper than after rendering.
-Sizing a draft: English dialogue voices with normal pauses run about **140 words per minute** (experiment 12: 975 words ≈ 6:55), so 6:30 ≈ 900 words. Measure the Chinese rate on the first `voice.py` run and size from it.
+Sizing a draft: **measure the rate on the first `voice.py` run** — words (English) or characters (Chinese) of the script divided by the minutes of the voiced timeline — and size the rest of the draft from that number. The rate depends on the voice, its `rate` setting and the pauses, so a figure from another film is only a first guess: measured English rates ranged from about 140 words per minute (a dialogue with long pauses) to 175–210 (single teacher voices at their registered rates). Before the first run, write to the target length at a guessed rate and expect to cut or add after measuring. Also listen for speed itself: a voice at its registered rate can be too fast for viewers who are not native speakers, and slowing it changes the measured rate.
 
 ## 9. Short social cut (trial, experiment 18 — not reviewed by the user yet)
 

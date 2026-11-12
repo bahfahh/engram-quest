@@ -2,6 +2,7 @@
 
 const I = require("obsidian");
 const { t, getLocale } = require("../i18n");
+const { assetUrl } = require("../assets");
 const {
   buildQuestRenderState,
   loadQuestState,
@@ -285,16 +286,15 @@ class QuestViewerModal extends I.Modal {
     });
 
     const isDark = isDarkTheme();
-    const assetRoot = this.app.vault.configDir + "/plugins/engram-quest/assets/quest-map/";
-    const generatedRoot = assetRoot + "generated/";
+    const generated = name => assetUrl(this.app, `assets/quest-map/generated/${name}.webp`);
     const mapAssets = {
-      crown: this.app.vault.adapter.getResourcePath(generatedRoot + "crown-current-node.webp"),
-      nodeFrame: this.app.vault.adapter.getResourcePath(generatedRoot + "node-number-frame.webp"),
-      bossGate: this.app.vault.adapter.getResourcePath(generatedRoot + "boss-gate.webp"),
-      bossLock: this.app.vault.adapter.getResourcePath(generatedRoot + "boss-lock-badge.webp"),
+      crown: generated("crown-current-node"),
+      nodeFrame: generated("node-number-frame"),
+      bossGate: generated("boss-gate"),
+      bossLock: generated("boss-lock-badge"),
     };
     const difficulty = this.quest.difficulty || "medium";
-    const bgUrl = this.app.vault.adapter.getResourcePath(assetRoot + "quest-map_backgroud_" + difficulty + ".png");
+    const bgUrl = assetUrl(this.app, `assets/quest-map/quest-map_backgroud_${difficulty}.png`);
 
     // Body: 2-col grid on desktop, single column on mobile (side panel first for navigation)
     const body = this.contentEl.createEl("div", {

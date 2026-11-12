@@ -77,3 +77,5 @@ A different look is fine when the content calls for it. The fixed points stay: c
 ## 6. Language
 
 Changing the language is a new layout, not a substitution: alphabetic languages need roughly twice the width for the same sentence. Shorten the cards, re-check the stills for overflow and recompute the timing.
+
+Set `lang` in the film's `FILM` to the language `scripts/film_lang.py` resolved (`en`, `zh-Hant`, ...). The stage puts it on the page: a language written with spaces then gets proportional quotes, apostrophes and dashes instead of the full-width ones of the CJK font. The patterns wrap long names inside their column and push what follows down, but they place by rule: the stills remain the check.

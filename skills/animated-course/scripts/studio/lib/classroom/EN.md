@@ -79,8 +79,10 @@ const mm = await makeMindmap(board, { layout: 'radial', lang: 'en',
   - Caveat 700: most cursive, but small x-height, looks one size smaller at the same px; not recommended.
 - Nodes, edge labels and `d.text()` inside doodles all use this font. Your own `el.text()` must pass it explicitly: `el.text('...', x, y, { font: mm.font.family })` (`mm.font = {family, weight}`).
 - Writing speed: 0.042 s per English letter (Chinese: 0.075 s per character).
-- Lint counts **words** instead of characters: node ≤ 5 words, center ≤ 7 words, whole board ≤ 36 words; the 50px size check is unchanged.
+- Lint counts **words** instead of characters: node ≤ 5 words, center ≤ 7 words per line (two lines at most; a radial center over 7 words wraps itself), whole board ≤ 36 words; the 50px size check is unchanged.
 - `S.writeOn` draws letter by letter (no kerning). Kalam's `?` has a wide left side bearing, so `How?` looks like `How ?`; switch to Patrick Hand if that matters.
+- **Look-alike characters in Kalam**: lowercase `l` and digit `1` are nearly the same stroke (`e11` reads as `ell`), and `5` resembles `S`. Keep such strings out of key terms on the board: spell the word out, rephrase, or draw a code-like term (model names, versions, IDs) in a font with distinct digits — `el.text(…, { font: 'Inter' })`, or `font: 'JetBrains Mono'` for code (load it first with `S.loadFonts([family], text, ['700'])`). Check every term with letters next to digits on a full-resolution still.
+- **Apostrophes**: write chalk text with the straight apostrophe `'`. Kalam's files include the curly one (`’`), but a curly apostrophe has been seen drawn in a Chinese font on the board, most likely a system fallback font stepping in where Kalam was not loaded for that text. Text of your own (`S.writeOn` in a wipe callback, `el.text`) only gets Kalam after `S.loadFonts(['Kalam'], text, ['700'])` with that text.
 - For your own English text in the wipe callback (`spec.wipe.prev`), use `S.writeOn(c, '...', x, y, 1, { font: '700 110px "Kalam"', color: C.CHALK.white })`.
 
 ---

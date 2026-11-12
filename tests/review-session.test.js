@@ -38,6 +38,25 @@ describe("ReviewSessionModal construction", () => {
   });
 });
 
+describe("resume point", () => {
+  it("a timed session neither sets nor clears the deck resume point", () => {
+    const settings = { language: "en", _reviewProgress: { deck: "Real deck", idx: 3 } };
+    const plugin = { ...fakePlugin, settings };
+    const m = new ReviewSessionModal(fakeApp, [makeCard()], "⏱ 5 min", plugin, null, { timeboxMinutes: 5 });
+    m._saveResumePoint();
+    expect(settings._reviewProgress).toEqual({ deck: "Real deck", idx: 3 });
+  });
+
+  it("a normal deck session still saves its resume point", () => {
+    const settings = { language: "en" };
+    const plugin = { ...fakePlugin, settings };
+    const m = new ReviewSessionModal(fakeApp, [makeCard()], "Real deck", plugin, null);
+    m.idx = 2;
+    m._saveResumePoint();
+    expect(settings._reviewProgress).toEqual({ deck: "Real deck", idx: 2 });
+  });
+});
+
 describe("ReviewSessionModal renderCard reset", () => {
   it("renderCard resets hintLevel and answerShown", () => {
     const m = new ReviewSessionModal(fakeApp, [makeCard()], "d", fakePlugin, null);

@@ -5,6 +5,7 @@ const I = require("obsidian");
 const { t: c, interpolate: K } = require("../i18n");
 const { QuestViewerModal } = require("../quest/viewer-modal");
 const ui = require("./ui");
+const { assetUrl } = require("../assets");
 
 const SORTS = [["newest", "SORT_NEWEST"], ["oldest", "SORT_OLDEST"], ["name", "SORT_NAME"]];
 const DIFFICULTY = { easy: ["DIFF_EASY", "tm"], medium: ["DIFF_MEDIUM", "tl"], hard: ["DIFF_HARD", "tn"] };
@@ -40,7 +41,7 @@ function coverUrl(hub, q) {
   try {
     let key = q.bossReady && !q.completed ? "hard" : String(q.difficulty || "medium").toLowerCase();
     if (!DIFFICULTY[key]) key = "medium";
-    return hub.app.vault.adapter.getResourcePath(I.normalizePath(`${hub.plugin.manifest.dir}/assets/quest-map/card-headers/quest-card-header-${key}.webp`));
+    return assetUrl(hub.app, `assets/quest-map/card-headers/quest-card-header-${key}.webp`);
   } catch (err) {
     console.warn("EngramQuest: quest card header asset unavailable", err);
     return null;

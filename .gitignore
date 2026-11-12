@@ -3,6 +3,7 @@ main.js
 data.json
 *.map
 src/skills/embedded-skills.js
+src/assets/embedded.js
 video-packs/
 
 # Large demo videos — hosted on YouTube, not shipped in the repo

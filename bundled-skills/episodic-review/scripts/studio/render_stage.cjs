@@ -66,7 +66,7 @@ const walk = (d, out = []) => { for (const f of fs.readdirSync(d)) { if (f.start
   const duration = await first.page.evaluate(() => window.DURATION);
   // what the scene says about itself (chapters, music cues, on-screen text): written beside the film for the other tools
   const data = await first.page.evaluate(() => ({ duration: window.DURATION, parts: window.PARTS || [], chapters: window.CHAPTERS || [], cues: window.CUES || [], marks: window.MARKS || [], peaks: window.PEAKS || [], onscreen: window.ONSCREEN || [], reading: window.READING || [] }));
-  // layout check: text that leaves the frame, and two texts whose boxes overlap (measured after fonts have loaded)
+  // layout check: text that leaves the frame or its card, and two texts whose boxes overlap (measured after fonts have loaded)
   data.layout = await first.page.evaluate((peaks) => {
     const V = document.getElementById('v'), out = [], seen = new Set();
     const shown = (e) => { let o = 1; for (let p = e; p && p !== document.body; p = p.parentElement) { if (p.style.opacity !== '') o *= parseFloat(p.style.opacity); } return o; };
@@ -77,7 +77,11 @@ const walk = (d, out = []) => { for (const f of fs.readdirSync(d)) { if (f.start
         const pad = (b - tp) > 0 ? Math.min(14, (b - tp) * 0.16) : 0;        // a line box is taller than its glyphs: compare the inked part
         if (r > l) items.push({ e, l, r, t: tp + pad, b: b - pad, s: tn.map(n => n.textContent.trim()).join(' ').slice(0, 16) }); }
       const add = (kind, a, b2) => { const k = kind + a.s + (b2 ? b2.s : ''); if (!seen.has(k)) { seen.add(k); out.push({ t, kind, text: a.s, other: b2 ? b2.s : undefined }); } };
-      for (const a of items) if (a.l < -1 || a.r > 1921 || a.t < -1 || a.b > 1081) add('outside', a);
+      // outside: closer than 6 px to the edge of the frame counts as cut off
+      for (const a of items) if (a.l < 6 || a.r > 1914 || a.t < 6 || a.b > 1074) add('outside', a);
+      // overflow: text that runs past the card or sheet it is drawn on
+      for (const a of items) { const box = a.e.closest('.card, .paper'); if (!box || box === a.e) continue; const q = box.getBoundingClientRect();
+        if (a.l < q.left - 2 || a.r > q.right + 2 || a.t < q.top - 2 || a.b > q.bottom + 2) add('overflow', a); }
       for (let i = 0; i < items.length; i++) for (let j = i + 1; j < items.length; j++) { const a = items[i], c = items[j]; if (a.e.contains(c.e) || c.e.contains(a.e)) continue;
         if (Math.min(a.r, c.r) - Math.max(a.l, c.l) > 8 && Math.min(a.b, c.b) - Math.max(a.t, c.t) > 8) add('overlap', a, c); } }
     window.renderAt(0); return out; },
@@ -94,7 +98,7 @@ const walk = (d, out = []) => { for (const f of fs.readdirSync(d)) { if (f.start
     console.log(`ok: film-data${sfx}.json, music-cues${sfx}.json  ${data.duration}s (${(data.duration / 60).toFixed(1)} min), ${data.chapters.length} chapters with a topic id`);
     data.parts.forEach(p => console.log(`  ${String(p.seconds).padStart(6)}s  ${p.name}`));
     console.log(`${data.reading.length} texts on screen for less than their reading time`); data.reading.slice(0, 30).forEach(r => console.log(`  ${r.t}s  on screen ${r.have}s, needs ${r.need}s  ${r.s}`));
-    console.log(`${data.layout.length} layout problems (text outside the frame, or two texts overlapping)`); data.layout.slice(0, 30).forEach(r => console.log(`  ${r.t}s  ${r.kind}  ${r.text}${r.other ? '  <->  ' + r.other : ''}`));
+    console.log(`${data.layout.length} layout problems (text outside the frame, overflowing its card, or two texts overlapping)`); data.layout.slice(0, 30).forEach(r => console.log(`  ${r.t}s  ${r.kind}  ${r.text}${r.other ? '  <->  ' + r.other : ''}`));
     await browser.close(); srv.close(); return; }
   const stills = opt('stills') && (opt('stills') === true || opt('stills') === 'auto' ? data.peaks : String(opt('stills')).split(',').map(Number));
   if (stills) {

@@ -53,7 +53,7 @@ Figure before sentence worked: picture first, then words (one idea at a time).
 | `figure` | — | `f => {…}` (drawing helpers, below) / SVG or HTML string / DOM node |
 | `size` | `[1440, 480]` | Figure area (card is 1640×800; this is its middle). Origin = top-left of this area |
 | `sub` | — | Small line under the label (seldom needed: fewer words) |
-| `backdrop` | st's `.k-viewport` | Background to push back; `false` = leave it |
+| `backdrop` | st's `.k-viewport` | Background to push back; `false` = leave it. While a card is up the card sets the element's `transform-origin` (50% 46%) and `scale`; when no card is up it puts back the inline values the element had when the first card was made. So the backdrop must not carry a camera: a camera that writes `transform-origin` or `scale` on the same element is overridden while a card is up and reset to the remembered values when none is. Put the camera on an inner element, or pass `false` |
 | `out` | true | `false` = no exit (you cut to another view yourself) |
 | `mark` | `#FFE27A` | Highlighter colour |
 | `lang` | — | `'en'` for English mode (see `EN.md`) |

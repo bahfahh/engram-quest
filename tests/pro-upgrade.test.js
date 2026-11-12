@@ -2,6 +2,9 @@ import { describe, it, expect, vi } from "vitest";
 import { createRequire } from "node:module";
 const require = createRequire(import.meta.url);
 const { renderUpgradeContent } = require("../src/license/upgrade");
+const { assetUrl } = require("../src/assets");
+// A data URL after a build (embedded), a plugin-folder path before one.
+const APP = { vault: { configDir: "custom", adapter: { getResourcePath: path => `app://${path}` } } };
 
 class Element {
   constructor(tag, opts = {}) {
@@ -36,8 +39,8 @@ describe("Pro upgrade overview", () => {
     expect(root.querySelector(".eq-pro-research")).toBeFalsy();
     const images = root.all().filter(el => el.tag === "img");
     expect(images.map(el => el.src)).toEqual([
-      "app://custom/plugins/engram-quest/assets/pro/learning-notebook-light.webp",
-      "app://custom/plugins/engram-quest/assets/pro/learning-notebook-dark.webp",
+      assetUrl(APP, "assets/pro/learning-notebook-light.webp"),
+      assetUrl(APP, "assets/pro/learning-notebook-dark.webp"),
     ]);
   });
   it("opens details on demand and preserves an accessible expanded state", () => {

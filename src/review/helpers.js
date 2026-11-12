@@ -351,6 +351,31 @@ async function loadSrData(adapter, notePath) {
   return {};
 }
 
+// Hints for the cards in one file. A note's hints are named like its sr/ file (full path), so two
+// same-name notes in different folders no longer share one. An AI card file keeps its own name: the
+// ai-cards folder is flat, so that name is already unique, and it equals the key of the note the
+// cards were made from, which lets a note and its AI cards share one hints file.
+const HINTS_DIR = "engram-review/hints";
+const AI_CARDS_DIR = "engram-review/ai-cards";
+function baseNoteName(notePath) {
+  return notePath.split("/").pop().replace(/\.md$/i, "");
+}
+function hintsPath(notePath) {
+  const key = notePath.startsWith(`${AI_CARDS_DIR}/`) ? baseNoteName(notePath) : srFileName(notePath);
+  return `${HINTS_DIR}/${key}.json`;
+}
+/** { path, data } of the hints in use for a file, or null. Hints written before full-path names are read as a fallback. */
+async function loadHints(adapter, notePath) {
+  for (const path of [...new Set([hintsPath(notePath), `${HINTS_DIR}/${baseNoteName(notePath)}.json`])]) {
+    let raw;
+    try { raw = await adapter.read(path); } catch { continue; }
+    // A file that exists but doesn't parse is corrupt, not missing: don't fall back to a file
+    // that may belong to a same-name note elsewhere.
+    try { return { path, data: JSON.parse(raw) }; } catch { return null; }
+  }
+  return null;
+}
+
 // Run fn over items with at most `limit` in flight. Used by the hub-open scans so per-file
 // I/O overlaps instead of paying one sequential round-trip per file on mobile.
 // NOTE: a rejection from fn rejects the whole mapLimit call — wrap fn in try/catch if one
@@ -516,6 +541,10 @@ module.exports = {
   mergeReviewHints,
   matchFlashcardTagPrefix,
   srFileName,
+  HINTS_DIR,
+  AI_CARDS_DIR,
+  hintsPath,
+  loadHints,
   buildSrRecord,
   loadSrData,
   saveSrData,

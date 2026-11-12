@@ -1,6 +1,6 @@
 "use strict";
 
-const { anySrPattern, parseSrComment, saveSrData, mapLimit } = require("./helpers");
+const { anySrPattern, parseSrComment, saveSrData, mapLimit, loadHints } = require("./helpers");
 
 async function migrateReviewDeckFolder(adapter) {
   if (await adapter.exists("engram-review/hints")) return;
@@ -153,16 +153,15 @@ async function scanReviewDecks(app, settings, reviewHelpers) {
       card.notePath = file.path;
     });
 
-    let noteName = file.name.replace(/\.md$/i, "");
     try {
       let srData = await reviewHelpers.loadSrData(app.vault.adapter, file.path);
       reviewHelpers.mergeSrIntoCards(cards, srData);
     } catch {}
 
     try {
-      // read+catch instead of exists+read — one round-trip per note instead of two.
-      let hintPath = `engram-review/hints/${noteName}.json`;
-      const hintsPayload = JSON.parse(await app.vault.adapter.read(hintPath));
+      const loaded = await loadHints(app.vault.adapter, file.path);
+      if (!loaded) return { deckName, cards };
+      const hintsPayload = loaded.data;
       reviewHelpers.mergeReviewHints(cards, hintsPayload);
       if (file.path.startsWith("engram-review/ai-cards/")) {
           const fileNotes = hintsPayload.note

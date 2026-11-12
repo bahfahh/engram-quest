@@ -1,6 +1,7 @@
 "use strict";
 // Review cards made from a video say where it explains them: the deck's frontmatter holds `video` (vault
-// path) and each answer ends with `影片：<title>（m:ss）`. The time is read from the card itself because
+// path) and each answer ends with `影片：<title>（m:ss）`, or `Video: <title> (m:ss)` for an English video. The time
+// is read from the card itself because
 // `video_times` is positional and goes wrong once a card is deleted. A pop-up keeps the session going.
 
 const I = require("obsidian");
@@ -10,8 +11,10 @@ function rewatchTarget(app, card) {
   const file = card.notePath && app.vault.getAbstractFileByPath(card.notePath);
   const frontmatter = file && (app.metadataCache.getFileCache(file) || {}).frontmatter;
   if (!frontmatter || typeof frontmatter.video !== "string") return null;
-  const stamp = String(card.back || "").match(/^影片：.*（(\d+):(\d{2})）\s*$/m);
-  return stamp ? { path: I.normalizePath(frontmatter.video), at: Number(stamp[1]) * 60 + Number(stamp[2]) } : null;
+  const stamp = String(card.back || "").match(/^(?:影片：.*（(\d+):(\d{2})）|Video: .*\((\d+):(\d{2})\))\s*$/m);
+  if (!stamp) return null;
+  const [min, sec] = stamp[1] !== undefined ? [stamp[1], stamp[2]] : [stamp[3], stamp[4]];
+  return { path: I.normalizePath(frontmatter.video), at: Number(min) * 60 + Number(sec) };
 }
 
 function openRewatch(app, { path, at }) {

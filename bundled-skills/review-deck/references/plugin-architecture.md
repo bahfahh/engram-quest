@@ -6,7 +6,7 @@ This is reference material; the execution steps are in `skills.md`.
 ## Terminology
 
 - **source note**: the user's original note in the vault (read-only for AI)
-- **ai-cards file**: a card file AI creates at `engram-review/ai-cards/{note-name}.md`
+- **ai-cards file**: a card file AI creates at `engram-review/ai-cards/{note-key}.md`
 
 ## How the Plugin Scans Cards
 
@@ -26,7 +26,7 @@ Both conditions must be true for a file to appear as a deck:
 | Flow | Who writes cards | Where cards live | Who must set the tag |
 |---|---|---|---|
 | User-written | User | source note | User (in the source note) |
-| AI-generated | AI | `engram-review/ai-cards/{note-name}.md` | AI (in the ai-cards file frontmatter) |
+| AI-generated | AI | `engram-review/ai-cards/{note-key}.md` | AI (in the ai-cards file frontmatter) |
 
 In both flows the plugin scans the **file that contains the cards**. The tag must be on that same file.
 
@@ -59,11 +59,13 @@ This means aggregated AI decks remain supported as long as the hints and deck na
 |---|---|
 | Plugin settings | `.obsidian/plugins/engram-quest/data.json` |
 | Plugin config | `engram-review/config.json` |
-| Hints | `engram-review/hints/{note-name}.json` |
+| Hints | `engram-review/hints/{note-key}.json` |
 | Scan record | `engram-review/scan-record.json` |
 | User-written cards | source notes (any `.md` with supported cards + matching tag) |
-| AI-generated cards | `engram-review/ai-cards/{note-name}.md` |
+| AI-generated cards | `engram-review/ai-cards/{note-key}.md` |
 | SR schedules | `engram-review/sr/{srFileName}.json` |
+
+`{note-key}` is the source note's vault path with `/` replaced by `__` and `.md` dropped (`Study/Azure Notes.md` → `Study__Azure Notes`), the same key `sr/` uses. Two notes with the same name in different folders therefore never share a file. Files written before this rule are named `{note-name}` only; the plugin still reads them, so when looking for a note's hints or ai-cards file, try `{note-key}` first, then `{note-name}`, and write back under `{note-key}`. An ai-cards file's hints use the ai-cards file's own name, which is the same `{note-key}`, so a note and its AI cards share one hints file.
 
 ### SR file naming
 

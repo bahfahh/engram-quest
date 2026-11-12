@@ -72,7 +72,7 @@ Sources, all readable without asking the owner:
 - The card (`q`, `a`).
 - Its review log in `engram-review/sr/{note path with / replaced by __, no .md}.json`: each card's `log`
   holds up to 20 `{ "d": "YYYY-MM-DD", "r": 1-4 }` entries, where `r: 1` is Again.
-- Hints in `engram-review/hints/{note name}.json`.
+- Hints in `engram-review/hints/{note path with / replaced by __, no .md}.json` (older files: `{note name}.json`).
 - The source note, and the other cards in its deck, which are natural candidates for what gets confused
   with this one.
 - Related notes found through Obsidian search; see `references/obsidian-cli.md`.

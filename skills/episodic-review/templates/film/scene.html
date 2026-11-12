@@ -11,6 +11,7 @@ window.studioReady = (async () => {
   const Q = new URLSearchParams(location.search), which = Q.get('film');       // ?film=gallery loads film.gallery.js
   let mod; if (which) mod = await import(`./film.${which}.js`); else try { mod = await import('./film.js'); } catch (e) { mod = await import('./film.example.js'); }
   const F = mod.FILM; let t = 0; const B = [];
+  if (F.lang) document.documentElement.lang = F.lang;            // the film's language (scripts/film_lang.py): line breaking and punctuation follow it
   F.chapters.forEach((ch, i) => { const t0 = t; t = ch.run(t0); B.push({ i, name: ch.name, strip: ch.strip, t0, t1: t }); });
   window.DURATION = Math.ceil(t);
   window.CHAPTERS = [...B.filter(b => b.strip != null).map(b => ({ title: b.name, topicId: F.topicId, from: +b.t0.toFixed(1), to: +b.t1.toFixed(1) })), ...segments()].sort((a, b) => a.from - b.from);

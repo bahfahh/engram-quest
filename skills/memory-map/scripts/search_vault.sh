@@ -20,9 +20,10 @@ PATTERN=$(echo "$QUERY" | tr ' ' '\n' | sed 's/[.[\*^$()+?{}|\\]/\\&/g' | paste 
 # Find vault root (4 levels up from scripts/)
 VAULT_ROOT="$(cd "$(dirname "$0")/../../../.." && pwd)"
 
+# Dot-folders (.obsidian, .git, and the AI tools' own .claude / .agents / .gemini / .cursor, where these
+# skills are installed) hold no notes; searching them would return the skill files themselves.
 grep -ri --include="*.md" \
-  --exclude-dir=".obsidian" \
-  --exclude-dir=".git" \
+  --exclude-dir=".*" \
   --exclude-dir="node_modules" \
   --exclude-dir="engram-review" \
   -E "$PATTERN" \

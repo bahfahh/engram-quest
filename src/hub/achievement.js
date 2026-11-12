@@ -4,6 +4,7 @@ const { t: c } = require("../i18n");
 const { getReviewStatus } = require("../review/helpers");
 const { listCourses, courseProgress } = require("../lessons/data");
 const ui = require("./ui");
+const { assetUrl } = require("../assets");
 
 const ACHIEVEMENTS = [
   // --- Original 12 ---
@@ -96,8 +97,7 @@ function renderActivity(panel, dailyLog, t, days) {
 }
 
 function addAchievementIcon(parent, plugin, ach) {
-  const { adapter } = plugin.app.vault;
-  const src = adapter.getResourcePath ? adapter.getResourcePath(`${plugin.app.vault.configDir}/plugins/engram-quest/${ach.icon}`) : ach.icon;
+  const src = assetUrl(plugin.app, ach.icon);
   const img = parent.createEl("img", { attr: { src, alt: "" } });
   img.onerror = () => { img.remove(); ui.icon(parent.createEl("span", { cls: "lh-gi" }), "medal"); };
 }
