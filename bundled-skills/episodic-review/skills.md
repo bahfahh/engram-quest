@@ -1,6 +1,6 @@
 ---
 name: engram-episodic-review
-description: Turn the notes a person touched over a period (usually one month) into recall material that actually helps memory - a recall pack for every topic (one-line overview plus retrieval questions that go into the Review Deck), and, for the topics worth it, a full-frame recall film built on maps and diagrams (a skeleton of questions first, illustrated concepts, a relation map at the end, then recall). Use when the user asks for "this month's episodic review", "recall film", "回顧片", "情境回顧", "情境記憶", "mymemory 回顧", a short / medium / long review, or pastes a request created by the EngramQuest plugin's Recall tab. This reviews what the user already wrote; it is not a teaching video (that is engram-quest-animated-course).
+description: Turn the notes a person touched over a period (usually one month) into recall material that actually helps memory - a recall pack for every topic (one-line overview plus retrieval questions that go into the Review Deck), and, for the topics worth it, a full-frame recall film built on maps and diagrams (a skeleton of questions first, illustrated concepts, a relation map at the end, then recall). Use when the user asks for "this month's episodic review", "recall film", "回顧片", "情境回顧", "情境記憶", a short / medium / long review, or pastes a request created by the EngramQuest plugin's Recall tab. This reviews what the user already wrote; it is not a teaching video (that is engram-quest-animated-course).
 ---
 
 # Episodic review
