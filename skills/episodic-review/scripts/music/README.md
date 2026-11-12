@@ -1,5 +1,12 @@
 # 回顧片配樂產生器（`scripts/music/`）
 
+> **Style `map` (2026-11-12, full-frame topic and month films, no narration).** One theme for the whole film: opening, body and
+> ending are the same composition (same seed, key and tempo; `warm`, full arrangement), the body is one continuous piece 3 dB
+> lower, and consecutive `topic` cues are merged. `marks` in the cue sheet (recall countdowns) make the score step back 9 dB and
+> place one chime at the reveal. `render_stage.cjs --data` writes such a cue sheet. Final mix for these films:
+> `mix.py --lufs -25 --air 3`. Why: a bed without melody under a ten-minute film was heard as "no music"; a melody at -19 LUFS was
+> "too loud". The rules below (`bed` under topics, a new piece per segment) describe the older styles `rooms`, `board`, `rewind`.
+
 > 下面指令裡的 `studio/music/gen` 就是這個資料夾。
 > **不寫進 skill 資料夾**：解碼快取放 `~/.cache/engram-episodic-music/`（`MUSIC_CACHE_DIR` 可改）；用過的 (mood, seed, 調) 記在 `~/.local/state/engram-episodic-music/used.json`，**主持人應把 `MUSIC_USED` 指到 vault 的 `engram-quest/episodic-review/music-used.json`**，片與片之間才不會重複。
 > 檢查成品混音：`python3 -I qa_music.py --target -16.5 --out-dir <別處> narration.wav`（不在專案資料夾留檔，響度目標用成品的）。取樣已放在 `samples/`（授權見 `licenses/`）；第一次跑會在 `.cache/` 解碼取樣（約 260MB，可刪，已加進 .gitignore）。需要 numpy、scipy（`pip install scipy`）、ffmpeg；`qa_music.py` 另外要 matplotlib。

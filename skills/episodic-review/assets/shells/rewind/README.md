@@ -54,7 +54,7 @@
 ## 四、怎麼試
 
 ```bash
-STUDIO=<工作區>            # 已有 render.cjs、node_modules（見 reference/07-製作與工具.md 第 3 節）
+STUDIO=<工作區>            # 已有 render.cjs、node_modules（見 legacy/reference/07-製作與工具.md 第 3 節）
 cp -r .claude/skills/engram-quest-episodic-review/assets/shells/rewind $STUDIO/projects/<id>
 cd $STUDIO
 RENDER_GPU=1 node render.cjs projects/<id> --stills 156      # 一張定格 -> projects/<id>/stills/t-156.jpg

@@ -15,7 +15,7 @@ film.json (see templates/film.json):
 segment kind: intro | overview | topic | recall | reveal | closure | transition | quiz | ending
 text use (the five allowed uses + helpers): context | question | rule | recall | reveal | label | quote | card | code | texture
   - code: counted as 2 s per line, not per character.  texture: background text nobody has to read (not counted).
-Rules (reference/06-片子規格.md):
+Rules (legacy/reference/06-片子規格.md):
   - per segment: time >= new characters / 5 + 1.5 s per text of 7+ characters (code: 2 s per line)
   - every single text stays on screen >= its own characters / 5 + 1.5 s
   - recall: question read time + 6 s of silence before the segment ends; reveal: >= 8 s and readable
