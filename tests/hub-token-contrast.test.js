@@ -98,7 +98,7 @@ function usedPairs(css) {
 const PLACED = [
   ...["text", "text2", "text3", "tint", "mstt", "duet", "lrnt", "newt", "dang", "goldt"].flatMap((fg) => ["base", "card", "side", "raised"].map((bg) => [fg, bg])),
   ...["text", "text2", "text3"].map((fg) => [fg, "fill"]),
-  ["tint", "tone"], ["tint", "toneh"], ["text", "tabon"], ["onbtn", "btn"], ["onbtn", "btnh"], ["segtx", "segon"],
+  ["tint", "tone"], ["tint", "toneh"], ["text", "tabon"], ["tint", "tabon"], ["onbtn", "btn"], ["onbtn", "btnh"], ["segtx", "segon"],
   ["rhardt", "color-mix(in srgb,var(--rhard) 24%,var(--raised))"],
   ["rgoodt", "color-mix(in srgb,var(--rgood) 24%,var(--raised))"],
   ["reasyt", "color-mix(in srgb,var(--reasy) 24%,var(--raised))"],

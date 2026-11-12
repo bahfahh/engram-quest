@@ -29,6 +29,9 @@ export default [
         exports: "writable",
         __dirname: "readonly",
         __filename: "readonly",
+        // Replaced with text by esbuild (`define` in scripts/build-options.mjs).
+        __EXPLAINER_PAGE__: "readonly",
+        __SETUP_PROMPT__: "readonly",
       },
     },
     rules: {
@@ -37,7 +40,9 @@ export default [
       "@typescript-eslint/no-unused-vars": "off",
       "@typescript-eslint/no-unused-expressions": "off",
       "@typescript-eslint/no-deprecated": "off",
-      "no-undef": "off",
+      // A name that is used but never declared throws when that line runs (ticket-035).
+      // tests/undeclared-identifiers.test.js runs this rule on every file in src/ during `npm test`.
+      "no-undef": "error",
       "no-empty": "off",
     },
   },

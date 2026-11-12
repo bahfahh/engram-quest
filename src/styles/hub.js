@@ -57,6 +57,18 @@ const tokens = `
 }
 `;
 
+// The icon rail. Narrow windows always use it; `.is-rail` is the user folding the sidebar
+// (src/hub/sidebar.js). One rule set draws both, so the two can never drift apart; only a narrow
+// window also tightens the page area.
+const rail = (scope, hub) => `
+  ${scope} .lh-side { width:68px; padding:12px 10px; align-items:center; }
+  ${scope} .lh-brand { width:44px; justify-content:center; padding:0; margin-bottom:4px; }
+  ${scope} .lh-brand-full,${scope} .lh-grp,${scope} .lh-nv-label,${scope} .lh-nv em,${scope} .lh-pro-label { display:none; }
+  ${scope} .lh-rsep { display:block; width:28px; height:1px; background:var(--sep); margin:6px 0; flex:none; }
+  ${hub} .lh-nv { width:44px; height:44px; padding:0; justify-content:center; }
+  ${scope} .lh-foot { flex-direction:column-reverse; gap:4px; }
+  ${hub} .lh-pro { flex:none; width:44px; height:44px; padding:0; justify-content:center; }`;
+
 const shell = `
 .modal.lh-hub.lh-session { width:min(95vw,920px); height:min(90vh,700px); }
 .modal.lh-hub { width:min(96vw,1240px); max-width:none; min-width:0; height:min(92vh,820px); max-height:none; padding:0; overflow:hidden; border:0; border-radius:18px; background:var(--base); color:var(--text); }
@@ -85,7 +97,7 @@ const shell = `
 
 .lh-side { position:absolute; z-index:3; left:0; top:0; bottom:0; width:224px; padding:16px 12px 12px; background:var(--side); border-right:.5px solid var(--sep); display:flex; flex-direction:column; gap:2px; overflow-y:auto; scrollbar-width:none; box-sizing:border-box; }
 .lh-side::-webkit-scrollbar { display:none; }
-.lh-brand { height:44px; flex:none; display:flex; align-items:center; gap:10px; padding:0 8px; margin-bottom:6px; font-size:17px; font-weight:700; letter-spacing:-.01em; color:var(--text); white-space:nowrap; }
+.lh-brand { height:44px; flex:none; display:flex; align-items:center; gap:10px; padding:0 0 0 8px; margin-bottom:6px; font-size:17px; font-weight:700; letter-spacing:-.01em; color:var(--text); white-space:nowrap; }
 .lh-grp { flex:none; font-size:12px; line-height:16px; font-weight:600; color:var(--text3); padding:16px 10px 6px; }
 .lh-rsep { display:none; }
 .lh-hub .lh-nv { flex:none; height:42px; width:100%; border:0; border-radius:10px; background:transparent; box-shadow:none; color:var(--text); display:flex; align-items:center; justify-content:flex-start; gap:11px; padding:0 8px; font-size:14.5px; font-weight:500; cursor:pointer; text-align:left; }
@@ -94,7 +106,7 @@ const shell = `
 .lh-nv-label { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .lh-nv em { margin-left:auto; font-style:normal; font-size:12.5px; font-weight:500; color:var(--text3); font-variant-numeric:tabular-nums; }
 .lh-hub .lh-nv.on em { color:var(--text2); }
-.lh-hub :is(.lh-nv,.lh-ib,.lh-pro,.lh-btn,.lh-pbtn,.lh-seg button,.lh-fp,.lh-link,.lh-ra button,.lh-pr,.lh-pact,.lh-pcycle,.lh-tf-opt,.lh-tabg button,.lh-pback):focus-visible,.lh-hub .lh-sf:focus-within,.lh-theme :is(.lh-btn,.lh-ib):focus-visible { outline:2px solid var(--focus); outline-offset:2px; box-shadow:none; }
+.lh-hub :is(.lh-nv,.lh-ib,.lh-side-fold,.lh-pro,.lh-btn,.lh-pbtn,.lh-seg button,.lh-fp,.lh-link,.lh-ra button,.lh-pr,.lh-pact,.lh-pcycle,.lh-tf-opt,.lh-tabg button,.lh-pback):focus-visible,.lh-hub .lh-sf:focus-within,.lh-theme :is(.lh-btn,.lh-ib):focus-visible { outline:2px solid var(--focus); outline-offset:2px; box-shadow:none; }
 
 .lh-foot { margin-top:auto; flex:none; display:flex; align-items:center; gap:4px; padding:6px 0 0; }
 .lh-hub .lh-pro { flex:1; min-width:0; height:44px; border:0; border-radius:10px; background:transparent; box-shadow:none; color:var(--text); display:flex; align-items:center; justify-content:flex-start; gap:10px; padding:0 6px; font-size:14px; font-weight:500; cursor:pointer; text-align:left; white-space:nowrap; }
@@ -113,15 +125,23 @@ const shell = `
 .lh-shell.no-hero .lh-main { padding-top:14px; }
 .lh-pending { flex:1; display:flex; align-items:center; justify-content:center; font-size:20px; color:var(--text3); }
 
-@media (max-width:1039px) {
-  body:not(.is-phone) .lh-side { width:68px; padding:12px 10px; align-items:center; }
-  body:not(.is-phone) .lh-brand { width:44px; justify-content:center; padding:0; margin-bottom:4px; }
-  body:not(.is-phone) .lh-brand-full,body:not(.is-phone) .lh-grp,body:not(.is-phone) .lh-nv-label,body:not(.is-phone) .lh-nv em,body:not(.is-phone) .lh-pro-label { display:none; }
-  body:not(.is-phone) .lh-rsep { display:block; width:28px; height:1px; background:var(--sep); margin:6px 0; flex:none; }
-  body:not(.is-phone) .lh-hub .lh-nv { width:44px; height:44px; padding:0; justify-content:center; }
-  body:not(.is-phone) .lh-foot { flex-direction:column-reverse; gap:4px; }
-  body:not(.is-phone) .lh-hub .lh-pro { flex:none; width:44px; height:44px; padding:0; justify-content:center; }
+/* Fold button: at the end of the name row; in the folded rail it sits under the logo. */
+.lh-brand-full { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; }
+.lh-hub .lh-side-fold { position:relative; flex:none; width:28px; height:28px; margin:0 -4px 0 -8px; padding:0; border:0; border-radius:50%; background:var(--raised) !important; box-shadow:var(--rshadow) !important; color:var(--tint) !important; display:grid; place-items:center; cursor:pointer; }
+.lh-hub .lh-side-fold:hover { background:var(--raisedh) !important; color:var(--tint) !important; }
+.lh-hub .lh-side-fold::after { content:""; position:absolute; inset:-6px; }
+.lh-hub .lh-side-fold .lh-i { width:15px; height:15px; stroke-width:2.2; }
+
+@media (max-width:1039px) {${rail("body:not(.is-phone)", "body:not(.is-phone) .lh-hub")}
   body:not(.is-phone) .lh-main { left:68px; padding:60px 20px 0 20px; gap:10px; }
+  body:not(.is-phone) .lh-hub .lh-side-fold { display:none; }
+}
+${rail(".lh-shell.is-rail", ".lh-hub .lh-shell.is-rail")}
+  .lh-shell.is-rail .lh-main { left:68px; }
+@media (min-width:1040px) {
+  .lh-shell.is-rail .lh-brand { flex-direction:column; height:auto; gap:8px; margin-bottom:8px; }
+  .lh-hub .lh-shell.is-rail .lh-side-fold { margin:0; }
+  .lh-hub .lh-shell.is-rail .lh-side-fold .lh-i { transform:rotate(180deg); }
 }
 `;
 

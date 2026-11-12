@@ -336,7 +336,7 @@ class QuestViewerModal extends I.Modal {
         const done = Boolean(progress.state.nodes[nodes[index]?.id]?.completed);
         addConnector(stage, pos, next, done);
       });
-      nodes.forEach((node, index) => this.renderNode(stage, node, index, positions[index], progress, assetRoot, isDark, mapAssets));
+      nodes.forEach((node, index) => this.renderNode(stage, node, index, positions[index], progress, isDark, mapAssets));
     };
 
     // Mobile: side panel first (immediate access to node list + start button), map below
@@ -350,7 +350,7 @@ class QuestViewerModal extends I.Modal {
     }
   }
 
-  renderNode(stage, node, index, pos, progress, assetRoot, isDark, mapAssets = {}) {
+  renderNode(stage, node, index, pos, progress, isDark, mapAssets = {}) {
     const completed = Boolean(progress.state.nodes[node.id]?.completed);
     const active = index === progress.activeIndex && !completed;
     const locked = index > progress.activeIndex && !completed;

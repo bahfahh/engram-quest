@@ -68,6 +68,7 @@ async function renderEpisodicTab(el, hub) {
 
   const root = el.createDiv({ cls: "lh-vid" });
   hub.setHero(!open);
+  hub.setWatching(open);
   hub._entryHints = { ...hub._entryHints, episodic: K(c(t, "VIDEO_COUNT"), { count: films.length }) };
   const toList = () => { hub._vTopic = null; refresh(); };
   ui.setPhoneNav(hub, open ? { label: c(t, "EPISODIC_BACK"), title: "", onBack: toList } : null);
