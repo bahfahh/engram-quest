@@ -11,21 +11,13 @@ export const PUBLIC_DIR = 'video-public';
 // The names to hide stay in the private vault, so this public repo never publishes the list of them.
 export const TERMS_FILE = '.claude/video-public-terms.json';
 
-// What the public copy leaves out, per skill: records of films made from real notes, and material the master keeps
-// for its own history that the current method no longer uses.
+// What the public copy leaves out, per skill: material in the master that is not meant for everyone.
 const REMOVED = {
   // Kits and course maps built for one series; the generic engines and one example map per kind stay.
   'animated-course': [
     /^scripts\/studio\/lib\/azure\//,
     /^scripts\/studio\/lib\/classroom\/(coursemap-(stock|pstack)\.js|COURSEMAP-(STOCK|PSTACK)\.md)$/,
     /^scripts\/studio\/lib\/house\/coursemap-(azure|ops)\.js$/,
-  ],
-  'episodic-review': [
-    /^legacy\//,
-    /^assets\//,
-    /^scripts\/(length_estimate|onscreen|keystills|plan_parts)\.py$/,
-    /^scripts\/(farm|join_parts)\.sh$/,
-    /^scripts\/studio\/(render\.cjs|lib\/)/,
   ],
 };
 

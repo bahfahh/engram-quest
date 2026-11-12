@@ -142,16 +142,6 @@ describe("lines a person has to read", () => {
 });
 
 describe("which files ship", () => {
-  it("leaves out the recall skill's legacy material and nothing of another skill", () => {
-    for (const rel of ["legacy/README.md", "assets/shells/rooms/content.js", "scripts/onscreen.py", "scripts/farm.sh", "scripts/studio/render.cjs", "scripts/studio/lib/stage.js"]) {
-      expect(isRemoved("episodic-review", rel)).toBe(true);
-    }
-    for (const rel of ["SKILL.md", "templates/film/engine.js", "scripts/studio/render_stage.cjs", "scripts/collect.py"]) {
-      expect(isRemoved("episodic-review", rel)).toBe(false);
-    }
-    expect(isRemoved("animated-course", "assets/looks/a.jpg")).toBe(false);
-  });
-
   it("leaves out the teaching skill's kits and maps built for one series, not the generic ones", () => {
     for (const rel of ["scripts/studio/lib/azure/kit.js", "scripts/studio/lib/classroom/coursemap-stock.js", "scripts/studio/lib/classroom/COURSEMAP-PSTACK.md", "scripts/studio/lib/house/coursemap-azure.js", "scripts/studio/lib/house/coursemap-ops.js"]) {
       expect(isRemoved("animated-course", rel)).toBe(true);
@@ -159,6 +149,8 @@ describe("which files ship", () => {
     for (const rel of ["scripts/studio/lib/classroom/coursemap-aieng.js", "scripts/studio/lib/classroom/coursemap4.js", "scripts/studio/lib/house/coursemap.js", "scripts/studio/lib/house/coursemap-aieng.js"]) {
       expect(isRemoved("animated-course", rel)).toBe(false);
     }
+    expect(isRemoved("animated-course", "assets/looks/a.jpg")).toBe(false);
+    expect(isRemoved("episodic-review", "scripts/studio/lib/azure/kit.js")).toBe(false);
   });
 
   it("asks for review of every image, wherever it is", () => {
