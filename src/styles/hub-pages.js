@@ -16,7 +16,7 @@ const session = `
 .lh-hub .lh-qrow .lh-i { width:15px; height:15px; flex:none; color:var(--text3); }
 .lh-hub .lh-qrow.is-done .lh-i { color:var(--mstt); }
 .lh-hub .lh-qrow:focus-visible { outline:2px solid var(--focus); outline-offset:2px; }
-.lh-theme .lh-btn.lh-vtog.is-danger:hover { color:var(--dang); }
+.lh-theme .lh-btn.lh-vtog.is-danger { color:var(--dang); }
 .lh-theme .lh-btn.lh-vtog.lh-vsrc { max-width:180px; }
 .lh-theme .lh-btn.lh-vtog.lh-vsrc span { overflow:hidden; text-overflow:ellipsis; }
 .lh-choice { display:flex; flex-direction:column; gap:8px; padding:14px; border-radius:16px; background:var(--card); box-shadow:var(--cshadow); cursor:pointer; outline:none; }
@@ -30,10 +30,10 @@ const session = `
 .lh-hub.lh-session .lh-review-tab { display:inline-flex; align-items:center; gap:8px; height:36px; padding:0 14px 0 10px; border:0 !important; background:transparent !important; color:var(--text) !important; font-size:14px; font-weight:500; border-radius:10px; box-shadow:none; cursor:pointer; opacity:1 !important; white-space:nowrap; transform:none; }
 .lh-hub.lh-session .lh-review-tab:hover { background:var(--fill2) !important; }
 .lh-hub.lh-session .lh-review-tab.active { background:var(--tabon) !important; color:var(--text) !important; font-weight:650; cursor:default; box-shadow:none !important; }
-.lh-hub.lh-session .lh-review-back { display:inline-flex; align-items:center; gap:6px; flex:none; height:34px; padding:0 14px 0 10px; border:0 !important; background:var(--raised) !important; color:var(--text) !important; border-radius:10px; font-size:14px; font-weight:500; box-shadow:var(--pshadow); transform:none; }
+.lh-hub.lh-session .lh-review-back { display:inline-flex; align-items:center; gap:6px; flex:none; height:34px; padding:0 14px 0 10px; border:0 !important; background:var(--raised) !important; color:var(--tint) !important; border-radius:10px; font-size:14px; font-weight:500; box-shadow:var(--rshadow); transform:none; }
 .lh-hub.lh-session .lh-review-back:hover { background:var(--raisedh) !important; }
-.lh-hub.lh-session .lh-review-back .lh-i { width:17px; height:17px; color:var(--tint); }
-.lh-review-cap { display:flex; flex:none; padding:2px; margin-left:4px; border-radius:12px; background:var(--raised); box-shadow:var(--pshadow); }
+.lh-hub.lh-session .lh-review-back .lh-i { width:17px; height:17px; }
+.lh-review-cap { display:flex; flex:none; padding:2px; margin-left:4px; border-radius:12px; background:var(--raised); box-shadow:var(--rshadow); }
 .lh-hub .lh-review-cap .lh-ib { width:32px; height:30px; border-radius:9px; }
 .lh-hub.lh-session .lh-review-card { background:var(--card) !important; color:var(--text) !important; border-radius:18px; box-shadow:var(--cshadow); }
 .lh-hub.lh-session .lh-rc-top { display:flex; align-items:center; gap:8px; padding-bottom:12px; margin-bottom:16px; border-bottom:.5px solid var(--sep); }
@@ -41,15 +41,11 @@ const session = `
 .lh-rc-deck span { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 :is(.lh-hub,.lh-theme) .lh-rc-deck .lh-i { width:22px; height:22px; stroke-width:1.5; color:var(--text2); }
 .lh-rc-acts { display:flex; align-items:center; gap:6px; flex:none; }
-.lh-hub.lh-session .lh-rc-edit-btn { display:inline-flex; align-items:center; gap:6px; height:32px; padding:0 12px; background:var(--raised) !important; border:0 !important; color:var(--text) !important; border-radius:10px; font-size:13px; font-weight:500; box-shadow:var(--pshadow); white-space:nowrap; cursor:pointer; }
+.lh-hub.lh-session .lh-rc-edit-btn { display:inline-flex; align-items:center; gap:6px; height:32px; padding:0 12px; background:var(--raised) !important; border:0 !important; color:var(--tint) !important; border-radius:10px; font-size:13px; font-weight:500; box-shadow:var(--rshadow); white-space:nowrap; cursor:pointer; }
 .lh-hub.lh-session .lh-rc-edit-btn:hover { background:var(--raisedh) !important; }
 .lh-hub.lh-session .lh-rc-edit-btn:disabled { background:var(--fill2) !important; color:var(--text3) !important; box-shadow:none; cursor:default; }
-.lh-hub.lh-session .lh-rc-edit-btn .lh-i { width:16px; height:16px; color:var(--tint); }
-.lh-hub.lh-session .lh-rc-edit-btn:is(:disabled,.is-danger,.is-done) .lh-i { color:currentColor; }
+.lh-hub.lh-session .lh-rc-edit-btn .lh-i { width:16px; height:16px; }
 .lh-hub.lh-session .lh-rc-edit-btn.is-danger { color:var(--dang) !important; }
-/* The source note is a link, and Highlight / Quote have no icon: their label carries the colour. */
-.lh-hub.lh-session :is(.lh-rc-src,.lh-fmt-btn):not(:disabled) { color:var(--tint) !important; }
-.lh-hub.lh-session .lh-fmt-btn:not(:disabled) > span { color:var(--text); }
 .lh-hub.lh-session .lh-fmt-btn { opacity:1; }
 .lh-hub.lh-session .lh-rc-edit-btn.is-done { color:var(--mstt) !important; }
 .lh-rc-src span { max-width:150px; overflow:hidden; text-overflow:ellipsis; }
@@ -79,9 +75,9 @@ const session = `
 .lh-hub.lh-session .lh-sbar .lh-pbtn.alt:not(.is-off):hover { background:var(--toneh); }
 .lh-hub.lh-session .lh-pbtn.is-off { background:var(--fill2); color:var(--text3); box-shadow:none; cursor:not-allowed; }
 .lh-hub.lh-session .lh-footer-meta { justify-content:flex-start; }
-.lh-hub.lh-session .lh-pill-reset { width:auto; flex:none; white-space:nowrap; display:inline-flex; align-items:center; gap:6px; height:32px; padding:0 12px 0 10px; background:var(--raised) !important; border:0 !important; color:var(--text) !important; border-radius:10px; font-size:13px; font-weight:500; box-shadow:var(--pshadow); }
+.lh-hub.lh-session .lh-pill-reset { width:auto; flex:none; white-space:nowrap; display:inline-flex; align-items:center; gap:6px; height:32px; padding:0 12px 0 10px; background:var(--raised) !important; border:0 !important; color:var(--tint) !important; border-radius:10px; font-size:13px; font-weight:500; box-shadow:var(--rshadow); }
 .lh-hub.lh-session .lh-pill-reset:hover { background:var(--raisedh) !important; transform:none; }
-.lh-hub.lh-session .lh-pill-reset .lh-i { width:16px; height:16px; color:var(--tint); }
+.lh-hub.lh-session .lh-pill-reset .lh-i { width:16px; height:16px; }
 .lh-hub.lh-session .lh-dot { background:var(--fill) !important; border:0; box-shadow:none; }
 .lh-hub.lh-session .lh-dot.lit { background:var(--bar) !important; box-shadow:none; }
 body:not(.is-phone) .lh-hub.lh-session .lh-review-progress { flex-direction:row; gap:14px; padding:12px 16px 16px; }
@@ -90,12 +86,11 @@ body:not(.is-phone) .lh-hub.lh-session .lh-review-prog-wrap { flex:1; }
 .lh-hub.lh-session .lh-review-prog-bar { background:var(--bar) !important; border-radius:4px; }
 .lh-hub.lh-session .lh-review-badge { background:transparent !important; color:var(--text) !important; box-shadow:none; padding:0; border-radius:0; font-size:14px; font-weight:600; font-variant-numeric:tabular-nums; }
 .lh-hub.lh-session .lh-browse-note { background:var(--fill2) !important; border:0 !important; color:var(--text2) !important; }
-.lh-hub.lh-session .lh-browse-btn { background:var(--raised) !important; border:0 !important; color:var(--tint) !important; box-shadow:var(--pshadow); border-radius:12px; }
+.lh-hub.lh-session .lh-browse-btn { background:var(--raised) !important; border:0 !important; color:var(--tint) !important; box-shadow:var(--rshadow); border-radius:12px; }
 .lh-hub.lh-session .lh-browse-btn:hover { background:var(--raisedh) !important; }
-.lh-hub.lh-session .lh-rewatch-row .lh-vid-btn { color:var(--tint) !important; box-shadow:var(--pshadow) !important; }
 .lh-hub.lh-session .lh-browse-btn:disabled { background:var(--fill2) !important; color:var(--text3) !important; box-shadow:none; }
 .lh-hub.lh-session .lh-rating-row { gap:10px; }
-.lh-hub.lh-session .lh-rating-btn { background:var(--raised) !important; box-shadow:var(--pshadow) !important; border:0 !important; transform:none; border-radius:14px; }
+.lh-hub.lh-session .lh-rating-btn { background:var(--raised) !important; box-shadow:var(--rshadow) !important; border:0 !important; transform:none; border-radius:14px; }
 .lh-hub.lh-session .lh-rating-btn:hover { background:var(--raisedh) !important; }
 /* Hard / Good / Easy each own a tinted surface; Again stays neutral and only its icon is coloured. */
 .lh-hub.lh-session .lh-rb-hard { --rb:var(--rhard); --rbt:var(--rhardt); }
@@ -117,7 +112,7 @@ body.is-phone .lh-hub.lh-session .lh-rb-top { gap:4px; }
 .lh-hub.lh-session .lh-edit-textarea { background:var(--card) !important; border:1px solid var(--sep) !important; color:var(--text) !important; box-shadow:none; }
 .lh-hub.lh-session .lh-edit-textarea:focus { border-color:var(--focus) !important; box-shadow:0 0 0 3px color-mix(in srgb,var(--focus) 20%,transparent); }
 .lh-hub.lh-session .lh-edit-save-btn { background:var(--btn) !important; color:var(--onbtn) !important; border-radius:10px; box-shadow:0 1px 2px rgba(0,0,0,.16) !important; transform:none; font-weight:600; }
-.lh-hub.lh-session .lh-edit-cancel-btn { background:var(--raised) !important; border:0 !important; color:var(--text) !important; border-radius:10px; box-shadow:var(--pshadow); }
+.lh-hub.lh-session .lh-edit-cancel-btn { background:var(--raised) !important; border:0 !important; color:var(--tint) !important; border-radius:10px; box-shadow:var(--rshadow); }
 .lh-hub.lh-session .lh-timebox-clock { background:var(--fill); color:var(--text2); }
 
 .lh-snav { display:flex; align-items:center; gap:4px; flex:none; min-height:44px; padding:calc(env(safe-area-inset-top,0px) + 8px) 12px 0 18px; }
@@ -170,7 +165,7 @@ const library = `
 .lh-st.tl { background:color-mix(in srgb,var(--due) 15%,transparent); color:var(--duet); }
 .lh-st.tm { background:color-mix(in srgb,var(--mst) 18%,transparent); color:var(--mstt); }
 .lh-xpt { display:flex; align-items:center; gap:6px; min-width:0; }
-.lh-xstar { color:var(--text2); display:grid; flex:none; }
+.lh-xstar { color:var(--goldt); display:grid; flex:none; }
 .lh-hub .lh-xstar .lh-i { width:14px; height:14px; fill:currentColor; }
 .lh-xbadge { flex:none; font-size:11px; line-height:16px; color:var(--text3); background:var(--fill2); border-radius:6px; padding:0 6px; white-space:nowrap; }
 
@@ -228,9 +223,9 @@ const lessons = `
 .lh-cc.sel { box-shadow:0 0 0 2px var(--btn); }
 .lh-cc-nm { font-size:15px; line-height:20px; font-weight:600; color:var(--text); padding-right:6px; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; word-break:break-word; }
 .lh-cc-em { width:34px; height:34px; border-radius:9px; background:var(--fill2); display:grid; place-items:center; font-size:18px; flex:none; }
-.lh-hub .lh-cc-st { position:absolute; right:8px; top:6px; width:32px; height:32px; padding:0; border:0; background:transparent; box-shadow:none; color:var(--text3); font-size:16px; line-height:1; cursor:pointer; }
+.lh-hub .lh-cc-st { position:absolute; right:8px; top:6px; width:32px; height:32px; padding:0; border:0; background:transparent; box-shadow:none; color:var(--goldt); font-size:16px; line-height:1; cursor:pointer; }
 .lh-hub .lh-cc-st:hover { background:transparent; }
-.lh-hub .lh-cc-st.on { color:var(--text); }
+.lh-hub .lh-cc-st.on { color:var(--goldt); }
 .lh-cc-tag { align-self:flex-start; }
 .lh-cc-tags { display:flex; gap:4px; flex-wrap:wrap; }
 .lh-cc-desc { font-size:12px; line-height:17px; color:var(--text2); display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
@@ -248,10 +243,10 @@ const lessons = `
 .lh-ls-goal { margin-top:2px; font-size:13px; line-height:18px; color:var(--text3); display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
 .lh-ls:not(.lh-ladd):hover { background:var(--fill2); }
 .lh-st:not(.td):not(.tl):not(.tm) { background:var(--fill); color:var(--text2); }
-.lh-ls-chev { display:grid; flex:none; width:16px; color:var(--text3); }
+.lh-ls-chev { display:grid; flex:none; width:16px; color:var(--tint); }
 .lh-hub .lh-ls-chev .lh-i { width:16px; height:16px; }
 .lh-ls:hover .lh-ra { opacity:1; }
-.lh-hub .lh-ls .lh-ra button { background:transparent; color:var(--text3); }
+.lh-hub .lh-ls .lh-ra button { background:transparent; color:var(--tint); }
 .lh-ladd { color:var(--tint); }
 .lh-hub .lh-ladd .lh-lic { color:var(--tint); }
 .lh-hub .lh-ladd input { all:unset; flex:1; min-width:0; height:32px; padding:0 10px; border-radius:8px; background:var(--fill); color:var(--text); font-size:14px; box-sizing:border-box; }
@@ -341,7 +336,7 @@ const help = `
 .lh-hub .lh-help-tab:focus-visible,.lh-hub .lh-help-sec-h:focus-visible,.lh-hub .lh-guide-opt:focus-visible { outline:2px solid var(--tint); outline-offset:-2px; }
 :is(.lh-help,.lh-guide) :is(.lh-link,.lh-guide-back,.lh-guide-zoom,.lh-guide-yt):focus-visible { outline:2px solid var(--tint); outline-offset:2px; border-radius:4px; }
 .lh-help-tab + .lh-help-tab::before { content:""; position:absolute; left:50px; right:0; top:0; height:.5px; background:var(--sep); }
-.lh-help-tab > .lh-i { width:16px; height:16px; color:var(--text3); }
+.lh-help-tab > .lh-i { width:16px; height:16px; color:var(--tint); }
 .lh-help-tab-tx { flex:1; min-width:0; display:flex; flex-direction:column; }
 .lh-help-tab-nm { display:flex; align-items:center; gap:6px; font-size:14px; line-height:19px; font-weight:600; }
 .lh-help-tab-sub { font-size:12px; line-height:16px; color:var(--text3); }
@@ -356,7 +351,7 @@ const help = `
 .lh-help-sec-t { flex:1; min-width:0; font-size:15px; line-height:20px; font-weight:600; }
 .lh-help-tag { flex:none; max-width:45%; font-size:12px; line-height:16px; color:var(--text3); text-align:right; }
 .lh-help-tag.pro { color:var(--text2); background:var(--fill); padding:1px 7px; border-radius:6px; font-weight:600; }
-.lh-help-chev { display:grid; flex:none; color:var(--text3); transition:transform .15s; }
+.lh-help-chev { display:grid; flex:none; color:var(--tint); transition:transform .15s; }
 .lh-help-chev .lh-i { width:16px; height:16px; }
 .lh-help-sec-h[aria-expanded="true"] .lh-help-chev { transform:rotate(90deg); }
 .lh-help-sec-b { padding:0 20px 18px 52px; font-size:14px; line-height:22px; color:var(--text); }
@@ -406,7 +401,7 @@ body.is-phone .lh-help-tag:not(.pro) { display:none; }
 .lh-guide-opt + .lh-guide-opt::before { content:""; position:absolute; left:14px; right:0; top:0; height:.5px; background:var(--sep); }
 .lh-guide-opt b { display:block; font-size:15px; line-height:20px; font-weight:600; }
 .lh-guide-opt span span { display:block; font-size:12px; line-height:16px; color:var(--text3); }
-.lh-guide-opt > .lh-i { width:16px; height:16px; color:var(--text3); }
+.lh-guide-opt > .lh-i { width:16px; height:16px; color:var(--tint); }
 .lh-hub .lh-guide-back { min-height:32px; color:var(--tint); font-size:14px; font-weight:500; cursor:pointer; }
 .lh-guide-fig { position:relative; margin:12px 0; }
 .lh-guide-cap { margin-bottom:5px; font-size:12px; line-height:16px; font-weight:600; color:var(--text3); }

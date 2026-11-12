@@ -11,7 +11,7 @@ module.exports = `
 .lh-vid-body { display:flex; flex-direction:column; gap:12px; }
 .lh-vid-spacer { flex:1; }
 
-.lh-vid-btn { height:34px; padding:0 14px !important; border-radius:10px !important; border:0 !important; background:var(--raised) !important; color:var(--text) !important; font-size:13.5px; font-weight:600; cursor:pointer; box-shadow:var(--rshadow) !important; white-space:nowrap; display:inline-flex; align-items:center; justify-content:center; gap:6px; }
+.lh-vid-btn { height:34px; padding:0 14px !important; border-radius:10px !important; border:0 !important; background:var(--raised) !important; color:var(--tint) !important; font-size:13.5px; font-weight:600; cursor:pointer; box-shadow:var(--rshadow) !important; white-space:nowrap; display:inline-flex; align-items:center; justify-content:center; gap:6px; }
 .lh-vid-btn:hover { background:var(--raisedh) !important; }
 .lh-vid-btn .lh-i { width:16px; height:16px; }
 .lh-vid-btn-primary { background:var(--btn) !important; color:var(--onbtn) !important; box-shadow:inset 0 .5px 0 rgba(255,255,255,.22),0 1px 2px rgba(0,0,0,.16),0 3px 10px rgba(91,72,184,.18) !important; }
@@ -20,12 +20,12 @@ module.exports = `
 .lh-vid-btn-danger,.lh-vid-btn-danger:hover { background:var(--dang) !important; color:#FFFFFF !important; }
 .lh-dark .lh-vid-btn-danger { color:#1D1D1F !important; }
 .lh-vid-btn:disabled { background:var(--fill2) !important; color:var(--text3) !important; box-shadow:none !important; cursor:not-allowed; }
-.lh-vid-btn.is-done { color:var(--mstt) !important; }
-.lh-vid-back { height:32px; padding:0 12px !important; border-radius:10px !important; background:var(--raised) !important; border:0 !important; box-shadow:var(--rshadow) !important; color:var(--text) !important; font-size:13.5px; font-weight:500; cursor:pointer; white-space:nowrap; }
+.lh-vid-btn.is-done { background:color-mix(in srgb,var(--mst) 16%,var(--raised)) !important; color:var(--mstt) !important; box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--mstt) var(--ringk),transparent) !important; }
+.lh-vid-back { height:32px; padding:0 12px !important; border-radius:10px !important; background:var(--raised) !important; border:0 !important; box-shadow:var(--rshadow) !important; color:var(--tint) !important; font-size:13.5px; font-weight:500; cursor:pointer; white-space:nowrap; }
 .lh-vid-back:hover { background:var(--raisedh) !important; }
 body.is-phone .lh-vid-back { height:auto; padding:0 !important; background:none !important; box-shadow:none !important; color:var(--tint) !important; font-size:15px; }
-.lh-vid-btn-danger-text { background:none !important; color:var(--text2) !important; font-weight:500; padding:0 8px !important; }
-.lh-vid-btn-danger-text:hover { background:none !important; color:var(--newt) !important; }
+.lh-vid-btn-danger-text { background:none !important; color:var(--dang) !important; font-weight:500; padding:0 8px !important; }
+.lh-vid-btn-danger-text:hover { background:none !important; color:var(--dang) !important; }
 .lh-vid-pro-tag { font-size:11px; font-weight:600; color:var(--text2); background:var(--fill); padding:1px 6px; border-radius:6px; }
 
 .lh-vid-empty { flex:1; min-height:240px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; text-align:center; padding-bottom:70px; }
@@ -99,10 +99,12 @@ body.is-phone .lh-vid-back { height:auto; padding:0 !important; background:none 
 .lh-vid-swatch.is-on { border-color:var(--card) !important; box-shadow:0 0 0 2px var(--btn) !important; }
 
 .lh-vid-cards-row:empty { display:none; }
+.lh-vid-cards-row .lh-vid-btn { background:var(--tone) !important; box-shadow:var(--tonering) !important; }
+.lh-vid-cards-row .lh-vid-btn:hover { background:var(--toneh) !important; }
 .lh-vid-chapters { display:flex; flex-direction:column; gap:2px; }
 .lh-vid-chapter { display:flex !important; justify-content:flex-start; align-items:center; gap:10px; height:auto !important; padding:5px 8px !important; background:none !important; border:0 !important; box-shadow:none !important; color:var(--text) !important; font-size:13px; text-align:left; white-space:normal; border-radius:8px !important; cursor:pointer; }
 .lh-vid-chapter:hover { background:var(--fill2) !important; }
-.lh-vid-chapter-time { flex-shrink:0; font-variant-numeric:tabular-nums; color:var(--text3); font-weight:500; }
+.lh-vid-chapter-time { flex-shrink:0; font-variant-numeric:tabular-nums; color:var(--tint); font-weight:500; }
 .lh-vid-credits { font-size:12px; line-height:16px; color:var(--text3); }
 .lh-vid-ep-setting { display:flex; align-items:center; flex-wrap:wrap; gap:10px; flex:none; font-size:13px; color:var(--text2); }
 .lh-vid-ep-setting .lh-vid-set-label { font-weight:500; color:var(--text); }
@@ -137,7 +139,7 @@ body.is-phone .lh-vid-back { height:auto; padding:0 !important; background:none 
 .lh-vid-status.is-progress { color:var(--lrnt); }
 
 .lh-vid-chip { display:inline-flex; align-items:center; gap:4px; max-width:220px; padding:2px 8px; border-radius:7px; background:var(--fill); color:var(--text2); font-size:12px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.lh-vid-chip-x { height:auto; padding:0 !important; background:none !important; border:0 !important; box-shadow:none !important; color:var(--text3) !important; font-size:13px; cursor:pointer; }
+.lh-vid-chip-x { height:auto; padding:0 !important; background:none !important; border:0 !important; box-shadow:none !important; color:var(--tint) !important; font-size:13px; cursor:pointer; }
 
 .lh-vid-topic { display:flex; flex-direction:column; gap:12px; }
 .lh-vid-stage { width:100%; aspect-ratio:16/9; border-radius:16px; overflow:hidden; background:#000; box-shadow:0 14px 34px rgba(0,0,0,.28); flex:none; }
@@ -145,7 +147,7 @@ body.is-phone .lh-vid-back { height:auto; padding:0 !important; background:none 
 .lh-vid-missing { height:100%; display:flex; align-items:center; justify-content:center; padding:20px; text-align:center; background:#1F1F23; color:#BDBDC5; font-size:13px; }
 .lh-vid-info { display:flex; flex-direction:column; gap:8px; }
 .lh-vid-info-row { display:flex; align-items:center; gap:12px; }
-.lh-vid-icon-btn { width:32px; padding:0 !important; background:none !important; color:var(--text2) !important; flex:0 0 auto; }
+.lh-vid-icon-btn { width:32px; padding:0 !important; background:none !important; color:var(--tint) !important; flex:0 0 auto; }
 .lh-vid-icon-btn svg { width:16px; height:16px; }
 .lh-vid-info-titles { flex:1; min-width:0; }
 .lh-vid-info-title { font-size:17px; line-height:24px; font-weight:600; color:var(--text); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
