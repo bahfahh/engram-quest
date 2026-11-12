@@ -1,8 +1,11 @@
 #!/usr/bin/env node
-// render_stage.cjs — frame renderer with a content-addressed frame cache (實驗 24).
+// render_stage.cjs — frame renderer with a content-addressed frame cache.
 //
+//   node render_stage.cjs <projectDir> --data                      film-data.json + music-cues.json; prints length per part and reading shortfalls
+//   node render_stage.cjs <projectDir> --stills auto [--notext]    one still at each fullest moment (or --stills 1.5,12); --notext hides the words
+//   add --film gallery to any of them to load film.gallery.js instead of film.js
 //   node render_stage.cjs <projectDir> [--scene scene.html] [--fps 24] [--workers 3] [--from s] [--to s]
-//                         [--out final.mp4] [--audio narration.wav] [--stills 1.5,12] [--nocache] [--poster 8]
+//                         [--out final.mp4] [--audio narration.wav] [--nocache] [--noaudio] [--poster 8] [--music-style rooms]
 //
 // Same scene contract as render.cjs (window.studioReady, window.renderAt(t), window.DURATION), plus one rule:
 // everything a frame shows must be in the DOM after renderAt(t) (inline styles, attributes, text). No <canvas> drawing,
@@ -40,12 +43,13 @@ const walk = (d, out = []) => { for (const f of fs.readdirSync(d)) { if (f.start
     for (const f of walk(d).sort()) if (/\.(css|json)$/.test(f)) h.update(fs.readFileSync(f)); else if (/\.(jpg|png|webp|svg)$/.test(f)) h.update(f + fs.statSync(f).size);
   const salt = h.digest('hex');
   const srv = await serve();
-  const url = `http://127.0.0.1:${srv.address().port}/${path.relative(STUDIO, project).split(path.sep).join('/')}/${SCENE}`;
+  const url = `http://127.0.0.1:${srv.address().port}/${path.relative(STUDIO, project).split(path.sep).join('/')}/${SCENE}` + '?' + [opt('notext') ? 'notext=1' : '', opt('film') ? 'film=' + encodeURIComponent(String(opt('film'))) : ''].filter(Boolean).join('&');
   const browser = await chromium.launch({ args: ['--disable-gpu', '--run-all-compositor-stages-before-draw'] });
   const open = async () => {
     const page = await browser.newPage({ viewport: { width: 1920, height: 1080 }, deviceScaleFactor: 1 });
     const errors = [];
-    page.on('pageerror', e => errors.push(String(e))); page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
+    page.on('pageerror', e => errors.push(String(e))); page.on('console', m => { if (m.type() === 'error' && !/Failed to load resource/.test(m.text())) errors.push(m.text()); });
+    page.on('response', r => { if (r.status() >= 400 && !/\/film\.js$/.test(r.url().split('?')[0])) errors.push(`${r.status()} ${r.url()}`); });   // film.js may be absent: the scene falls back to the example
     await page.goto(url);
     await page.waitForFunction(() => window.studioReady !== undefined, null, { timeout: 60000 });
     await page.evaluate(() => window.studioReady);
@@ -61,14 +65,22 @@ const walk = (d, out = []) => { for (const f of fs.readdirSync(d)) { if (f.start
   const first = await open();
   const duration = await first.page.evaluate(() => window.DURATION);
   // what the scene says about itself (chapters, music cues, on-screen text): written beside the film for the other tools
-  fs.writeFileSync(path.join(project, 'film-data.json'), JSON.stringify(await first.page.evaluate(() => ({ duration: window.DURATION, chapters: window.CHAPTERS || [], cues: window.CUES || [], onscreen: window.ONSCREEN || [], reading: window.READING || [] })), null, 1));
-  if (opt('data')) { const d = JSON.parse(fs.readFileSync(path.join(project, 'film-data.json'), 'utf8')); console.log(`ok: film-data.json  ${d.duration}s, ${d.chapters.length} chapters, ${d.reading.length} texts shorter than their reading time`); d.reading.slice(0, 20).forEach(r => console.log(`  ${r.t}s  on screen ${r.have}s, needs ${r.need}s  ${r.s}`)); await browser.close(); srv.close(); return; }
-  const stills = opt('stills') && String(opt('stills')).split(',').map(Number);
+  const data = await first.page.evaluate(() => ({ duration: window.DURATION, parts: window.PARTS || [], chapters: window.CHAPTERS || [], cues: window.CUES || [], peaks: window.PEAKS || [], onscreen: window.ONSCREEN || [], reading: window.READING || [] }));
+  fs.writeFileSync(path.join(project, 'film-data.json'), JSON.stringify(data, null, 1));
+  // the cue sheet for scripts/music/pick_music.py, rewritten every time so it never lags behind a retimed film
+  fs.writeFileSync(path.join(project, 'music-cues.json'), JSON.stringify({ film: path.basename(project), style: String(opt('music-style', 'rooms')), duration: data.duration,
+    cues: data.cues.map(c => ({ segment: c.kind, start: +c.t0.toFixed(1), dur: +(c.t1 - c.t0).toFixed(1) })) }, null, 1));
+  if (first.errors.length) console.error('page errors:\n' + [...new Set(first.errors)].slice(0, 8).join('\n'));
+  if (opt('data')) {
+    console.log(`ok: film-data.json, music-cues.json  ${data.duration}s (${(data.duration / 60).toFixed(1)} min), ${data.chapters.length} chapters with a topic id`);
+    data.parts.forEach(p => console.log(`  ${String(p.seconds).padStart(6)}s  ${p.name}`));
+    console.log(`${data.reading.length} texts on screen for less than their reading time`); data.reading.slice(0, 30).forEach(r => console.log(`  ${r.t}s  on screen ${r.have}s, needs ${r.need}s  ${r.s}`));
+    await browser.close(); srv.close(); return; }
+  const stills = opt('stills') && (opt('stills') === true || opt('stills') === 'auto' ? data.peaks : String(opt('stills')).split(',').map(Number));
   if (stills) {
-    fs.mkdirSync(path.join(project, 'stills'), { recursive: true });
-    for (const t of stills) { await first.page.evaluate(t => { window.renderAt(t); }, t); fs.writeFileSync(path.join(project, 'stills', `t-${t}.jpg`), await first.shot()); }
-    if (first.errors.length) console.error('page errors:\n' + [...new Set(first.errors)].slice(0, 8).join('\n'));
-    console.log(`ok: ${stills.length} stills`); await browser.close(); srv.close(); return;
+    const dir = path.join(project, 'stills' + (opt('film') ? '-' + opt('film') : '') + (opt('notext') ? '-notext' : '')); fs.mkdirSync(dir, { recursive: true });
+    for (const t of stills) { await first.page.evaluate(t => { window.renderAt(t); }, t); fs.writeFileSync(path.join(dir, `t-${Number(t).toFixed(1).padStart(6, '0')}.jpg`), await first.shot()); }
+    console.log(`ok: ${stills.length} stills in ${path.basename(dir)}/  (${stills.join(', ')})`); await browser.close(); srv.close(); return;
   }
   const from = Number(opt('from', 0)), to = Math.min(Number(opt('to', duration)), duration);
   const n = Math.round((to - from) * fps);

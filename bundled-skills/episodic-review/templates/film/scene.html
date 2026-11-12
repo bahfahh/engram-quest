@@ -1,23 +1,26 @@
 <!doctype html><html lang="zh-Hant"><meta charset="utf-8">
-<!-- Recall film stage. Content fills the frame. The film is film.js (falls back to film.example.js).
+<!-- Recall film stage. Content fills the frame. The film is film.js (falls back to film.example.js; ?film=gallery loads film.gallery.js).
      One rule: after renderAt(t) the page's HTML fully describes the frame (no canvas drawing, no CSS animation, no clocks). -->
 <link rel="stylesheet" href="look.css">
 <body><div id="v"><div id="crumb"></div><div id="count"></div><div id="mini"></div><div id="badge"></div></div>
 <script type="module">
-import { render, fn, fontsReady, icons, readingReport, onscreen, ease, clamp } from './engine.js';
+import { render, fn, fontsReady, imagesReady, icons, readingReport, onscreen, peaks, ease, clamp } from './engine.js';
 import { SK } from './patterns.js';
 window.studioReady = (async () => {
   await icons(['moon', 'mic', 'check', 'x', 'file-text', 'database', 'network', 'clock', 'search', 'link']);
-  let mod; try { mod = await import('./film.js'); } catch (e) { mod = await import('./film.example.js'); }
+  const Q = new URLSearchParams(location.search), which = Q.get('film');       // ?film=gallery loads film.gallery.js
+  let mod; if (which) mod = await import(`./film.${which}.js`); else try { mod = await import('./film.js'); } catch (e) { mod = await import('./film.example.js'); }
   const F = mod.FILM; let t = 0; const B = [];
   F.chapters.forEach((ch, i) => { const t0 = t; t = ch.run(t0); B.push({ i, name: ch.name, strip: ch.strip, t0, t1: t }); });
   window.DURATION = Math.ceil(t);
   window.CHAPTERS = B.filter(b => b.strip != null).map(b => ({ title: b.name, topicId: F.topicId, from: +b.t0.toFixed(1), to: +b.t1.toFixed(1) }));
-  window.CUES = B.map((b, k) => ({ t0: b.t0, t1: b.t1, kind: k === 0 ? 'intro' : k === B.length - 1 ? 'ending' : 'topic' }));
+  // music cues, in the words scripts/music/pick_music.py uses. A chapter may name its own: { name, cue: 'recall', run }
+  window.CUES = B.map((b, k) => ({ t0: b.t0, t1: b.t1, kind: F.chapters[k].cue || (k === 0 ? 'opening' : k === B.length - 1 ? 'ending' : 'topic') }));
+  window.PARTS = B.map(b => ({ name: b.name || '(opening)', seconds: +(b.t1 - b.t0).toFixed(1) }));
   // chrome: where we are (path), which chapter, and the skeleton as a strip with the active question lit
   const crumb = document.getElementById('crumb'), count = document.getElementById('count'), mini = document.getElementById('mini'), badge = document.getElementById('badge');
   const path = F.crumb.map((s, k) => k === F.crumb.length - 1 ? `<b>${s}</b>` : s).join('　/　');
-  mini.innerHTML = SK.q.map(([n, s, col]) => `<span style="display:inline-block;margin-right:34px;font-size:25px;font-weight:300;letter-spacing:.06em;white-space:nowrap"><i style="display:inline-block;width:12px;height:12px;border-radius:6px;margin-right:10px;background:${col}"></i>${n}</span>`).join('');
+  mini.innerHTML = SK.q.map(([n, s, col, inFilm]) => `<span style="display:inline-block;margin-right:34px;font-size:25px;font-weight:300;letter-spacing:.06em;white-space:nowrap"><i style="display:inline-block;box-sizing:border-box;width:12px;height:12px;border-radius:6px;margin-right:10px;${inFilm ? `background:${col}` : `border:1.5px solid ${col}`}"></i>${n}</span>`).join('');
   badge.textContent = F.badge || ''; badge.style.cssText = 'position:absolute;right:64px;bottom:44px;font-size:24px;font-weight:300;letter-spacing:.08em;color:#7d7f8a';
   fn((t) => { const b = B.find(b => t >= b.t0 && t < b.t1) || B[B.length - 1], a = clamp(Math.min(ease((t - b.t0 - 0.4) / 0.6), 1 - ease((t - (b.t1 - 0.9)) / 0.5)));
     crumb.innerHTML = b.i === 0 ? '' : path; crumb.style.opacity = b.i === 0 ? 0 : 1;
@@ -25,7 +28,9 @@ window.studioReady = (async () => {
     mini.style.opacity = b.strip != null ? a.toFixed(3) : 0;
     [...mini.children].forEach((s, k) => { s.style.color = k === b.strip ? '#f3f3f5' : '#5b5d66'; s.firstChild.style.opacity = k === b.strip ? 1 : 0.35; }); });
   window.renderAt = render;
-  window.READING = readingReport(); window.ONSCREEN = onscreen().map(x => ({ t0: x.t, t1: Math.min(x.out, window.DURATION), text: [x.s] }));
-  await fontsReady(); render(0);
+  window.READING = readingReport(); window.ONSCREEN = onscreen().map(x => ({ t0: +x.t.toFixed(1), t1: +x.out.toFixed(1), text: [x.s] }));
+  window.PEAKS = peaks();                                        // the fullest moments, for --stills auto
+  if (Q.has('notext')) document.getElementById('v').classList.add('notext');   // the picture without its words
+  await fontsReady(); await imagesReady(); render(0);
 })();
 </script></body></html>

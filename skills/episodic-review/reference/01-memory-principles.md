@@ -21,7 +21,7 @@ At review time the author is a stranger to their own notes. Anything that only w
 | Context cues | A cue from the time of learning helps the way back in | One line of context per topic: what the person was doing then |
 | Transfer | Recalling only in the original setting is brittle | End with a case the notes do not contain |
 
-Familiarity is not recall. Dates, file names and edit history create familiarity and nothing else, so they are not content.
+Familiarity is not recall. Dates, file names and edit history create familiarity and nothing else, so they are never what a screen is about and never what a question asks for. A note's name and the month it was written may still appear as a small label that says where something comes from (the history in the opening, the sources on the relation map): that is orientation.
 
 A film watched once gives none of the first two rows by itself. That is why the recall pack and its cards come first and the film second.
 

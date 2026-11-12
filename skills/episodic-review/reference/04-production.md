@@ -13,6 +13,7 @@ Three length tiers exist and nothing else (`templates/length.json`, also read by
 - Order of authority: what the user said this time; the `length` of a pending plugin request; ask once after reading (offer the three tiers with what each would cover); when nobody can be asked, the plugin setting `episodicLength`; otherwise medium.
 - Which topics: the user's named topics first; then the pack's ranking; prefer topics that reach L3-L4 and whose cards have gone badly. If fewer topics are deep enough than the tier holds, say so and make fewer. Do not pad.
 - Depth before breadth: a shorter film takes fewer skeleton questions, not shallower chapters.
+- **Aiming at a length.** `--data` prints the seconds of every part. Measured on the template: opening 40-50 s (with the history line), skeleton about 20 s, relation map 50-90 s, recall 60-90 s, close 40-50 s, so about four minutes before any chapter; a chapter is 50-130 s, a beat 25-60 s. A film of two chapters therefore lands near seven minutes. To go shorter, drop parts whole (the history in the opening, the links out, the areas in the close, a second new case) before thinning a chapter.
 - Report the topics not filmed. They are the candidates next time and they still have their cards.
 
 Reference point, one deep topic (about 10 minutes, 9 chapters): 14,232 frames of which 4,875 were captured, 4 minutes on 4 CPU cores. The time ranges in `length.json` predate this structure and have not been re-measured; treat them as loose.
@@ -25,22 +26,30 @@ mkdir -p $STUDIO/projects
 cp -r .claude/skills/engram-quest-episodic-review/scripts/studio/. $STUDIO/ && (cd $STUDIO && npm install)
 cp -r .claude/skills/engram-quest-episodic-review/templates/film $STUDIO/projects/<id>
 cd $STUDIO
-node render_stage.cjs projects/<id> --data              # film-data.json: length, chapters, music cues, on-screen text
-node render_stage.cjs projects/<id> --stills 4,30,95    # look before rendering
+node render_stage.cjs projects/<id> --film gallery --stills auto   # one still of each pattern the example does not use
+node render_stage.cjs projects/<id> --data                         # length of every part, reading shortfalls; writes film-data.json and music-cues.json
+node render_stage.cjs projects/<id> --stills auto                  # a still at each fullest moment (or --stills 4,30,95)
+node render_stage.cjs projects/<id> --stills auto --notext         # the same stills with the words hidden
+X264_PRESET=veryfast node render_stage.cjs projects/<id> --poster 30 --noaudio --out silent.mp4
 ```
+
+The renderer needs `playwright` with Chromium, `ffmpeg` and `node`. Cloud sessions have them; do not add playwright to the studio's `package.json` there (a second copy does not find the installed browser). On a machine without it: `npm i playwright && npx playwright install chromium`. `scripts/doctor.py` reports what is missing.
 
 The template:
 
 | File | Role |
 |---|---|
-| `engine.js` | a small timeline. Elements declare when they are on screen (`on`, `off`, `dim`), lines draw themselves (`line`), `fn` is for custom per-frame work. `renderAt(t)` only writes inline styles. Also reports reading-time shortfalls |
-| `parts.js` | pieces: chapter container, header, caption, nodes, labelled lines, cards, chat bubbles, rows, tags, countdown ring |
-| `patterns.js` | whole presentations driven by data: opening, skeleton, sorting a source into groups, facet cards, option cards, comparison rows, decision ladder, lanes, bars, relation map, cloze recall, new cases, closing |
+| `engine.js` | a small timeline. Elements declare when they are on screen (`on`, `off`, `dim`), lines draw themselves (`line`), `fn` is for custom per-frame work. `renderAt(t)` only writes inline styles. Also reports reading-time shortfalls and the fullest moments |
+| `parts.js` | pieces: chapter container, header, caption, nodes, labelled lines, cards, chat bubbles, rows, tags, countdown ring, an embedded figure; the palette |
+| `patterns.js` | whole presentations driven by data. Chapter level: `opening`, `skeleton`, `chapter`, `relationMap`, `recall`, `closing`. Beats inside a chapter: `sortInto`, `facets`, `table`, `optionCards`, `ladder`, `lanes`, `bars`, `axisMap`, `spans`, `figure`. Helpers for your own beats: `hold`, `clear`, `colour`, `rt` |
 | `look.css` | the look |
-| `scene.html` | loads the film, wires the chrome (path, chapter, skeleton strip), exposes `renderAt`, `DURATION`, `CHAPTERS`, `CUES`, `ONSCREEN`, `READING` |
+| `scene.html` | loads the film, wires the chrome (path, chapter, skeleton strip), exposes `renderAt`, `DURATION`, `PARTS`, `CHAPTERS`, `CUES`, `PEAKS`, `ONSCREEN`, `READING` |
 | `film.example.js` | a complete small film about an invented person's notes. Replace its content; keep or change its patterns |
+| `film.gallery.js`, `figs/` | the patterns the example does not use, and a sample figure |
 
-Write the film as `film.js` in the project: it is a list of chapters, each a call to a pattern with data, or your own function built from `parts.js`.
+Write the film as `film.js` in the project: it is a list of chapters, each a call to a pattern with data, or your own beat. The data shape of every pattern is in the comment above it in `patterns.js`. Put images the film embeds in the project's `figs/`.
+
+Chapters with a `strip` number are the ones walked for a skeleton question: they light that question in the strip and are written to `CHAPTERS` with the topic id. A chapter may set `cue` to name its own music segment.
 
 **One rule makes rendering cheap:** a frame is exactly what the page's HTML says after `renderAt(t)`. No canvas drawing, no CSS animation, no clocks. The renderer fingerprints the HTML and captures identical frames once. A review is mostly holds, so about a quarter to a third of the frames are captured. Continuous camera motion defeats this; prefer cuts, fades and things that move and then rest.
 
@@ -48,9 +57,9 @@ Reuse across runs is weak: the fingerprint covers the whole page, so an edit to 
 
 ## 3. Checking before the full render
 
-1. `READING` in `film-data.json` (also printed by `--data`): every text that is on screen for less than it needs. Fix the timing or cut words.
-2. Stills at each chapter's fullest moment: overlaps, text outside its card, type too small, an empty half of the frame.
-3. Read the on-screen text in order as a stranger would. Then look at the stills with text hidden. For medium and long tiers give both to a fresh agent that has not seen the notes.
+1. `READING` in `film-data.json` (also printed by `--data`): every text that is on screen for less than it needs. A text leaves when it, its card or its chapter leaves. Fix the timing or cut words.
+2. `--stills auto` takes a still just before each beat is cleared and each chapter ends, when the frame is fullest. Look at them at full size: overlaps, text outside its card, type too small, an empty half of the frame. The patterns place things by rule; long names and long relations are where the rules run out.
+3. Read the on-screen text in order as a stranger would (`onscreen` in `film-data.json`). Then look at the `--notext` stills. For medium and long tiers give both to a fresh agent that has not seen the notes.
 4. Every question: was its answer on screen before it was asked?
 
 Changing timing after the score is generated means regenerating the cue sheet; do it from `film-data.json` every time rather than by hand.
@@ -58,9 +67,16 @@ Changing timing after the score is generated means regenerating the cue sheet; d
 ## 4. Sound
 
 - No narration is assumed. Where speech synthesis is available it must say what the picture shows, in the film's language.
-- Music comes from `scripts/music/` (procedural score on sampled instruments): give `pick_music.py` a cue sheet built from the film's `CUES` (`opening`, `topic`, `recall`, `reveal`, `ending`), then `scripts/mix.py` for the final level (-16.5 LUFS, true peak under -1 dB).
+- Music comes from `scripts/music/` (procedural score on sampled instruments; it needs numpy and scipy). `--data` writes the cue sheet `music-cues.json` from the film's `CUES`, one segment per chapter: `opening`, `topic` for everything between, `ending`. It is rewritten on every run, so it cannot lag behind a retimed film.
+
+  ```bash
+  python3 -I .claude/skills/engram-quest-episodic-review/scripts/music/pick_music.py --cues projects/<id>/music-cues.json --render projects/<id>/audio/
+  python3 .claude/skills/engram-quest-episodic-review/scripts/mix.py --score projects/<id>/audio/score.wav --duration <seconds> --out projects/<id>/narration.wav
+  node render_stage.cjs projects/<id> --poster 30        # picks up narration.wav
+  ```
+  The credits text is in `audio/cues.json`.
 - Quiet beds under content, the thinnest texture during recall, one clean pitched sound at a reveal. Never noise, hiss or room tone.
-- The generator returns the credits text for the samples. Pass it to `deliver.py`.
+- Pass the credits text to `deliver.py`.
 
 ## 5. Delivering
 

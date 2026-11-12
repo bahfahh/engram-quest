@@ -26,8 +26,8 @@ A topic is a group of notes about one thing. It is the unit of everything that f
 ## 3. Reading
 
 - Read each note whole, as it is now. How it changed along the way is not content. A change of mind counts only when the note itself states it.
-- Render a canvas to an image before reading it (`scripts/render_canvas.cjs`): groups, arrows and edge labels are the author's relations.
-- Use the figures the notes already contain before drawing new ones.
+- Render a canvas to an image before reading it: groups, arrows and edge labels are the author's relations. `node scripts/render_canvas.cjs <list file: one vault-relative .canvas path per line> <output folder> [vault]` (set `CANVAS_FONT_DIR` to a `@fontsource/noto-sans-tc` folder when the machine has no CJK font).
+- Use the figures the notes already contain before drawing new ones. Copy the image into the film project (`figs/`) and show it with the `figure` beat, which points at the places worth looking at one by one.
 - Many notes in one topic: read the hub, map or index first, then the notes it leans on, then the ones touched in the period.
 - Unfamiliar term: search the vault, then the web, before writing a sentence about it.
 - When two notes disagree, do not choose for the author. Leave the point out of questions, and list it in the report.
@@ -44,6 +44,8 @@ How far the notes go decides how far the review goes.
 | L4 | cases: use on a real project, incidents, measurements |
 
 Show a topic at its deepest level. Never fill a gap with outside material.
+
+A level counts only when it is the author's own. A plan that has not been carried out is L3, however many cases it quotes from other people: those cases are shown as someone else's numbers, with their source, and the close says the plan is still untried.
 
 ## 5. The pack entry (one JSON per topic)
 
@@ -93,6 +95,7 @@ python3 .claude/skills/engram-quest-episodic-review/scripts/topic_links.py --vau
 ```
 
 - A relation exists when notes of two topics link to each other. Notes that link to almost everything (indexes, subscription lists, skill trees) are hubs and are left out, or every topic would relate to every other.
+- A note listed under two topics is reported as `shared`, not as a link: its own links would otherwise count for both topics. Read it and decide: it may be a real bridge (then write the sentence), or a sign that the two topics are one.
 - With no links at all, the script falls back to titles mentioned in the text; treat those as candidates to verify by reading.
 - **Each relation needs one sentence** saying what it is, taken from what the linking note says at that link. If you cannot write the sentence, do not draw the line.
 - Topics with no relation are returned as `isolated`. Show them as such.
@@ -112,6 +115,13 @@ Ways it shows up:
 
 Check it: every note should answer at least one question, and no question should be answered by a single sentence.
 
+Cases that come up:
+
+- **The author's numbering is not automatically the skeleton.** A map folder numbered 01-07 is the order things were filed in. Use it when its headings are questions the content answers; otherwise read through it for the questions underneath.
+- **A note that answers none of the questions.** Either the skeleton is missing a question, or the note is a side branch. A side branch stays out of the film and is listed under "left out" in the plan; it still gets its cards.
+- **A film that walks fewer questions than the skeleton has** (a short tier, or only some questions are deep enough). The skeleton screen still shows all of them, with the ones not walked dimmed and one line saying where they live (their cards). The relation map and the recall then cover only the walked questions, and the close does not raise open points from the others.
+- **Content that is not concepts.** The questions then follow what the content is: a decision (what was at stake, the options, what decided it), an investigation (the claim, the evidence, how far it holds), a plan (the goal, the steps, how it will be checked).
+
 ### Facets
 
 A concept is understood from several sides. For each concept in a chapter, see which sides the notes cover, and show those:
@@ -119,6 +129,15 @@ A concept is understood from several sides. For each concept in a chapter, see w
 what it is / what it looks like / an example / what it is good at / what it costs / when to choose it / what happens when it is misused / how it differs from its neighbour / how it changed over time / what it connects to
 
 Two or three well-chosen facets beat a full table. A facet the notes do not cover is not shown.
+
+That list suits concepts. Other content has other sides:
+
+| The content is | Sides worth showing |
+|---|---|
+| a decision | the options / the criteria / what was chosen / why / what it costs / what would change it |
+| evidence | the claim / where it comes from / the number / how strong it is / what it does not show |
+| a plan | the goal / the steps / when / how it is checked / what has been done so far |
+| an incident | what happened / the cause / the fix / what is now done differently |
 
 ### Sources within the topic
 

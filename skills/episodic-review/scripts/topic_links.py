@@ -9,7 +9,11 @@ Notes linked from, or linking to, --hub or more topics are hubs (indexes, subscr
 left out: with them every topic relates to every other. With no links at all it falls back to note titles mentioned
 in the text of another topic's notes; those are candidates to verify by reading.
 
-Output: { links: [{ a, b, count, how: "link" | "mention", evidence: [[from note, to note]] }], isolated: [topic id], hubs: [note] }
+A note listed by two topics is not a link between them: it is reported under `shared` and left out of the counting
+(its own links would otherwise count as links from both topics). Whether the two topics should be one is for the reader.
+
+Output: { links: [{ a, b, count, how: "link" | "mention", evidence: [[from note, to note]] }], isolated: [topic id],
+          shared: [{ note, topics }], hubs: [note] }
 Each link still needs one sentence that states the relation, written from what the linking note says there.
 """
 import argparse, collections, glob, json, os, re
@@ -46,11 +50,13 @@ for (i, n), s in text.items():
     for b in targets(s):
         if b in owner and i not in owner[b]:
             inbound[b].add(i)
-hubs = {n for n, r in reach.items() if len(r) >= a.hub} | {b for b, o in owner.items() if len(o) > 1} | {b for b, r in inbound.items() if len(r) >= a.hub - 1}
-hub_names = {os.path.splitext(os.path.basename(n))[0] for n in hubs}
+name = lambda n: os.path.splitext(os.path.basename(n))[0]
+shared = {b: sorted(o) for b, o in owner.items() if len(o) > 1}
+hubs = {name(n) for n, r in reach.items() if len(r) >= a.hub and name(n) not in shared} | {b for b, r in inbound.items() if len(r) >= a.hub - 1 and b not in shared}
+hub_names = hubs | set(shared)
 pairs = collections.defaultdict(list)
 for (i, n), s in text.items():
-    if n in hubs:
+    if name(n) in hub_names:
         continue
     for b in targets(s):
         if b in hub_names:
@@ -62,15 +68,19 @@ how = 'link'
 if not pairs:                                   # no links anywhere: titles mentioned in another topic's text
     how = 'mention'
     for (i, n), s in text.items():
+        if name(n) in hub_names:
+            continue
         for b, o in owner.items():
-            if len(b) >= 4 and b in s:
+            if len(b) >= 4 and b in s and b not in hub_names:
                 for j in o - {i}:
                     pairs[tuple(sorted((i, j)))].append([os.path.basename(n)[:-3], b])
 links = [dict(a=k[0], b=k[1], count=len(v), how=how, evidence=v[:4]) for k, v in sorted(pairs.items(), key=lambda kv: -len(kv[1]))]
 linked = {x for l in links for x in (l['a'], l['b'])}
-out = dict(period=a.period, links=links, isolated=sorted(set(T) - linked), hubs=sorted(hubs))
+out = dict(period=a.period, links=links, isolated=sorted(set(T) - linked), shared=[dict(note=b, topics=o) for b, o in sorted(shared.items())], hubs=sorted(hubs))
 if a.out:
     json.dump(out, open(a.out, 'w', encoding='utf8'), ensure_ascii=False, indent=1)
 for l in links:
     print(f'{T[l["a"]]["title"]}  <->  {T[l["b"]]["title"]}   {l["count"]} {l["how"]}(s)   e.g. {l["evidence"][0][0]} -> {l["evidence"][0][1]}')
 print('isolated:', [T[i]['title'] for i in out['isolated']]); print('hubs left out:', len(hubs))
+for b, o in sorted(shared.items()):
+    print(f'shared note (not counted as a link): {b}  in  {[T[i]["title"] for i in o]}')

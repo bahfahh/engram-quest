@@ -15,9 +15,13 @@ Fill this before building. It is for the builder and the reviewer; it is written
 
 The three to five questions these notes answer, in the order the film takes them. One colour each, kept for the whole film.
 
-| # | Question | One line under it | Notes that answer it |
-|---|---|---|---|
-| 1 | | | |
+| # | Question | One line under it | Notes that answer it | Walked in this film? |
+|---|---|---|---|---|
+| 1 | | | | |
+
+Notes that answer none of these (side branches; they keep their cards):
+
+Target length, and the parts dropped to reach it:
 
 ## Chapters
 
@@ -25,12 +29,13 @@ One block per skeleton question.
 
 ### 1. <question>
 
-| Concept | Facets the notes cover | Shape of the content | Presentation chosen | What the picture shows with the text hidden |
+| Concept, decision, evidence or step | Sides the notes cover | Shape of the content | Presentation chosen (a pattern, or "own beat") | What the picture shows with the text hidden |
 |---|---|---|---|---|
 | | | | | |
 
 - The one line this chapter ends on:
-- Real things to put on screen (numbers, a rule, a figure, code):
+- Real things to put on screen (numbers, a rule, a figure the notes contain, code):
+- Whose results these are (the author's own, or quoted from a source):
 - Illustrative values, to be marked as such:
 
 ## Relations

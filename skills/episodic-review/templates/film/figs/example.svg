@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 520" font-family="sans-serif">
+  <!-- An invented hand-made figure standing in for "a figure the notes already contain": a forgetting curve with two review marks. -->
+  <rect width="960" height="520" fill="#fbfaf6"/>
+  <line x1="90" y1="440" x2="900" y2="440" stroke="#333" stroke-width="3"/>
+  <line x1="90" y1="440" x2="90" y2="60" stroke="#333" stroke-width="3"/>
+  <path d="M90 90 C200 300 420 390 900 420" fill="none" stroke="#d2553a" stroke-width="5"/>
+  <path d="M330 345 L330 130 C430 250 600 310 900 330" fill="none" stroke="#2f7f5f" stroke-width="5" stroke-dasharray="2 0"/>
+  <path d="M600 304 L600 120 C700 190 800 215 900 225" fill="none" stroke="#2f7f5f" stroke-width="5"/>
+  <circle cx="330" cy="345" r="9" fill="#2f7f5f"/><circle cx="600" cy="304" r="9" fill="#2f7f5f"/>
+  <text x="110" y="52" font-size="26" fill="#333">remembered</text>
+  <text x="820" y="480" font-size="26" fill="#333">days</text>
+  <text x="330" y="478" font-size="24" fill="#333" text-anchor="middle">2</text><text x="600" y="478" font-size="24" fill="#333" text-anchor="middle">6</text>
+</svg>

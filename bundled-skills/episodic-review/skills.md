@@ -72,7 +72,7 @@ reference/
   06-pitfalls.md            mistakes already made
   legacy-shells.md          the older 3D shells: kept, not the default
 templates/
-  film/                     engine.js, parts.js, patterns.js, look.css, scene.html, film.example.js
+  film/                     engine.js, parts.js, patterns.js, look.css, scene.html, film.example.js, film.gallery.js, figs/
   film-plan.md              the plan written before building a film
   topic.example.json        one pack entry
   length.json               the three length tiers (single source, also read by the plugin)
@@ -81,10 +81,12 @@ scripts/
   build_pack.py             pack entries -> topic cache, Review Deck cards and hints, overview page, film ranking
   topic_links.py            relations between topics, from links between their notes
   film_lang.py              decide the film's language
-  studio/                   render_stage.cjs (frame renderer, holds are captured once), package.json
+  studio/                   render_stage.cjs (frame renderer: data, stills, film; holds are captured once), package.json
   music/, mix.py            score generator and final mix
   deliver.py                compress, poster, meta.json entry
-  length_estimate.py, onscreen.py, doctor.py, obsidian_index.js, render_canvas.cjs
+  render_canvas.cjs         an Obsidian canvas as an image, for reading
+  obsidian_index.js, doctor.py
+  length_estimate.py, onscreen.py, keystills.py, plan_parts.py, studio/render.cjs    for the legacy shells only
 assets/shells/, assets/demos/   legacy shells and their demo catalogue
 ```
 
