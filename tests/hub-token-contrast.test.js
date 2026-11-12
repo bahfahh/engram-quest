@@ -1,87 +1,211 @@
 import { describe, expect, it } from "vitest";
 
-const css = require("../src/styles/hub");
+// Contrast is checked on the pairs the stylesheets actually use together, not only on text tokens
+// over the page: a selected segment, a button label on its own surface, secondary text in a dialog.
+const hubCss = String(require("../src/styles/hub"));
+const SHEETS = { hub: hubCss, videos: String(require("../src/videos/styles")) };
 
-function themeTokens(selectorPattern) {
-  const block = String(css).match(selectorPattern);
+function themeBlock(pattern) {
+  const block = hubCss.match(pattern);
   if (!block) throw new Error("theme block not found");
-  return Object.fromEntries([...block[1].matchAll(/--([a-z0-9]+):\s*(#[0-9A-Fa-f]{6})/g)].map(m => [m[1], m[2]]));
+  return Object.fromEntries([...block[1].matchAll(/--([a-z0-9]+):\s*([^;]+);/g)].map((m) => [m[1], m[2].trim()]));
+}
+const LIGHT = themeBlock(/\.lh-hub,[^{]*\{([^}]*--base:#F5F5F7[^}]*)\}/);
+const DARK = { ...LIGHT, ...themeBlock(/\{([^}]*--base:#18181B[^}]*)\}/) };
+const THEMES = [["light", LIGHT], ["dark", DARK]];
+
+// Splits "a,b(c,d),e" on top-level commas.
+function splitArgs(text) {
+  const out = [];
+  let depth = 0, cur = "";
+  for (const ch of text) {
+    if (ch === "(") depth++;
+    if (ch === ")") depth--;
+    if (ch === "," && depth === 0) { out.push(cur.trim()); cur = ""; } else cur += ch;
+  }
+  out.push(cur.trim());
+  return out;
 }
 
-function luminance(hex) {
-  const channel = (i) => {
-    const v = parseInt(hex.slice(i, i + 2), 16) / 255;
-    return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4;
-  };
-  return 0.2126 * channel(1) + 0.7152 * channel(3) + 0.0722 * channel(5);
+// "40%" or a token holding it, as a 0–1 share.
+function percent(value, tokens) {
+  let v = String(value).trim();
+  for (let i = 0; i < 12 && v.startsWith("var(--"); i++) v = String(tokens[v.slice(6, -1)] || "").trim();
+  return /^[\d.]+%$/.test(v) ? Number(v.slice(0, -1)) / 100 : NaN;
 }
 
+// Resolves a CSS colour value to [r,g,b,a]; returns null for anything that is not one flat colour.
+function resolve(value, tokens, depth = 0) {
+  if (depth > 12 || value == null) return null;
+  const v = String(value).replace(/!important/, "").trim();
+  let m;
+  if ((m = v.match(/^#([0-9a-f]{6})$/i))) return [0, 2, 4].map((i) => parseInt(m[1].slice(i, i + 2), 16)).concat(1);
+  if (v === "transparent" || v === "none") return [0, 0, 0, 0];
+  if ((m = v.match(/^rgba?\(([^)]+)\)$/))) {
+    const p = m[1].split(",").map((x) => Number(x.trim()));
+    return [p[0], p[1], p[2], p.length > 3 ? p[3] : 1];
+  }
+  if ((m = v.match(/^var\(--([a-z0-9]+)\)$/))) return resolve(tokens[m[1]], tokens, depth + 1);
+  if ((m = v.match(/^color-mix\(in srgb,(.+)\)$/))) {
+    const [first, second] = splitArgs(m[1]);
+    const part = first.match(/^(.*?)\s+(\S+)$/);
+    if (!part || !second) return null;
+    const share = percent(part[2], tokens);
+    const a = resolve(part[1], tokens, depth + 1), b = resolve(second, tokens, depth + 1);
+    if (!a || !b || !(share >= 0 && share <= 1)) return null;
+    // color-mix works on premultiplied channels: mixing with transparent keeps the hue and scales alpha.
+    const alpha = a[3] * share + b[3] * (1 - share);
+    if (alpha === 0) return [0, 0, 0, 0];
+    return [0, 1, 2].map((i) => (a[i] * a[3] * share + b[i] * b[3] * (1 - share)) / alpha).concat(alpha);
+  }
+  return null;
+}
+
+const over = (fg, bg) => [0, 1, 2].map((i) => fg[i] * fg[3] + bg[i] * (1 - fg[3])).concat(1);
+function luminance(c) {
+  const ch = (v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; };
+  return 0.2126 * ch(c[0]) + 0.7152 * ch(c[1]) + 0.0722 * ch(c[2]);
+}
 function contrast(a, b) {
   const [hi, lo] = [luminance(a), luminance(b)].sort((x, y) => y - x);
   return (hi + 0.05) / (lo + 0.05);
 }
 
-const pages = String(require("../src/styles/hub-pages"));
-
-/** The design token a rule in hub-pages.js gives one property, e.g. token(".lh-syg-edge", "color") → "text". */
-function token(selector, property) {
-  const rule = pages.split("\n").find((line) => line.startsWith(`${selector} {`));
-  const value = rule && rule.match(new RegExp(`[{ ;]${property}:var\\(--([a-z0-9]+)\\)`));
-  if (!value) throw new Error(`${selector} sets no ${property} token`);
-  return value[1];
+// A translucent surface is judged over each opaque surface it can sit on; the worst case counts.
+function worstContrast(fgValue, bgValue, tokens) {
+  const fg = resolve(fgValue, tokens), bg = resolve(bgValue, tokens);
+  if (!fg || !bg) return null;
+  const under = bg[3] < 1 ? ["base", "card", "side"].map((n) => resolve(tokens[n], tokens)) : [[0, 0, 0, 1]];
+  return Math.min(...under.map((u) => { const surface = over(bg, u); return contrast(over(fg, surface), surface); }));
 }
 
-const TEXT = ["text", "text2", "text3", "mstt", "duet", "lrnt", "newt", "tint"];
-const SURFACES = ["base", "card"];
+// Every rule that sets both a background and a text colour from tokens.
+function usedPairs(css) {
+  const pairs = [];
+  for (const m of css.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
+    const selector = m[1].replace(/\/\*[\s\S]*?\*\//g, "").trim();
+    if (!selector || selector.startsWith("@")) continue;
+    if (/:disabled|\.is-off|aria-disabled|::placeholder/.test(selector)) continue; // unavailable states are exempt
+    const decl = {};
+    for (const d of m[2].split(";")) { const i = d.indexOf(":"); if (i > 0) decl[d.slice(0, i).trim()] = d.slice(i + 1).trim(); }
+    const bg = decl["background-color"] || decl.background, fg = decl.color;
+    if (bg && fg && /var\(--|color-mix/.test(bg + fg)) pairs.push({ selector, bg, fg });
+  }
+  return pairs;
+}
+
+// Pairs that come from two different rules (text on a surface it is placed on).
+const PLACED = [
+  ...["text", "text2", "text3", "tint", "mstt", "duet", "lrnt", "newt", "dang", "goldt"].flatMap((fg) => ["base", "card", "side", "raised"].map((bg) => [fg, bg])),
+  ...["text", "text2", "text3"].map((fg) => [fg, "fill"]),
+  ["tint", "tone"], ["tint", "toneh"], ["text", "tabon"], ["onbtn", "btn"], ["onbtn", "btnh"], ["segtx", "segon"],
+  ["rhardt", "color-mix(in srgb,var(--rhard) 24%,var(--raised))"],
+  ["rgoodt", "color-mix(in srgb,var(--rgood) 24%,var(--raised))"],
+  ["reasyt", "color-mix(in srgb,var(--reasy) 24%,var(--raised))"],
+];
+
+// The Synapse map (`.lh-syg*` in hub-pages.js) puts text on surfaces set by other rules: the reason
+// on each connector sits on the panel, a node's title and state on the node, or on the panel when
+// the node has no surface of its own. The pairs are read from the rules, so a change there is checked.
+const pagesCss = String(require("../src/styles/hub-pages"));
+function declared(selector, property) {
+  const rule = pagesCss.split("\n").find((line) => line.startsWith(`${selector} {`));
+  const found = rule && rule.slice(rule.indexOf("{") + 1, rule.lastIndexOf("}")).split(";")
+    .map((d) => [d.slice(0, d.indexOf(":")).trim(), d.slice(d.indexOf(":") + 1).trim()]).find(([name]) => name === property);
+  if (!found) throw new Error(`${selector} sets no ${property}`);
+  return found[1];
+}
+const SYNAPSE_SURFACES = {
+  "desktop panel": [".lh-syg", "background"],
+  "phone panel": ["body.is-phone .lh-syg", "background"],
+  "node that opens": [".lh-syg-node.is-link", "background"],
+  "node under the pointer": [".lh-syg-node.is-link:hover", "background"],
+  "centre card": [".lh-syg-root", "background"],
+  "centre card on a phone": ["body.is-phone .lh-syg-root,body.is-phone .lh-syg-back", "background"],
+};
+const SYNAPSE_NODE_TEXT = {
+  title: ".lh-syg-tt", subtitle: ".lh-syg-meta", cue: ".lh-syg-cue",
+  "finished or mastered": '.lh-syg-st:is([data-state="mastered"],[data-state="done"])',
+  "in progress": '.lh-syg-st:is([data-state="learning"],[data-state="seen"])',
+  "not seen": '.lh-syg-st[data-state="unseen"]',
+};
+const SYNAPSE_TEXT = {
+  // A node without a surface of its own (a recall topic, a next step) shows its text on the panel.
+  "desktop panel": { reason: ".lh-syg-edge", "explicit link": ".lh-syg-edge.is-explicit", "group label": ".lh-syg-tree > .lh-syg-grp", note: ".lh-syg-note", ...SYNAPSE_NODE_TEXT },
+  "phone panel": { reason: ".lh-syg-edge", "explicit link": ".lh-syg-edge.is-explicit", "group label": ".lh-syg-tree > .lh-syg-grp", note: ".lh-syg-note", ...SYNAPSE_NODE_TEXT },
+  "node that opens": SYNAPSE_NODE_TEXT,
+  "node under the pointer": SYNAPSE_NODE_TEXT,
+  "centre card": { caption: ".lh-syg-root-cap", question: ".lh-syg-root-tt" },
+  "centre card on a phone": { caption: ".lh-syg-root-cap", question: ".lh-syg-root-tt" },
+};
 
 describe("design token contrast", () => {
-  const light = themeTokens(/\.lh-hub,[^{]*\{([^}]*--base:#F5F5F7[^}]*)\}/);
-  const dark = { ...light, ...themeTokens(/\{([^}]*--base:#18181B[^}]*)\}/) };
+  it("resolves the colour functions the stylesheets use", () => {
+    expect(resolve("color-mix(in srgb,#FF0000 50%,#0000FF)", {})).toEqual([127.5, 0, 127.5, 1]);
+    expect(resolve("color-mix(in srgb,var(--a) var(--k),transparent)", { a: "#FFFFFF", k: "40%" })).toEqual([255, 255, 255, 0.4]);
+    expect(resolve("var(--b)", { b: "rgba(10,20,30,.5)" })).toEqual([10, 20, 30, 0.5]);
+  });
 
-  for (const [name, tokens] of [["light", light], ["dark", dark]]) {
-    it(`keeps every text colour at 4.5:1 on ${name} surfaces`, () => {
+  for (const [name, tokens] of THEMES) {
+    it(`keeps text readable on every surface it is placed on in ${name}`, () => {
       const failures = [];
-      for (const fg of TEXT) for (const bg of SURFACES) {
-        const ratio = contrast(tokens[fg], tokens[bg]);
-        if (ratio < 4.5) failures.push(`${fg} on ${bg}: ${ratio.toFixed(2)}`);
+      for (const [fg, bg] of PLACED) {
+        const ratio = worstContrast(tokens[fg] || fg, tokens[bg] || bg, tokens);
+        if (ratio === null) failures.push(`${fg} on ${bg}: cannot resolve`);
+        else if (ratio < 4.5) failures.push(`${fg} on ${bg}: ${ratio.toFixed(2)}`);
       }
       expect(failures).toEqual([]);
     });
 
-    it(`keeps button text readable in ${name}`, () => {
-      expect(contrast(tokens.onbtn, tokens.btn)).toBeGreaterThanOrEqual(4.5);
+    it(`keeps every background and text colour set by one rule readable in ${name}`, () => {
+      const failures = [];
+      let checked = 0;
+      for (const [sheet, css] of Object.entries(SHEETS)) for (const { selector, bg, fg } of usedPairs(css)) {
+        const darkOnly = /\.lh-dark|\.theme-dark/.test(selector), lightOnly = /:not\(\.theme-dark\)/.test(selector);
+        if ((name === "light" && darkOnly) || (name === "dark" && lightOnly)) continue;
+        // A shorthand such as "var(--raised) var(--chev) no-repeat …" is judged by its colour, the first part.
+        const ratio = worstContrast(fg, bg, tokens) ?? worstContrast(fg, bg.split(/\s+(?![^(]*\))/)[0], tokens);
+        if (ratio === null) {
+          // Gradients and Obsidian's own variables are out of reach; a pair built only from Hub tokens must resolve.
+          const names = [...(bg + " " + fg).matchAll(/var\(--([a-z0-9-]+)\)/g)].map((v) => v[1]);
+          if (names.length && names.every((n) => n in tokens) && !/gradient/.test(bg)) failures.push(`${sheet}: ${selector} — cannot resolve ${fg} on ${bg}`);
+          continue;
+        }
+        checked++;
+        if (ratio < 4.5) failures.push(`${sheet}: ${selector} — ${fg} on ${bg}: ${ratio.toFixed(2)}`);
+      }
+      expect(checked).toBeGreaterThan(30);
+      expect(failures).toEqual([]);
     });
 
-    // The Synapse map: the reason on each connector is the content, so it and the lines under each
-    // node are checked on the surface they are actually drawn on, desktop and phone.
-    it(`keeps the Synapse map's reasons, subtitles and states at 4.5:1 in ${name}`, () => {
-      const panel = { desktop: token(".lh-syg", "background"), phone: token("body.is-phone .lh-syg", "background") };
-      const node = { desktop: token(".lh-syg-node.is-link", "background"), phone: token("body.is-phone .lh-syg-node.is-link", "background") };
-      const onPanel = { reason: ".lh-syg-edge", "explicit link": ".lh-syg-edge.is-explicit", "group label": ".lh-syg-tree > .lh-syg-grp", note: ".lh-syg-note" };
-      const onNode = {
-        title: ".lh-syg-tt", subtitle: ".lh-syg-meta",
-        "finished or mastered": '.lh-syg-st:is([data-state="mastered"],[data-state="done"])',
-        "in progress": '.lh-syg-st:is([data-state="learning"],[data-state="seen"])',
-        "not seen": '.lh-syg-st[data-state="unseen"]',
-      };
-      // States use the Hub's own meanings: green finished, light blue in progress. Due stays for what is due.
-      expect(token(onNode["finished or mastered"], "color")).toBe("mstt");
-      expect(token(onNode["in progress"], "color")).toBe("lrnt");
-      expect(pages.split("\n").filter((line) => line.startsWith(".lh-syg") && /--due\b|--duet\b/.test(line))).toEqual([]);
+    it(`keeps the Synapse map's reasons, titles and states readable where they are drawn in ${name}`, () => {
       const failures = [];
-      const check = (what, selector, surface, where) => {
-        const ratio = contrast(tokens[token(selector, "color")], tokens[surface]);
-        if (ratio < 4.5) failures.push(`${what} on the ${where}: ${ratio.toFixed(2)}`);
-      };
-      for (const device of ["desktop", "phone"]) {
-        for (const [what, selector] of Object.entries(onPanel)) check(what, selector, panel[device], `${device} panel`);
-        // A node that opens something has its own surface; a recall topic and a next step sit on the panel.
-        for (const [what, selector] of Object.entries(onNode)) {
-          check(what, selector, node[device], `${device} node`);
-          check(what, selector, panel[device], `${device} panel`);
+      let checked = 0;
+      for (const [surface, [selector, property]] of Object.entries(SYNAPSE_SURFACES)) {
+        for (const [what, text] of Object.entries(SYNAPSE_TEXT[surface])) {
+          const ratio = worstContrast(declared(text, "color"), declared(selector, property), tokens);
+          checked++;
+          if (ratio === null) failures.push(`${what} on the ${surface}: cannot resolve`);
+          else if (ratio < 4.5) failures.push(`${what} on the ${surface}: ${ratio.toFixed(2)}`);
         }
       }
+      expect(checked).toBeGreaterThan(30);
       expect(failures).toEqual([]);
+      // Learning state keeps the Hub's meanings: green finished, light blue in progress; due is only for what is due.
+      expect(declared(SYNAPSE_NODE_TEXT["finished or mastered"], "color")).toBe("var(--mstt)");
+      expect(declared(SYNAPSE_NODE_TEXT["in progress"], "color")).toBe("var(--lrnt)");
+      expect(pagesCss.split("\n").filter((line) => line.startsWith(".lh-syg") && /--due\b|--duet\b/.test(line))).toEqual([]);
+    });
+
+    it(`gives raised and tinted controls a 3:1 outline in ${name}`, () => {
+      // The outline is drawn inside the control: an outer ring is clipped wherever a control touches a scroll edge.
+      const ring = tokens.rshadow.match(/inset 0 0 0 1px (rgba\([^)]+\))/);
+      expect(ring).not.toBeNull();
+      const edge = over(resolve(ring[1], tokens), resolve(tokens.raised, tokens));
+      for (const under of ["base", "card"]) expect(contrast(edge, resolve(tokens[under], tokens))).toBeGreaterThanOrEqual(3);
+      const tone = resolve(tokens.tone, tokens);
+      const toneRing = over(resolve(`color-mix(in srgb,var(--tint) ${tokens.ringk},transparent)`, tokens), tone);
+      expect(contrast(toneRing, resolve(tokens.base, tokens))).toBeGreaterThanOrEqual(3);
     });
   }
 });

@@ -156,6 +156,13 @@ describe("attachSynapseToCards", () => {
     expect(cards[0].synapseRejected).toEqual(["video|series/v1"]);
   });
 
+  it("treats a skill-owned file with no cards key as holding nothing", () => {
+    // engram-review/synapse/_catalog.json sits beside the per-note files; a note named "_catalog" would map to it.
+    const cards = [card("_catalog.md", "Q")];
+    attachSynapseToCards(cards, new Map([["_catalog.md", { markedAt: "2026-11-12", seen: ["lesson|a/b"] }]]));
+    expect(cards[0]).toMatchObject({ synapseAnchors: [], synapseRelations: [], synapseRejected: [] });
+  });
+
   it("reads an entry written before relations existed", () => {
     const cards = [card("a.md", "Q"), card("a.md", "no entry")];
     const doc = { cards: { Q: { anchors: [{ front: "anchor1" }], userRejected: [] } } };
