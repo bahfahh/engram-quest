@@ -111,8 +111,8 @@ function featureIcon(parent, plugin, id, { size = 32, fallback } = {}) {
 // Pages and dialogs still read Obsidian's variables; point them at the Hub's neutrals.
 function applyHubVars(el, dark) {
   const vars = dark
-    ? { "--background-primary": "#232326", "--background-secondary": "#2C2C30", "--text-normal": "#F5F5F7", "--text-muted": "#A0A0A8", "--background-modifier-border": "rgba(235,235,245,.12)" }
-    : { "--background-primary": "#FFFFFF", "--background-secondary": "#F5F5F7", "--text-normal": "#1D1D1F", "--text-muted": "#6A6A72", "--background-modifier-border": "rgba(60,60,67,.12)" };
+    ? { "--background-primary": "#232326", "--background-secondary": "#2C2C30", "--text-normal": "#F5F5F7", "--text-muted": "#B0B0B9", "--background-modifier-border": "rgba(235,235,245,.12)" }
+    : { "--background-primary": "#FFFFFF", "--background-secondary": "#F5F5F7", "--text-normal": "#1D1D1F", "--text-muted": "#62626A", "--background-modifier-border": "rgba(60,60,67,.12)" };
   for (const k in vars) el.style.setProperty(k, vars[k], "important");
 }
 
