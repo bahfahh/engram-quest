@@ -93,9 +93,8 @@ const session = `
 .lh-syg-sub { min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .lh-syg-st { flex:none; display:inline-flex; align-items:center; gap:5px; font-weight:650; white-space:nowrap; }
 .lh-syg-st::before { content:""; width:8px; height:8px; border-radius:50%; background:var(--dot,currentColor); }
-.lh-syg-st[data-state="mastered"] { color:var(--mstt); --dot:var(--mst); }
-.lh-syg-st[data-state="learning"] { color:var(--lrnt); --dot:var(--lrn); }
-.lh-syg-st[data-state="seen"] { color:var(--duet); --dot:var(--due); }
+.lh-syg-st:is([data-state="mastered"],[data-state="done"]) { color:var(--mstt); --dot:var(--mst); }
+.lh-syg-st:is([data-state="learning"],[data-state="seen"]) { color:var(--lrnt); --dot:var(--lrn); }
 .lh-syg-st[data-state="unseen"] { color:var(--text3); }
 .lh-syg-st[data-state="unseen"]::before { background:transparent; box-shadow:inset 0 0 0 1.5px currentColor; }
 .lh-syg-cue { flex:none; display:grid; place-items:center; width:22px; height:22px; color:var(--tint); }

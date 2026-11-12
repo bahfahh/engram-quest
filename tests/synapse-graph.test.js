@@ -88,7 +88,7 @@ describe("buildContentIndex", () => {
 
   it("keys lessons by <course slug>/<lessonId> with their reading state, leaving out planned lessons", () => {
     expect([...index.lessons.keys()]).toEqual(["cicd-azure-essentials/lsn-1752400000000", "cicd-azure-essentials/lsn-1752400000002"]);
-    expect(index.lessons.get("cicd-azure-essentials/lsn-1752400000000")).toMatchObject({ title: "CI/CD 在自動化什麼 + 測試金字塔", sub: "CI/CD 與 Azure 基礎", state: "seen" });
+    expect(index.lessons.get("cicd-azure-essentials/lsn-1752400000000")).toMatchObject({ title: "CI/CD 在自動化什麼 + 測試金字塔", sub: "CI/CD 與 Azure 基礎", state: "done" });
     expect(index.lessons.get("cicd-azure-essentials/lsn-1752400000002").state).toBe("unseen");
     expect(index.lessonByPath.get("engram-quest/lessons/cicd-azure-essentials/lsn-1752400000002-ci-gate.html")).toBe("cicd-azure-essentials/lsn-1752400000002");
   });
@@ -202,7 +202,7 @@ describe("buildSynapseGraph: mixed content", () => {
     const after = graphOf(makeCard(entry), { revealed: true });
     expect(ids(after)).toEqual(expect.arrayContaining(ids(before)));
     expect(before.more).toBe(after.count - before.count);
-    expect(before.more).toBe(3);
+    expect(before.more).toBe(4);
     expect(after.more).toBe(0);
   });
 
@@ -212,8 +212,8 @@ describe("buildSynapseGraph: mixed content", () => {
       relations: [{ type: "lesson", ref: "cicd-azure-essentials/lsn-1752400000000", score: 8, reason: "兩者都靠「失敗 門檻」擋下結果" }],
     });
     const before = graphOf(leaky, { revealed: false });
-    expect(ids(before)).toEqual([`note|${SOURCE_NOTE}`, "topic|t13-llm-testing", "explainer|ci-gate-value-1785501573"]);
-    expect(before.more).toBe(3);
+    expect(ids(before)).toEqual([`note|${SOURCE_NOTE}`, "topic|t13-llm-testing"]);
+    expect(before.more).toBe(4);
     const texts = flat(before).flatMap((n) => [n.title, n.sub, n.reason]).join(" ");
     expect(leaksAnswer(texts, BACK)).toBe(false);
     expect(ids(graphOf(leaky, { revealed: true }))).toContain("card|Study/CI.md|失敗門檻設多少才合理？");
@@ -283,7 +283,7 @@ describe("buildSynapseGraph: where the card came from", () => {
     const card = makeCard({ relations: [{ type: "topic", ref: "t13-llm-testing", score: 8, reason: "同一個主題" }] });
     const index = buildContentIndex({ ...rawContent(), topicSr: {} });
     const before = buildSynapseGraph({ card, sourcePaths: [], index, noteExists, revealed: false });
-    expect(ids(before)).toEqual(["explainer|ci-gate-value-1785501573"]);
+    expect(ids(before)).toEqual([]);
     const after = buildSynapseGraph({ card, sourcePaths: [], index, noteExists, revealed: true });
     expect(ids(after)).toContain(`note|${OTHER_NOTE}`);
   });
@@ -331,9 +331,14 @@ describe("buildSynapseGraph: size limit", () => {
     expect(kept).not.toContain("explainer|foundry-eval-selfhost-1794494410");
   });
 
-  it("honours a smaller limit and never keeps a child without its parent", () => {
-    const graph = graphOf(makeCard({ anchors: anchors.slice(0, 1) }), { revealed: true, resolvedLinks: links, max: 4 });
-    expect(ids(graph)).toEqual([`note|${SOURCE_NOTE}`, "explainer|ci-gate-value-1785501573", "video|azure-ai-2026/az-l04-eval"]);
+  it("honours a smaller limit, starting from what was shown before the answer", () => {
+    const small = makeCard({ anchors: anchors.slice(0, 1) });
+    const before = graphOf(small, { revealed: false, resolvedLinks: links, max: 4 });
+    expect(ids(before)).toEqual([`note|${SOURCE_NOTE}`, "topic|t13-llm-testing", "card|Study/CI.md|熟卡 0"]);
+    expect(ids(graphOf(small, { revealed: true, resolvedLinks: links, max: 4 }))).toEqual(ids(before));
+    // With room for one more, the next link by rank joins them.
+    expect(ids(graphOf(small, { revealed: true, resolvedLinks: links, max: 5 }))).toEqual(
+      [`note|${SOURCE_NOTE}`, "topic|t13-llm-testing", "explainer|ci-gate-value-1785501573", "card|Study/CI.md|熟卡 0"]);
   });
 });
 
@@ -359,6 +364,137 @@ describe("userRejected", () => {
   it("hides a rejected explicit link too, by the same <type>|<ref> key", () => {
     const graph = graphOf(makeCard(entry), { revealed: true });
     expect(ids(graph)).toEqual(["video|azure-ai-2026/az-l04-eval", "card|b.md|keep", "lesson|cicd-azure-essentials/lsn-1752400000000"]);
+  });
+});
+
+describe("buildSynapseGraph: nothing gives the answer away before it is shown", () => {
+  it("does not let a mastered card be opened when its own answer contains this card's answer", () => {
+    const card = makeCard({
+      anchors: [
+        { front: "合併前 CI 要檢查什麼？", back: "在 CI 設定失敗門檻來擋下合併", notePath: "Study/CI.md", stability: 20, score: 9, reason: "同一道 gate" },
+        { front: "測試金字塔的三層", back: "單元、整合、端對端", notePath: "Study/CI.md", stability: 20, score: 8, reason: "同屬 CI 的判斷" },
+      ],
+    });
+    const before = graphOf(card, { revealed: false }).branches.filter((n) => n.type === "card");
+    expect(before.map((n) => [n.title, n.expandable])).toEqual([["合併前 CI 要檢查什麼？", false], ["測試金字塔的三層", true]]);
+    const after = graphOf(card, { revealed: true }).branches.filter((n) => n.type === "card");
+    expect(after.map((n) => n.expandable)).toEqual([true, true]);
+    expect(after[0].back).toBe("在 CI 設定失敗門檻來擋下合併");
+  });
+
+  it("checks the answer the session would look up when the anchor stores none", () => {
+    const card = makeCard({ anchors: [{ front: "合併前 CI 要檢查什麼？", back: "", notePath: "Study/CI.md", stability: 20, score: 9, reason: "同一道 gate" }] });
+    const anchorBack = () => "先看失敗門檻有沒有過";
+    const [node] = graphOf(card, { revealed: false, anchorBack }).branches.filter((n) => n.type === "card");
+    expect(node).toMatchObject({ expandable: false, back: "先看失敗門檻有沒有過" });
+  });
+
+  it("keeps a Deep Dive page written for this very card until the answer is shown, even when read", () => {
+    const card = makeCard({});
+    expect(ids(graphOf(card, { revealed: false }))).not.toContain("explainer|ci-gate-value-1785501573");
+    expect(ids(graphOf(card, { revealed: true }))).toContain("explainer|ci-gate-value-1785501573");
+  });
+
+  it("keeps notes that are only linked from another node until the answer is shown", () => {
+    const card = makeCard({ relations: [{ type: "topic", ref: "t13-llm-testing", score: 8, reason: "同一個主題" }] });
+    const links = { [SOURCE_NOTE]: { [LINKED_NOTE]: 1 } };
+    const before = graphOf(card, { revealed: false, resolvedLinks: links });
+    expect(ids(before)).toEqual([`note|${SOURCE_NOTE}`, "topic|t13-llm-testing"]);
+    const after = graphOf(card, { revealed: true, resolvedLinks: links });
+    expect(ids(after)).toEqual(expect.arrayContaining([`note|${LINKED_NOTE}`, `note|${OTHER_NOTE}`]));
+    expect(flat(after).filter((n) => n.type === "note" && n.depth === 2).map(isLearned)).toEqual([false, false]);
+  });
+});
+
+describe("buildSynapseGraph: what was on the map before the answer stays on it after", () => {
+  const lessons = Array.from({ length: 12 }, (_, i) => ({ id: `lsn-${i}`, title: `第 ${i + 1} 課`, file: `lsn-${i}.html`, source: "skill" }));
+  const index = buildContentIndex({ courses: [{ slug: "big", meta: normalizeMeta({ title: "大課", lessons, completion: {} }) }] });
+  const card = makeCard({
+    anchors: [{ front: "熟卡", notePath: "Study/CI.md", stability: 20, score: 7, reason: "同一件事" }],
+    relations: lessons.map((l) => ({ type: "lesson", ref: `big/${l.id}`, score: 9, reason: "還沒上過的課" })),
+  });
+
+  it("keeps a recall cue that newer, higher-scored links would otherwise push out", () => {
+    const before = buildSynapseGraph({ card, sourcePaths: [SOURCE_NOTE], index, noteExists, revealed: false });
+    const after = buildSynapseGraph({ card, sourcePaths: [SOURCE_NOTE], index, noteExists, revealed: true });
+    expect(ids(before)).toEqual([`note|${SOURCE_NOTE}`, "card|Study/CI.md|熟卡"]);
+    expect(ids(after)).toEqual(expect.arrayContaining(ids(before)));
+    expect(after.count).toBe(MAX_NODES - 1);
+    expect(before.more).toBe(after.count - before.count);
+  });
+
+  it("still lists the revealed map in rank order", () => {
+    const after = buildSynapseGraph({ card, sourcePaths: [SOURCE_NOTE], index, noteExists, revealed: true });
+    expect(after.branches.map((n) => n.id)).toEqual([
+      `note|${SOURCE_NOTE}`, ...lessons.slice(0, 9).map((l) => `lesson|big/${l.id}`), "card|Study/CI.md|熟卡",
+    ]);
+  });
+});
+
+describe("buildSynapseGraph: malformed entries", () => {
+  it("skips a relation whose type is not one it knows, including names every object has", () => {
+    const card = makeCard({
+      relations: [
+        { type: "constructor", ref: "x", score: 9, reason: "r" },
+        { type: "__proto__", ref: "x", score: 9, reason: "r" },
+        { type: "toString", ref: "x", score: 9, reason: "r" },
+        { type: "hasOwnProperty", ref: "get", score: 9, reason: "r" },
+        { type: "lesson", ref: "cicd-azure-essentials/lsn-1752400000000", score: 8, reason: "ok" },
+      ],
+    });
+    const graph = buildSynapseGraph({ card, index: buildContentIndex(rawContent()), noteExists, revealed: true });
+    expect(ids(graph)).toEqual(["explainer|ci-gate-value-1785501573", "video|azure-ai-2026/az-l04-eval", "lesson|cicd-azure-essentials/lsn-1752400000000"]);
+  });
+});
+
+describe("content states follow the user's real progress", () => {
+  it("tells finished from merely opened, for lessons, videos and Deep Dive pages", () => {
+    const raw = rawContent();
+    raw.courses[0].meta.completion["lsn-1752400000002"] = { viewed: true, completed: false };
+    raw.series[0].meta.progress = { "az-l04-eval": { position: 0, completed: true }, "az-l01-foundry": { position: 12, completed: false } };
+    raw.explainerState["foundry-eval-selfhost-1794494410"] = { viewed: true, completed: true };
+    const index = buildContentIndex(raw);
+    expect(index.lessons.get("cicd-azure-essentials/lsn-1752400000000").state).toBe("done");
+    expect(index.lessons.get("cicd-azure-essentials/lsn-1752400000002").state).toBe("seen");
+    expect(index.videos.get("azure-ai-2026/az-l04-eval").state).toBe("done");
+    expect(index.videos.get("azure-ai-2026/az-l01-foundry").state).toBe("seen");
+    expect(index.videos.get("episodic-recall/ep-oct").state).toBe("seen");
+    expect(index.explainers.get("foundry-eval-selfhost-1794494410").state).toBe("done");
+    expect(index.explainers.get("ci-gate-value-1785501573").state).toBe("seen");
+    for (const state of ["done", "seen"]) expect(isLearned({ type: "lesson", state })).toBe(true);
+    expect(isLearned({ type: "lesson", state: "unseen" })).toBe(false);
+  });
+});
+
+describe("leaksAnswer: more than a verbatim match", () => {
+  it("finds one part of a longer answer", () => {
+    expect(leaksAnswer("什麼是失敗門檻？", "失敗門檻（fail threshold）")).toBe(true);
+    expect(leaksAnswer("How to set a fail threshold", "失敗門檻（fail threshold）")).toBe(true);
+    expect(leaksAnswer("兩者都靠失敗門檻", "指標低於失敗門檻，這次評測就不通過")).toBe(true);
+  });
+
+  it("reads through HTML, list markers and markdown", () => {
+    expect(leaksAnswer("設定失敗門檻", "失敗門檻<br>低於就不通過")).toBe(true);
+    expect(leaksAnswer("整合測試怎麼寫", "1. 單元測試\n2. 整合測試\n3. 端對端測試")).toBe(true);
+    expect(leaksAnswer("第 2 課的內容", "1. 單元測試\n2. 整合測試\n3. 端對端測試")).toBe(false);
+    expect(leaksAnswer("整合測試怎麼寫", "- **單元測試**\n- ==整合測試==\n- 端對端測試")).toBe(true);
+    expect(leaksAnswer("用&nbsp;Redis 當快取", "<b>Redis</b>&nbsp;")).toBe(true);
+  });
+
+  it("normalises curly quotes, dashes, ellipses and full-width letters", () => {
+    expect(leaksAnswer("都用 redis 當快取", "“Ｒｅｄｉｓ”——快取…")).toBe(true);
+    expect(leaksAnswer("ＲＥＤＩＳ 的用法", "‘redis’")).toBe(true);
+  });
+
+  it("does not count what the question already says", () => {
+    expect(leaksAnswer("失敗門檻是什麼", "失敗門檻設在基準分數的九成", "失敗門檻設多少才合理？")).toBe(false);
+    expect(leaksAnswer("設在基準分數的九成左右", "失敗門檻設在基準分數的九成", "失敗門檻設多少才合理？")).toBe(true);
+  });
+
+  it("stays quiet about unrelated text and trivial answers", () => {
+    expect(leaksAnswer("同屬 CI gate 的判斷", "失敗門檻（fail threshold）：指標低於門檻，這次評測就不通過 gate。", "CI gate 靠哪個設定？")).toBe(false);
+    expect(leaksAnswer("It depends on the setup", "end-to-end")).toBe(false);
+    expect(leaksAnswer("anything", "<br>")).toBe(false);
   });
 });
 

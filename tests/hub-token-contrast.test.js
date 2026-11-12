@@ -60,9 +60,14 @@ describe("design token contrast", () => {
       const onPanel = { reason: ".lh-syg-edge", "explicit link": ".lh-syg-edge.is-explicit", "group label": ".lh-syg-tree > .lh-syg-grp", note: ".lh-syg-note" };
       const onNode = {
         title: ".lh-syg-tt", subtitle: ".lh-syg-meta",
-        mastered: '.lh-syg-st[data-state="mastered"]', learning: '.lh-syg-st[data-state="learning"]',
-        seen: '.lh-syg-st[data-state="seen"]', unseen: '.lh-syg-st[data-state="unseen"]',
+        "finished or mastered": '.lh-syg-st:is([data-state="mastered"],[data-state="done"])',
+        "in progress": '.lh-syg-st:is([data-state="learning"],[data-state="seen"])',
+        "not seen": '.lh-syg-st[data-state="unseen"]',
       };
+      // States use the Hub's own meanings: green finished, light blue in progress. Due stays for what is due.
+      expect(token(onNode["finished or mastered"], "color")).toBe("mstt");
+      expect(token(onNode["in progress"], "color")).toBe("lrnt");
+      expect(pages.split("\n").filter((line) => line.startsWith(".lh-syg") && /--due\b|--duet\b/.test(line))).toEqual([]);
       const failures = [];
       const check = (what, selector, surface, where) => {
         const ratio = contrast(tokens[token(selector, "color")], tokens[surface]);

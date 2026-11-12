@@ -43,11 +43,10 @@ function buildContentIndex(raw = {}) {
   for (const { slug, meta } of raw.courses || []) {
     for (const lesson of (meta && meta.lessons) || []) {
       if (!lesson.file) continue;
-      const done = (meta.completion && meta.completion[lesson.id]) || {};
       const ref = `${slug}/${lesson.id}`;
       index.lessons.set(ref, {
         ref, title: lesson.title || lesson.id, sub: meta.title || "",
-        state: done.viewed || done.completed ? "seen" : "unseen",
+        state: progressState(meta.completion && meta.completion[lesson.id]),
         slug, lessonId: lesson.id,
       });
       index.lessonByPath.set(`${LESSONS_DIR}/${slug}/${lesson.file}`, ref);
@@ -62,7 +61,7 @@ function buildContentIndex(raw = {}) {
       const ref = `${slug}/${video.id}`;
       index.videos.set(ref, {
         ref, title: video.title || video.id, sub: meta.title || "",
-        state: progress.completed || position > 0 ? "seen" : "unseen",
+        state: progressState({ viewed: position > 0, completed: progress.completed }),
         path: `${VIDEOS_DIR}/${slug}/${video.file}`, position: progress.completed ? 0 : position,
       });
       if (typeof video.cards === "string" && video.cards) index.videoByCards.set(video.cards, ref);
@@ -72,8 +71,7 @@ function buildContentIndex(raw = {}) {
   const readState = raw.explainerState || {};
   for (const page of raw.explainers || []) {
     if (!page || !page.id) continue;
-    const s = readState[page.id] || {};
-    index.explainers.set(page.id, { ref: page.id, title: page.title || page.id, sub: "", state: s.viewed || s.completed ? "seen" : "unseen", page });
+    index.explainers.set(page.id, { ref: page.id, title: page.title || page.id, sub: "", state: progressState(readState[page.id]), page });
     const src = page.sourceCard;
     if (src && src.front) {
       const key = cardKey(src.note, src.front);
@@ -96,24 +94,58 @@ function buildContentIndex(raw = {}) {
   return index;
 }
 
-/** A card the user knows cold, a page read, a video watched, a lesson opened. Notes carry no state and always count. */
-function isLearned(node) {
-  if (node.type === "note") return true;
-  if (node.type === "card" || node.type === "topic") return node.state === "mastered";
-  return node.state === "seen";
+/**
+ * How far the user got with a lesson, a video or a Deep Dive page, in the Hub's own terms:
+ * "done" finished, "seen" opened or partly watched, "unseen" never opened.
+ */
+function progressState(progress) {
+  if (progress && progress.completed) return "done";
+  return progress && progress.viewed ? "seen" : "unseen";
 }
 
-const squash = (s) => String(s || "").toLowerCase().replace(/[\s*_`~=#>[\](){}（）「」『』，。、：；！？,.:;!?"'|\\/-]/g, "");
+/**
+ * What the user has evidence of knowing: a card or recall topic known cold, a lesson, video or page
+ * at least opened, and a note the card itself points at. A note only reached through another node
+ * carries no such evidence.
+ */
+function isLearned(node) {
+  if (node.type === "note") return node.depth !== 2;
+  if (node.type === "card" || node.type === "topic") return node.state === "mastered";
+  return node.state === "seen" || node.state === "done";
+}
 
-/** True when `text` spells out the card's answer, so it must not be shown before the answer is. */
-function leaksAnswer(text, answer) {
-  const a = squash(answer);
-  return a.length >= 2 && squash(text).includes(a);
+// Punctuation, brackets and markdown marks that end one part of an answer and start the next.
+const BREAKS = /[\n*_`~=#>[\](){}<>「」『』《》〈〉【】，。、：；！？,.:;!?"'“”‘’—–\-·•|\\/]+/;
+const LIST_MARKER = /^[ \t]*(?:[-*+•]|\d+[.)、])[ \t]+/gm;
+const plain = (s) => String(s || "").normalize("NFKC").toLowerCase().replace(/<[^>]*>/g, "\n").replace(/&#?[a-z0-9]+;/g, " ");
+const squash = (s) => plain(s).split(BREAKS).join("").replace(/\s+/g, "");
+const GRAM = 4;
+
+/**
+ * True when `text` gives away part of the card's answer, so it must wait until the answer is shown.
+ * The answer is read as its parts (clauses, list items, marked words) rather than one string, and a
+ * run of four characters shared with any part counts too, so a paraphrase or a longer answer is still
+ * caught. Whatever the question already says is not a secret. Errs on the side of hiding.
+ */
+function leaksAnswer(text, answer, question = "") {
+  const shown = squash(text);
+  const asked = squash(question);
+  const parts = plain(answer).replace(LIST_MARKER, "").split(BREAKS).map((part) => part.replace(/\s+/g, ""));
+  for (const part of [squash(answer), ...parts]) {
+    // A word or two of plain letters is too easily part of another word ("end" in "depends").
+    if (part.length < 2 || (part.length < GRAM && /^[a-z]+$/.test(part))) continue;
+    if (shown.includes(part) && !asked.includes(part)) return true;
+    for (let i = 0; i + GRAM <= part.length; i++) {
+      const gram = part.slice(i, i + GRAM);
+      if (/[^!-~]/.test(gram) && shown.includes(gram) && !asked.includes(gram)) return true;
+    }
+  }
+  return false;
 }
 
 function resolve(index, noteExists, type, ref) {
   if (type === "note") return isNotePath(ref) && noteExists(ref) ? { ref, title: baseName(ref), sub: "", state: null } : null;
-  const found = { lesson: index.lessons, video: index.videos, explainer: index.explainers, topic: index.topics }[type];
+  const found = new Map([["lesson", index.lessons], ["video", index.videos], ["explainer", index.explainers], ["topic", index.topics]]).get(type);
   return (found && found.get(ref)) || null;
 }
 
@@ -125,17 +157,25 @@ function resolve(index, noteExists, type, ref) {
  *   index          buildContentIndex() result
  *   resolvedLinks  app.metadataCache.resolvedLinks ({ [notePath]: { [linkedPath]: count } })
  *   noteExists     (path) => boolean
- *   revealed       false while the answer is hidden: only learned nodes, and no text that contains the answer
+ *   anchorBack     (anchor) => the answer a tap on that mastered card would show
+ *   revealed       false while the answer is hidden (see below)
  *
  * Returns { branches, count, more }. A branch is a node next to the centre with its own `children`;
  * `more` is how many further nodes the revealed graph holds (0 once revealed).
  *
- * node = { id, type, ref, title, sub, state, depth, inferred, score, reason | rel, entry | anchor, children }
+ * node = { id, type, ref, title, sub, state, depth, inferred, score, reason | rel, entry | anchor, back, expandable, children }
  *   reason  the skill's sentence (inferred edges)       rel  which explicit link it is (the panel words it)
+ *   back, expandable  card nodes only: the answer a tap shows, and whether it may be shown yet
+ *
+ * Before the answer is shown the graph holds only what the user has learned, leaves out the Deep
+ * Dive page written for this very card (it states the answer) and anything whose text gives part of
+ * the answer away, and keeps a mastered card closed when its own answer would. The revealed graph
+ * is that same set plus the rest, so nothing on screen disappears when the answer appears.
  */
-function buildSynapseGraph({ card, sourcePaths = [], index, resolvedLinks = {}, noteExists = () => false, revealed = false, max = MAX_NODES }) {
+function buildSynapseGraph({ card, sourcePaths = [], index, resolvedLinks = {}, noteExists = () => false, anchorBack = (anchor) => anchor.back || "", revealed = false, max = MAX_NODES }) {
   if (!card) return { branches: [], count: 0, more: 0 };
   const idx = index || buildContentIndex();
+  const leaks = (text) => leaksAnswer(text, card.back, card.front);
   const rejected = new Set(card.synapseRejected || []);
   const all = new Map();
   const add = (parent, type, ref, fields) => {
@@ -166,9 +206,11 @@ function buildSynapseGraph({ card, sourcePaths = [], index, resolvedLinks = {}, 
     if (!anchor || !anchor.front) continue;
     if (anchor.front === card.front && (!anchor.notePath || anchor.notePath === card.notePath)) continue;
     const learning = typeof anchor.stability === "number" && anchor.stability < MASTERED_STABILITY_THRESHOLD;
+    const back = String(anchorBack(anchor) || "");
     add(null, "card", `${anchor.notePath || ""}|${anchor.front}`, {
       title: anchor.front, sub: "", state: learning ? "learning" : "mastered",
       inferred: true, score: Number(anchor.score) || 0, reason: anchor.reason || "", anchor,
+      back, expandable: revealed || !leaks(back),
     });
   }
   for (const r of card.synapseRelations || []) {
@@ -188,29 +230,29 @@ function buildSynapseGraph({ card, sourcePaths = [], index, resolvedLinks = {}, 
   // Closest first; then explicit links, the skill's higher scores, and what the user already learned.
   const ranked = [...all.values()].sort((a, b) =>
     a.depth - b.depth || a.inferred - b.inferred || b.score - a.score || isLearned(b) - isLearned(a) || a.order - b.order);
-  const pick = (allowed) => {
-    const kept = new Map();
+  const pick = (allowed, kept = new Set()) => {
     for (const node of ranked) {
       if (kept.size >= max - 1) break;
-      if (!allowed(node) || (node.parent && !kept.has(node.parent))) continue;
-      kept.set(node.id, node);
+      if (kept.has(node.id) || !allowed(node) || (node.parent && !kept.has(node.parent))) continue;
+      kept.add(node.id);
     }
     return kept;
   };
-  const full = pick(() => true);
-  const safe = (node) => isLearned(node) && ![node.title, node.sub, node.reason].some((text) => leaksAnswer(text, card.back));
-  const shown = revealed ? full : pick(safe);
+  const safe = (node) => isLearned(node) && node.rel !== "explainer" && ![node.title, node.sub, node.reason].some(leaks);
+  const before = pick(safe);
+  const full = pick(() => true, new Set(before));
+  const shown = revealed ? full : before;
 
   const branches = [];
   const byId = new Map();
-  for (const node of shown.values()) {
+  for (const node of ranked.filter((n) => shown.has(n.id))) {
     const out = { ...node, children: [] };
     delete out.order;
     byId.set(out.id, out);
     if (out.parent) byId.get(out.parent).children.push(out);
     else branches.push(out);
   }
-  return { branches, count: shown.size, more: [...full.keys()].filter((id) => !shown.has(id)).length };
+  return { branches, count: shown.size, more: full.size - shown.size };
 }
 
-module.exports = { MAX_NODES, buildContentIndex, buildSynapseGraph, isLearned, leaksAnswer };
+module.exports = { MAX_NODES, buildContentIndex, buildSynapseGraph, progressState, isLearned, leaksAnswer };

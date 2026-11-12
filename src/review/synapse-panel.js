@@ -9,7 +9,7 @@
 const { t: c, interpolate: K } = require("../i18n");
 const { icon, featureIcon, isPhone } = require("../hub/ui");
 const { isLearned } = require("./synapse-graph");
-const { arrangeSynapseMap } = require("./synapse-layout");
+const { arrangeSynapseMap, spinePaths } = require("./synapse-layout");
 
 const MAP_MIN_WIDTH = 640; // narrower than this the side columns cannot hold a readable node
 const SVG_NS = "http://www.w3.org/2000/svg";
@@ -38,10 +38,14 @@ const RELS = {
 };
 const GROUPS = { recall: "SYNAPSE_GROUP_RECALL", source: "SYNAPSE_GROUP_SOURCE", next: "SYNAPSE_GROUP_NEXT" };
 
+// The words follow the real state; the colour (set in CSS from `data-state`) follows the Hub:
+// finished or mastered is green, in progress is light blue, not seen is a hollow neutral dot.
 function stateLabel(node) {
+  const video = node.type === "video";
   if (node.state === "mastered") return "SYNAPSE_STATE_MASTERED";
   if (node.state === "learning") return "SYNAPSE_STATE_LEARNING";
-  if (node.state === "seen") return node.type === "video" ? "SYNAPSE_STATE_WATCHED" : "SYNAPSE_STATE_READ";
+  if (node.state === "done") return video ? "SYNAPSE_STATE_WATCHED" : "SYNAPSE_STATE_READ_DONE";
+  if (node.state === "seen") return video ? "SYNAPSE_STATE_WATCHING" : "SYNAPSE_STATE_READ";
   if (node.state === "unseen") return node.type === "topic" ? "SYNAPSE_STATE_NEW" : "SYNAPSE_STATE_UNSEEN";
   return null; // notes carry no learning state
 }
@@ -96,7 +100,10 @@ function renderBranches(list, nodes, opts) {
     const row = item.createEl("div", { cls: "lh-syg-row" });
     row.createEl("span", { cls: "lh-syg-edge" + (node.inferred ? "" : " is-explicit"), text: node.reason || c(t, RELS[node.rel] || "SYNAPSE_REL_RELATED") });
 
-    const el = row.createEl("div", { cls: "lh-syg-node" + (type.cue ? " is-link" : ""), attr: { "data-type": node.type } });
+    // A mastered card whose own answer would give this card's answer away stays closed until the
+    // answer is shown, and is drawn like any other node that does nothing on click.
+    const opens = !!type.cue && (node.type !== "card" || node.expandable);
+    const el = row.createEl("div", { cls: "lh-syg-node" + (opens ? " is-link" : ""), attr: { "data-type": node.type } });
     if (type.feature) featureIcon(el, opts.plugin, type.feature, { size: 32, fallback: type.icon });
     else icon(el.createEl("span", { cls: "lh-syg-ic" }), type.icon);
     const text = el.createEl("span", { cls: "lh-syg-tx" });
@@ -106,7 +113,7 @@ function renderBranches(list, nodes, opts) {
     if (state) meta.createEl("span", { cls: "lh-syg-st", text: c(t, state), attr: { "data-state": node.state } });
     meta.createEl("span", { cls: "lh-syg-sub", text: [c(t, type.label), node.sub].filter(Boolean).join(" · ") });
 
-    if (type.cue) {
+    if (opens) {
       const expanded = node.type === "card" && opts.expandedId === node.id;
       icon(el.createEl("span", { cls: "lh-syg-cue" + (expanded ? " is-open" : "") }), type.cue);
       el.setAttribute("role", "button");
@@ -139,26 +146,27 @@ function watchLayout(map) {
   activeDocument.addEventListener("scroll", () => { if (map.isConnected) drawWires(map); }, { capture: true, passive: true, signal: scrolling.signal });
 }
 
-// One curve from the card to each branch next to it, ending where the line under the branch's
-// reason begins, so the reason reads as written on the connector.
+// One line leaves the card on each side and runs down a spine; a short branch turns off the spine
+// to each node and ends where the line under that node's reason begins, so the reason reads as
+// written on its own branch. Branches to what is still ahead are dashed, and so is the stretch of
+// spine that only they use.
 function drawWires(map) {
   const svg = map.querySelector(".lh-syg-wires");
   svg.replaceChildren();
   if (!map.hasClass("is-map")) return;
   const box = map.getBoundingClientRect();
   const root = map.querySelector(".lh-syg-root").getBoundingClientRect();
-  const y1 = root.top + root.height / 2 - box.top;
+  const y0 = root.top + root.height / 2 - box.top;
   for (const side of map.querySelectorAll(".lh-syg-side")) {
-    const left = side.hasClass("is-left");
-    const x1 = (left ? root.left : root.right) - box.left;
-    for (const branch of side.querySelectorAll(":scope > .lh-syg-br")) {
+    const dir = side.hasClass("is-left") ? -1 : 1;
+    const ends = [...side.querySelectorAll(":scope > .lh-syg-br")].map((branch) => {
       const edge = branch.querySelector(".lh-syg-edge").getBoundingClientRect();
-      const x2 = (left ? edge.right : edge.left) - box.left;
-      const y2 = edge.bottom - box.top - 0.75;
-      const mid = (x1 + x2) / 2;
+      return { x: (dir < 0 ? edge.right : edge.left) - box.left, y: edge.bottom - box.top - 0.75, dashed: branch.hasClass("is-next") };
+    });
+    for (const { d, dashed } of spinePaths({ x: (dir < 0 ? root.left : root.right) - box.left, y: y0 }, dir, ends)) {
       const path = svg.appendChild(activeDocument.createElementNS(SVG_NS, "path"));
-      path.setAttribute("d", `M${x1} ${y1}C${mid} ${y1} ${mid} ${y2} ${x2} ${y2}`);
-      if (branch.hasClass("is-next")) path.setAttribute("class", "is-next");
+      path.setAttribute("d", d);
+      if (dashed) path.setAttribute("class", "is-next");
     }
   }
 }
