@@ -1,0 +1,45 @@
+{
+  "version": 2,
+  "title": "Exposure Triangle in the Field",
+  "description": "Set aperture, shutter and ISO for real briefs, diagnose rejected frames, and shoot a wedding as the light drops.",
+  "difficulty": "medium",
+  "tags": ["photography"],
+  "createdAt": "2026-11-13",
+  "nodes": [
+    {
+      "id": "briefing",
+      "title": "Briefing",
+      "type": "briefing",
+      "summary": "You'll work through three jobs with a camera whose dials move in full stops. Each time, you decide what the picture is about and pay for it in stops.",
+      "points": [
+        { "title": "The meter reading", "body": "Every scene comes with one combination the camera's meter calls correctly exposed. It is a starting point, not an answer: any combination with the same total light is just as bright."
+        },
+        { "title": "Your dials", "body": "Aperture f/1.4 to f/16, shutter 1/2000 s to 1/4 s, ISO 100 to 6400, each one stop per click."
+        },
+        { "title": "What the photo shows you", "body": "After you shoot you see a simulated frame, with brightness, blur, shake and grain as your settings would give them, plus a short readout of what a viewer would notice."
+        }
+      ]
+    },
+    {
+      "id": "ch1-one-light",
+      "title": "Three frames, one light",
+      "type": "mission",
+      "mission_goal": "Put the shot's priority first and trade stops so the brightness stays right",
+      "html": "nodes/ch1-one-light.html"
+    },
+    {
+      "id": "ch2-rejects",
+      "title": "The reject pile",
+      "type": "mission",
+      "mission_goal": "Trace a flaw in a photo back to the setting behind it, and fix it without creating a new one",
+      "html": "nodes/ch2-rejects.html"
+    },
+    {
+      "id": "boss-wedding",
+      "title": "Into the blue hour",
+      "type": "boss",
+      "mission_goal": "Shoot a list of shots as the light falls, planning ahead so the hardest one isn't left to ISO",
+      "html": "nodes/boss-wedding.html"
+    }
+  ]
+}
