@@ -846,7 +846,7 @@ var Q=class extends I.Modal{
         },
         onSelect:(node)=>{
           if(node.type!=="card"){ this._synapse.open(node,()=>{ if(parent.isConnected) refresh(); }); return; }
-          if(!node.expandable) return;
+          if(node.locked) return;
           this._synapseExpandedId=this._synapseExpandedId===node.id?null:node.id;
           refresh();
         },

@@ -80,10 +80,11 @@ class SynapseMapSession {
 
   /**
    * Opens what a node stands for. `redraw` is called after a viewer that changed something closes.
-   * A tap that lands while another is still opening is ignored. Resolves to whether something opened.
+   * A tap that lands while another is still opening is ignored, and so is a tap on a node the
+   * graph marked locked (a cue only, until the answer is shown). Resolves to whether something opened.
    */
   async open(node, redraw) {
-    if (this.opening || !this.allowed()) return false;
+    if (this.opening || !this.allowed() || node.locked) return false;
     this.opening = true;
     try {
       const entry = node.entry;

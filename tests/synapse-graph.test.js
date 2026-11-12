@@ -376,9 +376,9 @@ describe("buildSynapseGraph: nothing gives the answer away before it is shown", 
       ],
     });
     const before = graphOf(card, { revealed: false }).branches.filter((n) => n.type === "card");
-    expect(before.map((n) => [n.title, n.expandable])).toEqual([["合併前 CI 要檢查什麼？", false], ["測試金字塔的三層", true]]);
+    expect(before.map((n) => [n.title, n.locked])).toEqual([["合併前 CI 要檢查什麼？", true], ["測試金字塔的三層", false]]);
     const after = graphOf(card, { revealed: true }).branches.filter((n) => n.type === "card");
-    expect(after.map((n) => n.expandable)).toEqual([true, true]);
+    expect(after.map((n) => n.locked)).toEqual([false, false]);
     expect(after[0].back).toBe("在 CI 設定失敗門檻來擋下合併");
   });
 
@@ -386,7 +386,66 @@ describe("buildSynapseGraph: nothing gives the answer away before it is shown", 
     const card = makeCard({ anchors: [{ front: "合併前 CI 要檢查什麼？", back: "", notePath: "Study/CI.md", stability: 20, score: 9, reason: "同一道 gate" }] });
     const anchorBack = () => "先看失敗門檻有沒有過";
     const [node] = graphOf(card, { revealed: false, anchorBack }).branches.filter((n) => n.type === "card");
-    expect(node).toMatchObject({ expandable: false, back: "先看失敗門檻有沒有過" });
+    expect(node).toMatchObject({ locked: true, back: "先看失敗門檻有沒有過" });
+  });
+
+  it("shows the video or lesson the card was made from as a cue, but does not let it be opened yet", () => {
+    // The review screen itself only offers "rewatch" once the answer is shown.
+    const raw = rawContent();
+    raw.series[0].meta.progress = { "az-l04-eval": { position: 0, completed: true } };
+    raw.courses[0].meta.completion["lsn-1752400000002"] = { viewed: true };
+    const index = buildContentIndex(raw);
+    const card = makeCard({ relations: [{ type: "lesson", ref: "cicd-azure-essentials/lsn-1752400000000", score: 8, reason: "同一道 gate" }] });
+    const sourcePaths = ["engram-quest/lessons/cicd-azure-essentials/lsn-1752400000002-ci-gate.html"];
+    const lockedOf = (graph) => Object.fromEntries(flat(graph).map((n) => [n.id, n.locked]));
+
+    expect(lockedOf(buildSynapseGraph({ card, sourcePaths, index, noteExists, revealed: false }))).toEqual({
+      "lesson|cicd-azure-essentials/lsn-1752400000002": true,  // the lesson the card came from
+      "video|azure-ai-2026/az-l04-eval": true,                 // the video the card came with
+      "lesson|cicd-azure-essentials/lsn-1752400000000": false, // a lesson the skill related: opens as before
+    });
+    const after = lockedOf(buildSynapseGraph({ card, sourcePaths, index, noteExists, revealed: true }));
+    expect(Object.values(after).every((locked) => locked === false)).toBe(true);
+    expect(Object.keys(after)).toEqual(expect.arrayContaining(["lesson|cicd-azure-essentials/lsn-1752400000002", "video|azure-ai-2026/az-l04-eval"]));
+  });
+
+  it("does not treat the name of the card's own source note, which the review screen shows, as part of the answer", () => {
+    const anchor = { front: "LLM測試維度有哪幾個？", notePath: "Study/CI.md", stability: 20, score: 9, reason: "同一份筆記的觀念" };
+    const card = makeCard({ anchors: [anchor] }, { back: "看 LLM測試維度 裡的穩定性那一組" });
+    const named = buildSynapseGraph({ card, sourcePaths: ["Notes/LLM測試維度.md"], noteExists: () => true, revealed: false });
+    expect(ids(named)).toContain("card|Study/CI.md|LLM測試維度有哪幾個？");
+    const unnamed = buildSynapseGraph({ card, sourcePaths: ["Notes/別的筆記.md"], noteExists: () => true, revealed: false });
+    expect(ids(unnamed)).not.toContain("card|Study/CI.md|LLM測試維度有哪幾個？");
+  });
+
+  it("still hides the source video when its title would give the answer away", () => {
+    const raw = rawContent();
+    raw.series[0].meta.videos[1].title = "第 4 課 失敗門檻怎麼設";
+    raw.series[0].meta.progress = { "az-l04-eval": { completed: true } };
+    const before = buildSynapseGraph({ card: makeCard({}), index: buildContentIndex(raw), noteExists, revealed: false });
+    expect(ids(before)).not.toContain("video|azure-ai-2026/az-l04-eval");
+  });
+
+  it("holds back any Deep Dive page made from this card's file, however the card is now worded", () => {
+    // The page was written for this card before its front was edited, so the exact match is gone;
+    // the skill may then list the page as a relation.
+    const raw = rawContent();
+    raw.explainers[0].sourceCard.front = "CI gate 的舊問法";
+    raw.explainers.push({ id: "sibling-page", title: "詳解：同一份牌組的另一張卡", sourceCard: { note: DECK, front: "另一張卡" } });
+    raw.explainerState["sibling-page"] = { viewed: true };
+    const index = buildContentIndex(raw);
+    const card = makeCard({
+      relations: [
+        { type: "explainer", ref: "ci-gate-value-1785501573", score: 9, reason: "講同一個設定" },
+        { type: "explainer", ref: "sibling-page", score: 8, reason: "同一份牌組" },
+        { type: "explainer", ref: "foundry-eval-selfhost-1794494410", score: 7, reason: "別的牌組的詳解" },
+      ],
+    });
+    raw.explainerState["foundry-eval-selfhost-1794494410"] = { viewed: true };
+    const before = buildSynapseGraph({ card, index: buildContentIndex(raw), noteExists, revealed: false });
+    expect(ids(before)).toEqual(["explainer|foundry-eval-selfhost-1794494410"]);
+    const after = buildSynapseGraph({ card, index, noteExists, revealed: true });
+    expect(ids(after)).toEqual(expect.arrayContaining(["explainer|ci-gate-value-1785501573", "explainer|sibling-page"]));
   });
 
   it("keeps a Deep Dive page written for this very card until the answer is shown, even when read", () => {
