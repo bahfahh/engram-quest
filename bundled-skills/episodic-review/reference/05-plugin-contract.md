@@ -34,7 +34,7 @@ The plugin shows, plays and schedules; it never makes content and never calls a 
 - `requests[]`: a `pending` entry is the user asking for a film from the plugin. Use its period and length; pass `--request-id` to `deliver.py` to mark it `done`.
 - `period`: `"2026-10"` or `"2026-08..2026-09"`. `length`: the tier. `createdAt` orders several films for one period.
 - `topics[]`: chapters in seconds. `topicId` is optional and links a chapter to a pack topic.
-- `style` is a free string (`episodic-map`, `episodic-quiz`, or a legacy shell name).
+- `style` is a free string: `episodic-map` for the films this skill makes. Entries made earlier keep the style they have.
 - `credits`: required when the score uses the bundled samples.
 - A missing field means "none". Never rename a field.
 

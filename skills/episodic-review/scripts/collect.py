@@ -1,24 +1,23 @@
 #!/usr/bin/env python3
-"""情境回顧：把一段期間的筆記整理成「主題資料包」（不用 AI，只用 git 和檔案）。
+"""Episodic review: group the notes touched in a period into topic packs (no model calls, only git and the files).
 
-用法：
-  python3 collect.py --vault <vault> --start 2026-10-01 --end 2026-10-31 --out <輸出資料夾> [--render]
+  python3 collect.py --vault <vault> --start 2026-10-01 --end 2026-10-31 --out <output folder> [--render]
 
-輸出：
-  <out>/pack.json            全部資料（主題、每篇筆記、每天、canvas、反向連結、複習紀錄、日記）
-  <out>/topics/<主題>.md      每個主題一份資料包，給 AI 寫主題頁用
-  <out>/canvas_png/           （--render）每張相關 canvas 畫成 PNG，給 AI 看圖理解關聯
+Writes:
+  <out>/pack.json            everything (topics, each note, each day, canvases, backlinks, review history, diary entries)
+  <out>/topics/<topic>.md    one pack per topic, the material for writing that topic's entry
+  <out>/canvas_png/          (--render) each related canvas as a PNG, so its relations can be read by eye
 
-規則照 (not public)）.md：
-- 一篇筆記＝一個單位，不切段。
-- 時間以「學習日」為單位：台灣時間，凌晨 5 點前算前一天。
-- 主題先用使用者自己的結構：資料夾（地圖系列）、canvas、連結。
-- 只算真的改了內容的日子：整庫搬家（大量改名、只改連結）的 commit 不算。
+Rules:
+- One note is one unit; notes are not split into sections.
+- Time is counted in learning days: UTC+8, and anything before 05:00 belongs to the day before.
+- Topics follow the person's own structure first: folders (map series), canvases, links.
+- Only days when content really changed count: commits that move the whole vault (mass renames, link-only edits) do not.
 """
 import argparse, collections, datetime as dt, json, os, re, subprocess, sys
 
 SKIP_DIRS = ('Clippings/', '.obsidian/', '.claude/', '.git/', 'engram-quest/', 'engram-review/')
-# Vaults name their top-level folders differently; numbered prefixes ("3.專案", "1. Projects") are optional.
+# Vaults name their top-level folders differently; numbered prefixes ("1. Projects", "3_areas") are optional.
 FOLDER_PREFIX = r'^(\d+[.\s_-]*)?'
 DIARY_RX = re.compile(FOLDER_PREFIX + r'(日記|diary|journals?|daily( notes)?)/', re.I)
 PROJECT_DIR = re.compile(FOLDER_PREFIX + r'(專案|projects?)$', re.I)
@@ -41,7 +40,7 @@ def learn_day(ts):
 
 
 def norm_rename(p):
-    # git numstat 的改名寫法："a/{old => new}/f.md" 或 "old.md => new.md"
+    # how git numstat writes a rename: "a/{old => new}/f.md" or "old.md => new.md"
     if '=>' not in p:
         return p
     m = re.match(r'(.*)\{(.*) => (.*)\}(.*)', p)
@@ -51,10 +50,10 @@ def norm_rename(p):
 
 
 def rename_map(vault, start):
-    """期間開始之後的所有改名（含之後的整庫搬家），把舊路徑一路對到現在的路徑。"""
+    """Every rename since the period began (later whole-vault moves included): follows an old path to its current one."""
     out = git(vault, 'log', f'--since={start}T00:00:00+08:00', '-M', '--name-status', '--diff-filter=R', '--format=@@%h')
     ren = {}
-    for block in reversed(out.split('@@')[1:]):          # 由舊到新
+    for block in reversed(out.split('@@')[1:]):          # oldest first
         for ln in block.strip().split('\n'):
             parts = ln.split('\t')
             if len(parts) == 3 and parts[0].startswith('R'):
@@ -68,7 +67,7 @@ def rename_map(vault, start):
 
 
 def scan_commits(vault, start, end):
-    """回傳 {path: set(學習日)}（只算真的改了內容），以及被判成搬家的 commit 日。"""
+    """Returns {path: set(learning days)} (only real content changes) and the days of commits judged to be bulk moves."""
     since = f'{start}T05:00:00+08:00'
     until = (dt.date.fromisoformat(end) + dt.timedelta(days=1)).isoformat() + 'T05:00:00+08:00'
     out = git(vault, 'log', f'--since={since}', f'--until={until}', '-M', '-w', '--ignore-cr-at-eol',
@@ -95,7 +94,7 @@ def scan_commits(vault, start, end):
         day = learn_day(ts)
         renames = sum(1 for _, _, ren in rows if ren)
         small = sum(1 for _, n, ren in rows if ren or n < 3)
-        # 整庫搬家：一次改名 30 個以上、一次動 150 個以上，或大量檔案只改一兩行
+        # bulk move: 30 or more renames, 150 or more files in one commit, or many files with only a line or two changed
         if renames >= 30 or len(rows) >= BULK_FILES or (len(rows) >= 30 and small / len(rows) > 0.8):
             bulk.append(day)
             continue
@@ -170,7 +169,7 @@ def note_info(vault, p):
         m = SUMMARY.search(l)
         if m and not l.startswith(('來源', '- 來源')) and (l.startswith(('>', '#', '**')) or len(l) < 200):
             rest = re.sub(r'^[>*#\s]+', '', m.group(2)).strip(' *')
-            if len(rest) < 8:   # 標題行，取下一個非空行
+            if len(rest) < 8:   # a heading line: take the next non-empty line
                 rest = next((x for x in lines[i + 1:i + 4] if x), '')
             summary = re.sub(r'^[>\-*\s]+', '', rest)[:240]
             break
@@ -185,7 +184,7 @@ def note_info(vault, p):
 
 
 def link_index(vault, files):
-    """反向連結：被連到的檔名 → 連到它的檔案。canvas 的檔案節點也算。"""
+    """Backlinks: linked note name -> the files that link to it. File nodes of a canvas count too."""
     idx = collections.defaultdict(set)
     for f in files:
         t = read(vault, f)
@@ -222,7 +221,8 @@ def topic_key(p):
 
 
 def reviews(vault, note_paths, start, end):
-    """插件複習紀錄（engram-review/sr）：檔名是筆記路徑把 / 換成 __。只留期間內的紀錄。"""
+    """The plugin's review history (engram-review/sr): the file name is the note path with / replaced by __.
+    Only entries inside the period are kept."""
     srdir = os.path.join(vault, 'engram-review', 'sr')
     out = {}
     if not os.path.isdir(srdir):
@@ -253,7 +253,7 @@ def main():
     ap.add_argument('--start', required=True, type=iso_day)
     ap.add_argument('--end', required=True, type=iso_day)
     ap.add_argument('--out', required=True)
-    ap.add_argument('--render', action='store_true', help='用 render_canvas.cjs 把相關 canvas 畫成 PNG')
+    ap.add_argument('--render', action='store_true', help='render the related canvases to PNG with render_canvas.cjs')
     a = ap.parse_args()
     os.makedirs(os.path.join(a.out, 'topics'), exist_ok=True)
 
@@ -261,7 +261,8 @@ def main():
         sys.exit(f'vault folder not found: {a.vault}')
     has_git = history_covers(a.vault, a.start)
     if not has_git:
-        print('沒有涵蓋這段期間的 git 歷史：改用檔案修改時間，每篇只算最後修改的那一天，期間之後又改過的筆記不會列入。')
+        print('No git history covers this period: using file modification times instead. Each note counts only on the day '
+              'it was last modified, and notes edited again after the period are not listed.')
     days, bulk = scan_commits(a.vault, a.start, a.end) if has_git else scan_mtimes(a.vault, a.start, a.end)
     head = set(git(a.vault, 'ls-files').split('\n')) if has_git else set(vault_files(a.vault))
     notes, diaries, structs = {}, {}, []
@@ -315,20 +316,20 @@ def main():
 
     png = lambda c: f"canvas_png/{c.replace('/', '__')[:-7]}.png"
     for k, t in sorted(pack['topics'].items(), key=lambda x: -len(x[1]['notes'])):
-        L = [f"# 主題資料包：{k}", '', f"- 動過的日子：{'、'.join(d[5:] for d in t['days'])}（共 {len(t['days'])} 天）",
-             f"- 筆記 {len(t['notes'])} 篇；職人知識庫整理 {len(t['craft'])} 篇", '']
+        L = [f"# Topic pack: {k}", '', f"- Days touched ({len(t['days'])}): {', '.join(d[5:] for d in t['days'])}",
+             f"- Notes: {len(t['notes'])}; distilled knowledge-base notes: {len(t['craft'])}", '']
         if t['canvases']:
-            L += ['## 你的結構（canvas，先看圖）'] + [f"- {c} → {png(c) if a.render else '（未畫圖）'}" for c in t['canvases']] + ['']
-        L.append('## 筆記（照第一次動到的日子排）')
+            L += ['## The existing structure (canvases: look at the image first)'] + [f"- {c} -> {png(c) if a.render else '(not rendered)'}" for c in t['canvases']] + ['']
+        L.append('## Notes (in order of the first day touched)')
         for p in t['notes'] + t['craft']:
             n = notes[p]
-            L.append(f"### 〈{n['title']}〉 {'、'.join(d[5:] for d in n['days'])}")
-            L.append(f"- 路徑：{p}（{n['chars']} 字）")
-            if n['summary']: L.append(f"- 筆記自己的總結句：{n['summary']}")
-            if n['source_line'] or n['fm'].get('source'): L.append(f"- 來源：{n['source_line'] or n['fm'].get('source')}")
-            if n['fm'].get('context'): L.append(f"- context：{n['fm']['context']}")
-            if n['backlinks']: L.append(f"- 反向連結：{'、'.join(os.path.basename(x) for x in n['backlinks'][:10])}")
-            for r in rv.get(p, [])[:5]: L.append(f"- 複習 {r['d']} 評 {r['r']}：{r['q']}")
+            L.append(f"### {n['title']} ({', '.join(d[5:] for d in n['days'])})")
+            L.append(f"- Path: {p} ({n['chars']} characters)")
+            if n['summary']: L.append(f"- The note's own summary line: {n['summary']}")
+            if n['source_line'] or n['fm'].get('source'): L.append(f"- Source: {n['source_line'] or n['fm'].get('source')}")
+            if n['fm'].get('context'): L.append(f"- Context: {n['fm']['context']}")
+            if n['backlinks']: L.append(f"- Backlinks: {', '.join(os.path.basename(x) for x in n['backlinks'][:10])}")
+            for r in rv.get(p, [])[:5]: L.append(f"- Reviewed {r['d']}, rated {r['r']}: {r['q']}")
             L.append('')
         safe = k.replace('/', '__')
         open(os.path.join(a.out, 'topics', f'{safe}.md'), 'w', encoding='utf-8').write('\n'.join(L))
@@ -340,8 +341,8 @@ def main():
         here = os.path.dirname(os.path.abspath(__file__))
         subprocess.run(['node', os.path.join(here, 'render_canvas.cjs'), lst, os.path.join(a.out, 'canvas_png'), a.vault], check=False)
 
-    print(f"期間 {a.start}～{a.end}：筆記 {len(notes)} 篇、主題 {len(pack['topics'])} 個、日記 {len(diaries)} 篇、"
-          f"結構頁 {len(structs)} 篇、搬家日 {bulk}、有複習紀錄 {len(rv)} 篇")
+    print(f"Period {a.start} to {a.end}: {len(notes)} notes, {len(pack['topics'])} topics, {len(diaries)} diary entries, "
+          f"{len(structs)} structure pages, bulk-move days {bulk}, {len(rv)} notes with review history")
 
 
 if __name__ == '__main__':

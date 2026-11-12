@@ -20,7 +20,7 @@ LABELS = {
                   filmed='已有回顧片（{f}）', rank='哪個主題值得做成片',
                   rank_note='分數＝筆記深度＋複習時答不好的比例＋平均難度＋還沒有任何複習卡。分數高的先做。複習紀錄少的時候，分數主要反映筆記深度。',
                   cols='| 主題 | 分數 | 筆記深度 | 原有複習卡 | 複習次數 | 答不好的次數 | 平均難度 | 狀態 |', has='已有片', cand='候選',
-                  hint='情境：{context}。這個主題在回答：{question}', hint3='判斷規則的方向：{rule}'),
+                  hint='情境：{context}。這個主題在回答：{question}', hint3='判斷規則的方向：{rule}', colon='：', sep='、', gap='　'),
     'en': dict(prefix='Recall', deck='Recall', page='Recall pack', title='Recall pack: {y}-{m:02d}',
                intro='{n} topics were touched in this period. One line each, plus {c} retrieval cards in the Review Deck (deck `{deck}`).',
                how='How to use: cover the conclusion, answer the question in your own words, then compare. The Review Deck brings the cards back later.',
@@ -28,7 +28,7 @@ LABELS = {
                filmed='has a recall film ({f})', rank='Which topics deserve a film',
                rank_note='Score = depth of the notes + share of bad answers in review + average difficulty + no cards yet. Higher first. With little review history the score mostly reflects depth.',
                cols='| Topic | Score | Depth | Existing cards | Reviews | Bad answers | Avg difficulty | Status |', has='filmed', cand='candidate',
-               hint='Context: {context}. This topic answers: {question}', hint3='Direction of the rule: {rule}'),
+               hint='Context: {context}. This topic answers: {question}', hint3='Direction of the rule: {rule}', colon=': ', sep=', ', gap='  '),
 }
 ap = argparse.ArgumentParser()
 ap.add_argument('--vault', required=True); ap.add_argument('--packs', required=True); ap.add_argument('--period', required=True)
@@ -105,12 +105,12 @@ dom = None
 for t in topics:
     if t['domain'] != dom:
         dom = t['domain']; M += [f'## {dom}', '']
-    M += [f'### {t["title"]}' + ('　' + L['filmed'].format(f=t['filmed']['film']) if t.get('filmed') else ''), '']
+    M += [f'### {t["title"]}' + (L['gap'] + L['filmed'].format(f=t['filmed']['film']) if t.get('filmed') else ''), '']
     for k in ('question', 'context', 'answer', 'why', 'rule', 'case', 'open'):
-        if t.get(k): M += [f'- **{L[k]}**：{t[k]}']
-    M += [f'- **{L["quick"]}**：{t["quick"]["q"]}', f'- **{L["apply"]}**：{t["apply"]["q"]}']
+        if t.get(k): M += [f'- **{L[k]}**{L["colon"]}{t[k]}']
+    M += [f'- **{L["quick"]}**{L["colon"]}{t["quick"]["q"]}', f'- **{L["apply"]}**{L["colon"]}{t["apply"]["q"]}']
     ln = [f'[[{p[:-3]}|{os.path.basename(p)[:-3]}]]' for p in t.get('notes', []) if p.endswith('.md') and os.path.exists(os.path.join(V, p))][:6]
-    if ln: M += [f'- **{L["notes"]}**：' + '、'.join(ln)]
+    if ln: M += [f'- **{L["notes"]}**{L["colon"]}' + L['sep'].join(ln)]
     M += ['']
 M += ['## ' + L['rank'], '', L['rank_note'], '', L['cols'], '|---|---|---|---|---|---|---|---|']
 for t in rank:

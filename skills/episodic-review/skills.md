@@ -71,7 +71,6 @@ reference/
   04-production.md          choosing what to film, building, checking, sound, delivering; cost
   05-plugin-contract.md     files and fields shared with the EngramQuest plugin
   06-pitfalls.md            mistakes already made
-  legacy-shells.md          the older 3D shells: kept, not the default
 templates/
   film/                     engine.js, parts.js, patterns.js, look.css, scene.html, film.example.js, film.gallery.js, figs/
   film-plan.md              the plan written before building a film
@@ -88,10 +87,8 @@ scripts/
   deliver.py                compress, poster, meta.json entry
   render_canvas.cjs         an Obsidian canvas as an image, for reading
   obsidian_index.js, doctor.py
-  length_estimate.py, onscreen.py, keystills.py, plan_parts.py, studio/render.cjs    for the legacy shells only
-assets/shells/, assets/demos/   legacy shells and their demo catalogue
 ```
 
 ## Reporting problems
 
-The user develops the EngramQuest plugin. When a script path, a script or a description in this skill is wrong, confirm it first, then open a ticket as the vault's `AGENTS.md` describes and tell the user.
+When a script path, a script or a description in this skill turns out to be wrong, confirm it first (reproduce it, find the line), then tell the user what you found and how you worked around it. If the vault has its own instructions for reporting skill problems, follow them.

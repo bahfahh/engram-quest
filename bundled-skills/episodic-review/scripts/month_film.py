@@ -15,10 +15,11 @@ import argparse, collections, json, os, sys
 L = {
     'zh-tw': dict(count='這個月，動過 {n} 個主題', areas='分在 {n} 個領域', n='{n} 個主題', q='這些主題，哪些是接在一起的？', map='{n} 個主題，怎麼接在一起',
                   alone1='「{a}」這個月沒有接到別的主題。', alone='有圈的 {n} 個主題，這個月沒有接到別的。', quiz='每個主題一題', ask='先自己講一次。', clue='線索　',
-                  last='每個主題的題目都在 Review Deck，過幾天會再問你。', month='這個月', quick='快問', close='收尾', months='一二三四五六七八九十'),
+                  last='每個主題的題目都在 Review Deck，過幾天會再問你。', month='這個月', quick='快問', close='收尾', sep='、',
+                  months=['一月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '十一月', '十二月']),
     'en': dict(count='{n} topics touched this month', areas='in {n} areas', n='{n} topics', q='Which of these topics connect?', map='{n} topics and how they connect',
                alone1='"{a}" did not connect to another topic this month.', alone='The {n} circled topics did not connect to another this month.', quiz='One question per topic', ask='Say it yourself first.', clue='Clue: ',
-               last='Every topic has its questions in the Review Deck; they will come back in a few days.', month='This month', quick='Quick questions', close='Close', months=None),
+               last='Every topic has its questions in the Review Deck; they will come back in a few days.', month='This month', quick='Quick questions', close='Close', sep=', ', months=None),
 }
 ap = argparse.ArgumentParser()
 ap.add_argument('--pack', required=True); ap.add_argument('--links', required=True); ap.add_argument('--out', required=True)
@@ -48,14 +49,14 @@ for s in links.get('shared', []):
 linked = {z for l in drawn for z in (l['a'], l['b'])} | {z for s in shared for z in s[:2]}
 lone = [x['title'] for x in topics if x['id'] not in linked]
 year, mon = pack['period'].split('-')[:2]
-month = (t['months'][int(mon) - 1] + '月' if int(mon) <= 10 else ('十一月' if int(mon) == 11 else '十二月')) if t['months'] else pack['period']
+month = t['months'][int(mon) - 1] if t['months'] else pack['period']
 J = lambda o: json.dumps(o, ensure_ascii=False)
 area_list = [[k, t['n'].format(n=len(v))] for k, v in areas.items()]
 film = dict(
     opening=dict(year=year, month=month, count=t['count'].format(n=len(topics)), areasTitle=t['areas'].format(n=len(areas)), areas=area_list, question=t['q']),
     map=dict(title=t['map'].format(n=len(topics)), areas=[dict(name=k, topics=[[x['id'], x['title']] for x in v]) for k, v in areas.items()],
              links=[[l['a'], l['b'], say(l['a'], l['b'])] for l in drawn], shared=[list(s) for s in shared],
-             alone=(t['alone1'].format(a=lone[0]) if len(lone) == 1 else t['alone'].format(n=len(lone), a='、'.join(lone) if a.lang != 'en' else ', '.join(lone))) if lone else ''),
+             alone=(t['alone1'].format(a=lone[0]) if len(lone) == 1 else t['alone'].format(n=len(lone), a=t['sep'].join(lone))) if lone else ''),
     quiz=dict(casesTitle=t['quiz'], ask=t['ask'], cases=[[x['quick']['q'], x['quick']['a'], x['quick'].get('because', ''), t['clue'] + x['quick']['clue'] if x['quick'].get('clue') else '', x['title'], x['id']] for x in topics if x.get('quick')]),
     closing=dict(areas=area_list, last=t['last']),
 )

@@ -1,6 +1,7 @@
 #!/bin/sh
-# 重新產生 demo/ 裡的試聽：每個 mood 一段 60–75 秒，warm / curious 各多一個 seed，另外加主題段（bed）、回想（dissolve）、揭曉一聲（chime）。
-# 用法：sh make_demos.sh        （全部 nice -n 10，背景算圖不受影響）
+# Regenerate the listening demos in demo/: one 60-75 s piece per mood, a second seed for warm and curious,
+# plus topic beds (bed), a recall (dissolve) and a reveal (chime).
+# Usage: sh make_demos.sh        (everything runs at nice -n 10, so a render in the background is not slowed down)
 set -e
 cd "$(dirname "$0")"
 mkdir -p demo/wav
@@ -21,7 +22,7 @@ g 12_reveal_chime_s11  --mood chime      --seed 11 --key Eb
 nice -n 10 python3 -I qa_music.py demo/wav/*.wav
 mv demo/wav/*.png demo/ 2>/dev/null || true
 mv demo/wav/qa_report.md demo/wav/qa_report.json demo/
-# 整支片範例（examples/cues_rooms.json，約 6 分鐘、29 段）：每段 wav ＋ score.wav ＋ cues.json；不寫 used.json
+# Whole-film example (examples/cues_rooms.json, about 6 minutes, 29 cues): one wav per cue + score.wav + cues.json; used.json is not written
 nice -n 10 python3 -I pick_music.py --cues examples/cues_rooms.json --render demo/film_example_rooms --deterministic --dry-run > /dev/null
 nice -n 10 ffmpeg -v error -y -i demo/film_example_rooms/score.wav -c:a libmp3lame -b:a 192k demo/13_film_example_rooms_score.mp3
 nice -n 10 python3 -I qa_music.py demo/film_example_rooms/score.wav demo/film_example_rooms/[0-2]*.wav

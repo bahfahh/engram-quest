@@ -7,7 +7,7 @@
 //   node render_stage.cjs <projectDir> [--scene scene.html] [--fps 24] [--workers 3] [--from s] [--to s]
 //                         [--out final.mp4] [--audio narration.wav] [--nocache] [--noaudio] [--poster 8] [--music-style map]
 //
-// Same scene contract as render.cjs (window.studioReady, window.renderAt(t), window.DURATION), plus one rule:
+// The scene (templates/film/scene.html) exposes window.studioReady, window.renderAt(t), window.DURATION. One rule:
 // everything a frame shows must be in the DOM after renderAt(t) (inline styles, attributes, text). No <canvas> drawing,
 // no CSS animation. Then the page's HTML *is* the frame's identity:
 //   key = sha1(salt + documentElement.outerHTML)   -> <project>/.frames/<key>.jpg
