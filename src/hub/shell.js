@@ -1,12 +1,14 @@
 "use strict";
-// The Hub frame: sidebar on desktop, icon rail in narrow windows, and on a phone a three-tab
-// home with sub-pages. Tab ids, load order and guards are unchanged from the old nav.
+// The Hub frame: sidebar on desktop (the user can fold it into the icon rail; narrow windows
+// always use the rail), and on a phone a three-tab home with sub-pages. Tab ids, load order and
+// guards are unchanged from the old nav.
 
 const { t: c } = require("../i18n");
 const { ProUpgradeModal } = require("../license/upgrade");
 const { HelpModal } = require("./help");
 const { attachInfoButton, hasFeatureGuide } = require("./feature-guide");
 const { STAR, PLAY, rawIcon, iconButton, featureIcon, isPhone, metrics, segBar, clearCapsuleActions } = require("./ui");
+const { isCollapsed, setCollapsed, watchingTab } = require("./sidebar");
 const { renderPhoneContinue } = require("../videos/render");
 const { TABS, categories } = require("./categories");
 
@@ -37,6 +39,8 @@ async function showTab(hub, content, tab) {
   hub.viewMode = hub.viewModes[tab] || "list";
   const gen = hub._tabGen = (hub._tabGen || 0) + 1;
   hub.setHero(true);
+  // Coming back to the tab whose video (hub._vTopic) is still open keeps the sidebar as it was there.
+  hub.setWatching(hub._watchingTab === tab && !!hub._vTopic);
   clearCapsuleActions(hub);
   content.empty();
   content.createEl("div", { text: "⏳", cls: "lh-pending" });
@@ -57,6 +61,27 @@ function renderDesktop(hub, root) {
   const brand = side.createEl("div", { cls: "lh-brand", attr: { title: c(t, "HUB_TITLE") } });
   featureIcon(brand, hub.plugin, "logo", { size: 32 });
   brand.createEl("span", { cls: "lh-brand-full", text: c(t, "HUB_TITLE") });
+
+  // Fold / unfold, beside the name (under the logo once folded). A page with a video open calls
+  // setWatching so the player gets the room; the button then changes (and remembers) the choice
+  // for that situation only.
+  const fold = iconButton(brand, "fold", "", () => {
+    const s = hub.plugin.settings;
+    setCollapsed(s, watching(), !isCollapsed(s, watching()));
+    paintSide();
+    Promise.resolve(hub.plugin.saveData(s)).catch((e) => console.warn("EngramQuest: sidebar state not saved", e));
+  }, "lh-side-fold");
+  const watching = () => !!hub._watchingTab && hub._watchingTab === hub.activeTab;
+  const paintSide = () => {
+    const collapsed = isCollapsed(hub.plugin.settings, watching());
+    const label = c(t, collapsed ? "HUB_SIDE_EXPAND" : "HUB_SIDE_COLLAPSE");
+    shell.classList.toggle("is-rail", collapsed);
+    fold.setAttribute("aria-expanded", String(!collapsed));
+    fold.setAttribute("aria-label", label);
+    fold.setAttribute("title", label);
+  };
+  hub.setWatching = (on) => { hub._watchingTab = watchingTab(hub._watchingTab, hub.activeTab, !!on); paintSide(); };
+  paintSide();
 
   const main = shell.createEl("div", { cls: "lh-main" });
   const buttons = new Map();
@@ -159,6 +184,7 @@ function renderPhone(hub, root) {
   const cats = categories(t);
   const shell = root.createEl("div", { cls: "lh-ph" });
   hub.setHero = () => {};
+  hub.setWatching = () => {};
   const paint = () => {
     hub._tabGen = (hub._tabGen || 0) + 1;
     shell.empty();

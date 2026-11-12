@@ -13,6 +13,7 @@ const { openVideoSettingsModal } = require("./settings-modal");
 const { teacherOfVideo } = require("./teachers");
 const { teacherTag } = require("./teacher-picker");
 const { seriesBadge, statusText, openSeriesStatusModal } = require("./request-ui");
+const { fmtTime, rowStatus } = require("./playlist");
 const { attachInfoButton } = require("../hub/feature-guide");
 const ui = require("../hub/ui");
 
@@ -27,20 +28,8 @@ function queueWrite(slug, fn) {
   return chain;
 }
 
-function fmtTime(sec) {
-  const s = Math.max(0, Math.round(Number(sec) || 0));
-  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
-}
-
 function fileUrl(hub, slug, name) {
   return hub.app.vault.adapter.getResourcePath(I.normalizePath(`${data.VIDEOS_DIR}/${slug}/${name}`));
-}
-
-function statusOf(t, meta, video) {
-  const p = data.videoProgress(meta, video.id);
-  if (p.completed) return { text: c(t, "VIDEO_WATCHED"), cls: "is-done" };
-  if (p.position > 0) return { text: K(c(t, "VIDEO_STOPPED_AT"), { time: fmtTime(p.position) }), cls: "is-progress" };
-  return { text: c(t, "VIDEO_NOT_STARTED"), cls: "" };
 }
 
 /** Thumbnail: the skill's poster when present, otherwise a flat tile; progress bar on the bottom edge. */
@@ -79,6 +68,7 @@ async function renderVideoTab(el, hub) {
   hub._entryHints = { ...hub._entryHints, video: K(c(t, "VIDEO_ENTRY_WATCHING"), { count: topics.filter(({ meta }) => data.topicState(meta) === "watching").length }) };
 
   hub.setHero(!open);
+  hub.setWatching(!!open);
   const toShelf = () => { hub._vTopic = null; refresh(); };
   ui.setPhoneNav(hub, open ? { label: c(t, "VIDEO_BACK"), title: "", onBack: toShelf } : null);
   const actions = (parent) => {
@@ -283,7 +273,9 @@ function confirmDelete(hub, t, slug, meta, refresh) {
 }
 
 // ---------------------------------------------------------------------------------------------
-// Topic view: inline player + playlist
+// Topic view: inline player + playlist. On a desktop everything about the video on screen sits in
+// `.lh-vid-main` and the playlist is its sibling, so a wide window can put the list beside the player;
+// a narrow window stacks them in the phone's order (styles.js). A phone has no wrapper: one column.
 // ---------------------------------------------------------------------------------------------
 
 /** Which video to show when a topic opens without an explicit pick: last unfinished, else first unwatched. */
@@ -306,16 +298,17 @@ function renderTopic(body, hub, t, topic, refresh) {
   const autoplay = !!sel.autoplay;
   hub._vTopic = { slug, videoId: video.id, autoplay: false };
 
+  const phone = ui.isPhone();
+  const layout = body.createDiv({ cls: "lh-vid-topic" });
+  const main = phone ? layout : layout.createDiv({ cls: "lh-vid-main" });
   const badge = seriesBadge(t, meta);
   if (badge) {
-    const banner = body.createDiv({ cls: "lh-vid-banner" + (meta.status === "failed" ? " is-failed" : "") });
+    const banner = main.createDiv({ cls: "lh-vid-banner" + (meta.status === "failed" ? " is-failed" : "") });
     banner.createSpan({ cls: "lh-vid-banner-text", text: badge });
     banner.createEl("button", { cls: "lh-vid-btn", text: c(t, "VIDEO_STATUS_DETAILS") })
       .addEventListener("click", () => showStatus(hub, t, topic, refresh, null));
   }
 
-  const layout = body.createDiv({ cls: "lh-vid-topic" });
-  const main = layout;
   const stage = main.createDiv({ cls: "lh-vid-stage" });
 
   const save = (patch) => queueWrite(slug, () => data.saveProgress(adapter, slug, video.id, patch))
@@ -348,11 +341,11 @@ function renderTopic(body, hub, t, topic, refresh) {
     });
   }
   const done = data.videoProgress(meta, video.id).completed;
-  const doneBtn = titleRow.createEl("button", { cls: ui.isPhone() ? "lh-pbtn" + (done ? " alt" : "") : "lh-vid-btn" + (done ? " is-done" : " lh-vid-btn-primary"), text: c(t, done ? "VIDEO_MARKED_DONE" : "VIDEO_MARK_DONE") });
+  const doneBtn = titleRow.createEl("button", { cls: phone ? "lh-pbtn" + (done ? " alt" : "") : "lh-vid-btn" + (done ? " is-done" : " lh-vid-btn-primary"), text: c(t, done ? "VIDEO_MARKED_DONE" : "VIDEO_MARK_DONE") });
   doneBtn.addEventListener("click", () => { save({ completed: !done }); leave({ slug, videoId: video.id, autoplay: false }); });
 
   if (meta.sources.length) {
-    const src = (ui.isPhone() ? info : infoMeta).createDiv({ cls: "lh-vid-sources" });
+    const src = (phone ? info : infoMeta).createDiv({ cls: "lh-vid-sources" });
     src.createSpan({ text: `${c(t, "VIDEO_SOURCES")}：` });
     for (const path of meta.sources) {
       const a = src.createEl("a", { cls: "lh-vid-source", text: path.split("/").pop().replace(/\.md$/, "") });
@@ -362,23 +355,40 @@ function renderTopic(body, hub, t, topic, refresh) {
 
   const side = layout.createDiv({ cls: "lh-vid-side" });
   const prog = data.topicProgress(meta);
-  const others = topic.othersOnPhone && ui.isPhone();
+  const others = topic.othersOnPhone && phone;
   side.createDiv({ cls: "lh-vid-side-head", text: others ? c(t, "EPISODIC_OTHERS") : `${c(t, "VIDEO_PLAYLIST")} · ${K(c(t, "VIDEO_TOPIC_META"), { count: prog.total, done: prog.completed })}` });
   const shelf = side.createDiv({ cls: "lh-vid-side-list" });
+  let current = null;
   for (const v of playable) {
     if (others && v.id === video.id) continue;
-    const item = shelf.createDiv({ cls: "lh-vid-item" + (v.id === video.id ? " is-current" : "") });
+    const st = rowStatus(t, meta, v, video.id);
+    const item = shelf.createDiv({ cls: "lh-vid-item" + (st.kind === "playing" ? " is-current" : "") });
     renderThumb(item, hub, slug, meta, v, "is-small");
     const txt = item.createDiv({ cls: "lh-vid-item-text" });
     txt.createDiv({ cls: "lh-vid-item-title", text: v.title });
-    const st = v.id === video.id ? { text: c(t, "VIDEO_PLAYING"), cls: "is-progress" } : statusOf(t, meta, v);
-    const dur = v.duration && !ui.isPhone() ? `${fmtTime(v.duration)} · ` : "";
-    txt.createDiv({ cls: `lh-vid-status ${st.cls}`, text: dur + st.text });
-    if (v.id !== video.id) item.addEventListener("click", () => leave({ slug, videoId: v.id, autoplay: true }));
+    const line = txt.createDiv({ cls: `lh-vid-status is-${st.kind}` });
+    // A phone row shows the length on its thumbnail; a desktop row adds a mark that reads without the words.
+    if (!phone && st.kind === "playing") ui.rawIcon(line, ui.PLAY);
+    if (!phone && st.kind === "done") ui.icon(line, "check");
+    line.createSpan({ text: (v.duration && !phone ? `${fmtTime(v.duration)} · ` : "") + st.text });
+    if (st.kind === "playing") current = item;
+    else item.addEventListener("click", () => leave({ slug, videoId: v.id, autoplay: true }));
+  }
+  // Beside the player the list scrolls on its own. It stays at the top while the video on screen is
+  // visible there; otherwise that row goes to the middle — also when resizing the window or folding
+  // the sidebar moves the list beside the player.
+  if (current && !phone) {
+    const centre = () => {
+      const row = current.getBoundingClientRect(), box = shelf.getBoundingClientRect();
+      if (row.top < box.top || row.bottom > box.bottom) shelf.scrollTop += row.top - box.top - (box.height - row.height) / 2;
+    };
+    centre();
+    const watch = new ResizeObserver(() => { if (shelf.isConnected) centre(); else watch.disconnect(); });
+    watch.observe(shelf);
   }
 
   if (video.cards) {
-    const cardsRow = layout.createDiv({ cls: "lh-vid-cards-row" });
+    const cardsRow = main.createDiv({ cls: "lh-vid-cards-row lh-vid-below" });
     Promise.resolve(hub._decksReady).then(() => {
       const deck = (hub.decks || []).find((d) => d.cards.some((x) => x.notePath === video.cards));
       if (!deck || !cardsRow.isConnected) return;
@@ -390,7 +400,7 @@ function renderTopic(body, hub, t, topic, refresh) {
   }
 
   if (video.topics.length) {
-    const chapters = layout.createDiv({ cls: "lh-vid-chapters" });
+    const chapters = main.createDiv({ cls: "lh-vid-chapters lh-vid-below" });
     chapters.createDiv({ cls: "lh-vid-side-head", text: c(t, "VIDEO_CHAPTERS") });
     for (const chapter of video.topics) {
       const row = chapters.createEl("button", { cls: "lh-vid-chapter" });
@@ -403,8 +413,8 @@ function renderTopic(body, hub, t, topic, refresh) {
       });
     }
   }
-  if (video.notTaken.length) layout.createDiv({ cls: "lh-vid-sources", text: `${c(t, "VIDEO_NOT_TAKEN")}：${video.notTaken.join("、")}` });
-  if (video.credits) layout.createDiv({ cls: "lh-vid-credits", text: `${c(t, "VIDEO_CREDITS")}：${video.credits}` });
+  if (video.notTaken.length) main.createDiv({ cls: "lh-vid-sources lh-vid-below", text: `${c(t, "VIDEO_NOT_TAKEN")}：${video.notTaken.join("、")}` });
+  if (video.credits) main.createDiv({ cls: "lh-vid-credits lh-vid-below", text: `${c(t, "VIDEO_CREDITS")}：${video.credits}` });
 }
 
 function mountPlayer(stage, hub, t, slug, meta, video, autoplay, save, playable, setPlayer, leave) {
