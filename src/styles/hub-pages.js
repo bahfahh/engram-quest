@@ -4,9 +4,8 @@
 
 const session = `
 .lh-session .modal-content { position:relative; }
-.lh-hub .lh-btn.danger,.lh-theme .lh-btn.danger { background:var(--dang); color:#FFFFFF; box-shadow:inset 0 .5px 0 rgba(255,255,255,.2),0 1px 2px rgba(0,0,0,.16); }
+.lh-hub .lh-btn.danger,.lh-theme .lh-btn.danger { background:var(--dang); color:var(--ondang); box-shadow:inset 0 .5px 0 rgba(255,255,255,.2),0 1px 2px rgba(0,0,0,.16); }
 .lh-hub .lh-btn.danger:hover,.lh-theme .lh-btn.danger:hover { background:var(--dang); filter:brightness(1.06); }
-.lh-dark .lh-btn.danger { color:#1D1D1F; }
 .lh-theme .lh-btn.lh-vtog { height:30px; padding:0 12px; font-size:12.5px; gap:6px; flex:none; }
 .lh-theme .lh-btn.lh-vtog .lh-i { width:15px; height:15px; }
 .lh-theme .lh-btn.lh-vtog.is-on { background:color-mix(in srgb,var(--mst) 16%,var(--raised)); color:var(--mstt); box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--mst) 45%,transparent); }
@@ -197,9 +196,8 @@ const library = `
 .lh-hub .lh-get { height:34px; flex:none; display:inline-flex; align-items:center; gap:6px; padding:0 14px 0 11px; border:0; border-radius:10px; background:var(--btn); box-shadow:inset 0 .5px 0 rgba(255,255,255,.22),0 1px 2px rgba(0,0,0,.16); color:var(--onbtn); font-size:13px; font-weight:650; white-space:nowrap; cursor:pointer; }
 .lh-hub .lh-get:hover { background:var(--btnh); }
 .lh-hub .lh-get .lh-i { width:15px; height:15px; stroke-width:2; }
-.lh-hub .lh-get.is-boss { background:var(--dang); color:#FFFFFF; }
+.lh-hub .lh-get.is-boss { background:var(--dang); color:var(--ondang); }
 .lh-hub .lh-get.is-boss:hover { background:var(--dang); filter:brightness(1.07); }
-.lh-dark .lh-get.is-boss { color:#1D1D1F; }
 .lh-hub .lh-get.is-cleared { background:color-mix(in srgb,var(--mst) 18%,transparent); color:var(--mstt); box-shadow:none; }
 .lh-hub .lh-get.is-cleared:hover { background:color-mix(in srgb,var(--mst) 26%,transparent); }
 .lh-qthumb { width:72px; height:72px; flex:none; border-radius:10px; background-color:var(--fill2); background-size:cover; background-position:center; }

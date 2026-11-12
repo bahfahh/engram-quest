@@ -11,19 +11,19 @@
 
 const tokens = `
 .lh-hub,.lh-theme,.lh-vid-modal {
-  --base:#F5F5F7; --card:#FFFFFF; --side:#EFEFF2; --text:#1D1D1F; --text2:#595963; --text3:#6A6A72;
+  --base:#F5F5F7; --card:#FFFFFF; --side:#EFEFF2; --text:#1D1D1F; --text2:#51515B; --text3:#62626A;
   --fill:rgba(60,60,67,.08); --fill2:rgba(60,60,67,.05); --sep:rgba(60,60,67,.12); --line:#D9D9DF;
   --glass:rgba(250,250,252,.72); --edge:rgba(255,255,255,.75);
   --raised:#FFFFFF; --raisedh:#F7F7F9;
   --rshadow:0 0 0 1px rgba(0,0,0,.42),0 1px 2px rgba(0,0,0,.06),0 2px 6px rgba(0,0,0,.03);
-  --btn:#6D5BD0; --btnh:#5B48B8; --onbtn:#FFFFFF; --tint:#5B48B8; --focus:#6D5BD0; --bar:#6E83EC;
+  --btn:#6D5BD0; --btnh:#5B48B8; --onbtn:#FFFFFF; --ondang:#FFFFFF; --tint:#5B48B8; --focus:#6D5BD0; --bar:#6E83EC;
   --trk:rgba(120,120,128,.16); --tabon:rgba(60,60,67,.10); --segon:#FFFFFF; --segtx:#1D1D1F;
   --cshadow:0 0 0 .5px rgba(0,0,0,.06),0 1px 2px rgba(0,0,0,.03),0 6px 18px rgba(0,0,0,.04);
   --cshadowh:0 0 0 .5px rgba(0,0,0,.10),0 2px 4px rgba(0,0,0,.04),0 10px 24px rgba(0,0,0,.07);
   --float:inset 0 1px 0 rgba(255,255,255,.7),0 0 0 .5px rgba(0,0,0,.08),0 10px 30px rgba(0,0,0,.12);
   --amb1:rgba(109,91,208,.075); --amb2:rgba(176,150,128,.06);
   --mst:#5DBB9D; --due:#6E83EC; --lrn:#6CBBF2; --new:#E8877B; --uns:#D4D4DA;
-  --mstt:#24705E; --duet:#4057B5; --lrnt:#1672B5; --newt:#AC4934; --dang:#C2412D; --gold:#D29A2E; --goldt:#8A6100;
+  --mstt:#24705E; --duet:#4057B5; --lrnt:#146CAB; --newt:#A44530; --dang:#BC3E2B; --gold:#D29A2E; --goldt:#8A6100;
   --locked:grayscale(1) opacity(.42);
   --rhard:#D9483B; --rhardt:#A32D20; --rgood:#D9A400; --rgoodt:#765300; --reasy:#2E9F78; --reasyt:#1D6A51;
   --ringk:70%; --tone:color-mix(in srgb,var(--btn) 20%,var(--raised)); --toneh:color-mix(in srgb,var(--btn) 30%,var(--raised));
@@ -33,12 +33,12 @@ const tokens = `
 /* Without color-mix a token built from it would be invalid and leave the control with no surface. */
 @supports not (color:color-mix(in srgb,red,blue)) { .lh-hub,.lh-theme,.lh-vid-modal { --tone:var(--raised); --toneh:var(--raisedh); --tonering:var(--rshadow); } }
 .lh-hub.lh-dark,.lh-theme.lh-dark,.theme-dark .lh-vid-modal {
-  --base:#18181B; --card:#29292D; --side:#1F1F23; --text:#F5F5F7; --text2:#BDBDC7; --text3:#A0A0A8;
+  --base:#18181B; --card:#29292D; --side:#1F1F23; --text:#F5F5F7; --text2:#C8C8D1; --text3:#B0B0B9;
   --fill:rgba(235,235,245,.12); --fill2:rgba(235,235,245,.06); --sep:rgba(235,235,245,.12); --line:#48484F;
   --glass:rgba(42,42,46,.66); --edge:rgba(255,255,255,.12);
   --raised:#2F2F34; --raisedh:#38383E;
   --rshadow:inset 0 .5px 0 rgba(255,255,255,.08),0 0 0 1px rgba(255,255,255,.34),0 1px 3px rgba(0,0,0,.35);
-  --btn:#5B5BD6; --btnh:#6C6CE0; --tint:#B0A5FF; --focus:#B0A5FF; --bar:#7C8FF5;
+  --btn:#5B5BD6; --btnh:#6565DC; --ondang:#1D1D1F; --tint:#B0A5FF; --focus:#B0A5FF; --bar:#7C8FF5;
   --trk:rgba(235,235,245,.13); --tabon:rgba(235,235,245,.13); --segon:#ECECF0; --segtx:#1D1D1F;
   --cshadow:inset 0 .5px 0 rgba(255,255,255,.08),0 0 0 .5px rgba(255,255,255,.07),0 6px 18px rgba(0,0,0,.30);
   --cshadowh:inset 0 .5px 0 rgba(255,255,255,.10),0 0 0 .5px rgba(255,255,255,.14),0 10px 26px rgba(0,0,0,.40);

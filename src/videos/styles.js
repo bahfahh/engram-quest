@@ -17,8 +17,7 @@ module.exports = `
 .lh-vid-btn-primary { background:var(--btn) !important; color:var(--onbtn) !important; box-shadow:inset 0 .5px 0 rgba(255,255,255,.22),0 1px 2px rgba(0,0,0,.16),0 3px 10px rgba(91,72,184,.18) !important; }
 .lh-vid-btn-primary:hover { background:var(--btnh) !important; color:var(--onbtn) !important; }
 .lh-vid-btn-primary svg:not(.lh-i) { width:12px; height:12px; fill:currentColor; }
-.lh-vid-btn-danger,.lh-vid-btn-danger:hover { background:var(--dang) !important; color:#FFFFFF !important; }
-.lh-dark .lh-vid-btn-danger { color:#1D1D1F !important; }
+.lh-vid-btn-danger,.lh-vid-btn-danger:hover { background:var(--dang) !important; color:var(--ondang) !important; }
 .lh-vid-btn:disabled { background:var(--fill2) !important; color:var(--text3) !important; box-shadow:none !important; cursor:not-allowed; }
 .lh-vid-btn.is-done { background:color-mix(in srgb,var(--mst) 16%,var(--raised)) !important; color:var(--mstt) !important; box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--mstt) var(--ringk),transparent) !important; }
 .lh-vid-back { height:32px; padding:0 12px !important; border-radius:10px !important; background:var(--raised) !important; border:0 !important; box-shadow:var(--rshadow) !important; color:var(--tint) !important; font-size:13.5px; font-weight:500; cursor:pointer; white-space:nowrap; }
@@ -188,7 +187,7 @@ body.is-phone .lh-vid-back { height:auto; padding:0 !important; background:none 
 .lh-vid-set-hint { font-size:13px; font-weight:400; color:var(--text3); }
 .lh-vid-lens { display:inline-flex; padding:2px; border-radius:9px; background:var(--fill); }
 .lh-vid-len { height:28px; padding:0 12px !important; border-radius:7px !important; border:0 !important; background:transparent !important; color:var(--text2) !important; box-shadow:none !important; font-size:13px; font-weight:500; cursor:pointer; }
-.lh-vid-len.is-on { background:var(--segon) !important; color:var(--text) !important; font-weight:600; box-shadow:0 1px 3px rgba(0,0,0,.14) !important; }
+.lh-vid-len.is-on { background:var(--segon) !important; color:var(--segtx) !important; font-weight:600; box-shadow:0 1px 3px rgba(0,0,0,.14) !important; }
 .lh-vid-modal .lh-vid-lens { display:flex; }
 .lh-vid-modal .lh-vid-len { flex:1; }
 .lh-vid-set-row { display:flex; align-items:center; gap:12px; }
