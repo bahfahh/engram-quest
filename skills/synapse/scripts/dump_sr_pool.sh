@@ -4,7 +4,9 @@
 # Node implementation in the same directory.
 #
 # Pass `--full` to force a full rebuild even when _status.json indicates
-# incremental would be sufficient.
+# incremental would be sufficient. Pass `--mark-seen <catalogToken>` after a
+# run's files are written to record the content catalog it paired from in
+# engram-review/synapse/_catalog.json.
 #
 # Exits 3 with a structured JSON error on stderr if `node` is not available;
 # the SKILL.md "If `node` is not available" section explains the fallback path.

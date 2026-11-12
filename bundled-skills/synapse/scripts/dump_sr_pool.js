@@ -24,20 +24,44 @@
 // so the skill can embed back text into anchor records for runtime display without
 // relying on the target card being present in the same review session.
 //
+// Content catalog: besides cards, the dump lists the learner's other content — every
+// lesson, video, explainer page and episodic-review topic — as type / ref / title only.
+// Bodies are never read, so the run stays one-shot. Targets pick `relations` from it.
+//   - "new-content"    — catalog entries not in synapse/_catalog.json (the snapshot the
+//                         last run left with --mark-seen) are flagged `new`; targets that
+//                         would otherwise be preserved are queued to look at those only.
+//   - "stale-relation" — a relation whose content is no longer in the catalog.
+// Each target also carries `skip`: ids of candidates it must not be paired with, because
+// the plugin already draws that link from the vault's own data or the user rejected it.
+//
 // Usage:  node scripts/dump_sr_pool.js [--full]
+//         node scripts/dump_sr_pool.js --mark-seen <catalogToken>
+//             (the only call that writes a file; the token comes from the dump the
+//              run worked from, so content added while pairing is not marked as seen)
 //         (cwd should be the vault root)
 
 "use strict";
 
+const crypto = require("crypto");
 const fs = require("fs");
 const path = require("path");
 
 const SR_DIR = "engram-review/sr";
 const SYNAPSE_DIR = "engram-review/synapse";
 const STATUS_FILE = path.join(SYNAPSE_DIR, "_status.json");
+const CATALOG_SEEN_FILE = path.join(SYNAPSE_DIR, "_catalog.json");
+const HINTS_DIR = "engram-review/hints";
+const AI_CARDS_DIR = "engram-review/ai-cards";
+const LESSONS_DIR = "engram-quest/lessons";
+const VIDEOS_DIR = "engram-quest/videos";
+const EXPLAINER_META_DIR = "engram-quest/explainer/meta";
+const TOPICS_DIR = "engram-quest/episodic-review/topics";
 const MASTERED_STABILITY_THRESHOLD = 7;
 
 const forceFull = process.argv.includes("--full");
+const markSeenAt = process.argv.indexOf("--mark-seen");
+const markSeen = markSeenAt >= 0;
+const markSeenToken = markSeen ? process.argv[markSeenAt + 1] : undefined;
 
 function srFileNameToNotePath(srFileName) {
   return srFileName.replace(/__/g, "/") + ".md";
@@ -186,8 +210,170 @@ function readJsonOrNull(p) {
 }
 
 function listJsonFiles(dir) {
-  if (!fs.existsSync(dir)) return [];
-  return fs.readdirSync(dir).filter(f => f.endsWith(".json")).sort();
+  try {
+    return fs.readdirSync(dir).filter(f => f.endsWith(".json")).sort();
+  } catch {
+    return [];
+  }
+}
+
+// Stored lists are AI-written; anything that is not an array counts as empty.
+function arrayOrEmpty(value) {
+  return Array.isArray(value) ? value : [];
+}
+
+function listFolders(dir) {
+  try {
+    return fs.readdirSync(dir, { withFileTypes: true }).filter(d => d.isDirectory()).map(d => d.name).sort();
+  } catch {
+    return [];
+  }
+}
+
+// A string, or a list of strings, as a list of non-empty strings.
+function asList(value) {
+  return (Array.isArray(value) ? value : [value]).filter(v => typeof v === "string" && v);
+}
+
+// Identity of a catalog item or a stored relation: "<type>|<ref>". Also the key the
+// plugin uses in userRejected for a rejected relation.
+const catalogKey = item => `${item.type}|${item.ref}`;
+const CATALOG_TYPES = new Set(["lesson", "video", "explainer", "topic"]);
+
+// Fingerprint of a catalog's contents. The dump carries it and --mark-seen takes it back,
+// so the snapshot is only written when the catalog is still the one the run paired from.
+function catalogTokenOf(items) {
+  return crypto.createHash("sha1").update(items.map(catalogKey).sort().join("\n")).digest("hex").slice(0, 12);
+}
+
+// Titles go into a prompt line each: one line, bounded length.
+function cleanTitle(value) {
+  return String(value).replace(/\s+/g, " ").trim().slice(0, 200);
+}
+
+// The learner's other content, titles only. Refs are the ids the plugin opens each item
+// by (src/lessons/data.js, src/videos/data.js, src/explainer/data.js). A missing folder
+// or an unreadable file contributes nothing.
+//
+// `explicit` records the links the plugin already draws without AI, so a target can skip
+// them: the cards file attached to a video, the card an explainer was written for, and
+// the notes (and the topic file itself) behind an episodic-review topic. Keys are a note
+// path, or "<note path>\n<card front>" for a single card.
+function buildCatalog() {
+  const items = [];
+  const keys = new Set();
+  const explicit = new Map();
+  const push = (type, ref, title, group) => {
+    const item = { id: `c${items.length + 1}`, type, ref, title: cleanTitle(title) };
+    if (group) item.group = cleanTitle(group);
+    const key = catalogKey(item);
+    // Two entries with one id (a duplicated lesson id) are one item to the plugin.
+    if (!keys.has(key)) {
+      keys.add(key);
+      items.push(item);
+    }
+    return key;
+  };
+  const link = (from, key) => {
+    if (!explicit.has(from)) explicit.set(from, new Set());
+    explicit.get(from).add(key);
+  };
+
+  for (const slug of listFolders(LESSONS_DIR)) {
+    const meta = readJsonOrNull(path.join(LESSONS_DIR, slug, "meta.json"));
+    if (!meta || !Array.isArray(meta.lessons)) continue;
+    for (const lesson of meta.lessons) {
+      // No file = a planned outline entry; there is nothing to open yet.
+      if (!lesson || !lesson.file) continue;
+      push("lesson", `${slug}/${lesson.id || `file-${lesson.file}`}`, lesson.title || lesson.file, meta.title || slug);
+    }
+  }
+
+  for (const slug of listFolders(VIDEOS_DIR)) {
+    const meta = readJsonOrNull(path.join(VIDEOS_DIR, slug, "meta.json"));
+    // Recall films (kind "episodic") replay many topics at once; the topics are listed below instead.
+    if (!meta || meta.kind === "episodic" || !Array.isArray(meta.videos)) continue;
+    for (const video of meta.videos) {
+      if (!video || !video.id || !video.file) continue;
+      const key = push("video", `${slug}/${video.id}`, video.title || video.file, meta.title || slug);
+      if (typeof video.cards === "string" && video.cards) link(video.cards, key);
+    }
+  }
+
+  for (const filename of listJsonFiles(EXPLAINER_META_DIR)) {
+    const page = readJsonOrNull(path.join(EXPLAINER_META_DIR, filename));
+    if (!page || !page.id) continue;
+    const key = push("explainer", String(page.id), page.title || page.id);
+    const card = page.sourceCard;
+    if (card && card.note && card.front) link(`${card.note}\n${card.front}`, key);
+  }
+
+  for (const folder of listFolders(TOPICS_DIR)) {
+    const topicFile = `${TOPICS_DIR}/${folder}/topic.json`;
+    const topic = readJsonOrNull(topicFile);
+    if (!topic || typeof topic !== "object" || Array.isArray(topic)) continue;
+    const key = push("topic", folder, topic.title || folder);
+    for (const note of [topicFile, ...asList(topic.notes)]) link(note, key);
+  }
+
+  return { items, explicit };
+}
+
+// The notes a card was made from: its own file plus what its hints file records. Follows
+// the plugin: hints are named by the note's full path, or by its bare name for AI card
+// files and older hints (hintsPath / loadHints in src/review/helpers.js); a card's own
+// `source` replaces the file-level `note`, and `source: null` means it has none
+// (src/review/decks.js).
+const hintsCache = new Map();
+function sourceNotesOf(target) {
+  if (!hintsCache.has(target.notePath)) {
+    const bare = target.notePath.split("/").pop().replace(/\.md$/i, "");
+    const full = target.notePath.replace(/\//g, "__").replace(/\.md$/i, "");
+    const names = target.notePath.startsWith(`${AI_CARDS_DIR}/`) ? [bare] : [full, bare];
+    let hints = null;
+    for (const name of names) {
+      hints = readJsonOrNull(path.join(HINTS_DIR, `${name}.json`));
+      if (hints) break;
+    }
+    hintsCache.set(target.notePath, hints);
+  }
+  const hints = hintsCache.get(target.notePath);
+  const cards = hints && hints.cards;
+  const card = Array.isArray(cards)
+    ? cards.find(c => c && c.front === target.front)
+    : cards && typeof cards === "object" ? cards[target.front] : null;
+  const sources = card && typeof card === "object" && "source" in card ? card.source : hints && hints.note;
+  return [target.notePath, ...asList(sources)];
+}
+
+// Ids of the candidates a target must not be paired with: catalog items the plugin
+// already links to it, and anchors or relations the user rejected.
+function skipIdsFor(target, userRejected, { explicit, catalogByKey, masteredByFront, masteredByKey }) {
+  const skip = new Set();
+  for (const note of sourceNotesOf(target)) {
+    for (const from of [note, `${note}\n${target.front}`]) {
+      for (const key of explicit.get(from) || []) skip.add(catalogByKey.get(key).id);
+    }
+  }
+  for (const key of userRejected) {
+    // A relation is rejected as "<type>|<ref>"; an anchor as "<notePath>|<front>" or the bare front.
+    const hit = catalogByKey.get(key) || masteredByKey.get(key) || masteredByFront.get(key);
+    if (hit) skip.add(hit.id);
+  }
+  return [...skip];
+}
+
+// Pretty-printed like every other mode, with the catalog appended one entry per line:
+// it is the longest list in the dump and each entry is read as a single line.
+function writeDumpWithCatalog(doc, catalog) {
+  const head = JSON.stringify(doc, null, 2).replace(/\n}$/, "");
+  const lines = catalog.map(item => `    ${JSON.stringify(item)}`).join(",\n");
+  process.stdout.write(`${head},\n  "catalog": [${lines ? `\n${lines}\n  ` : ""}]\n}`);
+}
+
+function loadSeenCatalogKeys() {
+  const doc = readJsonOrNull(CATALOG_SEEN_FILE);
+  return new Set(asList(doc && doc.seen));
 }
 
 function buildPoolsFromSr() {
@@ -221,14 +407,25 @@ function buildPoolsFromSr() {
   return { masteredByFront, targetsByFront, fileErrors };
 }
 
+// A stored entry is found by the synapse file it is in plus the card front. The file named
+// after the card's current note is the only one the plugin reads, so an entry left behind
+// under an old note path does not count as "already paired" (and cannot be merged into).
+const entryKey = (synapseFile, front) => `${synapseFile}\n${front}`;
+const entryKeyOf = target =>
+  entryKey(target.notePath.replace(/\//g, "__").replace(/\.md$/i, "") + ".json", target.front);
+function priorEntryOf(existingEntries, target) {
+  return existingEntries.get(entryKeyOf(target));
+}
+
 function loadExistingSynapseFiles() {
-  // Map: targetFront -> { notePath, anchorFronts: Set<front> }
-  const existingByFront = new Map();
+  // Map: entryKey -> { front, synapseFile, anchorFronts: Set<front>, relationKeys: Set<"type|ref">, userRejected: string[] }
+  // Entries written before relations existed simply have no relation keys.
+  const existingEntries = new Map();
   const skillFiles = [];
-  if (!fs.existsSync(SYNAPSE_DIR)) return { existingByFront, skillFiles };
+  if (!fs.existsSync(SYNAPSE_DIR)) return { existingEntries, skillFiles };
 
   for (const filename of listJsonFiles(SYNAPSE_DIR)) {
-    if (filename === "_status.json") continue;
+    if (filename === "_status.json" || filename === "_catalog.json") continue;
     const fullPath = path.join(SYNAPSE_DIR, filename);
     const doc = readJsonOrNull(fullPath);
     if (!doc || !doc.cards) continue;
@@ -237,19 +434,25 @@ function loadExistingSynapseFiles() {
     for (const front of Object.keys(doc.cards)) {
       const entry = doc.cards[front];
       const anchorFronts = new Set(
-        ((entry && entry.anchors) || []).map(a => a && a.front).filter(Boolean)
+        arrayOrEmpty(entry && entry.anchors).map(a => a && a.front).filter(Boolean)
       );
-      existingByFront.set(front, {
+      const relationKeys = new Set(
+        arrayOrEmpty(entry && entry.relations).filter(r => r && r.type && r.ref).map(catalogKey)
+      );
+      existingEntries.set(entryKey(filename, front), {
+        front,
         notePath: sourceNotePath || srFileNameToNotePath(filename.replace(/\.json$/i, "")),
         synapseFile: filename,
-        anchorFronts
+        anchorFronts,
+        relationKeys,
+        userRejected: asList(entry && entry.userRejected)
       });
     }
   }
-  return { existingByFront, skillFiles };
+  return { existingEntries, skillFiles };
 }
 
-function decideMode({ status, masteredByFront, targetsByFront, existingByFront, forceFull }) {
+function decideMode({ status, masteredByFront, targetsByFront, existingEntries, forceFull }) {
   if (forceFull) return "full";
   if (!status || !status.generatedAt) return "full";
   if (status.enabled === false) return "full"; // probably first successful run after pool grew
@@ -261,14 +464,16 @@ function decideMode({ status, masteredByFront, targetsByFront, existingByFront, 
   return "incremental";
 }
 
-function buildWorkQueue({ masteredByFront, targetsByFront, existingByFront, poolGrew }) {
-  const newTargets = [];     // targets with no existing synapse entry
+function buildWorkQueue({ masteredByFront, targetsByFront, existingEntries, poolGrew, catalogByKey, hasNewContent }) {
+  const newTargets = [];     // targets with no entry in their note's synapse file
   const staleTargets = [];   // targets whose existing anchors include cards no longer mastered
+  const staleRelationTargets = []; // targets with a relation to content that is no longer in the catalog
   const emptyRetryTargets = []; // targets that got no anchors last run, retried after pool growth
-  const preservedFronts = []; // targets whose anchors are all still valid
+  const newContentTargets = []; // otherwise-preserved targets that only need to look at new catalog entries
+  const preservedFronts = []; // targets whose anchors and relations are all still valid
 
   for (const [front, target] of targetsByFront) {
-    const prior = existingByFront.get(front);
+    const prior = priorEntryOf(existingEntries, target);
     if (!prior) {
       newTargets.push({ ...target, reason: "new-target" });
       continue;
@@ -277,15 +482,23 @@ function buildWorkQueue({ masteredByFront, targetsByFront, existingByFront, pool
     for (const anchorFront of prior.anchorFronts) {
       if (!masteredByFront.has(anchorFront)) stale.push(anchorFront);
     }
+    // Only types the catalog lists can be checked; any other relation is left alone.
+    const staleRelations = [...prior.relationKeys].filter(
+      key => CATALOG_TYPES.has(key.split("|")[0]) && !catalogByKey.has(key)
+    );
     if (stale.length > 0) {
       staleTargets.push({ ...target, reason: "stale-anchor", staleAnchors: stale });
+    } else if (staleRelations.length > 0) {
+      staleRelationTargets.push({ ...target, reason: "stale-relation", staleRelations });
     } else if (prior.anchorFronts.size === 0 && poolGrew) {
       emptyRetryTargets.push({ ...target, reason: "empty-retry" });
+    } else if (hasNewContent) {
+      newContentTargets.push({ ...target, reason: "new-content" });
     } else {
       preservedFronts.push(front);
     }
   }
-  return { newTargets, staleTargets, emptyRetryTargets, preservedFronts };
+  return { newTargets, staleTargets, staleRelationTargets, emptyRetryTargets, newContentTargets, preservedFronts };
 }
 
 function main() {
@@ -296,10 +509,35 @@ function main() {
   }
   const { masteredByFront, targetsByFront, fileErrors } = result;
 
-  const status = readJsonOrNull(STATUS_FILE);
-  const { existingByFront, skillFiles } = loadExistingSynapseFiles();
+  // Called once the run's files are written: remember the catalog the run paired from, so
+  // the next run only treats later content as new. If the catalog changed in between
+  // (another session added a lesson while this one was pairing), nothing is written: the
+  // next run then offers the same entries again, which costs a pass but loses nothing.
+  if (markSeen) {
+    const items = buildCatalog().items;
+    if (catalogTokenOf(items) !== markSeenToken) {
+      process.stdout.write(JSON.stringify({
+        mode: "not-marked",
+        reason: markSeenToken ? "catalog-changed-since-dump" : "catalog-token-missing",
+        catalogCount: items.length
+      }, null, 2));
+      return;
+    }
+    const seen = items.map(catalogKey);
+    fs.mkdirSync(SYNAPSE_DIR, { recursive: true });
+    fs.writeFileSync(CATALOG_SEEN_FILE, JSON.stringify({ markedAt: new Date().toISOString(), seen }, null, 2));
+    process.stdout.write(JSON.stringify({
+      mode: "marked-seen",
+      catalogCount: seen.length,
+      file: `${SYNAPSE_DIR}/_catalog.json`
+    }, null, 2));
+    return;
+  }
 
-  const mode = decideMode({ status, masteredByFront, targetsByFront, existingByFront, forceFull });
+  const status = readJsonOrNull(STATUS_FILE);
+  const { existingEntries, skillFiles } = loadExistingSynapseFiles();
+
+  const mode = decideMode({ status, masteredByFront, targetsByFront, existingEntries, forceFull });
 
   const masteredArr = [...masteredByFront.values()];
   const targetsArr = [...targetsByFront.values()];
@@ -329,31 +567,72 @@ function main() {
     entry.back = (cache && cache.get(entry.front)) || "";
   }
 
+  const { items: catalog, explicit } = buildCatalog();
+  const lookups = {
+    explicit,
+    catalogByKey: new Map(catalog.map(item => [catalogKey(item), item])),
+    masteredByFront,
+    masteredByKey: new Map(masteredArr.map(m => [`${m.notePath}|${m.front}`, m]))
+  };
+  // Attach what the target must not be paired with, and the rejections to carry over
+  // into its written entry. Both fields are omitted when empty.
+  const withExclusions = target => {
+    const prior = priorEntryOf(existingEntries, target);
+    const userRejected = prior ? prior.userRejected : [];
+    const skip = skipIdsFor(target, userRejected, lookups);
+    return {
+      ...target,
+      ...(skip.length ? { skip } : {}),
+      ...(userRejected.length ? { userRejected } : {})
+    };
+  };
+
+  const catalogToken = catalogTokenOf(catalog);
+
   if (mode === "full" || forceFull) {
-    process.stdout.write(JSON.stringify({
+    // A full run regenerates each file from its targets. Entries of cards that are not
+    // targets now but hold user rejections are named so the skill carries them over.
+    const targetKeys = new Set(targetsArr.map(entryKeyOf));
+    const keepEntries = [...existingEntries]
+      .filter(([key, entry]) => entry.userRejected.length > 0 && !targetKeys.has(key))
+      .map(([, entry]) => ({ file: entry.synapseFile, front: entry.front }));
+
+    writeDumpWithCatalog({
       mode: "full",
       forced: forceFull,
       previousMasteredPoolSize: status ? (status.masteredPoolSize || 0) : 0,
+      catalogToken,
       stats: {
         masteredCount: masteredArr.length,
         targetCount: targetsArr.length,
+        catalogCount: catalog.length,
         existingSynapseFiles: skillFiles.length,
         threshold: MASTERED_STABILITY_THRESHOLD,
         filesScanned: listJsonFiles(SR_DIR).length,
         fileErrors: fileErrors.length
       },
       mastered: masteredArr,
-      targets: targetsArr
-    }, null, 2));
+      targets: targetsArr.map(withExclusions),
+      ...(keepEntries.length ? { keepEntries } : {})
+    }, catalog);
     return;
   }
 
   // Incremental
+  const seen = loadSeenCatalogKeys();
+  const newCatalog = catalog.filter(item => !seen.has(catalogKey(item)));
+  for (const item of newCatalog) item.new = true;
+
   const poolGrew = masteredByFront.size > ((status && status.masteredPoolSize) || 0);
-  const { newTargets, staleTargets, emptyRetryTargets, preservedFronts } = buildWorkQueue({
-    masteredByFront, targetsByFront, existingByFront, poolGrew
+  const {
+    newTargets, staleTargets, staleRelationTargets, emptyRetryTargets, newContentTargets, preservedFronts
+  } = buildWorkQueue({
+    masteredByFront, targetsByFront, existingEntries, poolGrew,
+    catalogByKey: lookups.catalogByKey, hasNewContent: newCatalog.length > 0
   });
-  const workQueue = [...newTargets, ...staleTargets, ...emptyRetryTargets];
+  const workQueue = [
+    ...newTargets, ...staleTargets, ...staleRelationTargets, ...emptyRetryTargets, ...newContentTargets
+  ].map(withExclusions);
 
   if (workQueue.length === 0) {
     process.stdout.write(JSON.stringify({
@@ -362,6 +641,7 @@ function main() {
       stats: {
         masteredCount: masteredArr.length,
         targetCount: targetsArr.length,
+        catalogCount: catalog.length,
         preservedTargets: preservedFronts.length,
         threshold: MASTERED_STABILITY_THRESHOLD,
         filesScanned: listJsonFiles(SR_DIR).length,
@@ -371,14 +651,19 @@ function main() {
     return;
   }
 
-  process.stdout.write(JSON.stringify({
+  writeDumpWithCatalog({
     mode: "incremental",
+    catalogToken,
     stats: {
       masteredCount: masteredArr.length,
       targetCount: targetsArr.length,
+      catalogCount: catalog.length,
+      newCatalog: newCatalog.length,
       newTargets: newTargets.length,
       staleTargets: staleTargets.length,
+      staleRelationTargets: staleRelationTargets.length,
       emptyRetryTargets: emptyRetryTargets.length,
+      newContentTargets: newContentTargets.length,
       preservedTargets: preservedFronts.length,
       threshold: MASTERED_STABILITY_THRESHOLD,
       filesScanned: listJsonFiles(SR_DIR).length,
@@ -387,7 +672,7 @@ function main() {
     mastered: masteredArr,    // LLM still needs the FULL pool to pick anchors from
     workQueue,                // ONLY these go through the LLM
     preservedFronts           // skill must NOT touch synapse files for these
-  }, null, 2));
+  }, catalog);                // the full catalog; entries added since the last run carry `new: true`
 }
 
 main();
