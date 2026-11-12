@@ -8,6 +8,7 @@ import {
   loadSynapseForNote,
   loadSynapseBatch,
   attachSynapseToCards,
+  loadSynapseSources,
   countMasteredFromSr,
   shouldShowRefreshBanner,
   isSynapseEnabled,
@@ -130,6 +131,83 @@ describe("attachSynapseToCards", () => {
     const doc = { cards: { Q: { anchors: [{ score: 9 }, { front: "ok" }] } } };
     attachSynapseToCards(cards, new Map([["a.md", doc]]));
     expect(cards[0].synapseAnchors).toHaveLength(1);
+  });
+
+  it("attaches relations beside the anchors and drops malformed or rejected ones", () => {
+    const cards = [card("a.md", "Q")];
+    const doc = {
+      cards: {
+        Q: {
+          anchors: [{ front: "anchor1", notePath: "b.md", score: 9 }],
+          relations: [
+            { type: "lesson", ref: "course/lsn-1", score: 8, reason: "r" },
+            { type: "video", ref: "series/v1", score: 9, reason: "rejected" },
+            { type: "note", score: 7 },
+            "not an object",
+          ],
+          userRejected: ["video|series/v1"]
+        }
+      }
+    };
+    attachSynapseToCards(cards, new Map([["a.md", doc]]));
+    expect(cards[0].synapseAnchors).toHaveLength(1);
+    expect(cards[0].synapseRelations).toEqual([{ type: "lesson", ref: "course/lsn-1", score: 8, reason: "r" }]);
+    expect(cards[0].synapseRejected).toEqual(["video|series/v1"]);
+  });
+
+  it("reads an entry written before relations existed", () => {
+    const cards = [card("a.md", "Q"), card("a.md", "no entry")];
+    const doc = { cards: { Q: { anchors: [{ front: "anchor1" }], userRejected: [] } } };
+    attachSynapseToCards(cards, new Map([["a.md", doc]]));
+    expect(cards[0].synapseRelations).toEqual([]);
+    expect(cards[1]).toMatchObject({ synapseAnchors: [], synapseRelations: [], synapseRejected: [] });
+  });
+});
+
+describe("loadSynapseSources", () => {
+  function folderAdapter(files) {
+    const under = (dir) => Object.keys(files).filter((p) => p.startsWith(dir + "/"));
+    return {
+      async exists(p) { return p in files || under(p).length > 0; },
+      async read(p) { if (!(p in files)) throw new Error(`ENOENT ${p}`); return files[p]; },
+      async list(dir) {
+        const rest = under(dir).map((p) => p.slice(dir.length + 1));
+        if (!rest.length) throw new Error(`ENOENT ${dir}`);
+        return {
+          files: rest.filter((r) => !r.includes("/")).map((r) => `${dir}/${r}`),
+          folders: [...new Set(rest.filter((r) => r.includes("/")).map((r) => `${dir}/${r.split("/")[0]}`))]
+        };
+      }
+    };
+  }
+  const json = (v) => JSON.stringify(v);
+
+  it("returns empty collections when the vault has none of the content", async () => {
+    expect(await loadSynapseSources(folderAdapter({}))).toEqual({
+      courses: [], series: [], explainers: [], explainerState: {}, recallTopics: [], topicSr: {}
+    });
+  });
+
+  it("reads lessons, videos with recall films, Deep Dive pages and recall topics with their card schedules", async () => {
+    const deck = "engram-review/ai-cards/情境回顧-LLM 應用怎麼測.md";
+    const adapter = folderAdapter({
+      "engram-quest/lessons/cicd/meta.json": json({ title: "CI/CD", lessons: [{ id: "lsn-1", title: "L1", file: "lsn-1.html" }], completion: {} }),
+      "engram-quest/videos/azure-ai-2026/meta.json": json({ title: "Azure", videos: [{ id: "v1", file: "v1.mp4" }] }),
+      "engram-quest/videos/episodic-recall/meta.json": json({ kind: "episodic", videos: [{ id: "ep-oct", file: "ep-oct.mp4" }], progress: { "ep-oct": { position: 34 } } }),
+      "engram-quest/videos/settings.json": json({ quality: "high" }),
+      "engram-quest/explainer/meta/p1.json": json({ id: "p1", title: "詳解", sourceCard: { note: "a.md", front: "Q" } }),
+      "engram-quest/explainer/state.json": json({ p1: { viewed: true } }),
+      "engram-quest/episodic-review/topics/t13/topic.json": json({ id: "t13", title: "LLM 應用怎麼測", notes: ["a.md"], cards: [{ q: "q1", a: "a1" }] }),
+      "engram-quest/episodic-review/topics/broken/topic.json": "{not json",
+      "engram-review/sr/engram-review__ai-cards__情境回顧-LLM 應用怎麼測.json": json({ q1: { stability: 9.5 }, q2: { due: "2026-11-20" } })
+    });
+    const raw = await loadSynapseSources(adapter, new Map([["t13", [deck]], ["unknown", ["x.md"]]]));
+    expect(raw.courses.map((c) => c.slug)).toEqual(["cicd"]);
+    expect(raw.series.map((s) => s.slug).sort()).toEqual(["azure-ai-2026", "episodic-recall"]);
+    expect(raw.explainers.map((p) => p.id)).toEqual(["p1"]);
+    expect(raw.explainerState).toEqual({ p1: { viewed: true } });
+    expect(raw.recallTopics.map((t) => t.id)).toEqual(["t13"]);
+    expect(raw.topicSr).toEqual({ t13: [9.5] });
   });
 });
 
