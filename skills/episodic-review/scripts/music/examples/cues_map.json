@@ -1,0 +1,59 @@
+{
+ "film": "map-example",
+ "style": "map",
+ "duration": 387,
+ "cues": [
+  {
+   "segment": "opening",
+   "start": 0,
+   "dur": 37.9
+  },
+  {
+   "segment": "topic",
+   "start": 37.9,
+   "dur": 19
+  },
+  {
+   "segment": "topic",
+   "start": 56.9,
+   "dur": 48.6
+  },
+  {
+   "segment": "topic",
+   "start": 105.6,
+   "dur": 62.1
+  },
+  {
+   "segment": "topic",
+   "start": 167.6,
+   "dur": 68.5
+  },
+  {
+   "segment": "topic",
+   "start": 236.1,
+   "dur": 50.4
+  },
+  {
+   "segment": "topic",
+   "start": 286.5,
+   "dur": 61.5
+  },
+  {
+   "segment": "ending",
+   "start": 348,
+   "dur": 38.9
+  }
+ ],
+ "marks": [
+  {
+   "kind": "recall",
+   "start": 302.99,
+   "dur": 8
+  },
+  {
+   "kind": "recall",
+   "start": 327.94,
+   "dur": 6
+  }
+ ]
+}

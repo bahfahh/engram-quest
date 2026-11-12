@@ -22,7 +22,7 @@ g 12_reveal_chime_s11  --mood chime      --seed 11 --key Eb
 nice -n 10 python3 -I qa_music.py demo/wav/*.wav
 mv demo/wav/*.png demo/ 2>/dev/null || true
 mv demo/wav/qa_report.md demo/wav/qa_report.json demo/
-# Whole-film example (examples/cues_rooms.json, about 6 minutes, 29 cues): one wav per cue + score.wav + cues.json; used.json is not written
-nice -n 10 python3 -I pick_music.py --cues examples/cues_rooms.json --render demo/film_example_rooms --deterministic --dry-run > /dev/null
-nice -n 10 ffmpeg -v error -y -i demo/film_example_rooms/score.wav -c:a libmp3lame -b:a 192k demo/13_film_example_rooms_score.mp3
-nice -n 10 python3 -I qa_music.py demo/film_example_rooms/score.wav demo/film_example_rooms/[0-2]*.wav
+# Whole-film example (examples/cues_map.json, the template's example film): one wav per cue + score.wav + cues.json; used.json is not written
+nice -n 10 python3 -I pick_music.py --cues examples/cues_map.json --render demo/film_example_map --deterministic --dry-run > /dev/null
+nice -n 10 ffmpeg -v error -y -i demo/film_example_map/score.wav -c:a libmp3lame -b:a 192k demo/13_film_example_map_score.mp3
+nice -n 10 python3 -I qa_music.py demo/film_example_map/score.wav demo/film_example_map/[0-2]*.wav

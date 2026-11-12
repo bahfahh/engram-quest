@@ -175,7 +175,7 @@ MOODS = {
                     sparse=[[(0, 1), (2, 1)], [(0.5, 0.5), (1, 1.5)], [(0, 1.5), (2, 0.5)]],
                     end=[[(0, 1), (1, 0.5), (1.5, 1.5)], [(0, 2)], [(0, 0.5), (0.5, 1.5)]])),
     'reflective': dict(
-        desc='reflective, looking back (rewind): slow 3/4 broken piano chords + music-box melody + a very faint pad, '
+        desc='reflective, looking back: slow 3/4 broken piano chords + music-box melody + a very faint pad, '
              'with a reversed-reverb "breath" where phrases meet', meter=3, bpm=(55, 65),
         keys=['C', 'D', 'Eb', 'F', 'G', 'Ab'], rt60=3.2, predelay=0.025, wet=0.36,
         pools=dict(
@@ -745,7 +745,7 @@ class Composer:
             tones = sorted({m for m in range(76, 89) if m % 12 in sp.chord.pcs})[:3]
             for k, m in enumerate(tones[::-1]):
                 self.add('box', 'music_box', m, sp.b0 + 1 + k * 0.5, 1.2, 0.36 - 0.03 * k, role='motif')
-        # rewind texture: reversed reverb swells that "breathe in" into new phrases and the final chord
+        # reflective texture: reversed reverb swells that "breathe in" into new phrases and the final chord
         if dens != 'bed':
             for si, sec in enumerate(self.sections):
                 if si == 0 or sec['role'] not in ('b', 'cons2', 'final', 'ante'):

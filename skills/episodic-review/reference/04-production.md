@@ -89,7 +89,7 @@ Changing timing after the score is generated means regenerating the cue sheet; d
 - **What the score is for.** A film of six to ten minutes with no narration needs something that is heard as a piece of music: light, slow, with a melody. The cue sheet's style `map` gives one theme for the whole film: the opening states the melody (piano over long strings), the body restates it and carries on as one continuous piece 3 dB lower, the ending brings it back. One key, one tempo, no new piece per chapter. A bed without melody under a long film is heard as no music at all.
 - **Level.** The viewer is reading. `--lufs -25` is the level for a film with music only (measured: about -25 in the opening and ending, -28 in the body); `-16.5` is for a film with narration. `--air 3` lifts the top a little so a quiet score survives small speakers.
 - **Recall.** During each countdown the music steps back about 9 dB and keeps going; one clean chime marks the reveal. Both come from the `marks` in the cue sheet (the `recall` pattern emits them; your own beat can call `cue('recall', t0, t1)`).
-- Never noise, hiss or room tone. The picker's other styles (`rooms`, `board`, `rewind`) score a film piece by piece with beds under the content; they suit a film with narration, not these.
+- Never noise, hiss or room tone.
 - Pass the credits text to `deliver.py`.
 
 ## 5. Delivering
