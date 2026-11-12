@@ -1,9 +1,9 @@
 // Vault index from Obsidian's own metadata cache, for `obsidian eval` (Obsidian CLI 1.12+, Obsidian must be running).
 //
-//   obsidian eval code="$(cat .claude/skills/engram-quest-episodic-review/scripts/obsidian_index.js)" > index.json
+//   obsidian eval code="$(cat <skill folder>/scripts/obsidian_index.js)" > index.json
 //
 // Synchronous on purpose (only the metadata cache, no file reads), so it works whether or not `eval` awaits promises.
-// Set START/END (ISO dates, Taiwan time) to keep notes modified in the period; null keeps everything.
+// Set START/END (ISO dates, UTC+8) to keep notes modified in the period; null keeps everything.
 // Output JSON: { generated, files: [ { path, mtime, ctime, size, frontmatter, tags, headings, links, embeds, backlinks } ],
 //                canvases: [ { path, mtime } ] }
 //   links / embeds / backlinks are resolved vault paths: Obsidian resolves aliases, renamed files and same-name notes,
@@ -24,7 +24,7 @@
     for (const dst of Object.keys(targets)) (back[dst] = back[dst] || []).push(src);
   }
   const files = app.vault.getMarkdownFiles()
-    .filter(f => inPeriod(f) && !f.path.startsWith('Clippings/'))     // never read Clippings (user rule)
+    .filter(f => inPeriod(f) && !f.path.startsWith('Clippings/'))     // Clippings holds raw web captures, not notes
     .map(f => {
       const c = mc.getFileCache(f) || {};
       const fmTags = (c.frontmatter && c.frontmatter.tags) || [];

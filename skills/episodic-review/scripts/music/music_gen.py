@@ -1,17 +1,17 @@
 #!/usr/bin/env python3
-"""music_gen.py — 回顧片用的「依情況自動作曲」輕音樂產生器（真實樂器取樣 + 規則作曲）。
+"""music_gen.py - light background music for recall films, composed by rule for a given mood and played on sampled instruments.
 
   nice -n 10 python3 music_gen.py --mood warm --seed 7 --dur 70 --out demo/warm_7.wav
   nice -n 10 python3 music_gen.py --mood reflective --seed 3 --dur 40 --density bed --key Eb --out x.wav
-  nice -n 10 python3 music_gen.py --mood thinking --seed 5 --dur 8 --key Eb --out recall.wav   # 回想倒數：一個長音和弦慢慢散掉
-  nice -n 10 python3 music_gen.py --mood chime --seed 1 --key Eb --out reveal.wav              # 揭曉一聲（有音高的鐘聲）
-  python3 music_gen.py --mood curious --seed 3 --dur 70 --plan     # 只印作曲計畫（調、速度、和弦表），不算音訊
+  nice -n 10 python3 music_gen.py --mood thinking --seed 5 --dur 8 --key Eb --out recall.wav   # recall countdown: one held chord that slowly dissolves
+  nice -n 10 python3 music_gen.py --mood chime --seed 1 --key Eb --out reveal.wav              # reveal: one pitched bell
+  python3 music_gen.py --mood curious --seed 3 --dur 70 --plan     # print the composition plan only (key, tempo, chord chart); no audio
   python3 music_gen.py --list
 
-輸出：<out>.wav（48 kHz 立體聲 24-bit PCM）、<out>.notes.tsv（音符表）、<out>.json（計畫、和弦表、響度、credits）。
+Output: <out>.wav (48 kHz stereo, 24-bit PCM), <out>.notes.tsv (note table), <out>.json (plan, chord chart, loudness, credits).
 
-規則：背景一律是「樂音」。沒有白噪音、嘶聲、底噪、雜訊 whoosh。殘響的脈衝響應（IR）雖然是用衰減的雜訊做的，
-但它只是乘在樂音上的空間感（convolution），輸入沒有音符就沒有任何聲音。
+Rule: background sound is always pitched music. No white noise, hiss, room tone or noise whoosh. The reverb impulse
+response is built from decaying noise, but it is only convolved with the notes: with no note at the input there is no sound.
 """
 import argparse, itertools, json, math, os, re, subprocess, sys, tempfile
 from fractions import Fraction
@@ -43,8 +43,8 @@ SOURCES = {
                '(https://creativecommons.org/licenses/by/3.0/us/).'),
 }
 
-# kind: decay = 自然衰減（鋼琴、鐘琴…），sustain = 持續音（弦樂、pad，需要接縫交叉淡化的 loop）
-# tone: 力度→亮度（one-pole lowpass 截止頻率 = base * 2**(vel*span)），None = 不加
+# kind: decay = the note dies away by itself (piano, glockenspiel, ...); sustain = a held tone (strings, pad: looped with a crossfade at the seam)
+# tone: velocity -> brightness (one-pole lowpass, cutoff = base * 2**(vel*span)); None = no filter
 INST = {
     'piano':     dict(src='salamander', dir='salamander', kind='decay', release=0.30, tone=(2600, 3.2)),
     'strings':   dict(src='fluidr3_gm', dir='fluidr3_gm/string_ensemble_1', kind='sustain', attack=0.55, release=1.4, loop_from=0.7, tone=(2600, 2.0)),
@@ -135,10 +135,11 @@ def smooth(u):
 
 # ============================================================================ moods
 # pools are 4-bar phrases (one symbol per bar; 'X|Y' = two chords in one bar).
-# ante = 前句（停在非主和弦），cons = 後句（回到 I），b = 對比段；curious 的 b 段在關係小調（數字相對小調主音）。
+# ante = antecedent phrase (ends off the tonic), cons = consequent phrase (returns to I), b = contrasting section;
+# the b section of 'curious' is in the relative minor (its numerals are relative to the minor tonic).
 MOODS = {
     'warm': dict(
-        desc='溫暖、懷舊（回到那個房間）：鋼琴分解和弦＋弦樂長音，大調', meter=4, bpm=(65, 75),
+        desc='warm, nostalgic (back in that room): broken piano chords + long string notes, major key', meter=4, bpm=(65, 75),
         keys=['C', 'D', 'Eb', 'F', 'G', 'Bb'], rt60=2.4, predelay=0.018, wet=0.30,
         pools=dict(
             ante=[['I', 'V/3', 'vi', 'IV'], ['I', 'vi7', 'IVmaj7', 'Vsus4|V'], ['Iadd9', 'iii', 'IV', 'V'],
@@ -155,7 +156,8 @@ MOODS = {
                     sparse=[[(0, 3)], [(0, 2), (2, 2)], [(1, 3)]],
                     end=[[(0, 3)], [(0, 2), (2, 1.5)], [(0, 2.5)]])),
     'curious': dict(
-        desc='輕快好奇、像在拼線索：電鋼琴切分和弦＋豎琴撥弦低音＋馬林巴木琴旋律，大調與關係小調交錯', meter=4, bpm=(80, 90),
+        desc='light and curious, like piecing clues together: syncopated electric-piano chords + plucked harp bass + marimba melody, '
+             'major key alternating with its relative minor', meter=4, bpm=(80, 90),
         keys=['C', 'D', 'F', 'G', 'A', 'Bb'], rt60=1.7, predelay=0.012, wet=0.22,
         pools=dict(
             ante=[['I', 'V', 'vi', 'IV'], ['I', 'iii', 'IV', 'V'], ['IV', 'V', 'iii', 'vi'], ['I', 'IV', 'ii7', 'V'], ['I', 'vi', 'ii', 'V']],
@@ -173,7 +175,8 @@ MOODS = {
                     sparse=[[(0, 1), (2, 1)], [(0.5, 0.5), (1, 1.5)], [(0, 1.5), (2, 0.5)]],
                     end=[[(0, 1), (1, 0.5), (1.5, 1.5)], [(0, 2)], [(0, 0.5), (0.5, 1.5)]])),
     'reflective': dict(
-        desc='沉思、回頭看（倒帶）：3/4 慢板鋼琴分解和弦＋音樂盒旋律＋極淡的 pad，樂句交接處有倒放殘響的「吸氣」', meter=3, bpm=(55, 65),
+        desc='reflective, looking back (rewind): slow 3/4 broken piano chords + music-box melody + a very faint pad, '
+             'with a reversed-reverb "breath" where phrases meet', meter=3, bpm=(55, 65),
         keys=['C', 'D', 'Eb', 'F', 'G', 'Ab'], rt60=3.2, predelay=0.025, wet=0.36,
         pools=dict(
             ante=[['I', 'iii', 'vi', 'IV'], ['IVmaj7', 'I/3', 'ii7', 'Vsus4|V'], ['vi', 'IV', 'I', 'V'], ['I', 'IVmaj7', 'vi7', 'V']],
@@ -187,7 +190,8 @@ MOODS = {
                     sparse=[[(0, 3)], [(1, 2)]],
                     end=[[(0, 3)], [(0, 2)]])),
     'bright': dict(
-        desc='明亮收尾（片尾全部亮起）：鋼琴上行分解和弦＋鐘琴，大調，旋律一句比一句高', meter=4, bpm=(76, 84),
+        desc='bright ending (everything lights up): rising broken piano chords + glockenspiel, major key, each phrase higher than the last',
+        meter=4, bpm=(76, 84),
         keys=['C', 'D', 'Eb', 'F', 'G'], rt60=2.2, predelay=0.016, wet=0.27,
         pools=dict(
             ante=[['I', 'V', 'vi', 'IV'], ['I', 'IV', 'vi', 'V'], ['IV', 'V', 'iii', 'vi'], ['I', 'iii', 'IV', 'V']],
@@ -202,7 +206,8 @@ MOODS = {
                     sparse=[[(0, 2), (2, 2)], [(0, 3)], [(0, 1), (2, 2)]],
                     end=[[(0, 2), (2, 2)], [(0, 3)], [(0, 1), (1, 3)]])),
     'thinking': dict(
-        desc='回想倒數：極稀疏、懸而未決（停在 V9sus4 或 IVmaj7）；短於 16 秒時就是一個長音和弦慢慢散掉', meter=4, bpm=(58, 64),
+        desc='recall countdown: very sparse and unresolved (rests on V9sus4 or IVmaj7); under 16 s it is one held chord that slowly dissolves',
+        meter=4, bpm=(58, 64),
         keys=['C', 'D', 'Eb', 'F', 'G', 'Ab', 'Bb'], rt60=3.6, predelay=0.03, wet=0.42, chord_bars=2,
         pools=dict(
             ante=[['Iadd9', 'vi7', 'IVmaj7', 'V9sus4'], ['IVmaj7', 'Iadd9/3', 'vi7', 'V9sus4'], ['vi7', 'IVmaj7', 'Iadd9', 'V9sus4']],
@@ -213,7 +218,7 @@ MOODS = {
             final=['V9sus4', 'V9sus4', 'IVmaj7']),
         mel=dict(inst='piano', lo=67, hi=86, center=76, vel=0.36),
         rhythm=None),
-    'chime': dict(desc='音效：揭曉時的一聲（有音高、乾淨的鐘聲／撥弦，不用雜訊）', meter=4, bpm=(60, 60),
+    'chime': dict(desc='sound effect: one sound at the reveal (a clean pitched bell or pluck, never noise)', meter=4, bpm=(60, 60),
                   keys=['C', 'D', 'Eb', 'F', 'G', 'Ab', 'Bb'], rt60=2.6, predelay=0.02, wet=0.34),
 }
 DENSITY_LUFS = {'full': -20.0, 'light': -23.0, 'bed': -26.0}
@@ -1313,14 +1318,14 @@ def main():
     ap.add_argument('--seed', type=int, default=1)
     ap.add_argument('--dur', type=float, default=70.0)
     ap.add_argument('--density', choices=['full', 'light', 'bed'], default='full',
-                    help='full = 片頭/片尾；light = 全貌/揭曉後；bed = 主題段（很淡但仍是音樂）')
-    ap.add_argument('--key', help='固定調性（例：Eb），讓同一個房間的主題段/回想/揭曉接得上')
-    ap.add_argument('--lufs', type=float, help='整段響度目標；預設 full -20、light -23、bed -26、thinking -28、chime -24')
-    ap.add_argument('--out', help='輸出 wav 路徑')
-    ap.add_argument('--mp3', action='store_true', help='另外輸出 192k mp3')
-    ap.add_argument('--plan', action='store_true', help='只印出作曲計畫 JSON，不算音訊')
-    ap.add_argument('--open-tonic', action='store_true', help='第一個和弦一定是 I（揭曉段：把回想的懸念解決掉）')
-    ap.add_argument('--list', action='store_true')
+                    help='full = opening/ending; light = overview/after a reveal; bed = topic segments (very quiet, still music)')
+    ap.add_argument('--key', help='fix the key (e.g. Eb) so the topic, recall and reveal of one room connect')
+    ap.add_argument('--lufs', type=float, help='integrated loudness target; default full -20, light -23, bed -26, thinking -28, chime -24')
+    ap.add_argument('--out', help='output wav path')
+    ap.add_argument('--mp3', action='store_true', help='also write a 192k mp3')
+    ap.add_argument('--plan', action='store_true', help='print the composition plan as JSON only; no audio')
+    ap.add_argument('--open-tonic', action='store_true', help='the first chord is always I (reveal segments: resolves the suspense of the recall)')
+    ap.add_argument('--list', action='store_true', help='list the moods')
     a = ap.parse_args()
     if a.list:
         for k, v in MOODS.items():

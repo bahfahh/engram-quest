@@ -7,7 +7,7 @@ Order: --lang > engram-quest/videos/settings.json narrationLang (zh-tw | en) > z
 "follow" or an unset narrationLang means the language of the source notes, else the language the user writes in:
 this script cannot read that, so pass it with --lang once the notes are read.
 
-Output: lang, source, reading {unit, calibrated}, shellStrings (the shells carry interface wording for it), voice, notes[].
+Output: lang, source, reading {unit, calibrated}, shellStrings (true when the film template has interface wording for it), voice, notes[].
 A language with no tested setting still resolves: its gaps are listed in notes, nothing stops or falls back to Chinese.
 """
 import argparse, json, os, re
@@ -21,7 +21,7 @@ _TOKEN = re.compile(rf'[{CJK}]|{_WORD}')
 
 
 def normalise(lang):
-    """Lowercase tag; regional English and Traditional Chinese tags map to the sets the shells carry."""
+    """Lowercase tag; regional English and Traditional Chinese tags map to the sets the film template carries."""
     tag = lang.strip().replace('_', '-').lower()
     if tag.split('-')[0] == 'en':
         return 'en'
@@ -62,9 +62,9 @@ def resolve(vault, requested):
         lang, source = 'zh-tw', 'default'
         notes.append('narrationLang is "follow" or unset: re-run with --lang <language of the source notes, else of the user>')
     if lang not in SHELL_LANGS:
-        notes.append(f'no interface strings for {lang} in the shells: add a set to UI_SETS in the content file, or English is shown')
+        notes.append(f'no interface strings for {lang}: write the fixed wording of the film (titles, prompts) in that language yourself')
         notes.append(f'no tested voice for {lang}: pick one from edge-tts --list-voices and check it by ear before any narration')
-        notes.append(f'shell fonts cover Latin, Cyrillic, Vietnamese and Traditional Chinese: another script needs its own font in the project')
+        notes.append(f'the fonts of the template cover Latin, Cyrillic, Vietnamese and Traditional Chinese: another script needs its own font in the project')
     if reading_note(lang):
         notes.append(reading_note(lang))
     return {'lang': lang, 'source': source,

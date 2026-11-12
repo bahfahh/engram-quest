@@ -1,6 +1,6 @@
-// 把 Obsidian canvas 畫成 PNG，讓人（和 agent）用看的理解關聯。
-// 用法：node render_canvas.cjs <清單檔（每行一個相對 vault 的 .canvas 路徑）> <輸出資料夾> [vault 路徑]
-// 中文字型：環境變數 CANVAS_FONT_DIR 指到 @fontsource/noto-sans-tc 資料夾（系統沒有中文字型時要設）
+// Render Obsidian canvases to PNG, so a person (or an agent) can read the relations by eye.
+// Usage: node render_canvas.cjs <list file: one vault-relative .canvas path per line> <output folder> [vault path]
+// CJK font: set the environment variable CANVAS_FONT_DIR to an @fontsource/noto-sans-tc folder when the machine has no CJK font.
 const fs = require('fs'), path = require('path');
 const { chromium } = require('playwright');
 const [listFile, outDir, vaultArg] = process.argv.slice(2);
@@ -12,7 +12,7 @@ const col = c => !c ? null : (COLORS[c] || c);
 const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 function inline(s) {
   return esc(s)
-    .replace(/!\[\[([^\]|]+)(\|[^\]]*)?\]\]/g, (m, a) => `<span class="emb">［圖：${path.basename(a)}］</span>`)
+    .replace(/!\[\[([^\]|]+)(\|[^\]]*)?\]\]/g, (m, a) => `<span class="emb">[image: ${path.basename(a)}]</span>`)
     .replace(/\[\[([^\]|]+)\|([^\]]+)\]\]/g, '<u>$2</u>').replace(/\[\[([^\]]+)\]\]/g, (m, a) => `<u>${path.basename(a)}</u>`)
     .replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>').replace(/==([^=]+)==/g, '<mark>$1</mark>').replace(/`([^`]+)`/g, '<code>$1</code>');
 }
@@ -41,7 +41,7 @@ function fileNode(n) {
     if (n.subpath) { const h = n.subpath.replace(/^#/, ''); const i = t.indexOf(h); if (i >= 0) t = t.slice(i); }
     return title + `<div class="fb">${md(t, 18)}</div>`;
   }
-  return title + `<div class="fb">（${fs.existsSync(abs) ? '檔案' : '找不到檔案'}）</div>`;
+  return title + `<div class="fb">(${fs.existsSync(abs) ? 'file' : 'file not found'})</div>`;
 }
 function anchor(n, side) {
   const cx = n.x + n.width / 2, cy = n.y + n.height / 2;

@@ -1,15 +1,19 @@
 #!/usr/bin/env python3
-"""qa_music.py — 用數據檢查產生的配樂（我們聽不到，所以全部用量測）。
+"""qa_music.py - check generated music by measurement (nothing here is judged by ear).
 
-  nice -n 10 python3 qa_music.py demo/*.wav            # 每個 wav 旁邊要有 music_gen 產生的 .json / .notes.tsv
-  輸出：每段一張 <名>.png（波形＋頻譜圖＋段落/和弦標記），demo/qa_report.md、demo/qa_report.json
+  nice -n 10 python3 qa_music.py demo/*.wav            # each wav needs the .json / .notes.tsv music_gen wrote next to it
+  nice -n 10 python3 qa_music.py --target -16.5 --out-dir <dir> mix.wav     # a finished mix: its own loudness target, reports elsewhere
+  Output: one <name>.png per file (waveform + spectrogram + section/chord markers), qa_report.md and qa_report.json
+  (next to the first wav, or in --out-dir)
 
-檢查項目
-  響度／true peak  ffmpeg ebur128（獨立於產生器自己的量測）
-  頻譜            各頻段能量（相對全頻）：<40 Hz 轟鳴、5 kHz 以上刺耳；2–8 kHz 1/3 八度突起（共振）
-  雜訊            2–16 kHz 頻譜平坦度（嘶聲/白噪音會很平）、樂段中最安靜 10% 的電平
-  爆音／喀噠聲     7 kHz 高通後的尖峰 / 局部 RMS，再扣掉音符起音時間；取樣尾端／loop 接縫
-  音符表          調外音、同時發聲的音數、旋律級進比例、最大跳進、強拍非和弦音、與伴奏的小二度摩擦
+Checks
+  loudness / true peak  ffmpeg ebur128 (independent of the generator's own measurement)
+  spectrum              energy per band relative to the total: rumble below 40 Hz, harshness above 5 kHz;
+                        a 1/3-octave band between 1 and 10 kHz sticking out of its neighbours (resonance)
+  noise                 spectral flatness 2-16 kHz (hiss and white noise are very flat); level of the quietest 10% of the piece
+  pops / clicks         spikes after a 7 kHz high-pass vs the local RMS, minus those at note onsets; sample ends / loop seams
+  note table            out-of-key notes, pitches sounding at once, share of melodic steps, largest leap,
+                        non-chord tones on strong beats, minor-second rubs against the accompaniment
 """
 import csv, json, os, re, subprocess, sys
 import numpy as np
@@ -274,8 +278,10 @@ def main():
     res = [check(f) for f in files]
     outdir = OUTDIR or (os.path.dirname(os.path.abspath(files[0])) if files else '.')
     json.dump(res, open(os.path.join(outdir, 'qa_report.json'), 'w'), ensure_ascii=False, indent=1)
-    lines = ['# 配樂品質檢查（全部是量測數據，沒有人耳試聽）', '',
-             '| 檔案 | LUFS | TP dBTP | LRA | <40Hz | 5–10k | >10k | 1/3oct 突起（相對鄰帶 @頻率，該帶相對全頻） | HF 平坦度 | 不明尖峰 | 調外音 | 最多同時音 | 同時音級 | 旋律級進% | 最大跳進 | 強拍非和弦音 | 小二度摩擦 | 結尾 dBFS | 最長近無聲 s | 旗標 |',
+    lines = ['# Music quality check (measurements only; nothing was judged by ear)', '',
+             '| file | LUFS | TP dBTP | LRA | <40Hz | 5–10k | >10k | 1/3-oct bump (dB above neighbours @Hz, band re total) | HF flatness | unexplained spikes '
+             '| out-of-key notes | max pitches at once | pitch classes at once | melody steps % | largest leap | strong-beat non-chord tones '
+             '| minor-2nd rubs | end dBFS | longest near-silence s | flags |',
              '|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|']
     for q in res:
         nc = q['notes'] or {}

@@ -3,7 +3,7 @@
 // c is the chapter's container, W its svg for lines, q the skeleton question of the chapter ([name, sub, colour]) when it has one.
 // Timing follows the text: a beat waits as long as its new words need.
 // None fits? Write a beat here in the film with engine.js and parts.js (see `spans` for a short one), using hold / clear / colour below.
-import { el, on, off, at, wait, T, wire, line, fn, cue, ico, midOf, clamp } from './engine.js';
+import { el, on, off, at, wait, T, wire, line, fn, cue, segment, ico, midOf, clamp } from './engine.js';
 import { chapter as chap, header, caption, label, node, chat, bubble, box, row, tag, ring, figure as sheet, COL, tw } from './parts.js';
 export const PALETTE = [COL.blue, COL.teal, COL.violet, COL.rose, COL.lime];   // one per skeleton question; not green, coral or amber (they mean good, cost, your turn)
 export const SK = { q: [] };                                    // the film's skeleton: [[name, sub, colour, inThisFilm]], set by skeleton()
@@ -300,8 +300,9 @@ export const monthMap = (d) => (t0) => {
 };
 
 // ------------------------------------------------------------------ recall: cover and fill, then new cases
-// { title, clue, lines: ['text with ｛hidden words｝' | [skeleton index, text], ...], casesTitle, ask, cases: [[situation, answer, detail, clue, label]] }
+// { title, clue, lines: ['text with ｛hidden words｝' | [skeleton index, text], ...], casesTitle, ask, cases: [[situation, answer, detail, clue, label, topicId]] }
 // Without `lines` only the cases run: a month film asks one quick question per topic that way (label = the topic's name).
+// A case with a topicId is written to the film's chapter list, so a card that fails can open that topic's question.
 // A plain string takes the skeleton question at its own position; give [index, text] when the film walked only some questions.
 // A clue is something that was there at learning (the pack's `quick.clue`): shown before the wait, it must not contain the answer.
 export const recall = (d) => (t0) => {
@@ -318,12 +319,12 @@ export const recall = (d) => (t0) => {
   fn((t) => blanks.forEach(([b, tr, col]) => { const open = t >= tr; b.style.color = open ? col : 'transparent'; b.style.background = open ? 'transparent' : 'rgba(242,184,75,.16)'; b.style.outline = open ? 'none' : '1.5px dashed #f2b84b'; }));
   ring(c, 1760, 190, tReveal - think, tReveal); cue('recall', tReveal - think, tReveal); at(tReveal + rows.length * 2.0 + 4.5); A.forEach(r => off(r)); }
   if (d.cases && d.cases.length) { on(el(c, 'a h1', d.casesTitle, 'left:98px;top:150px'), { t: T + 0.6 });
-    d.cases.forEach(([q, a1, a2, clue, lab], i) => { wait(0.6); const B = [], tq = rt(q, clue || '') + 1.5;
+    d.cases.forEach(([q, a1, a2, clue, lab, tid], i) => { wait(0.6); const B = [], tq = rt(q, clue || '') + 1.5, t0c = T;
       B.push(on(el(c, 'a s nw', `${i + 1} / ${d.cases.length}` + (lab ? `<span style="margin-left:24px;color:#f3f3f5;letter-spacing:.06em">${lab}</span>` : ''), 'left:150px;top:300px;letter-spacing:.14em;color:#6fdc9b'), { dy: 0 })); B.push(on(el(c, 'a h1', q, 'left:150px;top:350px;right:300px;font-size:56px')));
       if (clue) B.push(on(el(c, 'a nw', clue, 'left:150px;top:520px;font-size:30px;color:#b9bac2'), { t: T + rt(q) * 0.6, dy: 0 }));
       B.push(on(el(c, 'a p', d.ask, `left:150px;top:${clue ? 580 : 560}px;font-size:38px;color:#f2b84b`), { t: T + tq - 1.2 })); ring(c, 1700, 420, T + tq, T + tq + 6); cue('recall', T + tq, T + tq + 6);
       B.push(on(el(c, 'a', a1, 'left:150px;top:660px;right:200px;font-size:44px;font-weight:500'), { t: T + tq + 6.2 })); B.push(on(el(c, 'a p', a2 || '', 'left:150px;top:744px;right:200px;font-size:36px;color:#f3f3f5'), { t: T + tq + 6.2 + rt(a1) }));
-      wait(tq + 6.2 + rt(a1, a2 || '') + 2.5); B.forEach(r => off(r)); }); }
+      wait(tq + 6.2 + rt(a1, a2 || '') + 2.5); B.forEach(r => off(r)); if (tid) segment(lab || q, tid, t0c, T); }); }
   end(T); return T + 0.6;
 };
 

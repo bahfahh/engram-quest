@@ -25,6 +25,7 @@ Films are expensive. A film that is only watched once gives a feeling, not a mem
 |---|---|---|
 | **Recall pack**: one cached content file per topic, retrieval cards in the Review Deck, an overview page, a ranking of which topics deserve a film | every topic touched in the period | reading tokens only, no rendering |
 | **Topic film**: one topic, full depth, 4-10 minutes | the one to three topics chosen | a few minutes of rendering per film |
+| **Month film**: the period's topics by area, the real links between them one at a time, the topics that stand alone, then one quick question per topic | once per period, in the long tier or when asked | generated from the pack and the links; one sentence written per link |
 | Links between the two: each film chapter carries the topic id, so a failed card can jump to the right passage | — | — |
 
 ## Flow
@@ -70,7 +71,6 @@ reference/
   04-production.md          choosing what to film, building, checking, sound, delivering; cost
   05-plugin-contract.md     files and fields shared with the EngramQuest plugin
   06-pitfalls.md            mistakes already made
-  legacy-shells.md          the older 3D shells: kept, not the default
 templates/
   film/                     engine.js, parts.js, patterns.js, look.css, scene.html, film.example.js, film.gallery.js, figs/
   film-plan.md              the plan written before building a film
@@ -87,10 +87,8 @@ scripts/
   deliver.py                compress, poster, meta.json entry
   render_canvas.cjs         an Obsidian canvas as an image, for reading
   obsidian_index.js, doctor.py
-  length_estimate.py, onscreen.py, keystills.py, plan_parts.py, studio/render.cjs    for the legacy shells only
-assets/shells/, assets/demos/   legacy shells and their demo catalogue
 ```
 
 ## Reporting problems
 
-The user develops the EngramQuest plugin. When a script path, a script or a description in this skill is wrong, confirm it first, then open a ticket as the vault's `AGENTS.md` describes and tell the user.
+When a script path, a script or a description in this skill turns out to be wrong, confirm it first (reproduce it, find the line), then tell the user what you found and how you worked around it. If the vault has its own instructions for reporting skill problems, follow them.

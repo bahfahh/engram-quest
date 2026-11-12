@@ -1,23 +1,31 @@
 #!/usr/bin/env python3
-"""pick_music.py — 依「情況」挑配樂：風格 × 段落 × 片 id → mood / seed / density / key，或 library/ 裡的真曲子。
+"""pick_music.py - choose the music for a situation: style x segment x film id -> mood / seed / density / key, or a real track from library/.
 
-單一段落（印出 JSON；--render 才真的產生音檔）：
+One segment (prints JSON; audio is only rendered with --render):
   python3 -I pick_music.py --film rooms-oct --style rooms --segment opening --dur 20
   python3 -I pick_music.py --film rooms-oct --style rooms --segment opening --dur 20 --render out/
 
-整支片（cue sheet，涵蓋片頭到片尾每一段，包含主題段和回想倒數）：
+A whole film (a cue sheet covering every segment from opening to ending, topic segments and recall countdowns included):
   python3 -I pick_music.py --cues examples/cues_rooms.json --render out/rooms-oct/
-  → out/rooms-oct/NN_<segment>.wav（每段）＋ score.wav（整支片長度、對齊時間軸、段落交接自然重疊）＋ cues.json（挑選結果＋credits）
+  -> out/rooms-oct/NN_<segment>.wav (one per cue) + score.wav (as long as the film, placed on the timeline, neighbouring
+     cues overlapping) + cues.json (the picks + credits)
 
-規則（README 有完整說明）
-  * 背景一律是「樂音」：主題段 = 很淡的音樂（density bed），回想倒數 = 一個懸著的長音和弦慢慢散掉（thinking），
-    揭曉 = 有音高的一聲（chime）或回到主和弦的短樂句。不用白噪音、嘶聲、底噪、雜訊 whoosh。
-  * 同一個 mood 裡隨機：seed = sha256(片 id:段落:房間) XOR 隨機數，所以每支片都不一樣；--deterministic 拿掉隨機部分（可重現）。
-  * 記錄在 used.json，避免和「上一支片」重複：同段落用過的 mood 權重 ×0.35；同 (mood, seed) 不再用；同段落不用同一個調；
-    上一支片用過的 library 曲子不選。
-  * 整支片同一個調（--key-policy film，預設；避開上一支片的調）：段落交接處前一段的尾音和下一段的淡入會疊在一起，
-    同調才不會打架。回想停在 V9sus4（懸著），揭曉 / 收束從 I 開始（解決）。--key-policy room 則每個房間各自一個調。
-  * library.json 標了 "course" 的曲子（例：〈Morning〉，教學片用）回顧片不選；--allow-course 才會選。
+Rules (the README has the full description)
+  * Background sound is always pitched music: a topic segment = very quiet music (density bed), a recall countdown = one
+    suspended chord that slowly dissolves (thinking), a reveal = one pitched sound (chime) or a short phrase that returns to
+    the tonic. No white noise, hiss, room tone or noise whoosh.
+  * Random within a mood: seed = sha256(film id:segment:room) XOR a random number, so every film differs;
+    --deterministic drops the random part (reproducible).
+  * Picks are recorded in used.json so a film does not repeat the previous one: a mood the previous film used for the same
+    segment gets weight x0.35; the same (mood, seed) is not used again; the same segment does not get the same key; a library
+    track the previous film used is not picked.
+  * One key for the whole film (--key-policy film, the default; it avoids the previous film's key): where cues meet, the tail
+    of one overlaps the fade-in of the next, and only a shared key keeps them from clashing. A recall rests on V9sus4
+    (suspended); the reveal / closure starts on I (resolved). With --key-policy room each room gets its own key.
+  * Style map is one theme for the whole film: opening, body and ending are the same composition, and the cue sheet's
+    "marks" (recall countdowns) make the score step back and place one chime at the reveal.
+  * Tracks tagged "course" in library.json (meant for teaching videos) are not picked for recall films unless
+    --allow-course is given.
 """
 import argparse, hashlib, json, os, secrets, subprocess, sys, tempfile, time
 
@@ -259,7 +267,7 @@ def apply_marks(score, marks, key, outdir, depth_db=-9.0):
     chime = os.path.join(outdir, 'reveal_chime.wav')
     mg.generate('chime', 1, 4.0, chime, 'full', key)
     raw = subprocess.run(['ffmpeg', '-v', 'error', '-i', chime, '-f', 'f32le', '-'], capture_output=True, check=True).stdout
-    ch = np.frombuffer(raw, np.float32).reshape(-1, 2).astype(np.float64) * 10 ** (-3 / 20)
+    ch = np.frombuffer(raw, np.float32).reshape(-1, 2).astype(np.float64) * 10 ** (-8 / 20)     # about as loud as the music it returns to, not above it
     g = np.ones(len(score))
     lo, down, up = 10 ** (depth_db / 20), int(0.8 * mg.SR), int(1.5 * mg.SR)
     for m in marks:
@@ -313,20 +321,21 @@ def write_score_meta(outdir, out):
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument('--film', help='片的 id，例：rooms-oct')
+    ap.add_argument('--film', help='film id, e.g. rooms-oct')
     ap.add_argument('--style', choices=list(STYLE_MOOD), help='rooms / board / rewind / map (one theme through the whole film)')
     ap.add_argument('--segment', choices=SEGMENTS)
-    ap.add_argument('--room', type=int, help='第幾個房間/主題（同房間共用調性）')
+    ap.add_argument('--room', type=int, help='number of the room/topic (segments of one room share a key)')
     ap.add_argument('--dur', type=float, default=30.0)
-    ap.add_argument('--cues', help='整支片的 cue sheet JSON（見 examples/）')
-    ap.add_argument('--render', metavar='DIR', help='產生音檔到這個資料夾')
-    ap.add_argument('--overlap', type=float, default=2.0, help='相鄰段落重疊秒數（前一段的尾音和下一段的淡入疊在一起）')
-    ap.add_argument('--deterministic', action='store_true', help='seed 只用片 id 雜湊，不加隨機（可重現）')
-    ap.add_argument('--dry-run', action='store_true', help='不寫入 used.json')
-    ap.add_argument('--allow-course', action='store_true', help='允許選 library 裡標 course 的曲子（教學片用）')
-    ap.add_argument('--library-weight', type=float, default=0.3, help='有符合的真曲子時，選它的機率')
+    ap.add_argument('--cues', help='cue sheet JSON for a whole film (see examples/)')
+    ap.add_argument('--render', metavar='DIR', help='render the audio into this folder')
+    ap.add_argument('--overlap', type=float, default=2.0, help='seconds neighbouring cues overlap (the tail of one under the fade-in of the next)')
+    ap.add_argument('--deterministic', action='store_true', help='derive seeds from the film id hash only, nothing random (reproducible)')
+    ap.add_argument('--dry-run', action='store_true', help='do not write used.json')
+    ap.add_argument('--allow-course', action='store_true', help='allow library tracks tagged "course" (meant for teaching videos)')
+    ap.add_argument('--library-weight', type=float, default=0.3, help='probability of picking a real track when one matches')
     ap.add_argument('--key-policy', choices=['film', 'room'], default='film',
-                    help='film = 整支片同一個調（段落交接不打架，預設）；room = 每個房間自己的調（片頭/全貌/片尾不固定）')
+                    help='film = one key for the whole film (cues do not clash where they meet; default); '
+                         'room = each room has its own key (opening/overview/ending are not fixed)')
     a = ap.parse_args()
     if a.render:
         try:

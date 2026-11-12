@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Deliver a finished episodic review film into the engram-quest video library.
 
-  python3 deliver.py --final <final.mp4> --poster <poster.jpg> --id <id> --title "<片名>" \
-      --style episodic-rooms --vault <vault root> --period 2026-10 --length medium \
-      [--topics-json topics.json] [--not-taken "主題A,主題B"] [--request-id req-1] [--credits "<text>"] [--crf 26] [--max-mb 95]
+  python3 deliver.py --final <final.mp4> --poster <poster.jpg> --id <id> --title "<film title>" \
+      --style episodic-map --vault <vault root> --period 2026-10 --length medium \
+      [--topics-json topics.json] [--not-taken "Topic A,Topic B"] [--request-id req-1] [--credits "<text>"] [--crf 26] [--max-mb 95]
 
 - Compresses to the vault version (x264 slow, CRF 26, max 1800 kbps, AAC 128k, faststart), run at nice 19.
   engram-quest/videos/settings.json quality "compact" scales the delivered copy to 720p.
@@ -57,7 +57,7 @@ ap.add_argument('--final', required=True)
 ap.add_argument('--poster', required=True)
 ap.add_argument('--id', required=True)
 ap.add_argument('--title', required=True)
-ap.add_argument('--style', required=True, help='episodic-rooms | episodic-rewind | episodic-board | episodic-castle | episodic-custom')
+ap.add_argument('--style', required=True, help='a label stored with the film; episodic-map for the films this skill makes')
 ap.add_argument('--vault', default='.')
 ap.add_argument('--credits', default='', help='music credits, if a licensed track was used')
 ap.add_argument('--crf', default='26')
