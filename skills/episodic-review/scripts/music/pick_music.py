@@ -16,7 +16,7 @@ Rules (the README has the full description)
     "marks" (recall countdowns) make the score step back and place one chime at the reveal.
   * A recall or quiz segment is one suspended chord that slowly dissolves (thinking); a reveal is one pitched sound
     (chime) or a short phrase that returns to the tonic.
-  * Random within a mood: seed = sha256(film id:segment) XOR a random number, so every film differs; --deterministic
+  * Random within a mood: seed = sha256(film id:segment:None:salt) XOR a random number, so every film differs; --deterministic
     drops the random part (reproducible).
   * Picks are recorded in used.json so a film does not repeat the previous one: not its theme seed, not its key, not a
     (mood, seed) pair it used.
@@ -49,7 +49,9 @@ def moment(segment, dur):
     """(mood, density) for a segment outside the theme."""
     if segment in ('recall', 'quiz'):
         return 'thinking', 'bed'
-    return ('chime', 'full') if dur <= 6 else (THEME_MOOD, 'light')
+    if segment == 'reveal':
+        return ('chime', 'full') if dur <= 6 else (THEME_MOOD, 'light')
+    raise SystemExit(f'unknown segment {segment}; use one of {", ".join(SEGMENTS)}')
 
 
 def load_json(path, default):
@@ -100,7 +102,9 @@ class Picker:
     def theme_seed(self):
         """One seed per film (kept across calls for the same film; never the previous film's)."""
         if self._theme is None:
-            earlier = [r.get('seed') for r in self.used['history'] if r['film'] == self.film and r.get('segment') in THEME_LEVEL and r.get('seed')]
+            # records of an older scoring style under the same film id are not this film's theme
+            earlier = [r.get('seed') for r in self.used['history'] if r['film'] == self.film and r.get('style', 'map') == 'map'
+                       and r.get('segment') in THEME_LEVEL and r.get('seed')]
             prev = {r.get('seed') for r in self.prev}
             self._theme = earlier[-1] if earlier else next(s for s in (seed_for(self.film, 'theme', self.det, k) for k in range(24)) if s not in prev)
         return self._theme
@@ -118,7 +122,7 @@ class Picker:
             self.taken.add((mood, seed))
             lufs = mg.default_lufs(mood, density)
             plan = mg.plan_only(mood, seed, dur, density, self.film_key, open_tonic=segment in OPEN_TONIC)
-        rec = dict(film=self.film, segment=segment, dur=dur, kind='generated', mood=mood, seed=seed, density=density,
+        rec = dict(film=self.film, segment=segment, dur=dur, mood=mood, seed=seed, density=density,
                    key=plan['key'].split()[0], bpm=plan['bpm'], form=plan['form'], instruments=plan['instruments'], lufs=lufs)
         self.records.append(rec)
         return rec
@@ -127,7 +131,7 @@ class Picker:
         now = time.strftime('%Y-%m-%dT%H:%M:%S')
         for r in self.records:
             self.used['history'].append({k: v for k, v in r.items() if k in
-                                         ('film', 'segment', 'kind', 'mood', 'seed', 'density', 'key', 'bpm')} | {'at': now})
+                                         ('film', 'segment', 'mood', 'seed', 'density', 'key', 'bpm')} | {'at': now})
         save_used(self.used)
 
 
@@ -217,7 +221,6 @@ def write_score_meta(outdir, out):
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument('--film', help='film id, e.g. oct-map')
-    ap.add_argument('--style', choices=['map'], default='map', help='the film template\'s style (the cue sheet names it)')
     ap.add_argument('--segment', choices=SEGMENTS)
     ap.add_argument('--dur', type=float, default=30.0)
     ap.add_argument('--cues', help='cue sheet JSON for a whole film (see examples/)')

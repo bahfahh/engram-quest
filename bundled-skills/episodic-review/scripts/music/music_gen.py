@@ -139,7 +139,7 @@ def smooth(u):
 # the b section of 'curious' is in the relative minor (its numerals are relative to the minor tonic).
 MOODS = {
     'warm': dict(
-        desc='warm, nostalgic (back in that room): broken piano chords + long string notes, major key', meter=4, bpm=(65, 75),
+        desc='warm, nostalgic: broken piano chords + long string notes, major key', meter=4, bpm=(65, 75),
         keys=['C', 'D', 'Eb', 'F', 'G', 'Bb'], rt60=2.4, predelay=0.018, wet=0.30,
         pools=dict(
             ante=[['I', 'V/3', 'vi', 'IV'], ['I', 'vi7', 'IVmaj7', 'Vsus4|V'], ['Iadd9', 'iii', 'IV', 'V'],
@@ -1319,7 +1319,7 @@ def main():
     ap.add_argument('--dur', type=float, default=70.0)
     ap.add_argument('--density', choices=['full', 'light', 'bed'], default='full',
                     help='full = opening/ending; light = overview/after a reveal; bed = topic segments (very quiet, still music)')
-    ap.add_argument('--key', help='fix the key (e.g. Eb) so the topic, recall and reveal of one room connect')
+    ap.add_argument('--key', help='fix the key (e.g. Eb) so neighbouring pieces of one film connect')
     ap.add_argument('--lufs', type=float, help='integrated loudness target; default full -20, light -23, bed -26, thinking -28, chime -24')
     ap.add_argument('--out', help='output wav path')
     ap.add_argument('--mp3', action='store_true', help='also write a 192k mp3')

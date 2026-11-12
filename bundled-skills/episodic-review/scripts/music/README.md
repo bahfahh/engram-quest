@@ -76,9 +76,9 @@ Every piece is built from 4-bar phrases (an optional intro, antecedent and conse
 | `opening`, `ending` | the theme | full, -20 LUFS |
 | `overview`, `topic`, `closure` | the theme (`closure` starts on I) | full, 3 dB lower |
 | `recall`, `quiz` | thinking | bed |
-| `reveal` | 6 s or shorter: chime; longer: a phrase of the theme's mood, starting on I | light |
+| `reveal` | 6 s or shorter: chime (full); longer: a phrase of the theme's mood, starting on I (light) | full / light |
 
-- **Random within a mood.** `seed = sha256("film:segment") XOR 32 random bits`, so the same situation sounds different in every film; `--deterministic` drops the random part.
+- **Random within a mood.** `seed = sha256("film:segment:None:salt") XOR 32 random bits` (the theme uses the segment name `theme`; `None` keeps the seeds of earlier films; the salt counts up past seeds already used), so the same situation sounds different in every film; `--deterministic` drops the random part.
 - **One key per film.** Neighbouring cues overlap by `--overlap` seconds (default 2), and a shared key keeps them from clashing. A recall rests on V9sus4 and the reveal or closure starts on I: the question hangs, the answer resolves it.
 - **No repeats of the previous film** (`used.json`). Its theme seed, its key and every (mood, seed) pair it used are avoided. Within one film a (mood, seed) pair is used once, except the theme, which is reused on purpose.
 - **Cue sheet.** `{"film", "style": "map", "duration", "cues": [{"segment", "start", "dur"}], "marks"?: [{"start", "dur"}]}`. `--render` writes one wav per cue, places them at `start` in `score.wav` (as long as the film), and writes `cues.json` (picks + credits) and `score.json`. Narration, sound effects and the final level are mixed afterwards (`mix.py`).
