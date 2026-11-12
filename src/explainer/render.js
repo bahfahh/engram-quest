@@ -5,7 +5,7 @@
 
 const I = require("obsidian");
 const { t: c, interpolate: K } = require("../i18n");
-const { scanExplainers, groupExplainersByDeck, readState, deleteExplainer } = require("./data");
+const { scanExplainers, groupExplainersByDeck, readState, applyReadingState, deleteExplainer } = require("./data");
 const { ExplainerViewerModal } = require("./viewer-modal");
 const ui = require("../hub/ui");
 
@@ -48,12 +48,7 @@ async function renderExplainerTab(el, hub) {
   }
   if (hub._tabGen !== gen) return;
   el.empty();
-  for (const page of scan.pages) {
-    const st = state[page.id] || {};
-    page._viewed = !!st.viewed;
-    page._starred = !!st.starred;
-    page._completed = !!st.completed;
-  }
+  for (const page of scan.pages) applyReadingState(page, state);
 
   const unreadTotal = scan.pages.filter(p => !p._viewed).length;
   (hub._entryHints = hub._entryHints || {}).explainer = unreadTotal ? `${unreadTotal} ${c(t, "EXPLAINER_STAT_UNREAD")}` : "";

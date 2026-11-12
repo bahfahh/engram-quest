@@ -16,9 +16,16 @@ const EXPLAINER_QUEUE = "engram-quest/explainer/queue.json";
 const VIDEOS_DIR = "engram-quest/videos";
 const BATCH_MS = 500;
 
+// A link the user rejected in a synapse file is kept as "note|<path>" (see userRejected in src/review/synapse.js).
+const REJECTED_NOTE = "note|";
+
 /** `value` with every string that is a key of `moves` replaced by its new path; `changed` says whether any was. */
 function replacePaths(value, moves) {
-  if (typeof value === "string") return moves.has(value) ? { value: moves.get(value), changed: true } : { value, changed: false };
+  if (typeof value === "string") {
+    if (moves.has(value)) return { value: moves.get(value), changed: true };
+    const rejected = value.startsWith(REJECTED_NOTE) ? value.slice(REJECTED_NOTE.length) : null;
+    return rejected !== null && moves.has(rejected) ? { value: REJECTED_NOTE + moves.get(rejected), changed: true } : { value, changed: false };
+  }
   if (Array.isArray(value)) {
     let changed = false;
     const out = value.map((v) => { const r = replacePaths(v, moves); changed = changed || r.changed; return r.value; });

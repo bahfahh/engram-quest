@@ -8,6 +8,7 @@ import {
   loadSynapseForNote,
   loadSynapseBatch,
   attachSynapseToCards,
+  loadSynapseSources,
   countMasteredFromSr,
   shouldShowRefreshBanner,
   isSynapseEnabled,
@@ -15,6 +16,7 @@ import {
   SYNAPSE_DIR,
   MASTERED_STABILITY_THRESHOLD
 } from "../src/review/synapse.js";
+import { vaultAdapter, json } from "./helpers/vault-adapter.js";
 
 function makeAdapter(files = {}) {
   return {
@@ -130,6 +132,125 @@ describe("attachSynapseToCards", () => {
     const doc = { cards: { Q: { anchors: [{ score: 9 }, { front: "ok" }] } } };
     attachSynapseToCards(cards, new Map([["a.md", doc]]));
     expect(cards[0].synapseAnchors).toHaveLength(1);
+  });
+
+  it("attaches relations beside the anchors and drops malformed or rejected ones", () => {
+    const cards = [card("a.md", "Q")];
+    const doc = {
+      cards: {
+        Q: {
+          anchors: [{ front: "anchor1", notePath: "b.md", score: 9 }],
+          relations: [
+            { type: "lesson", ref: "course/lsn-1", score: 8, reason: "r" },
+            { type: "video", ref: "series/v1", score: 9, reason: "rejected" },
+            { type: "note", score: 7 },
+            "not an object",
+          ],
+          userRejected: ["video|series/v1"]
+        }
+      }
+    };
+    attachSynapseToCards(cards, new Map([["a.md", doc]]));
+    expect(cards[0].synapseAnchors).toHaveLength(1);
+    expect(cards[0].synapseRelations).toEqual([{ type: "lesson", ref: "course/lsn-1", score: 8, reason: "r" }]);
+    expect(cards[0].synapseRejected).toEqual(["video|series/v1"]);
+  });
+
+  it("treats a skill-owned file with no cards key as holding nothing", () => {
+    // engram-review/synapse/_catalog.json sits beside the per-note files; a note named "_catalog" would map to it.
+    const cards = [card("_catalog.md", "Q")];
+    attachSynapseToCards(cards, new Map([["_catalog.md", { markedAt: "2026-11-12", seen: ["lesson|a/b"] }]]));
+    expect(cards[0]).toMatchObject({ synapseAnchors: [], synapseRelations: [], synapseRejected: [] });
+  });
+
+  it("reads an entry written before relations existed", () => {
+    const cards = [card("a.md", "Q"), card("a.md", "no entry")];
+    const doc = { cards: { Q: { anchors: [{ front: "anchor1" }], userRejected: [] } } };
+    attachSynapseToCards(cards, new Map([["a.md", doc]]));
+    expect(cards[0].synapseRelations).toEqual([]);
+    expect(cards[1]).toMatchObject({ synapseAnchors: [], synapseRelations: [], synapseRejected: [] });
+  });
+});
+
+describe("loadSynapseSources", () => {
+  const DECK_SR = "engram-review/sr/engram-review__ai-cards__情境回顧-LLM 應用怎麼測.json";
+  const content = () => ({
+    "engram-quest/lessons/cicd/meta.json": json({ title: "CI/CD", lessons: [{ id: "lsn-1", title: "L1", file: "lsn-1.html" }], completion: {} }),
+    "engram-quest/videos/azure-ai-2026/meta.json": json({ title: "Azure", videos: [{ id: "v1", file: "v1.mp4" }] }),
+    "engram-quest/videos/episodic-recall/meta.json": json({ kind: "episodic", videos: [{ id: "ep-oct", file: "ep-oct.mp4" }], progress: { "ep-oct": { position: 34 } } }),
+    "engram-quest/videos/settings.json": json({ quality: "high" }),
+    "engram-quest/explainer/meta/p1.json": json({ id: "p1", title: "詳解", sourceCard: { note: "a.md", front: "Q" } }),
+    "engram-quest/explainer/state.json": json({ p1: { viewed: true } }),
+    "engram-quest/episodic-review/topics/t13-llm-testing/topic.json": json({ id: "t13", title: "LLM 應用怎麼測", notes: ["a.md"], cards: [{ q: "q1", a: "a1" }, { q: "q2", a: "a2" }] }),
+    "engram-quest/episodic-review/topics/broken/topic.json": "{not json",
+    "engram-review/ai-cards/情境回顧-LLM 應用怎麼測.md": "---\ntopic: t13\n---\n",
+    "engram-review/ai-cards/other.md": "",
+    [DECK_SR]: json({ q1: { stability: 9.5 }, q2: { due: "2026-11-20" }, "a card of another topic": { stability: 30 } }),
+  });
+
+  it("returns empty collections when the vault has none of the content", async () => {
+    expect(await loadSynapseSources(vaultAdapter({}))).toEqual({
+      courses: [], series: [], explainers: [], explainerState: {}, recallTopics: [], topicSr: {}
+    });
+  });
+
+  it("reads lessons, videos with recall films, Deep Dive pages and recall topics with their card schedules", async () => {
+    const raw = await loadSynapseSources(vaultAdapter(content()));
+    expect(raw.courses.map((c) => c.slug)).toEqual(["cicd"]);
+    expect(raw.series.map((s) => s.slug).sort()).toEqual(["azure-ai-2026", "episodic-recall"]);
+    expect(raw.explainers.map((p) => p.id)).toEqual(["p1"]);
+    expect(raw.explainerState).toEqual({ p1: { viewed: true } });
+  });
+
+  it("names a recall topic by its folder, which is what the skill writes in a relation", async () => {
+    const raw = await loadSynapseSources(vaultAdapter(content()));
+    expect(raw.recallTopics.map((t) => [t.id, t.title])).toEqual([["t13-llm-testing", "LLM 應用怎麼測"]]);
+  });
+
+  it("finds a topic's cards by the card file named after it, through the adapter alone, and counts only that topic's cards", async () => {
+    const adapter = vaultAdapter(content());
+    const raw = await loadSynapseSources(adapter);
+    expect(raw.topicSr).toEqual({ "t13-llm-testing": [9.5] });
+    expect(adapter.lists).toContain("engram-review/ai-cards");
+    expect(adapter.reads.some((p) => p.startsWith("engram-review/ai-cards/"))).toBe(false);
+  });
+
+  it("matches the card file name the way the skill writes it, with unsafe characters replaced", async () => {
+    const adapter = vaultAdapter({
+      "engram-quest/episodic-review/topics/t19/topic.json": json({ id: "t19", title: "金流：驗收/對帳", cards: [{ q: "q1", a: "a" }] }),
+      "engram-review/ai-cards/Recall-金流：驗收 對帳.md": "",
+      "engram-review/sr/engram-review__ai-cards__Recall-金流：驗收 對帳.json": json({ q1: { stability: 12 } }),
+    });
+    expect((await loadSynapseSources(adapter)).topicSr).toEqual({ t19: [12] });
+  });
+
+  it("keeps everything else when one schedule file holds no object", async () => {
+    const files = content();
+    files[DECK_SR] = "null";
+    const raw = await loadSynapseSources(vaultAdapter(files));
+    expect(raw.topicSr).toEqual({ "t13-llm-testing": [] });
+    expect(raw.courses).toHaveLength(1);
+    expect(raw.explainers).toHaveLength(1);
+  });
+
+  it("never has more than eight reads in flight, however much content there is", async () => {
+    const files = {};
+    for (let i = 0; i < 30; i++) {
+      files[`engram-quest/lessons/c${i}/meta.json`] = json({ title: `C${i}`, lessons: [], completion: {} });
+      files[`engram-quest/videos/s${i}/meta.json`] = json({ title: `S${i}`, videos: [] });
+      files[`engram-quest/explainer/meta/p${i}.json`] = json({ id: `p${i}` });
+    }
+    const adapter = vaultAdapter(files);
+    const raw = await loadSynapseSources(adapter);
+    expect([raw.courses.length, raw.series.length, raw.explainers.length]).toEqual([30, 30, 30]);
+    expect(adapter.maxInFlight).toBeLessThanOrEqual(8);
+    expect(adapter.maxInFlight).toBeGreaterThan(1);
+  });
+
+  it("fails as a whole, so the caller does not keep a half-empty result, when a folder that exists cannot be listed", async () => {
+    const adapter = vaultAdapter(content());
+    adapter.failList.add("engram-quest/lessons");
+    await expect(loadSynapseSources(adapter)).rejects.toThrow("EIO");
   });
 });
 

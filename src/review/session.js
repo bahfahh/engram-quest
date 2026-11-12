@@ -4,6 +4,8 @@ const { computeFsrs: P } = require("../fsrs");
 const { t: c, tAlt: C, getLocale: _getLocale } = require("../i18n");
 const { anySrPattern: ge, getReviewStatus: $, loadSrData, saveSrData, buildSrRecord } = require("./helpers");
 const { loadSynapseStatus, loadSynapseBatch, attachSynapseToCards, isSynapseEnabled } = require("./synapse");
+const { SynapseMapSession } = require("./synapse-session");
+const { renderSynapseMap } = require("./synapse-panel");
 const { ACHIEVEMENTS, RARITY_DARK, RARITY_LIGHT } = require("../hub/achievement");
 const { assetUrl } = require("../assets");
 const { wrapSelection, selectionLines } = require("./format");
@@ -11,6 +13,8 @@ const { saveTagSourceCard, saveInlineCard, deleteTagSourceCard, applyFormatToCar
 const { registerSelectionCopy } = require("../ui/selection-copy");
 const { normalizeMarkdown } = require("../ui/markdown");
 const { addToQueue, readQueue, isQueued } = require("../explainer/data");
+const { ExplainerViewerModal } = require("../explainer/viewer-modal");
+const { LessonViewerModal, CanvasLessonModal } = require("../lessons/viewer-modal");
 const { addRewatchButton, rewatchTarget, openRewatch } = require("../videos/rewatch");
 const { watchTheme, themedModal, restoreButton: _restoreButton, featureIcon: _featureIcon, icon: _uiIcon, iconButton: _uiIconButton, isPhone: _isPhone } = require("../hub/ui");
 const W_ref = { get locale() { try { return I.moment && I.moment.locale && I.moment.locale(); } catch(e) { return "en"; } } };
@@ -209,7 +213,8 @@ var Q=class extends I.Modal{
     this._rating_locked=false; // Task 4: lock flag
     this.synapseOpen=false;
     this._synapseStatus=null;
-    this._synapseExpandedAnchorIdx=-1;
+    this._synapseExpandedId=null;
+    this._synapse=this._newSynapseMap();
     this._timeboxMinutes=a.timeboxMinutes||0;
     this._sessionStartMs=0;
     this._timerIntervalId=null;
@@ -266,9 +271,36 @@ var Q=class extends I.Modal{
     }catch(err){ console.warn("synapse: load failed",err); }
   }
 
+  // The ⚡ map's logic lives in synapse-session.js; this hands it the session's own pieces: where a
+  // card came from, and the viewers. Lessons, videos, Deep Dive pages and recall topics are read
+  // once per session and only when the user first opens ⚡, so opening a session costs no more.
+  _newSynapseMap(){
+    return new SynapseMapSession({
+      adapter:this.app.vault.adapter,
+      allowed:()=>!!this.plugin.settings.licenseValid&&isSynapseEnabled(this._synapseStatus),
+      sourcePaths:getCardRelatedNotePaths,
+      anchorBack:(anchor)=>this._lookupAnchorBack(anchor),
+      resolvedLinks:()=>this.app.metadataCache.resolvedLinks,
+      noteExists:(p)=>!!this.app.vault.getAbstractFileByPath(p),
+      openers:{
+        // A note opens in Obsidian and the session steps aside so it can be read; the rest open in
+        // the viewer the Hub already uses for them, on top of the session.
+        note:(path)=>{ this.app.workspace.openLinkText(path,"",false); this._minimize(); },
+        lesson:({slug,meta,lesson,onClose})=>{
+          if(lesson.type==="canvas") new CanvasLessonModal(this.app,this.plugin,slug,meta,lesson,onClose,this).open();
+          else new LessonViewerModal(this.app,this.plugin,slug,meta,lesson,onClose).open();
+        },
+        explainer:(page,onChanged)=>new ExplainerViewerModal(this.app,this.plugin,page,onChanged,this).open(),
+        video:(video)=>openRewatch(this.app,video),
+        missing:()=>new I.Notice(c(this.plugin.settings,"SYNAPSE_NOT_HERE")),
+      },
+    });
+  }
+
   renderCard(){
     this.hintLevel=0; this.answerShown=false; this._rating_locked=false;
-    this.synapseOpen=false; this._synapseExpandedAnchorIdx=-1;
+    this.synapseOpen=false; this._synapseExpandedId=null;
+    this._synapse.retry();
     // Save progress
     this._saveResumePoint();
     this._renderCardContent(this.cards[this.idx]);
@@ -397,7 +429,9 @@ var Q=class extends I.Modal{
         findMemoryMapCandidatesByCanvasContent(this.app,e,w).then(found=>{if(this._mmGen===gen&&btn.isConnected)setMemoryMapAction(found||[]);}).catch(()=>{});}
     };
     const synapseEnabled=this.plugin.settings.licenseValid && isSynapseEnabled(this._synapseStatus);
-    const anchorCount=Array.isArray(e.synapseAnchors)?e.synapseAnchors.length:0;
+    // A card in a file can always have links (at least where it came from); once the content is
+    // read, the answer is exact. The count is of the full graph, so ⚡ stays on before the reveal.
+    const synapseHasLinks=this._synapse.hasLinks(e);
     // Filled in once the card body exists; the phone menu and the desktop pill both call it.
     let toggleSynapse=()=>{};
 
@@ -414,7 +448,7 @@ var Q=class extends I.Modal{
         add(c(t,"COPY_CARD"),"copy",()=>copyCard().then(()=>new I.Notice(c(t,"COPY_CARD_DONE"))));
         add(c(t,"EDIT_CARD"),"pencil",editCard);
         add(c(t,"DELETE"),"trash-2",deleteCard);
-        if(synapseEnabled) add(c(t,"SYNAPSE"),"zap",()=>toggleSynapse(),anchorCount===0);
+        if(synapseEnabled) add(c(t,"SYNAPSE"),"zap",()=>toggleSynapse(),!synapseHasLinks);
         if(t.licenseValid&&this.answerShown&&!this.browseOnly) add(queued?c(t,"EXPLAINER_ALREADY"):c(t,"EXPLAINER_MARK_BTN"),"bookmark-plus",async()=>{
           try{const _r=await addToQueue(this.app.vault.adapter,{source:e.notePath,q:e.front,a:e.back,deck:this.deckName||null});new I.Notice(_r.added?c(t,"EXPLAINER_MARKED"):c(t,"EXPLAINER_ALREADY"));queued=true;}catch(err){console.error("EngramQuest: explainer queue failed",err);}
         },queued);
@@ -530,10 +564,12 @@ var Q=class extends I.Modal{
     };
     const refreshSynapseContainer=()=>{
       synapseContainer.empty();
-      if(!this.synapseOpen) return;
+      if(!this.synapseOpen||!synapseEnabled) return;
       this._renderSynapsePanel(synapseContainer,e,t,renderMd,refreshSynapseContainer);
     };
-    toggleSynapse=()=>{ this.synapseOpen=!this.synapseOpen; refreshHintsContainer(); refreshSynapseContainer(); };
+    // After the answer the map opens below it, possibly out of view: bring it in.
+    const revealSynapse=()=>{ if(this.synapseOpen) synapseContainer.scrollIntoView({block:"nearest"}); };
+    toggleSynapse=()=>{ this.synapseOpen=!this.synapseOpen; refreshHintsContainer(); refreshSynapseContainer(); revealSynapse(); };
     refreshHintsContainer();
     refreshSynapseContainer();
 
@@ -559,12 +595,11 @@ var Q=class extends I.Modal{
       // Answer-header button row — always present so post-reveal Synapse toggle has a home.
       let fmtBtns=answerHeader.createEl("div",{attr:{class:"lh-answer-fmt-btns"}});
       // Post-reveal Synapse access: ⚡ toggle next to Highlight/Blockquote.
-      const _syAnchors=Array.isArray(e.synapseAnchors)?e.synapseAnchors:[];
-      if(!phone&&synapseEnabled&&_syAnchors.length>0){
+      if(!phone&&synapseHasLinks){
         const syHeaderBtn=fmtBtns.createEl("button",{attr:{class:"lh-rc-edit-btn lh-fmt-btn",title:c(t,"SYNAPSE_HINT")}});
         _featureIcon(syHeaderBtn,this.plugin,"synapse",{size:18});
         syHeaderBtn.createEl("span",{text:c(t,"SYNAPSE")});
-        syHeaderBtn.addEventListener("click",()=>{ this.synapseOpen=!this.synapseOpen; refreshSynapseContainer(); });
+        syHeaderBtn.addEventListener("click",()=>{ this.synapseOpen=!this.synapseOpen; refreshSynapseContainer(); revealSynapse(); });
       }
       if(e.notePath){
         // In-place answer refresh — full _renderCardContent rebuilds .lh-review-card and
@@ -627,6 +662,8 @@ var Q=class extends I.Modal{
         i.createEl("button",{cls:"lh-link lh-open-note",text:c(t,"OPEN_IN_NOTE")}).addEventListener("click",()=>openNote(notePaths[0]));
       }
       this.browseOnly&&i.createEl("div",{text:c(t,"BROWSE_NOTE"),attr:{class:"lh-browse-note"}});
+      // Once the answer shows, the relation map sits below it: the answer stays the first thing in view.
+      i.appendChild(synapseContainer);
     }
 
     // Footer buttons
@@ -638,7 +675,7 @@ var Q=class extends I.Modal{
         let E=p.createEl("button",{text:c(t,"PREVIOUS"),attr:{class:"lh-browse-btn"}});
         this.idx===0&&(E.disabled=true);
         E.addEventListener("click",()=>{this.idx!==0&&(this.idx--,this.renderCard());});
-        p.createEl("button",{text:this.idx>=this.cards.length-1?c(t,"BACK"):c(t,"NEXT"),attr:{class:"lh-browse-btn"}}).addEventListener("click",()=>{
+        p.createEl("button",{text:this.idx>=this.cards.length-1?c(t,"BACK"):c(t,"NEXT"),attr:{class:"lh-browse-btn lh-browse-next"}}).addEventListener("click",()=>{
           if(this.idx>=this.cards.length-1){this.close();this.onBack&&this.onBack();return;}
           this.idx++;this.renderCard();
         });
@@ -745,13 +782,13 @@ var Q=class extends I.Modal{
       k.createEl("span",{text:c(t,"MEMORY_MAP")});
       bindMemoryMap(k);
 
-      // Three states: hidden (feature off / not Pro), dim (no anchors), active.
+      // Three states: hidden (feature off / not Pro), dim (nothing links to this card), active.
       if(synapseEnabled){
         g.classList.add("lh-pill-row-4");
         let syBtn=g.createEl("button",{attr:{class:"lh-pill-btn lh-pill-synapse"}});
         _featureIcon(syBtn,this.plugin,"synapse",{size:22,fallback:"bolt"});
         const syLabel=syBtn.createEl("span",{text:c(t,"SYNAPSE")});
-        if(anchorCount===0){
+        if(!synapseHasLinks){
           syLabel.textContent=c(t,"SYNAPSE_NONE");
           this._disablePillBtn(syBtn,c(t,"SYNAPSE_EMPTY"));
         }else{
@@ -789,43 +826,35 @@ var Q=class extends I.Modal{
     btn.classList.remove("is-off");
   }
 
+  // The relation map around this card. Before the answer it holds only what the user has already
+  // learned; the graph builder leaves the rest, and any text spelling out the answer, for after.
+  // A failure in here leaves the panel empty and the rest of the card as it was.
   _renderSynapsePanel(parent,card,t,renderMd,refresh){
-    const anchors=Array.isArray(card.synapseAnchors)?card.synapseAnchors:[];
-    const panel=parent.createEl("div",{attr:{class:"lh-synapse-panel"}});
-    panel.createEl("div",{text:"⚡ "+c(t,"SYNAPSE"),attr:{class:"lh-synapse-title"}});
-    panel.createEl("div",{text:c(t,"SYNAPSE_HINT"),attr:{class:"lh-synapse-hint"}});
-    if(anchors.length===0){
-      panel.createEl("div",{text:c(t,"SYNAPSE_EMPTY"),attr:{class:"lh-synapse-empty"}});
-      return;
-    }
-    anchors.forEach((a,idx)=>{
-      const row=panel.createEl("div",{attr:{class:"lh-synapse-card"}});
-      const head=row.createEl("div",{attr:{class:"lh-synapse-card-head"}});
-      // Stability → emoji badge (self-contained; avoids ACHIEVEMENTS coupling)
-      const stab=typeof a.stability==="number"?a.stability:0;
-      const badge=stab>=30?"👑":(stab>=15?"🌟":"⭐");
-      head.createEl("span",{text:badge,attr:{class:"lh-synapse-card-badge"}});
-      head.createEl("span",{text:a.front||"",attr:{class:"lh-synapse-card-front"}});
-      if(a.reason){
-        row.createEl("div",{text:c(t,"SYNAPSE_REASON_PREFIX")+a.reason,attr:{class:"lh-synapse-card-reason"}});
+    try{
+      if(!this._synapse.ready){
+        renderSynapseMap(parent,{t,card,loading:true,revealed:this.answerShown});
+        this._synapse.load().then(drawable=>{ if(drawable&&parent.isConnected) refresh(); });
+        return;
       }
-      // Click row → toggle expanded back (best-effort; back is only available
-      // for anchors whose notePath was loaded into the current session's cards)
-      const isExpanded=this._synapseExpandedAnchorIdx===idx;
-      if(isExpanded){
-        const back=this._lookupAnchorBack(a);
-        const backEl=row.createEl("div",{attr:{class:"lh-synapse-card-back"}});
-        if(back && typeof renderMd==="function"){ renderMd(backEl,back); }
-        else if(back){ backEl.textContent=back; }
-        else backEl.textContent=c(t,"SYNAPSE_NO_BACK");
-      }
-      row.addEventListener("click",(ev)=>{
-        ev.stopPropagation();
-        this._synapseExpandedAnchorIdx=isExpanded?-1:idx;
-        if(typeof refresh==="function") refresh();
-        else this._renderCardContent(card);
+      renderSynapseMap(parent,{
+        t, card, plugin:this.plugin, revealed:this.answerShown,
+        graph:this._synapse.graph(card,this.answerShown),
+        expandedId:this._synapseExpandedId,
+        renderBack:(el,node)=>{
+          if(node.back) renderMd(el,node.back);
+          else el.textContent=c(t,"SYNAPSE_NO_BACK");
+        },
+        onSelect:(node)=>{
+          if(node.type!=="card"){ this._synapse.open(node,()=>{ if(parent.isConnected) refresh(); }); return; }
+          if(!node.expandable) return;
+          this._synapseExpandedId=this._synapseExpandedId===node.id?null:node.id;
+          refresh();
+        },
       });
-    });
+    }catch(err){
+      console.warn("synapse: could not draw the map",err);
+      parent.empty();
+    }
   }
 
   // Fallback to session-card lookup for anchors pre-dating stored `back` (backward compat).

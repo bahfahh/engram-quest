@@ -50,6 +50,30 @@ describe("followNoteRenames", () => {
     expect(a.store["engram-quest/videos/topic-b/meta.json"]).toBe(untouched);
   });
 
+  it("keeps a synapse relation to a renamed note, and a rejected one, pointing at the note", async () => {
+    const entry = {
+      anchors: [{ front: "A", notePath: OLD, stability: 9, score: 9, reason: "r" }],
+      relations: [
+        { type: "note", ref: OLD, score: 8, reason: "同一個做法" },
+        { type: "note", ref: "Keep.md", score: 7, reason: "r" },
+        { type: "lesson", ref: "course/lsn-1", score: 7, reason: "r" },
+      ],
+      userRejected: [`note|${OLD}`, "note|Keep.md", "lesson|course/lsn-1"],
+    };
+    const a = memoryAdapter({ "engram-review/synapse/Other.json": json({ cards: { q: entry } }) });
+
+    await followNoteRenames(a, one(OLD, NEW));
+
+    const after = JSON.parse(a.store["engram-review/synapse/Other.json"]).cards.q;
+    expect(after.relations).toEqual([
+      { type: "note", ref: NEW, score: 8, reason: "同一個做法" },
+      { type: "note", ref: "Keep.md", score: 7, reason: "r" },
+      { type: "lesson", ref: "course/lsn-1", score: 7, reason: "r" },
+    ]);
+    expect(after.userRejected).toEqual([`note|${NEW}`, "note|Keep.md", "lesson|course/lsn-1"]);
+    expect(after.anchors[0].notePath).toBe(NEW);
+  });
+
   it("never overwrites an anchors file that already exists under the new name", async () => {
     const a = memoryAdapter({
       "engram-review/synapse/Study__Old Name.json": json({ _meta: { sourceNotePath: OLD } }),

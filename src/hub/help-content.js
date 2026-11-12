@@ -197,7 +197,7 @@ module.exports = {
         body: [
           { p: "一次買斷，之後的 Pro 功能更新都包含。不升級也能繼續使用所有免費功能。Pro 加的是這四件事：" },
           { list: [
-            "<strong>Synapse 記憶錨點</strong>：把難記的卡連到你已經掌握的相關卡。已掌握的卡（穩定度 7 天以上）累積到 10 張後，執行 engram-synapse skill；複習時有適合的錨點，卡片上才會出現 Synapse 按鈕。Review Deck 頁會提醒你何時該執行或更新。",
+            "<strong>Synapse 記憶錨點</strong>：把難記的卡連到你學過的相關內容。複習時按 Synapse，會看到以這張卡為中心的關聯圖：記熟的卡、來源筆記、深入解析、教材、影片、情境回顧主題，每條線都寫著為什麼相關。看答案前只出現你已經學過的，看答案後才補上還沒看過的。已掌握的卡（穩定度 7 天以上）累積到 10 張後，執行 engram-synapse skill 建立關聯；Review Deck 頁會提醒你何時該執行或更新。",
             "<strong>深入解析</strong>：難卡加入佇列，用 engram-explainer skill 生成白話圖解，在「深入解析」分頁閱讀。",
             "<strong>限時複習</strong>：在 Review Deck 頁的「定時」選 5／10／15 分鐘，以一張約一分鐘挑出那麼多張卡，順序是新卡 → 過期最久 → 最快到期。倒數到零會顯示「時間到」，但你可以把這輪做完，排程照常記錄。",
             "<strong>更多老師與情境回顧片</strong>：Nico 以外的影片老師、替每個系列指定老師，以及用 Claude Code 把筆記做成情境回顧片。看影片、管理影片學院、看已經做好的回顧片都免費。",
@@ -218,7 +218,7 @@ module.exports = {
           { list: [
             "<strong>間隔重複</strong>：在快忘記時複習，用最少時間留住最多。Review Deck 用 FSRS 排程。",
             "<strong>主動提取</strong>：先自己想，再看答案，比重讀有效得多。三階提示讓你在想不起來時只拿到剛好夠的線索；Quest Map 把提取放進真實情境。",
-            "<strong>精緻化編碼</strong>：把新東西掛在已知的東西上。Memory Map 畫出結構，Synapse 把難卡接到你已掌握的卡。",
+            "<strong>精緻化編碼</strong>：把新東西掛在已知的東西上。Memory Map 畫出結構，Synapse 把難卡接到你學過的內容。",
             "<strong>情境記憶</strong>：回到學習當下的情境比較容易想起來。L2 提示帶你回到當初的筆記，情境回顧片帶你回到那段時間。",
           ] },
         ],
@@ -488,7 +488,7 @@ module.exports = {
         body: [
           { p: "One purchase, with future Pro feature updates included. Every free feature keeps working without it. Pro adds four things:" },
           { list: [
-            "<strong>Synapse memory anchors</strong>: link a hard card to related cards you have already mastered. Once you have 10 mastered cards (stability of 7 days or more), run the engram-synapse skill; during review a Synapse button appears on cards that have a good anchor. The Review Deck page tells you when to run or refresh it.",
+            "<strong>Synapse memory anchors</strong>: link a hard card to related things you have already learned. During review, the Synapse button opens a small map around the card: mastered cards, the source note, deep dives, lessons, videos and recall topics, with the reason written on every line. Before the answer it shows only what you have already learned; the rest appears after. Once you have 10 mastered cards (stability of 7 days or more), run the engram-synapse skill to build the links. The Review Deck page tells you when to run or refresh it.",
             "<strong>Deep Dive</strong>: queue a hard card, generate a plain-language, illustrated page with the engram-explainer skill, and read it in the Deep Dive tab.",
             "<strong>Time-boxed review</strong>: under Timed on the Review Deck page, pick 5, 10 or 15 minutes. At about a minute per card it picks that many cards: new first, then the most overdue, then the soonest due. When the countdown reaches zero it says Time's up, but you can finish the round and scheduling works as usual.",
             "<strong>More teachers and recall films</strong>: the video teachers besides Nico, a teacher for each series, and making recall films from your notes with Claude Code. Watching videos, managing the Video Academy and watching recall films you already have are free.",
@@ -509,7 +509,7 @@ module.exports = {
           { list: [
             "<strong>Spaced repetition</strong>: review just before you forget to keep the most for the least time. Review Deck schedules with FSRS.",
             "<strong>Retrieval practice</strong>: recalling before you look beats rereading. The three hints give you only as much as you need; Quest Map puts recall into real situations.",
-            "<strong>Elaborative encoding</strong>: hang new ideas on ones you know. Memory Map draws the structure; Synapse ties hard cards to cards you have mastered.",
+            "<strong>Elaborative encoding</strong>: hang new ideas on ones you know. Memory Map draws the structure; Synapse ties hard cards to what you have already learned.",
             "<strong>Context and episodic memory</strong>: returning to where you learned something helps you recall it. The L2 hint takes you back to the note; recall films take you back to the period.",
           ] },
         ],
