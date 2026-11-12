@@ -27,13 +27,20 @@ function splitArgs(text) {
   return out;
 }
 
+// "40%" or a token holding it, as a 0–1 share.
+function percent(value, tokens) {
+  let v = String(value).trim();
+  for (let i = 0; i < 12 && v.startsWith("var(--"); i++) v = String(tokens[v.slice(6, -1)] || "").trim();
+  return /^[\d.]+%$/.test(v) ? Number(v.slice(0, -1)) / 100 : NaN;
+}
+
 // Resolves a CSS colour value to [r,g,b,a]; returns null for anything that is not one flat colour.
 function resolve(value, tokens, depth = 0) {
   if (depth > 12 || value == null) return null;
   const v = String(value).replace(/!important/, "").trim();
   let m;
   if ((m = v.match(/^#([0-9a-f]{6})$/i))) return [0, 2, 4].map((i) => parseInt(m[1].slice(i, i + 2), 16)).concat(1);
-  if (v === "transparent") return [0, 0, 0, 0];
+  if (v === "transparent" || v === "none") return [0, 0, 0, 0];
   if ((m = v.match(/^rgba?\(([^)]+)\)$/))) {
     const p = m[1].split(",").map((x) => Number(x.trim()));
     return [p[0], p[1], p[2], p.length > 3 ? p[3] : 1];
@@ -43,7 +50,7 @@ function resolve(value, tokens, depth = 0) {
     const [first, second] = splitArgs(m[1]);
     const part = first.match(/^(.*?)\s+(\S+)$/);
     if (!part || !second) return null;
-    const share = resolve(part[2], tokens, depth + 1) === null ? Number(String(part[2].startsWith("var(") ? tokens[part[2].slice(6, -1)] : part[2]).replace("%", "")) / 100 : null;
+    const share = percent(part[2], tokens);
     const a = resolve(part[1], tokens, depth + 1), b = resolve(second, tokens, depth + 1);
     if (!a || !b || !(share >= 0 && share <= 1)) return null;
     // color-mix works on premultiplied channels: mixing with transparent keeps the hue and scales alpha.
@@ -121,8 +128,14 @@ describe("design token contrast", () => {
       for (const [sheet, css] of Object.entries(SHEETS)) for (const { selector, bg, fg } of usedPairs(css)) {
         const darkOnly = /\.lh-dark|\.theme-dark/.test(selector), lightOnly = /:not\(\.theme-dark\)/.test(selector);
         if ((name === "light" && darkOnly) || (name === "dark" && lightOnly)) continue;
-        const ratio = worstContrast(fg, bg, tokens);
-        if (ratio === null) continue; // gradients, images, Obsidian variables
+        // A shorthand such as "var(--raised) var(--chev) no-repeat …" is judged by its colour, the first part.
+        const ratio = worstContrast(fg, bg, tokens) ?? worstContrast(fg, bg.split(/\s+(?![^(]*\))/)[0], tokens);
+        if (ratio === null) {
+          // Gradients and Obsidian's own variables are out of reach; a pair built only from Hub tokens must resolve.
+          const names = [...(bg + " " + fg).matchAll(/var\(--([a-z0-9-]+)\)/g)].map((v) => v[1]);
+          if (names.length && names.every((n) => n in tokens) && !/gradient/.test(bg)) failures.push(`${sheet}: ${selector} — cannot resolve ${fg} on ${bg}`);
+          continue;
+        }
         checked++;
         if (ratio < 4.5) failures.push(`${sheet}: ${selector} — ${fg} on ${bg}: ${ratio.toFixed(2)}`);
       }
@@ -131,12 +144,11 @@ describe("design token contrast", () => {
     });
 
     it(`gives raised and tinted controls a 3:1 outline in ${name}`, () => {
-      const ring = tokens.rshadow.match(/0 0 0 1px (rgba\([^)]+\))/);
+      // The outline is drawn inside the control: an outer ring is clipped wherever a control touches a scroll edge.
+      const ring = tokens.rshadow.match(/inset 0 0 0 1px (rgba\([^)]+\))/);
       expect(ring).not.toBeNull();
-      for (const under of ["base", "card"]) {
-        const page = resolve(tokens[under], tokens);
-        expect(contrast(over(resolve(ring[1], tokens), page), page)).toBeGreaterThanOrEqual(3);
-      }
+      const edge = over(resolve(ring[1], tokens), resolve(tokens.raised, tokens));
+      for (const under of ["base", "card"]) expect(contrast(edge, resolve(tokens[under], tokens))).toBeGreaterThanOrEqual(3);
       const tone = resolve(tokens.tone, tokens);
       const toneRing = over(resolve(`color-mix(in srgb,var(--tint) ${tokens.ringk},transparent)`, tokens), tone);
       expect(contrast(toneRing, resolve(tokens.base, tokens))).toBeGreaterThanOrEqual(3);

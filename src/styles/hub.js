@@ -7,6 +7,10 @@
 // text, --tonering outline: an offered next step), raised (neutral --raised surface with the 3:1 outline
 // in --rshadow and --tint content: tools and navigation such as Back), quiet (--tint content, no surface:
 // links, row actions, disclosure chevrons). Destructive content is --dang. Static data never looks raised.
+// What is selected is accent too: --tabon behind the current page / tab / row, --segon + --segtx for the
+// chosen segment, --tone on a picker that holds a choice. A picker shows the accent chevron --chev.
+// Text has three levels (--text, --text2, --text3); each stays 4.5:1 on every surface it is placed on
+// (tests/hub-token-contrast.test.js). Status colours (--mst/--due/--lrn/--new, --gold) mark data only.
 // --rhard/--rgood/--reasy (+ the "t" text colour) are the review ratings; --ringk is the outline strength.
 
 const tokens = `
@@ -15,9 +19,9 @@ const tokens = `
   --fill:rgba(60,60,67,.08); --fill2:rgba(60,60,67,.05); --sep:rgba(60,60,67,.12); --line:#D9D9DF;
   --glass:rgba(250,250,252,.72); --edge:rgba(255,255,255,.75);
   --raised:#FFFFFF; --raisedh:#F7F7F9;
-  --rshadow:0 0 0 1px rgba(0,0,0,.42),0 1px 2px rgba(0,0,0,.06),0 2px 6px rgba(0,0,0,.03);
+  --rshadow:inset 0 0 0 1px rgba(0,0,0,.45),0 1px 2px rgba(0,0,0,.06),0 2px 6px rgba(0,0,0,.03);
   --btn:#6D5BD0; --btnh:#5B48B8; --onbtn:#FFFFFF; --ondang:#FFFFFF; --tint:#5B48B8; --focus:#6D5BD0; --bar:#6E83EC;
-  --trk:rgba(120,120,128,.16); --tabon:rgba(60,60,67,.10); --segon:#FFFFFF; --segtx:#1D1D1F;
+  --trk:rgba(120,120,128,.16); --tabon:rgba(109,91,208,.14); --segon:#E5E0FB; --segtx:#4B3AA6;
   --cshadow:0 0 0 .5px rgba(0,0,0,.06),0 1px 2px rgba(0,0,0,.03),0 6px 18px rgba(0,0,0,.04);
   --cshadowh:0 0 0 .5px rgba(0,0,0,.10),0 2px 4px rgba(0,0,0,.04),0 10px 24px rgba(0,0,0,.07);
   --float:inset 0 1px 0 rgba(255,255,255,.7),0 0 0 .5px rgba(0,0,0,.08),0 10px 30px rgba(0,0,0,.12);
@@ -26,20 +30,21 @@ const tokens = `
   --mstt:#24705E; --duet:#4057B5; --lrnt:#146CAB; --newt:#A44530; --dang:#BC3E2B; --gold:#D29A2E; --goldt:#8A6100;
   --locked:grayscale(1) opacity(.42);
   --rhard:#D9483B; --rhardt:#A32D20; --rgood:#D9A400; --rgoodt:#765300; --reasy:#2E9F78; --reasyt:#1D6A51;
+  --chev:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235B48B8' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E"); --chipbg:color-mix(in srgb,var(--btn) 16%,transparent);
   --ringk:70%; --tone:color-mix(in srgb,var(--btn) 20%,var(--raised)); --toneh:color-mix(in srgb,var(--btn) 30%,var(--raised));
   --tonering:inset 0 0 0 1px color-mix(in srgb,var(--tint) var(--ringk),transparent);
   --interactive-normal:transparent; --interactive-hover:var(--fill2); --input-shadow:none; --input-shadow-hover:none;
 }
 /* Without color-mix a token built from it would be invalid and leave the control with no surface. */
-@supports not (color:color-mix(in srgb,red,blue)) { .lh-hub,.lh-theme,.lh-vid-modal { --tone:var(--raised); --toneh:var(--raisedh); --tonering:var(--rshadow); } }
+@supports not (color:color-mix(in srgb,red,blue)) { .lh-hub,.lh-theme,.lh-vid-modal { --tone:var(--raised); --toneh:var(--raisedh); --tonering:var(--rshadow); --chipbg:var(--fill); } }
 .lh-hub.lh-dark,.lh-theme.lh-dark,.theme-dark .lh-vid-modal {
   --base:#18181B; --card:#29292D; --side:#1F1F23; --text:#F5F5F7; --text2:#C8C8D1; --text3:#B0B0B9;
   --fill:rgba(235,235,245,.12); --fill2:rgba(235,235,245,.06); --sep:rgba(235,235,245,.12); --line:#48484F;
   --glass:rgba(42,42,46,.66); --edge:rgba(255,255,255,.12);
   --raised:#2F2F34; --raisedh:#38383E;
-  --rshadow:inset 0 .5px 0 rgba(255,255,255,.08),0 0 0 1px rgba(255,255,255,.34),0 1px 3px rgba(0,0,0,.35);
+  --rshadow:inset 0 0 0 1px rgba(255,255,255,.34),0 1px 3px rgba(0,0,0,.35);
   --btn:#5B5BD6; --btnh:#6565DC; --ondang:#1D1D1F; --tint:#B0A5FF; --focus:#B0A5FF; --bar:#7C8FF5;
-  --trk:rgba(235,235,245,.13); --tabon:rgba(235,235,245,.13); --segon:#ECECF0; --segtx:#1D1D1F;
+  --trk:rgba(235,235,245,.13); --tabon:rgba(124,108,255,.24); --segon:#4C4CA0; --segtx:#FFFFFF;
   --cshadow:inset 0 .5px 0 rgba(255,255,255,.08),0 0 0 .5px rgba(255,255,255,.07),0 6px 18px rgba(0,0,0,.30);
   --cshadowh:inset 0 .5px 0 rgba(255,255,255,.10),0 0 0 .5px rgba(255,255,255,.14),0 10px 26px rgba(0,0,0,.40);
   --float:inset 0 .5px 0 rgba(255,255,255,.16),0 12px 34px rgba(0,0,0,.5);
@@ -48,6 +53,7 @@ const tokens = `
   --mstt:#93D6C0; --duet:#ADB9FF; --lrnt:#84CBFB; --newt:#F2A18D; --dang:#FF8A75; --gold:#E5C07A; --goldt:#E5C07A;
   --locked:grayscale(1) brightness(.5);
   --rhard:#F2625A; --rhardt:#FFAAA3; --rgood:#EBC334; --rgoodt:#F5D873; --reasy:#5CC79B; --reasyt:#9BE0C4; --ringk:50%;
+  --chev:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23B0A5FF' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
 }
 `;
 
@@ -172,11 +178,10 @@ const components = `
 .lh-sf .lh-i { width:17px; height:17px; stroke-width:1.8; }
 .lh-hub .lh-sf input { all:unset; flex:1; min-width:0; font-size:14px; color:var(--text); }
 .lh-hub .lh-sf input::placeholder { color:var(--text3); }
-.lh-hub .lh-fp { height:36px; flex:none; line-height:36px; max-width:100%; border:0; border-radius:10px; background-color:var(--raised); background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231D1D1F' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 8px center; background-size:12px; box-shadow:var(--rshadow); color:var(--text); font-size:13.5px; font-weight:500; padding:0 28px 0 12px; cursor:pointer; -webkit-appearance:none; appearance:none; white-space:nowrap; }
+.lh-hub .lh-fp { height:36px; flex:none; line-height:36px; max-width:100%; border:0; border-radius:10px; background-color:var(--raised); background-image:var(--chev); background-repeat:no-repeat; background-position:right 8px center; background-size:12px; box-shadow:var(--rshadow); color:var(--text); font-size:13.5px; font-weight:500; padding:0 28px 0 12px; cursor:pointer; -webkit-appearance:none; appearance:none; white-space:nowrap; }
 .lh-hub .lh-fp:hover { background-color:var(--raisedh); box-shadow:var(--rshadow); }
-.lh-hub .lh-fp.is-set { background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235B48B8' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E"); color:var(--tint); font-weight:600; }
-.lh-hub.lh-dark .lh-fp { background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23F5F5F7' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E"); }
-.lh-hub.lh-dark .lh-fp.is-set { background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23B0A5FF' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E"); }
+.lh-hub .lh-fp.is-set { background-color:var(--tone); box-shadow:var(--tonering); color:var(--tint); font-weight:600; }
+.lh-hub .lh-fp.is-set:hover { background-color:var(--toneh); box-shadow:var(--tonering); }
 .lh-sf.lh-grow { min-width:140px; }
 .lh-tf { position:relative; flex:none; }
 .lh-tf-drop { display:none; position:absolute; z-index:6; top:calc(100% + 4px); right:0; width:220px; max-height:260px; flex-direction:column; border-radius:12px; background:var(--card); box-shadow:var(--float); overflow:hidden; }
@@ -207,8 +212,9 @@ const components = `
 
 .lh-hub .lh-deck-cards { display:grid; grid-template-columns:repeat(auto-fill,minmax(210px,1fr)); gap:14px; padding:0; }
 .lh-tbi { display:inline-flex; align-items:center; gap:6px; color:var(--text2); font-size:13px; font-weight:500; white-space:nowrap; }
-.lh-tbi em { font-style:normal; font-size:11px; font-weight:600; color:var(--text2); background:var(--fill); padding:1px 6px; border-radius:6px; }
+.lh-tbi em { font-style:normal; font-size:11px; font-weight:600; color:var(--tint); background:var(--chipbg); padding:1px 6px; border-radius:6px; }
 .lh-tbi .lh-i { width:16px; height:16px; stroke-width:1.8; }
+.lh-hub .lh-tbi + .lh-seg button { color:var(--tint); font-weight:600; }
 .lh-dc { background:var(--card); box-shadow:var(--cshadow); border-radius:16px; padding:15px 16px 14px; display:flex; flex-direction:column; gap:8px; position:relative; min-width:0; cursor:pointer; transition:box-shadow .15s; }
 .lh-dc:hover,.lh-dc:focus-within { box-shadow:var(--cshadowh); }
 .lh-dc-top { display:flex; align-items:flex-start; gap:10px; min-width:0; }
