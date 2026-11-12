@@ -17,5 +17,8 @@ CLAUDE.md
 doc/
 !node_modules/obsidian
 debug/
+# internal design packages and scratch output stay local (public repo)
+design/
+tmp/
 
 .agents/
