@@ -100,9 +100,10 @@ function renderBranches(list, nodes, opts) {
     const row = item.createEl("div", { cls: "lh-syg-row" });
     row.createEl("span", { cls: "lh-syg-edge" + (node.inferred ? "" : " is-explicit"), text: node.reason || c(t, RELS[node.rel] || "SYNAPSE_REL_RELATED") });
 
-    // A mastered card whose own answer would give this card's answer away stays closed until the
-    // answer is shown, and is drawn like any other node that does nothing on click.
-    const opens = !!type.cue && (node.type !== "card" || node.expandable);
+    // A locked node (a mastered card whose own answer would give this one away, the video or lesson
+    // the card came from) is a cue only until the answer is shown, and is drawn like any other node
+    // that does nothing on click.
+    const opens = !!type.cue && !node.locked;
     const el = row.createEl("div", { cls: "lh-syg-node" + (opens ? " is-link" : ""), attr: { "data-type": node.type } });
     if (type.feature) featureIcon(el, opts.plugin, type.feature, { size: 32, fallback: type.icon });
     else icon(el.createEl("span", { cls: "lh-syg-ic" }), type.icon);
@@ -138,12 +139,18 @@ function watchLayout(map) {
   };
   update();
   const scrolling = new AbortController();
-  const observer = new ResizeObserver(() => {
-    if (map.isConnected) update();
-    else { observer.disconnect(); scrolling.abort(); }
-  });
+  // Either callback may be the first to find the map gone (a map removed while its container is
+  // hidden never gets a resize), so both stop the watching.
+  const stop = () => { observer.disconnect(); scrolling.abort(); };
+  const observer = new ResizeObserver(() => { if (map.isConnected) update(); else stop(); });
   observer.observe(map);
-  activeDocument.addEventListener("scroll", () => { if (map.isConnected) drawWires(map); }, { capture: true, passive: true, signal: scrolling.signal });
+  // Scroll events arrive far more often than frames: redraw once per frame at most.
+  let frame = 0;
+  activeDocument.addEventListener("scroll", () => {
+    if (!map.isConnected) { stop(); return; }
+    if (frame) return;
+    frame = window.requestAnimationFrame(() => { frame = 0; if (map.isConnected) drawWires(map); });
+  }, { capture: true, passive: true, signal: scrolling.signal });
 }
 
 // One line leaves the card on each side and runs down a spine; a short branch turns off the spine

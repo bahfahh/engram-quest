@@ -8,6 +8,7 @@
 // so the graph is a tree at most two steps deep.
 
 const { MASTERED_STABILITY_THRESHOLD } = require("./synapse");
+const { leaksAnswer } = require("./answer-leak");
 
 const MAX_NODES = 12; // the centre card included
 const LESSONS_DIR = "engram-quest/lessons";
@@ -114,35 +115,6 @@ function isLearned(node) {
   return node.state === "seen" || node.state === "done";
 }
 
-// Punctuation, brackets and markdown marks that end one part of an answer and start the next.
-const BREAKS = /[\n*_`~=#>[\](){}<>「」『』《》〈〉【】，。、：；！？,.:;!?"'“”‘’—–\-·•|\\/]+/;
-const LIST_MARKER = /^[ \t]*(?:[-*+•]|\d+[.)、])[ \t]+/gm;
-const plain = (s) => String(s || "").normalize("NFKC").toLowerCase().replace(/<[^>]*>/g, "\n").replace(/&#?[a-z0-9]+;/g, " ");
-const squash = (s) => plain(s).split(BREAKS).join("").replace(/\s+/g, "");
-const GRAM = 4;
-
-/**
- * True when `text` gives away part of the card's answer, so it must wait until the answer is shown.
- * The answer is read as its parts (clauses, list items, marked words) rather than one string, and a
- * run of four characters shared with any part counts too, so a paraphrase or a longer answer is still
- * caught. Whatever the question already says is not a secret. Errs on the side of hiding.
- */
-function leaksAnswer(text, answer, question = "") {
-  const shown = squash(text);
-  const asked = squash(question);
-  const parts = plain(answer).replace(LIST_MARKER, "").split(BREAKS).map((part) => part.replace(/\s+/g, ""));
-  for (const part of [squash(answer), ...parts]) {
-    // A word or two of plain letters is too easily part of another word ("end" in "depends").
-    if (part.length < 2 || (part.length < GRAM && /^[a-z]+$/.test(part))) continue;
-    if (shown.includes(part) && !asked.includes(part)) return true;
-    for (let i = 0; i + GRAM <= part.length; i++) {
-      const gram = part.slice(i, i + GRAM);
-      if (/[^!-~]/.test(gram) && shown.includes(gram) && !asked.includes(gram)) return true;
-    }
-  }
-  return false;
-}
-
 function resolve(index, noteExists, type, ref) {
   if (type === "note") return isNotePath(ref) && noteExists(ref) ? { ref, title: baseName(ref), sub: "", state: null } : null;
   const found = new Map([["lesson", index.lessons], ["video", index.videos], ["explainer", index.explainers], ["topic", index.topics]]).get(type);
@@ -163,25 +135,30 @@ function resolve(index, noteExists, type, ref) {
  * Returns { branches, count, more }. A branch is a node next to the centre with its own `children`;
  * `more` is how many further nodes the revealed graph holds (0 once revealed).
  *
- * node = { id, type, ref, title, sub, state, depth, inferred, score, reason | rel, entry | anchor, back, expandable, children }
+ * node = { id, type, ref, title, sub, state, depth, inferred, score, reason | rel, entry | anchor, back, locked, children }
  *   reason  the skill's sentence (inferred edges)       rel  which explicit link it is (the panel words it)
- *   back, expandable  card nodes only: the answer a tap shows, and whether it may be shown yet
+ *   back    card nodes only: the answer a tap shows
+ *   locked  shown as a cue, but a tap must do nothing until the answer is shown
  *
- * Before the answer is shown the graph holds only what the user has learned, leaves out the Deep
- * Dive page written for this very card (it states the answer) and anything whose text gives part of
- * the answer away, and keeps a mastered card closed when its own answer would. The revealed graph
- * is that same set plus the rest, so nothing on screen disappears when the answer appears.
+ * Before the answer is shown the graph holds only what the user has learned. It leaves out every
+ * Deep Dive page made from this card's file (such a page states the answer) and anything whose
+ * title, subtitle or reason gives part of the answer away. It keeps three kinds of node on screen
+ * but locked: a mastered card whose own answer would give this one away, and the video or lesson
+ * the card was made from (the review screen offers "rewatch" only after the answer, too).
+ * The revealed graph is that same set plus the rest, so nothing on screen disappears with the answer.
  */
 function buildSynapseGraph({ card, sourcePaths = [], index, resolvedLinks = {}, noteExists = () => false, anchorBack = (anchor) => anchor.back || "", revealed = false, max = MAX_NODES }) {
   if (!card) return { branches: [], count: 0, more: 0 };
   const idx = index || buildContentIndex();
-  const leaks = (text) => leaksAnswer(text, card.back, card.front);
+  // What the review screen already shows is not a secret: the question, and the names of the card's source notes.
+  const onScreen = [card.front, ...sourcePaths.filter(isNotePath).map(baseName)].join("\n");
+  const leaks = (text) => leaksAnswer(text, card.back, onScreen);
   const rejected = new Set(card.synapseRejected || []);
   const all = new Map();
   const add = (parent, type, ref, fields) => {
     const id = `${type}|${ref}`;
     if (all.has(id) || rejected.has(id)) return null;
-    const node = { id, type, ref, depth: parent ? 2 : 1, parent: parent ? parent.id : null, inferred: false, score: 0, order: all.size, ...fields };
+    const node = { id, type, ref, depth: parent ? 2 : 1, parent: parent ? parent.id : null, inferred: false, score: 0, locked: false, order: all.size, ...fields };
     all.set(id, node);
     return node;
   };
@@ -194,12 +171,12 @@ function buildSynapseGraph({ card, sourcePaths = [], index, resolvedLinks = {}, 
   for (const path of sourcePaths) {
     if (typeof path !== "string" || !path) continue;
     const topic = path.match(TOPIC_PATH);
-    if (idx.lessonByPath.has(path)) addContent(null, "lesson", idx.lessonByPath.get(path), { rel: "from-lesson" });
+    if (idx.lessonByPath.has(path)) addContent(null, "lesson", idx.lessonByPath.get(path), { rel: "from-lesson", locked: !revealed });
     else if (topic) addContent(null, "topic", topic[1], { rel: "from-topic" });
     else addContent(null, "note", path, { rel: "source-note" });
   }
   for (const id of idx.explainersByCard.get(cardKey(card.notePath, card.front)) || []) addContent(null, "explainer", id, { rel: "explainer" });
-  if (card.notePath && idx.videoByCards.has(card.notePath)) addContent(null, "video", idx.videoByCards.get(card.notePath), { rel: "video-cards" });
+  if (card.notePath && idx.videoByCards.has(card.notePath)) addContent(null, "video", idx.videoByCards.get(card.notePath), { rel: "video-cards", locked: !revealed });
 
   // Inferred links the synapse skill wrote: mastered cards, then everything else.
   for (const anchor of card.synapseAnchors || []) {
@@ -210,7 +187,7 @@ function buildSynapseGraph({ card, sourcePaths = [], index, resolvedLinks = {}, 
     add(null, "card", `${anchor.notePath || ""}|${anchor.front}`, {
       title: anchor.front, sub: "", state: learning ? "learning" : "mastered",
       inferred: true, score: Number(anchor.score) || 0, reason: anchor.reason || "", anchor,
-      back, expandable: revealed || !leaks(back),
+      back, locked: !revealed && leaks(back),
     });
   }
   for (const r of card.synapseRelations || []) {
@@ -238,7 +215,9 @@ function buildSynapseGraph({ card, sourcePaths = [], index, resolvedLinks = {}, 
     }
     return kept;
   };
-  const safe = (node) => isLearned(node) && node.rel !== "explainer" && ![node.title, node.sub, node.reason].some(leaks);
+  // Matched by the card's file, not its wording: a page stays "written for this card" after the front is edited.
+  const ownPage = (node) => node.type === "explainer" && !!card.notePath && (node.entry.page.sourceCard || {}).note === card.notePath;
+  const safe = (node) => isLearned(node) && !ownPage(node) && ![node.title, node.sub, node.reason].some(leaks);
   const before = pick(safe);
   const full = pick(() => true, new Set(before));
   const shown = revealed ? full : before;

@@ -211,6 +211,18 @@ describe("SynapseMapSession: opening a node", () => {
     expect(await session.open(node)).toBe(true);
   });
 
+  it("does not open the video a card came with until the answer is shown", async () => {
+    const { session, opened } = makeSession();
+    await session.load();
+    const card = makeCard();
+    const find = (revealed) => session.graph(card, revealed).branches.find((n) => n.id === "video|azure-ai-2026/az-l04");
+    expect(find(false).locked).toBe(true);
+    expect(await session.open(find(false))).toBe(false);
+    expect(opened).toEqual([]);
+    expect(await session.open(find(true))).toBe(true);
+    expect(opened.map(([kind]) => kind)).toEqual(["video"]);
+  });
+
   it("does nothing for a node that has no page of its own", async () => {
     const { session, opened } = makeSession();
     await session.load();
