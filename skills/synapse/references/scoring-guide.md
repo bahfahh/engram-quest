@@ -32,11 +32,59 @@ when no real anchor exists.
 4. **Self-pairing is invalid.** A card cannot anchor itself. The AI should never return an
    anchor whose front equals the target front.
 
-5. **Three is the max.** Even when 5 anchors all score ≥ 7, return only the top 3 (highest
-   score wins; ties broken by AI judgment).
+5. **Three anchors, four relations.** Even when 5 anchors all score ≥ 7, return only the
+   top 3 (highest score wins; ties broken by AI judgment). Relations stop at 4, with at most
+   2 of one type, so one long course cannot crowd out a video or an explainer page that
+   covers the same idea from another angle.
 
 6. **Reason must be specific.** "Both are technical" is not a valid reason. "同屬 DDD
    戰略設計" or "Both define cache eviction policies" are valid reasons.
+
+7. **Reason must not give the answer away.** See "Reasons the user reads before answering".
+
+## Scoring a catalog entry
+
+Relations use the same 0–10 scale and the same ≥ 7 cutoff, but the evidence is thinner:
+a catalog entry is a title (plus its course or series title), never the content.
+
+| Score | Meaning | Example (target: "What decides whether a CI test gate is worth having?") |
+|---|---|---|
+| 10 | The entry teaches exactly what the card asks | lesson "Turning tests into a CI gate" |
+| 8-9 | Same topic, a neighbouring step or a worked case of it | lesson "The test pyramid and what CI automates" in the same course |
+| 7 | Same domain, and seeing it would plausibly bring the card's idea back | video "Deploying to Azure with GitHub Actions" |
+| 4-6 | Same broad field only | lesson "Git branching basics" |
+| 0-3 | Different field, or a shared word only | lesson "Excel pivot tables" |
+
+- **Judge from the title, never beyond it.** "Lesson 3" or "Overview" says nothing; even
+  inside a course that fits, such an entry scores below 7 unless its title names the idea.
+  The course or series title tells you the domain, not what one lesson covers.
+- **A relation is something the user studied, not a definition.** Prefer the entry whose
+  recall brings back the setting in which the idea was learned ("the lesson where I set up
+  that gate") over one that merely shares vocabulary.
+- **One entry per piece of content.** When several entries are versions of the same thing
+  (a re-cut video, a translated twin), pick the one whose title fits best, not all of them.
+- **A title can be a spoiler too.** The plugin shows a relation's title beside the
+  unanswered card. If the title alone answers the card, leave the entry out, however
+  closely it matches.
+- **Do not repeat what the plugin already shows.** Ids in a target's `skip` list are links
+  the plugin draws itself or picks the user rejected; they are never valid answers.
+
+## Reasons the user reads before answering
+
+The ⚡ panel can be opened while the card's answer is still hidden, and every reason is
+visible there. A reason that contains the answer turns the review into reading.
+
+Write what the two items have in common, or what the other item is about. Leave out what
+the target's answer is.
+
+| Target front | Leaks the answer ❌ | Safe ✅ |
+|---|---|---|
+| What decides whether a CI test gate is worth having? | "The lesson shows a gate is only as good as the tests behind it" | "The lesson where this gate gets set up" |
+| Which cache layer answers a repeated question fastest? | "Both say exact-match cache comes first" | "Both compare the layers of an AI cache" |
+| 為什麼評測要接進 CI？ | 「影片示範分數掉了就擋合併」 | 「影片示範同一個評測流程」 |
+
+The check: could someone answer the card from the reason alone? If yes, rewrite it around
+the shared topic.
 
 ## Why these rules exist (the four defenses)
 
@@ -51,12 +99,12 @@ If the user's mastered pool is < 10 cards, the entire feature is disabled. Preve
 from straining to find anchors when the pool is too small.
 
 ### 3. Reason transparency (rendered by plugin)
-Each anchor displays its reason next to the card front in the UI. Users see exactly why
-a link was suggested, and can spot AI hallucinations immediately.
+Each anchor and relation displays its reason in the UI. Users see exactly why a link was
+suggested, and can spot AI hallucinations immediately.
 
-### 4. User feedback hook (v2, schema reserved)
-The `userRejected` array in each `cards.{front}` entry is reserved for a future "X this
-anchor" UI. Skill should preserve this list across runs.
+### 4. User rejections
+The `userRejected` array in each `cards.{front}` entry lists the anchors and relations the
+user turned down. The skill preserves it across runs and never recommends them again.
 
 ## Failure modes to avoid
 
@@ -70,16 +118,15 @@ memory. Score 0-3.
 
 ✅ "I cannot find a 7+ anchor for this card. Return []." → Correct.
 
-## Future: User feedback loop (v2)
+## User rejections
 
-When the runtime adds a "✕ this anchor" button, rejected (notePath, front) pairs go into
-`userRejected: [...]`. The skill must:
+`userRejected: [...]` holds what the user turned down for a card: an anchor as
+`"<notePath>|<front>"` (or the bare front in older entries), a relation as `"<type>|<ref>"`.
+The dumper does the bookkeeping, so the skill never has to search old synapse files for it:
 
-1. Read the existing per-note synapse file (if any)
-2. Preserve `userRejected` arrays when overwriting
-3. **Exclude rejected anchors from new recommendations** — even if they would otherwise
-   score 9, the user has explicitly said no
-
-This rule is not yet implemented in the runtime, but the schema and AI prompt already
-support it. When v2 ships, only the prompt needs updating to add an "EXCLUDED ANCHORS"
-section per-target.
+1. Each target in the dump carries its stored `userRejected` — copy it into the entry you
+   write, on every write.
+2. The ids of the rejected candidates are already in the target's `skip` list — **never
+   recommend them again**, even if they would otherwise score 9. The user has said no.
+3. A full run lists in `keepEntries` the entries that hold rejections but belong to cards
+   that are not targets right now — carry those entries over as they are.
