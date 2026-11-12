@@ -638,7 +638,7 @@ var Q=class extends I.Modal{
         let E=p.createEl("button",{text:c(t,"PREVIOUS"),attr:{class:"lh-browse-btn"}});
         this.idx===0&&(E.disabled=true);
         E.addEventListener("click",()=>{this.idx!==0&&(this.idx--,this.renderCard());});
-        p.createEl("button",{text:this.idx>=this.cards.length-1?c(t,"BACK"):c(t,"NEXT"),attr:{class:"lh-browse-btn"}}).addEventListener("click",()=>{
+        p.createEl("button",{text:this.idx>=this.cards.length-1?c(t,"BACK"):c(t,"NEXT"),attr:{class:"lh-browse-btn lh-browse-next"}}).addEventListener("click",()=>{
           if(this.idx>=this.cards.length-1){this.close();this.onBack&&this.onBack();return;}
           this.idx++;this.renderCard();
         });

@@ -4,6 +4,9 @@
 // Page-specific rules live in hub-pages.js. Colour rule: large areas stay neutral, each data colour
 // keeps one meaning. Controls come in three weights: primary (solid indigo), raised (neutral surface
 // with a hairline and a small shadow) and quiet (no surface until hover). Static data never looks raised.
+// A control that can be pressed carries colour: --tone/--tonering is the tinted surface of a secondary
+// action, a raised control tints its icon (its label when it has no icon). Grey and flat means unavailable.
+// --rhard/--rgood/--reasy (+ the "t" text colour) are the review ratings; --ringk is the outline strength.
 
 const tokens = `
 .lh-hub,.lh-theme,.lh-vid-modal {
@@ -21,8 +24,14 @@ const tokens = `
   --mst:#5DBB9D; --due:#6E83EC; --lrn:#6CBBF2; --new:#E8877B; --uns:#D4D4DA;
   --mstt:#24705E; --duet:#4057B5; --lrnt:#1672B5; --newt:#AC4934; --dang:#C2412D; --gold:#D29A2E;
   --locked:grayscale(1) opacity(.42);
+  --rhard:#D9483B; --rhardt:#A32D20; --rgood:#D9A400; --rgoodt:#765300; --reasy:#2E9F78; --reasyt:#1D6A51;
+  --pshadow:0 0 0 1px rgba(0,0,0,.42),var(--rshadow);
+  --ringk:70%; --tone:color-mix(in srgb,var(--btn) 20%,var(--raised)); --toneh:color-mix(in srgb,var(--btn) 30%,var(--raised));
+  --tonering:inset 0 0 0 1px color-mix(in srgb,var(--tint) var(--ringk),transparent);
   --interactive-normal:transparent; --interactive-hover:var(--fill2); --input-shadow:none; --input-shadow-hover:none;
 }
+/* Without color-mix a token built from it would be invalid and leave the control with no surface. */
+@supports not (color:color-mix(in srgb,red,blue)) { .lh-hub,.lh-theme,.lh-vid-modal { --tone:var(--raised); --toneh:var(--raisedh); --tonering:var(--pshadow); } }
 .lh-hub.lh-dark,.lh-theme.lh-dark,.theme-dark .lh-vid-modal {
   --base:#18181B; --card:#29292D; --side:#1F1F23; --text:#F5F5F7; --text2:#BDBDC7; --text3:#A0A0A8;
   --fill:rgba(235,235,245,.12); --fill2:rgba(235,235,245,.06); --sep:rgba(235,235,245,.12); --line:#48484F;
@@ -38,6 +47,8 @@ const tokens = `
   --mst:#6FCFAE; --due:#7C8FF5; --lrn:#74C4FA; --new:#F2917F; --uns:#55555B;
   --mstt:#93D6C0; --duet:#ADB9FF; --lrnt:#84CBFB; --newt:#F2A18D; --dang:#FF8A75; --gold:#E5C07A;
   --locked:grayscale(1) brightness(.5);
+  --rhard:#F2625A; --rhardt:#FFAAA3; --rgood:#EBC334; --rgoodt:#F5D873; --reasy:#5CC79B; --reasyt:#9BE0C4; --ringk:50%;
+  --pshadow:0 0 0 1px rgba(255,255,255,.34),var(--rshadow);
 }
 `;
 

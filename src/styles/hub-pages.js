@@ -30,10 +30,10 @@ const session = `
 .lh-hub.lh-session .lh-review-tab { display:inline-flex; align-items:center; gap:8px; height:36px; padding:0 14px 0 10px; border:0 !important; background:transparent !important; color:var(--text) !important; font-size:14px; font-weight:500; border-radius:10px; box-shadow:none; cursor:pointer; opacity:1 !important; white-space:nowrap; transform:none; }
 .lh-hub.lh-session .lh-review-tab:hover { background:var(--fill2) !important; }
 .lh-hub.lh-session .lh-review-tab.active { background:var(--tabon) !important; color:var(--text) !important; font-weight:650; cursor:default; box-shadow:none !important; }
-.lh-hub.lh-session .lh-review-back { display:inline-flex; align-items:center; gap:6px; flex:none; height:34px; padding:0 14px 0 10px; border:0 !important; background:var(--raised) !important; color:var(--text) !important; border-radius:10px; font-size:14px; font-weight:500; box-shadow:var(--rshadow); transform:none; }
+.lh-hub.lh-session .lh-review-back { display:inline-flex; align-items:center; gap:6px; flex:none; height:34px; padding:0 14px 0 10px; border:0 !important; background:var(--raised) !important; color:var(--text) !important; border-radius:10px; font-size:14px; font-weight:500; box-shadow:var(--pshadow); transform:none; }
 .lh-hub.lh-session .lh-review-back:hover { background:var(--raisedh) !important; }
-.lh-hub.lh-session .lh-review-back .lh-i { width:17px; height:17px; }
-.lh-review-cap { display:flex; flex:none; padding:2px; margin-left:4px; border-radius:12px; background:var(--raised); box-shadow:var(--rshadow); }
+.lh-hub.lh-session .lh-review-back .lh-i { width:17px; height:17px; color:var(--tint); }
+.lh-review-cap { display:flex; flex:none; padding:2px; margin-left:4px; border-radius:12px; background:var(--raised); box-shadow:var(--pshadow); }
 .lh-hub .lh-review-cap .lh-ib { width:32px; height:30px; border-radius:9px; }
 .lh-hub.lh-session .lh-review-card { background:var(--card) !important; color:var(--text) !important; border-radius:18px; box-shadow:var(--cshadow); }
 .lh-hub.lh-session .lh-rc-top { display:flex; align-items:center; gap:8px; padding-bottom:12px; margin-bottom:16px; border-bottom:.5px solid var(--sep); }
@@ -41,14 +41,19 @@ const session = `
 .lh-rc-deck span { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 :is(.lh-hub,.lh-theme) .lh-rc-deck .lh-i { width:22px; height:22px; stroke-width:1.5; color:var(--text2); }
 .lh-rc-acts { display:flex; align-items:center; gap:6px; flex:none; }
-.lh-hub.lh-session .lh-rc-edit-btn { display:inline-flex; align-items:center; gap:6px; height:32px; padding:0 12px; background:var(--raised) !important; border:0 !important; color:var(--text) !important; border-radius:10px; font-size:13px; font-weight:500; box-shadow:var(--rshadow); white-space:nowrap; cursor:pointer; }
+.lh-hub.lh-session .lh-rc-edit-btn { display:inline-flex; align-items:center; gap:6px; height:32px; padding:0 12px; background:var(--raised) !important; border:0 !important; color:var(--text) !important; border-radius:10px; font-size:13px; font-weight:500; box-shadow:var(--pshadow); white-space:nowrap; cursor:pointer; }
 .lh-hub.lh-session .lh-rc-edit-btn:hover { background:var(--raisedh) !important; }
 .lh-hub.lh-session .lh-rc-edit-btn:disabled { background:var(--fill2) !important; color:var(--text3) !important; box-shadow:none; cursor:default; }
-.lh-hub.lh-session .lh-rc-edit-btn .lh-i { width:16px; height:16px; }
+.lh-hub.lh-session .lh-rc-edit-btn .lh-i { width:16px; height:16px; color:var(--tint); }
+.lh-hub.lh-session .lh-rc-edit-btn:is(:disabled,.is-danger,.is-done) .lh-i { color:currentColor; }
 .lh-hub.lh-session .lh-rc-edit-btn.is-danger { color:var(--dang) !important; }
+/* The source note is a link, and Highlight / Quote have no icon: their label carries the colour. */
+.lh-hub.lh-session :is(.lh-rc-src,.lh-fmt-btn):not(:disabled) { color:var(--tint) !important; }
+.lh-hub.lh-session .lh-fmt-btn:not(:disabled) > span { color:var(--text); }
+.lh-hub.lh-session .lh-fmt-btn { opacity:1; }
 .lh-hub.lh-session .lh-rc-edit-btn.is-done { color:var(--mstt) !important; }
 .lh-rc-src span { max-width:150px; overflow:hidden; text-overflow:ellipsis; }
-:is(.lh-hub,.lh-theme) .lh-rc-src .lh-i:last-child { width:14px; height:14px; color:var(--text3); }
+:is(.lh-hub,.lh-theme) .lh-rc-src .lh-i:last-child { width:14px; height:14px; }
 .lh-hub.lh-session .lh-rc-question { color:var(--text) !important; font-size:24px; line-height:1.45; font-weight:650; letter-spacing:-.01em; }
 .lh-hub.lh-session .lh-rc-badge { background:var(--fill) !important; color:var(--text2) !important; border-radius:9px; font-weight:600; }
 .lh-hub.lh-session .lh-hint { background:var(--fill2) !important; border:0 !important; border-left:0 !important; border-radius:12px; box-shadow:none; }
@@ -62,18 +67,21 @@ const session = `
 .lh-hub.lh-session .lh-answer-text mark { background:var(--fill); color:var(--text); }
 .lh-hub.lh-session .lh-answer-text blockquote,.lh-hub.lh-session .lh-hint-text blockquote { border-left:3px solid var(--line); background:transparent; }
 .lh-hub.lh-session .lh-pill-row { gap:10px; }
-.lh-hub.lh-session .lh-pill-btn { display:inline-flex; align-items:center; justify-content:center; gap:10px; border:0 !important; background:var(--raised) !important; color:var(--text) !important; box-shadow:var(--rshadow) !important; border-radius:12px; font-size:15px; font-weight:600; min-height:46px; transform:none; filter:none; opacity:1; cursor:pointer; }
-.lh-hub.lh-session .lh-pill-btn:hover { background:var(--raisedh) !important; }
+.lh-hub.lh-session .lh-pill-btn { display:inline-flex; align-items:center; justify-content:center; gap:10px; border:0 !important; background:var(--tone) !important; color:var(--tint) !important; box-shadow:var(--tonering) !important; border-radius:12px; font-size:15px; font-weight:600; min-height:46px; transform:none; filter:none; opacity:1; cursor:pointer; }
+.lh-hub.lh-session .lh-pill-btn:hover { background:var(--toneh) !important; }
 .lh-hub.lh-session .lh-pill-btn .lh-i { width:20px; height:20px; }
-.lh-hub.lh-session .lh-pill-show { background:var(--btn) !important; color:var(--onbtn) !important; box-shadow:inset 0 .5px 0 rgba(255,255,255,.22),0 1px 2px rgba(0,0,0,.16),0 3px 10px rgba(91,72,184,.2) !important; }
-.lh-hub.lh-session .lh-pill-show:hover { background:var(--btnh) !important; }
+.lh-hub.lh-session .lh-pill-btn:not(.is-off) .lh-fi.is-fallback .lh-i { color:currentColor; }
+.lh-hub.lh-session .lh-pill-show,.lh-hub.lh-session .lh-browse-btn.lh-browse-next { background:var(--btn) !important; color:var(--onbtn) !important; box-shadow:inset 0 .5px 0 rgba(255,255,255,.22),0 1px 2px rgba(0,0,0,.16),0 3px 10px rgba(91,72,184,.2) !important; }
+.lh-hub.lh-session .lh-pill-show:hover,.lh-hub.lh-session .lh-browse-btn.lh-browse-next:hover { background:var(--btnh) !important; }
 .lh-hub.lh-session .lh-pill-btn.is-off { background:var(--fill2) !important; color:var(--text3) !important; box-shadow:none !important; cursor:not-allowed; }
-.lh-hub.lh-session .lh-pill-btn.is-off .lh-fi { opacity:.45; filter:grayscale(.6); }
+.lh-hub.lh-session .lh-pill-btn.is-off .lh-fi { opacity:.4; filter:grayscale(1); }
+.lh-hub.lh-session .lh-sbar .lh-pbtn.alt:not(.is-off) { background:var(--tone); color:var(--tint); box-shadow:var(--tonering); }
+.lh-hub.lh-session .lh-sbar .lh-pbtn.alt:not(.is-off):hover { background:var(--toneh); }
 .lh-hub.lh-session .lh-pbtn.is-off { background:var(--fill2); color:var(--text3); box-shadow:none; cursor:not-allowed; }
 .lh-hub.lh-session .lh-footer-meta { justify-content:flex-start; }
-.lh-hub.lh-session .lh-pill-reset { width:auto; flex:none; white-space:nowrap; display:inline-flex; align-items:center; gap:6px; height:32px; padding:0 12px 0 10px; background:var(--raised) !important; border:0 !important; color:var(--text) !important; border-radius:10px; font-size:13px; font-weight:500; box-shadow:var(--rshadow); }
+.lh-hub.lh-session .lh-pill-reset { width:auto; flex:none; white-space:nowrap; display:inline-flex; align-items:center; gap:6px; height:32px; padding:0 12px 0 10px; background:var(--raised) !important; border:0 !important; color:var(--text) !important; border-radius:10px; font-size:13px; font-weight:500; box-shadow:var(--pshadow); }
 .lh-hub.lh-session .lh-pill-reset:hover { background:var(--raisedh) !important; transform:none; }
-.lh-hub.lh-session .lh-pill-reset .lh-i { width:16px; height:16px; }
+.lh-hub.lh-session .lh-pill-reset .lh-i { width:16px; height:16px; color:var(--tint); }
 .lh-hub.lh-session .lh-dot { background:var(--fill) !important; border:0; box-shadow:none; }
 .lh-hub.lh-session .lh-dot.lit { background:var(--bar) !important; box-shadow:none; }
 body:not(.is-phone) .lh-hub.lh-session .lh-review-progress { flex-direction:row; gap:14px; padding:12px 16px 16px; }
@@ -82,28 +90,34 @@ body:not(.is-phone) .lh-hub.lh-session .lh-review-prog-wrap { flex:1; }
 .lh-hub.lh-session .lh-review-prog-bar { background:var(--bar) !important; border-radius:4px; }
 .lh-hub.lh-session .lh-review-badge { background:transparent !important; color:var(--text) !important; box-shadow:none; padding:0; border-radius:0; font-size:14px; font-weight:600; font-variant-numeric:tabular-nums; }
 .lh-hub.lh-session .lh-browse-note { background:var(--fill2) !important; border:0 !important; color:var(--text2) !important; }
-.lh-hub.lh-session .lh-browse-btn { background:var(--raised) !important; border:0 !important; color:var(--text) !important; box-shadow:var(--rshadow); border-radius:12px; }
+.lh-hub.lh-session .lh-browse-btn { background:var(--raised) !important; border:0 !important; color:var(--tint) !important; box-shadow:var(--pshadow); border-radius:12px; }
 .lh-hub.lh-session .lh-browse-btn:hover { background:var(--raisedh) !important; }
+.lh-hub.lh-session .lh-rewatch-row .lh-vid-btn { color:var(--tint) !important; box-shadow:var(--pshadow) !important; }
 .lh-hub.lh-session .lh-browse-btn:disabled { background:var(--fill2) !important; color:var(--text3) !important; box-shadow:none; }
 .lh-hub.lh-session .lh-rating-row { gap:10px; }
-.lh-hub.lh-session .lh-rating-btn { background:var(--raised) !important; box-shadow:var(--rshadow) !important; border:0 !important; transform:none; border-radius:14px; }
+.lh-hub.lh-session .lh-rating-btn { background:var(--raised) !important; box-shadow:var(--pshadow) !important; border:0 !important; transform:none; border-radius:14px; }
 .lh-hub.lh-session .lh-rating-btn:hover { background:var(--raisedh) !important; }
+/* Hard / Good / Easy each own a tinted surface; Again stays neutral and only its icon is coloured. */
+.lh-hub.lh-session .lh-rb-hard { --rb:var(--rhard); --rbt:var(--rhardt); }
+.lh-hub.lh-session .lh-rb-good { --rb:var(--rgood); --rbt:var(--rgoodt); }
+.lh-hub.lh-session .lh-rb-easy { --rb:var(--reasy); --rbt:var(--reasyt); }
+.lh-hub.lh-session .lh-rating-btn:not(.lh-rb-again) { background:color-mix(in srgb,var(--rb) 24%,var(--raised)) !important; box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--rbt) var(--ringk),transparent) !important; }
+.lh-hub.lh-session .lh-rating-btn:not(.lh-rb-again):hover { background:color-mix(in srgb,var(--rb) 34%,var(--raised)) !important; }
+.lh-hub.lh-session .lh-rating-btn:not(.lh-rb-again) :is(.lh-rb-label,.lh-rb-icon,.lh-rb-days) { color:var(--rbt); }
 .lh-hub.lh-session .lh-rating-btn::before { display:none; }
 .lh-hub.lh-session .lh-rb-top { display:flex; align-items:center; justify-content:center; gap:7px; }
 .lh-hub.lh-session .lh-rb-label { font-weight:650; font-size:16px; color:var(--text); }
 .lh-hub.lh-session .lh-rb-icon { display:inline-grid; place-items:center; width:20px; height:20px; background:none !important; box-shadow:none; }
 .lh-hub.lh-session .lh-rb-icon .lh-i { width:19px; height:19px; stroke-width:1.9; }
 .lh-hub.lh-session .lh-rb-days { color:var(--text2); opacity:1; font-weight:500; font-size:12.5px; }
-.lh-hub.lh-session .lh-rb-again .lh-rb-icon { color:var(--newt); }
-.lh-hub.lh-session .lh-rb-hard .lh-rb-icon { color:var(--text2); }
-.lh-hub.lh-session .lh-rb-good .lh-rb-icon { color:var(--duet); }
-.lh-hub.lh-session .lh-rb-easy .lh-rb-icon { color:var(--mstt); }
-body.is-phone .lh-hub.lh-session .lh-rb-icon { display:none; }
+.lh-hub.lh-session .lh-rb-again .lh-rb-icon { color:var(--lrnt); }
+body.is-phone .lh-hub.lh-session .lh-rb-icon,body.is-phone .lh-hub.lh-session .lh-rb-icon .lh-i { width:14px; height:14px; }
+body.is-phone .lh-hub.lh-session .lh-rb-top { gap:4px; }
 .lh-hub.lh-session .lh-edit-label,.lh-hub.lh-session .lh-edit-hints-label { color:var(--text3) !important; text-transform:none; letter-spacing:0; font-size:12px; font-weight:600; }
 .lh-hub.lh-session .lh-edit-textarea { background:var(--card) !important; border:1px solid var(--sep) !important; color:var(--text) !important; box-shadow:none; }
 .lh-hub.lh-session .lh-edit-textarea:focus { border-color:var(--focus) !important; box-shadow:0 0 0 3px color-mix(in srgb,var(--focus) 20%,transparent); }
 .lh-hub.lh-session .lh-edit-save-btn { background:var(--btn) !important; color:var(--onbtn) !important; border-radius:10px; box-shadow:0 1px 2px rgba(0,0,0,.16) !important; transform:none; font-weight:600; }
-.lh-hub.lh-session .lh-edit-cancel-btn { background:var(--raised) !important; border:0 !important; color:var(--text) !important; border-radius:10px; box-shadow:var(--rshadow); }
+.lh-hub.lh-session .lh-edit-cancel-btn { background:var(--raised) !important; border:0 !important; color:var(--text) !important; border-radius:10px; box-shadow:var(--pshadow); }
 .lh-hub.lh-session .lh-timebox-clock { background:var(--fill); color:var(--text2); }
 
 .lh-snav { display:flex; align-items:center; gap:4px; flex:none; min-height:44px; padding:calc(env(safe-area-inset-top,0px) + 8px) 12px 0 18px; }
@@ -112,6 +126,8 @@ body.is-phone .lh-hub.lh-session .lh-rb-icon { display:none; }
 .lh-hub .lh-sib { width:40px; height:44px; padding:0; border:0; background:transparent; box-shadow:none; color:var(--text2); display:grid; place-items:center; cursor:pointer; }
 .lh-hub .lh-sib:hover { background:transparent; }
 .lh-hub .lh-sib .lh-i { width:20px; height:20px; }
+.lh-hub.lh-session .lh-sib { color:var(--tint); }
+.lh-hub.lh-session .lh-sib.is-off { color:var(--text3); opacity:.45; }
 .lh-sprog { flex:none; height:3px; margin:4px 18px 0; border-radius:2px; background:var(--trk); overflow:hidden; }
 .lh-sprog i { display:block; height:100%; background:var(--bar); }
 body.is-phone .lh-hub.lh-session .lh-review-body { padding:14px 18px 0; overflow-y:auto; display:block; }
@@ -137,8 +153,9 @@ body.is-phone .lh-hub.lh-session .lh-answer-text.is-short { font-size:21px; line
 .lh-hub .lh-sbar-row .lh-pbtn:not(.alt) { flex:1; width:auto; }
 .lh-sbar-title { text-align:center; font-size:13px; line-height:18px; color:var(--text2); }
 body.is-phone .lh-hub.lh-session .lh-sbar .lh-rating-row { grid-template-columns:repeat(4,minmax(0,1fr)); gap:0; padding:0; background:var(--fill); border-radius:14px; overflow:hidden; }
-body.is-phone .lh-hub.lh-session .lh-sbar .lh-rating-btn { background:transparent !important; border:0; border-radius:0; min-height:62px; padding:0 2px; gap:2px; }
-body.is-phone .lh-hub.lh-session .lh-sbar .lh-rb-good { background:var(--tabon) !important; }
+body.is-phone .lh-hub.lh-session .lh-sbar .lh-rating-btn { border:0; border-radius:0; min-height:62px; padding:0 2px; gap:2px; }
+body.is-phone .lh-hub.lh-session .lh-sbar .lh-rb-again { background:transparent !important; box-shadow:none !important; }
+body.is-phone .lh-hub.lh-session .lh-sbar .lh-rb-easy { border-radius:0 14px 14px 0; }
 body.is-phone .lh-hub.lh-session .lh-sbar .lh-browse-row { padding:0; }
 `;
 
