@@ -36,9 +36,13 @@ drawn, shared, missing = [], [], []
 for l in links.get('links', []):
     if l['a'] in ids and l['b'] in ids:
         (drawn if say(l['a'], l['b']) else missing).append(l)
+pairs = {frozenset((l['a'], l['b'])) for l in links.get('links', [])}
 for s in links.get('shared', []):
     for i, x in enumerate(s['topics']):
         for y in s['topics'][i + 1:]:
+            if frozenset((x, y)) in pairs:              # already drawn as a link, or already drawn as shared: one line per pair
+                continue
+            pairs.add(frozenset((x, y)))
             if x in ids and y in ids:
                 (shared.append((x, y, say(x, y))) if say(x, y) else missing.append(dict(a=x, b=y, evidence=[[s['note'], '(shared note)']])))
 linked = {z for l in drawn for z in (l['a'], l['b'])} | {z for s in shared for z in s[:2]}
@@ -52,7 +56,7 @@ film = dict(
     map=dict(title=t['map'].format(n=len(topics)), areas=[dict(name=k, topics=[[x['id'], x['title']] for x in v]) for k, v in areas.items()],
              links=[[l['a'], l['b'], say(l['a'], l['b'])] for l in drawn], shared=[list(s) for s in shared],
              alone=(t['alone1'].format(a=lone[0]) if len(lone) == 1 else t['alone'].format(n=len(lone), a='、'.join(lone) if a.lang != 'en' else ', '.join(lone))) if lone else ''),
-    quiz=dict(casesTitle=t['quiz'], ask=t['ask'], cases=[[x['quick']['q'], x['quick']['a'], x['quick'].get('because', ''), t['clue'] + x['quick']['clue'] if x['quick'].get('clue') else '', x['title']] for x in topics if x.get('quick')]),
+    quiz=dict(casesTitle=t['quiz'], ask=t['ask'], cases=[[x['quick']['q'], x['quick']['a'], x['quick'].get('because', ''), t['clue'] + x['quick']['clue'] if x['quick'].get('clue') else '', x['title'], x['id']] for x in topics if x.get('quick')]),
     closing=dict(areas=area_list, last=t['last']),
 )
 out = f"""// Written by scripts/month_film.py from {os.path.basename(a.pack)} and {os.path.basename(a.links)}. Edit the data, not the patterns.

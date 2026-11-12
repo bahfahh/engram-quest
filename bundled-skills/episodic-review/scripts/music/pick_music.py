@@ -259,7 +259,7 @@ def apply_marks(score, marks, key, outdir, depth_db=-9.0):
     chime = os.path.join(outdir, 'reveal_chime.wav')
     mg.generate('chime', 1, 4.0, chime, 'full', key)
     raw = subprocess.run(['ffmpeg', '-v', 'error', '-i', chime, '-f', 'f32le', '-'], capture_output=True, check=True).stdout
-    ch = np.frombuffer(raw, np.float32).reshape(-1, 2).astype(np.float64) * 10 ** (-3 / 20)
+    ch = np.frombuffer(raw, np.float32).reshape(-1, 2).astype(np.float64) * 10 ** (-8 / 20)     # about as loud as the music it returns to, not above it
     g = np.ones(len(score))
     lo, down, up = 10 ** (depth_db / 20), int(0.8 * mg.SR), int(1.5 * mg.SR)
     for m in marks:

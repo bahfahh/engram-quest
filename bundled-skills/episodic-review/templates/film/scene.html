@@ -4,7 +4,7 @@
 <link rel="stylesheet" href="look.css">
 <body><div id="v"><div id="crumb"></div><div id="count"></div><div id="mini"></div><div id="badge"></div></div>
 <script type="module">
-import { render, fn, fontsReady, imagesReady, icons, readingReport, onscreen, peaks, marks, ease, clamp } from './engine.js';
+import { render, fn, fontsReady, imagesReady, icons, readingReport, onscreen, peaks, marks, segments, ease, clamp } from './engine.js';
 import { SK } from './patterns.js';
 window.studioReady = (async () => {
   await icons(['moon', 'mic', 'check', 'x', 'file-text', 'database', 'network', 'clock', 'search', 'link']);
@@ -13,7 +13,7 @@ window.studioReady = (async () => {
   const F = mod.FILM; let t = 0; const B = [];
   F.chapters.forEach((ch, i) => { const t0 = t; t = ch.run(t0); B.push({ i, name: ch.name, strip: ch.strip, t0, t1: t }); });
   window.DURATION = Math.ceil(t);
-  window.CHAPTERS = B.filter(b => b.strip != null).map(b => ({ title: b.name, topicId: F.topicId, from: +b.t0.toFixed(1), to: +b.t1.toFixed(1) }));
+  window.CHAPTERS = [...B.filter(b => b.strip != null).map(b => ({ title: b.name, topicId: F.topicId, from: +b.t0.toFixed(1), to: +b.t1.toFixed(1) })), ...segments()].sort((a, b) => a.from - b.from);
   // music cues, in the words scripts/music/pick_music.py uses. A chapter may name its own: { name, cue: 'recall', run }
   window.CUES = B.map((b, k) => ({ t0: b.t0, t1: b.t1, kind: F.chapters[k].cue || (k === 0 ? 'opening' : k === B.length - 1 ? 'ending' : 'topic') }));
   window.MARKS = marks().map(m => ({ kind: m.kind, start: +m.t0.toFixed(2), dur: +(m.t1 - m.t0).toFixed(2) }));   // recall countdowns: the score steps back, a chime at the end
