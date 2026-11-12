@@ -5,13 +5,14 @@
 
 "use strict";
 
-const { srFileName, mapLimit, loadSrData } = require("./helpers");
-const { listCourses } = require("../lessons/data");
-const { listTopics, readEpisodic } = require("../videos/data");
-const { scanExplainers, readState } = require("../explainer/data");
+const { srFileName, mapLimit, loadSrData, AI_CARDS_DIR } = require("./helpers");
+const { LESSONS_DIR, normalizeMeta } = require("../lessons/data");
+const { VIDEOS_DIR, normalizeTopic } = require("../videos/data");
+const { META_DIR: EXPLAINER_META_DIR, readState } = require("../explainer/data");
 
 const SYNAPSE_DIR = "engram-review/synapse";
 const RECALL_TOPICS_DIR = "engram-quest/episodic-review/topics";
+const READS = 8; // content files read at once while the index is built
 const STATUS_FILE = `${SYNAPSE_DIR}/_status.json`;
 const POOL_DELTA_THRESHOLD = 15;
 const POOL_AGE_DAYS_THRESHOLD = 28;
@@ -82,39 +83,60 @@ function attachSynapseToCards(cards, synapseByPath) {
 /**
  * Everything the relation graph resolves a card's links against, read once per review session and
  * only when the user first opens ⚡: lessons, videos (recall films included), Deep Dive pages with
- * their reading state, and recall topics. `topicDecks` maps a recall topic id to the card files made
- * from it; their schedules give the topic its learning state. A missing folder is an empty list.
+ * their reading state, and recall topics with the schedule of the cards made from them (a topic's
+ * learning state). Everything goes through the adapter: these files are written outside Obsidian
+ * and the vault index can lag behind them. A missing folder is an empty list.
  * The result feeds buildContentIndex in synapse-graph.js.
  */
-async function loadSynapseSources(adapter, topicDecks = new Map()) {
-  const or = (promise, fallback) => promise.catch((e) => { console.warn("synapse: content load failed", e); return fallback; });
-  const [courses, teaching, episodic, scan, explainerState, recallTopics] = await Promise.all([
-    or(listCourses(adapter), []),
-    or(listTopics(adapter), []),
-    or(readEpisodic(adapter), null),
-    or(scanExplainers(adapter), { pages: [] }),
-    or(readState(adapter), {}),
-    or(loadRecallTopics(adapter), []),
-  ]);
+async function loadSynapseSources(adapter) {
+  const folderName = (path) => String(path).split("/").pop();
+  const metas = async (dir, normalise) => {
+    const found = await mapLimit((await listDir(adapter, dir)).folders, READS, async (folder) => {
+      const meta = normalise(await readJson(adapter, `${folder}/meta.json`));
+      return meta ? { slug: folderName(folder), meta } : null;
+    });
+    return found.filter(Boolean);
+  };
+  // One kind of content after another, each with a few reads in flight: on a phone every read is a
+  // native-bridge hop, and this runs while the user is looking at the card.
+  const courses = await metas(LESSONS_DIR, normalizeMeta);
+  const series = await metas(VIDEOS_DIR, normalizeTopic);
+  const pageFiles = (await listDir(adapter, EXPLAINER_META_DIR)).files.filter((file) => file.endsWith(".json"));
+  const explainers = (await mapLimit(pageFiles, READS, (file) => readJson(adapter, file))).filter((page) => page && page.id);
+  const explainerState = await readState(adapter);
+  // A relation names a recall topic by its folder, so that is the id used here.
+  const recallTopics = (await mapLimit((await listDir(adapter, RECALL_TOPICS_DIR)).folders, READS, async (folder) => {
+    const topic = await readJson(adapter, `${folder}/topic.json`);
+    return topic && typeof topic === "object" && !Array.isArray(topic) ? { ...topic, id: folderName(folder) } : null;
+  })).filter(Boolean);
+
+  // The cards made from a topic live in `ai-cards/<prefix>-<title>.md` (the episodic-review skill's
+  // build_pack.py); the file list is enough to find them, and their schedule is keyed by card front.
+  const decks = recallTopics.length ? (await listDir(adapter, AI_CARDS_DIR)).files : [];
   const topicSr = {};
-  await mapLimit(recallTopics.filter((topic) => topicDecks.has(topic.id)), 4, async (topic) => {
-    const stabilities = [];
-    for (const deck of topicDecks.get(topic.id)) {
-      const sr = await loadSrData(adapter, deck);
-      for (const record of Object.values(sr)) if (record && typeof record.stability === "number") stabilities.push(record.stability);
-    }
-    topicSr[topic.id] = stabilities;
+  await mapLimit(recallTopics, READS, async (topic) => {
+    const deck = topic.title ? decks.find((path) => path.endsWith(`-${String(topic.title).replace(/[\\/:*?"<>|]/g, " ")}.md`)) : null;
+    if (!deck) return;
+    const sr = await loadSrData(adapter, deck);
+    const fronts = new Set((Array.isArray(topic.cards) ? topic.cards : []).map((card) => card && card.q).filter(Boolean));
+    topicSr[topic.id] = Object.entries(sr && typeof sr === "object" ? sr : {})
+      .filter(([front, record]) => (!fronts.size || fronts.has(front)) && record && typeof record.stability === "number")
+      .map(([, record]) => record.stability);
   });
-  return { courses, series: episodic ? [...teaching, episodic] : teaching, explainers: scan.pages, explainerState, recallTopics, topicSr };
+  return { courses, series, explainers, explainerState, recallTopics, topicSr };
 }
 
-async function loadRecallTopics(adapter) {
-  let listing;
-  try { listing = await adapter.list(RECALL_TOPICS_DIR); } catch { return []; }
-  const topics = await mapLimit((listing && listing.folders) || [], 8, async (folder) => {
-    try { return JSON.parse(await adapter.read(`${folder}/topic.json`)); } catch { return null; }
-  });
-  return topics.filter((topic) => topic && topic.id);
+// What is directly under `dir`. A folder that is not there holds nothing; one that exists but cannot
+// be listed is a real failure and is left to throw, so the caller does not mistake it for "no content".
+async function listDir(adapter, dir) {
+  if (!(await adapter.exists(dir))) return { files: [], folders: [] };
+  const listing = await adapter.list(dir);
+  return { files: listing.files || [], folders: listing.folders || [] };
+}
+
+// One unreadable or malformed file is skipped; it never takes the rest of the content with it.
+async function readJson(adapter, path) {
+  try { return JSON.parse(await adapter.read(path)); } catch { return null; }
 }
 
 async function countMasteredFromSr(adapter) {

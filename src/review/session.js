@@ -3,8 +3,8 @@ const I = require("obsidian");
 const { computeFsrs: P } = require("../fsrs");
 const { t: c, tAlt: C, getLocale: _getLocale } = require("../i18n");
 const { anySrPattern: ge, getReviewStatus: $, loadSrData, saveSrData, buildSrRecord } = require("./helpers");
-const { loadSynapseStatus, loadSynapseBatch, attachSynapseToCards, isSynapseEnabled, loadSynapseSources } = require("./synapse");
-const { buildContentIndex, buildSynapseGraph } = require("./synapse-graph");
+const { loadSynapseStatus, loadSynapseBatch, attachSynapseToCards, isSynapseEnabled } = require("./synapse");
+const { SynapseMapSession } = require("./synapse-session");
 const { renderSynapseMap } = require("./synapse-panel");
 const { ACHIEVEMENTS, RARITY_DARK, RARITY_LIGHT } = require("../hub/achievement");
 const { assetUrl } = require("../assets");
@@ -14,7 +14,6 @@ const { registerSelectionCopy } = require("../ui/selection-copy");
 const { normalizeMarkdown } = require("../ui/markdown");
 const { addToQueue, readQueue, isQueued } = require("../explainer/data");
 const { ExplainerViewerModal } = require("../explainer/viewer-modal");
-const { loadCourse } = require("../lessons/data");
 const { LessonViewerModal, CanvasLessonModal } = require("../lessons/viewer-modal");
 const { addRewatchButton, rewatchTarget, openRewatch } = require("../videos/rewatch");
 const { watchTheme, themedModal, restoreButton: _restoreButton, featureIcon: _featureIcon, icon: _uiIcon, iconButton: _uiIconButton, isPhone: _isPhone } = require("../hub/ui");
@@ -52,17 +51,6 @@ function getCardRelatedNotePaths(card) {
 function getCardDisplayNotePaths(card) {
   if (isAiReviewCard(card)) return getCardRelatedNotePaths(card);
   return uniqueNonEmpty([card.notePath, card.sourceNotePath, ...(Array.isArray(card.relatedNotePaths) ? card.relatedNotePaths : [])]);
-}
-
-// Recall topic id → the card files made from it (their front matter carries `topic`).
-function recallTopicDecks(app) {
-  const decks = new Map();
-  for (const file of app.vault.getMarkdownFiles()) {
-    if (!file.path.startsWith("engram-review/ai-cards/")) continue;
-    const frontmatter = (app.metadataCache.getFileCache(file) || {}).frontmatter;
-    if (frontmatter && typeof frontmatter.topic === "string") decks.set(frontmatter.topic, [...(decks.get(frontmatter.topic) || []), file.path]);
-  }
-  return decks;
 }
 
 function getCanvasFiles(app) {
@@ -226,8 +214,7 @@ var Q=class extends I.Modal{
     this.synapseOpen=false;
     this._synapseStatus=null;
     this._synapseExpandedId=null;
-    this._synapseIndex=null;     // content the relation graph resolves against; read on the first ⚡ open
-    this._synapseIndexLoad=null;
+    this._synapse=this._newSynapseMap();
     this._timeboxMinutes=a.timeboxMinutes||0;
     this._sessionStartMs=0;
     this._timerIntervalId=null;
@@ -284,32 +271,36 @@ var Q=class extends I.Modal{
     }catch(err){ console.warn("synapse: load failed",err); }
   }
 
-  // Lessons, videos, Deep Dive pages and recall topics are read once per session, and only when
-  // the user first opens ⚡, so opening a session costs no more than it did.
-  _ensureSynapseIndex(){
-    if(!this.plugin.settings.licenseValid||!isSynapseEnabled(this._synapseStatus)) return Promise.resolve(null);
-    if(this._synapseIndex) return Promise.resolve(this._synapseIndex);
-    if(!this._synapseIndexLoad){
-      this._synapseIndexLoad=loadSynapseSources(this.app.vault.adapter,recallTopicDecks(this.app))
-        .then(buildContentIndex)
-        .catch(err=>{ console.warn("synapse: content load failed",err); return buildContentIndex(); })
-        .then(index=>{ this._synapseIndex=index; this._synapseIndexLoad=null; return index; });
-    }
-    return this._synapseIndexLoad;
-  }
-
-  _synapseGraph(card,revealed){
-    return buildSynapseGraph({
-      card, revealed, index:this._synapseIndex,
-      sourcePaths:getCardRelatedNotePaths(card),
-      resolvedLinks:this.app.metadataCache.resolvedLinks||{},
+  // The ⚡ map's logic lives in synapse-session.js; this hands it the session's own pieces: where a
+  // card came from, and the viewers. Lessons, videos, Deep Dive pages and recall topics are read
+  // once per session and only when the user first opens ⚡, so opening a session costs no more.
+  _newSynapseMap(){
+    return new SynapseMapSession({
+      adapter:this.app.vault.adapter,
+      allowed:()=>!!this.plugin.settings.licenseValid&&isSynapseEnabled(this._synapseStatus),
+      sourcePaths:getCardRelatedNotePaths,
+      anchorBack:(anchor)=>this._lookupAnchorBack(anchor),
+      resolvedLinks:()=>this.app.metadataCache.resolvedLinks,
       noteExists:(p)=>!!this.app.vault.getAbstractFileByPath(p),
+      openers:{
+        // A note opens in Obsidian and the session steps aside so it can be read; the rest open in
+        // the viewer the Hub already uses for them, on top of the session.
+        note:(path)=>{ this.app.workspace.openLinkText(path,"",false); this._minimize(); },
+        lesson:({slug,meta,lesson,onClose})=>{
+          if(lesson.type==="canvas") new CanvasLessonModal(this.app,this.plugin,slug,meta,lesson,onClose,this).open();
+          else new LessonViewerModal(this.app,this.plugin,slug,meta,lesson,onClose).open();
+        },
+        explainer:(page,onChanged)=>new ExplainerViewerModal(this.app,this.plugin,page,onChanged,this).open(),
+        video:(video)=>openRewatch(this.app,video),
+        missing:()=>new I.Notice(c(this.plugin.settings,"SYNAPSE_NOT_HERE")),
+      },
     });
   }
 
   renderCard(){
     this.hintLevel=0; this.answerShown=false; this._rating_locked=false;
     this.synapseOpen=false; this._synapseExpandedId=null;
+    this._synapse.retry();
     // Save progress
     this._saveResumePoint();
     this._renderCardContent(this.cards[this.idx]);
@@ -440,7 +431,7 @@ var Q=class extends I.Modal{
     const synapseEnabled=this.plugin.settings.licenseValid && isSynapseEnabled(this._synapseStatus);
     // A card in a file can always have links (at least where it came from); once the content is
     // read, the answer is exact. The count is of the full graph, so ⚡ stays on before the reveal.
-    const synapseHasLinks=synapseEnabled&&!!e.notePath&&(!this._synapseIndex||this._synapseGraph(e,true).count>0);
+    const synapseHasLinks=this._synapse.hasLinks(e);
     // Filled in once the card body exists; the phone menu and the desktop pill both call it.
     let toggleSynapse=()=>{};
 
@@ -837,53 +828,33 @@ var Q=class extends I.Modal{
 
   // The relation map around this card. Before the answer it holds only what the user has already
   // learned; the graph builder leaves the rest, and any text spelling out the answer, for after.
+  // A failure in here leaves the panel empty and the rest of the card as it was.
   _renderSynapsePanel(parent,card,t,renderMd,refresh){
-    if(!this._synapseIndex){
-      renderSynapseMap(parent,{t,card,loading:true,revealed:this.answerShown});
-      this._ensureSynapseIndex().then(index=>{ if(index&&parent.isConnected) refresh(); });
-      return;
-    }
-    renderSynapseMap(parent,{
-      t, card, plugin:this.plugin, revealed:this.answerShown,
-      graph:this._synapseGraph(card,this.answerShown),
-      expandedId:this._synapseExpandedId,
-      renderBack:(el,node)=>{
-        const back=this._lookupAnchorBack(node.anchor);
-        if(back) renderMd(el,back);
-        else el.textContent=c(t,"SYNAPSE_NO_BACK");
-      },
-      onSelect:(node)=>{
-        if(node.type!=="card"){ this._openSynapseNode(node,t,refresh); return; }
-        this._synapseExpandedId=this._synapseExpandedId===node.id?null:node.id;
-        refresh();
-      },
-    });
-  }
-
-  // A note opens in Obsidian (the session steps aside so it can be read); a lesson, a Deep Dive
-  // page and a video open in the viewer the Hub already uses for them, on top of the session.
-  async _openSynapseNode(node,t,refresh){
-    const adapter=this.app.vault.adapter;
-    const entry=node.entry;
-    // A viewer may mark the page read or delete it: read the content again and redraw.
-    const changed=()=>{ this._synapseIndex=null; refresh(); };
     try{
-      if(node.type==="note"){
-        this.app.workspace.openLinkText(node.ref,"",false);
-        this._minimize();
-      }else if(node.type==="lesson"){
-        const meta=await loadCourse(adapter,entry.slug);
-        const lesson=meta&&meta.lessons.find(l=>l.id===entry.lessonId);
-        if(!lesson||!lesson.file){ new I.Notice(c(t,"SYNAPSE_NOT_HERE")); return; }
-        if(lesson.type==="canvas") new CanvasLessonModal(this.app,this.plugin,entry.slug,meta,lesson,changed,this).open();
-        else new LessonViewerModal(this.app,this.plugin,entry.slug,meta,lesson,changed).open();
-      }else if(node.type==="explainer"){
-        new ExplainerViewerModal(this.app,this.plugin,entry.page,changed,this).open();
-      }else if(node.type==="video"){
-        if(!(await adapter.exists(entry.path))){ new I.Notice(c(t,"SYNAPSE_NOT_HERE")); return; }
-        openRewatch(this.app,{path:entry.path,at:entry.position});
+      if(!this._synapse.ready){
+        renderSynapseMap(parent,{t,card,loading:true,revealed:this.answerShown});
+        this._synapse.load().then(drawable=>{ if(drawable&&parent.isConnected) refresh(); });
+        return;
       }
-    }catch(err){ console.warn("synapse: could not open",node.id,err); }
+      renderSynapseMap(parent,{
+        t, card, plugin:this.plugin, revealed:this.answerShown,
+        graph:this._synapse.graph(card,this.answerShown),
+        expandedId:this._synapseExpandedId,
+        renderBack:(el,node)=>{
+          if(node.back) renderMd(el,node.back);
+          else el.textContent=c(t,"SYNAPSE_NO_BACK");
+        },
+        onSelect:(node)=>{
+          if(node.type!=="card"){ this._synapse.open(node,()=>{ if(parent.isConnected) refresh(); }); return; }
+          if(!node.expandable) return;
+          this._synapseExpandedId=this._synapseExpandedId===node.id?null:node.id;
+          refresh();
+        },
+      });
+    }catch(err){
+      console.warn("synapse: could not draw the map",err);
+      parent.empty();
+    }
   }
 
   // Fallback to session-card lookup for anchors pre-dating stored `back` (backward compat).

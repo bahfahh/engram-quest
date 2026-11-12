@@ -68,6 +68,19 @@ async function readState(adapter) {
   return data && typeof data === "object" && !Array.isArray(data) ? data : {};
 }
 
+/**
+ * Put a page's saved reading state on the page itself (`_viewed`, `_starred`, `_completed`), the
+ * form the viewer reads. Every place that opens the viewer does this first: without it the viewer
+ * shows a starred, finished page as neither, and its toggles then flip the saved values the wrong way.
+ */
+function applyReadingState(page, state) {
+  const saved = (state && state[page.id]) || {};
+  page._viewed = !!saved.viewed;
+  page._starred = !!saved.starred;
+  page._completed = !!saved.completed;
+  return page;
+}
+
 async function writeState(adapter, state) {
   await adapter.mkdir(EXPLAINER_DIR).catch(() => {});
   await adapter.write(STATE_PATH, JSON.stringify(state, null, 2));
@@ -217,6 +230,7 @@ module.exports = {
   scanExplainers,
   groupExplainersByDeck,
   readState,
+  applyReadingState,
   writeState,
   markViewed,
   toggleStateFlag,
