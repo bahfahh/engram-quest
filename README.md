@@ -267,7 +267,7 @@ Mark key answers with `==highlight==` or `**bold**`, then add a rule to your AI 
 
 | Pro feature | What it adds | Availability |
 | --- | --- | --- |
-| Memory anchors · Synapse | Connect review cards to related knowledge you have mastered | Available; the skill prepares matching anchors |
+| Memory anchors · Synapse | During review, a small map connects the card to what you have learned: mastered cards, notes, deep dives, lessons and videos, each with the reason it is related | Available; the skill prepares the links |
 | Deep dive | Queue difficult cards, generate illustrated explanations with the skill, and read them in the Hub | Available |
 | Time-boxed review | Choose 5 / 10 / 15 minutes to review priority cards | Available |
 | More teachers and recall films | Teachers who each teach in their own way, a teacher per series, and recall films made from your notes | Available; videos are made with Claude Code |
@@ -556,7 +556,7 @@ EngramQuest 建立在認知科學的四根支柱上：
 
 | Pro 功能 | 提供什麼 | 狀態 |
 | --- | --- | --- |
-| 記憶錨點 · Synapse | 複習時連結已掌握的相關卡片，幫助回想 | 已提供；需先由 skill 配對錨點 |
+| 記憶錨點 · Synapse | 複習時以這張卡為中心，畫出它和你學過內容的關聯：熟卡、筆記、深入解析、教材、影片，每條線都寫著為什麼相關 | 已提供；需先由 skill 建立關聯 |
 | 深入解析 | 難卡加入佇列，由 skill 生成白話圖解，再回到 Hub 閱讀 | 已提供 |
 | 限時複習 | 選擇 5／10／15 分鐘，優先挑出需要複習的卡片 | 已提供 |
 | 更多老師與情境回顧片 | 教法各不相同的老師、替系列指定老師，以及把筆記做成回顧片 | 已提供；影片用 Claude Code 製作 |
