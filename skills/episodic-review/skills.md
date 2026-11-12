@@ -80,9 +80,10 @@ scripts/
   collect.py                notes touched in a period, grouped into topics (git history or mtimes)
   build_pack.py             pack entries -> topic cache, Review Deck cards and hints, overview page, film ranking
   topic_links.py            relations between topics, from links between their notes
+  month_film.py             the film.js of a month overview film, from the pack and the links
   film_lang.py              decide the film's language
   studio/                   render_stage.cjs (frame renderer: data, stills, film; holds are captured once), package.json
-  music/, mix.py            score generator and final mix
+  music/, mix.py            score generator (one theme per film) and final mix
   deliver.py                compress, poster, meta.json entry
   render_canvas.cjs         an Obsidian canvas as an image, for reading
   obsidian_index.js, doctor.py

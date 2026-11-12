@@ -42,6 +42,7 @@ Read once before planning a film. Each line is something that was built, shown a
 - **Trusting a pattern's layout with long text.** A wrapped line ran into the next label; two relations on one question sat on top of each other. The stills are the check, not the pattern.
 - **The same id in two svgs.** Arrowheads resolved to the first, hidden one and never appeared, in every film, until someone looked for them. A thing that should be on screen and is not is a bug, not a style.
 - **Timing changed, cue sheet not regenerated.** The score no longer matched.
+- **A bed with no melody under a ten-minute film.** It measured as present and was heard as "no background sound at all". Then samples with a melody at -19 LUFS were "too loud" for reading. The score needs a melody and a low level, both.
 - **Deepening git history with file contents.** Gigabytes of old videos. Fetch history without blobs.
 - **Two encodes at slow settings.** The intermediate only needs to be fast.
 - **Asking whether an idea is good instead of showing it.** Make a short sample and let the person look.

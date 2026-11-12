@@ -24,6 +24,10 @@ export const off = (r, t = T) => { r.out = t; return r; };
 const leaves = (r) => { let out = r.out; for (let p = r.e.parentElement; p && p !== V; p = p.parentElement) { const q = BY.get(p); if (q) out = Math.min(out, q.out); } return out; };
 export const dim = (r, a, b, level = 0.28) => { r.dim.push([a, b, level]); return r; };          // step back between a and b
 export const fn = (f) => FN.push(f);                 // custom per-frame work: f(t)
+// moments the score should know about: cue('recall', t0, t1) = the viewer is thinking (music steps back, a chime at t1)
+const CUE = [];
+export const cue = (kind, t0, t1) => { CUE.push({ kind, t0, t1 }); };
+export const marks = () => CUE;
 // ---- svg wires
 export function wire(parent, w = 1920, h = 1080) { const s = document.createElementNS(NS, 'svg'); s.setAttribute('class', 'wire'); s.setAttribute('width', w); s.setAttribute('height', h); (parent || V).appendChild(s);
   s.dataset.ah = 'ah' + (WN++);                      // one marker id per svg: url(#id) resolves to the first match in the page, which may be hidden

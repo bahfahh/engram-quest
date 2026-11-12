@@ -19,7 +19,7 @@ Read the content first, then choose. A presentation is chosen because of the sha
 | quantities | **bars or a scale** with the numbers from the notes | size is seen, not read | `bars` |
 | a figure the author already drew | **the figure itself**, with the places worth looking at pointed out one at a time | their own picture is the strongest cue they have | `figure` |
 | how the topic's notes fit together | **relation map**: sources on the outside, the skeleton in the middle, one question lit at a time | the summary of the topic, shown last | `relationMap` |
-| how topics of the period fit together | **tidy link map**: areas as groups, only real links, one relation read at a time | what a graph view shows, without the noise | `relationMap` `outs`; a month film needs its own |
+| how topics of the period fit together | **tidy link map**: topics on two arcs with names outside, areas by colour, only real links, one relation read at a time, then the topics that stand alone | what a graph view shows, without the noise | `monthMap` (a month film); `relationMap` `outs` (inside a topic film) |
 | anything already shown | **cover and fill**: the same picture with parts hidden, a pause, then filled | retrieval with the structure as the cue | `recall` |
 
 Mix them inside one film. `film.example.js` uses eight of the patterns in a complete film; `film.gallery.js` shows the rest (`--film gallery --stills auto` renders one still of each). Look before choosing.
@@ -52,7 +52,7 @@ A structure that has worked; adapt it to the topic.
 | Recall | retrieval | cover the key words of each question, wait, fill; then one or two new cases |
 | Close | the author's own judgement | what they concluded for themselves, what the notes leave open; where the questions now live. A topic with no stated judgement skips that part rather than inventing one |
 
-A month overview film uses the same ideas at one level up: a few points, then areas, then the real links one at a time, then the topics that stand alone.
+A month overview film uses the same ideas at one level up: a few points, then areas, then the real links one at a time, then the topics that stand alone, then one quick question per topic. `scripts/month_film.py` writes that film from the pack and the links (`04-production.md` §2); the only thing written by hand is the sentence for each link.
 
 ## 4. Time on screen
 

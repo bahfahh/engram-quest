@@ -3,7 +3,7 @@
 // c is the chapter's container, W its svg for lines, q the skeleton question of the chapter ([name, sub, colour]) when it has one.
 // Timing follows the text: a beat waits as long as its new words need.
 // None fits? Write a beat here in the film with engine.js and parts.js (see `spans` for a short one), using hold / clear / colour below.
-import { el, on, off, at, wait, T, wire, line, fn, ico, midOf, clamp } from './engine.js';
+import { el, on, off, at, wait, T, wire, line, fn, cue, ico, midOf, clamp } from './engine.js';
 import { chapter as chap, header, caption, label, node, chat, bubble, box, row, tag, ring, figure as sheet, COL, tw } from './parts.js';
 export const PALETTE = [COL.blue, COL.teal, COL.violet, COL.rose, COL.lime];   // one per skeleton question; not green, coral or amber (they mean good, cost, your turn)
 export const SK = { q: [] };                                    // the film's skeleton: [[name, sub, colour, inThisFilm]], set by skeleton()
@@ -260,14 +260,54 @@ export const relationMap = (d) => (t0) => {
   wait(1.5); end(T); return T + 0.6;
 };
 
+// ------------------------------------------------------------------ month map: the topics of a period and the links between them
+// { title, areas: [{ name, topics: [[id, name], ...] }], links: [[idA, idB, sentence]], shared: [[idA, idB, sentence]], alone, caption }
+// For a film about the whole period, one level above a topic film. Topics sit on two arcs, names on the outside, so a link never crosses
+// a name. One area arrives at a time (its colour stays in the legend), then one link at a time with the sentence that states it, then
+// the topics that stand alone. `links` come from scripts/topic_links.py; each sentence is written from what the linking note says.
+// `shared` is a note that belongs to two topics (drawn dashed). About nine topics per side read well; beyond that, split by area.
+export const monthMap = (d) => (t0) => {
+  const { c, end } = chap(t0), W = wire(c), cols = [...PALETTE, COL.sand, COL.slate], CX = 960, CY = 580, RX = 500, RY = 330, PHI = 62 * Math.PI / 180; at(t0 + 0.5);
+  on(el(c, 'a h2', d.title, 'left:100px;top:136px')); wait(1.6);
+  const all = d.areas.flatMap((a, ai) => a.topics.map(([id, name]) => ({ id, name, ai }))), half = Math.ceil(all.length / 2), P = {}, R = {};
+  // keep an area together on one side when that is possible
+  let cut = half, acc = 0; for (const a of d.areas) { if (acc + a.topics.length > half) { cut = (half - acc) * 2 >= a.topics.length ? acc + a.topics.length : acc; break; } acc += a.topics.length; cut = acc; }
+  if (cut === 0 || cut === all.length) cut = half;
+  const fs = Math.max(cut, all.length - cut) > 9 ? 25 : 30;
+  [all.slice(0, cut), all.slice(cut)].forEach((side, si) => side.forEach((tp, i) => { const ph = Math.min(PHI, (side.length - 1) * 0.2), a = side.length > 1 ? -ph + 2 * ph * i / (side.length - 1) : 0;   // a short side stays near the middle
+    P[tp.id] = [CX + (si ? 1 : -1) * RX * Math.cos(a), CY + RY * Math.sin(a), si]; }));
+  d.areas.forEach((a, ai) => { const col = cols[ai % cols.length];
+    on(el(c, 'a nw', `<i style="display:inline-block;width:14px;height:14px;border-radius:7px;margin-right:10px;background:${col}"></i>${a.name}`, `right:${100 + (d.areas.length - 1 - ai) * 0}px;top:${150 + ai * 40}px;font-size:26px;font-weight:300;letter-spacing:.06em;color:#b9bac2`), { dy: 0 });
+    a.topics.forEach(([id, name], i) => { const [x, y, si] = P[id];
+      R[id] = on(el(c, 'a', `<i style="position:absolute;left:-9px;top:-9px;width:18px;height:18px;border-radius:9px;background:${col}"></i><div class="nw" style="position:absolute;${si ? 'left:24px' : 'right:24px'};top:${-fs * 0.72}px;font-size:${fs}px;font-weight:500;letter-spacing:.03em">${name}</div>`, `left:${x}px;top:${y}px`), { t: T + 0.5 + i * 0.5, dy: 0 }); });
+    wait(0.5 + a.topics.length * 0.5 + rt(a.name, ...a.topics.map(x => x[1])) * 0.5 + 0.6); });
+  wait(1.5);
+  const say = (text, t, out) => on(el(c, 'a h2 c', text, 'left:170px;right:170px;top:922px;font-size:40px'), { t, out });   // two lines fit under the arcs
+  const chord = (a, b) => { const [x1, y1, s1] = P[a], [x2, y2, s2] = P[b], mx = (x1 + x2) / 2, my = (y1 + y2) / 2, k = s1 === s2 ? 0.75 : 0.35;
+    return `M${x1 + (s1 ? -14 : 14)} ${y1} Q${mx + (CX - mx) * k} ${my + (CY - my) * k} ${x2 + (s2 ? -14 : 14)} ${y2}`; };
+  const linked = new Set(), L = [];
+  const show = (list, dash) => list.forEach(([a, b, text]) => { if (!P[a] || !P[b]) return; linked.add(a); linked.add(b); const need = rt(text) + 2.2, te = T + 1.0 + need;
+    const l = line(W, chord(a, b), { t: T + 0.3, dur: 1.0, color: '#f3f3f5', w: 2.5, dash }); l.dim.push([te, 1e9, 0.3]); L.push(l);
+    Object.keys(R).forEach(id => { if (id !== a && id !== b) R[id].dim.push([T, te, 0.28]); }); L.slice(0, -1).forEach(o => o.dim.push([T, te, 0.4]));
+    say(text, T + 1.0, te - 0.3); at(te + 0.5); });
+  show(d.links || []); show(d.shared || [], '3 9');
+  const lone = Object.keys(R).filter(id => !linked.has(id));
+  if (lone.length && d.alone) { const te = T + rt(d.alone) + 3.5; Object.keys(R).forEach(id => { if (!lone.includes(id)) R[id].dim.push([T, te, 0.28]); });
+    lone.forEach((id, i) => { const [x, y] = P[id]; on(el(c, 'a', '', `left:${x - 17}px;top:${y - 17}px;width:34px;height:34px;border-radius:50%;border:1.5px solid rgba(255,255,255,.7)`), { t: T + 0.3 + i * 0.25, out: te, dy: 0, sc: 0.3 }); });
+    say(d.alone, T + 0.8, te - 0.3); at(te + 0.5); }
+  if (d.caption) { say(d.caption, T); hold(d.caption); wait(2.0); }
+  wait(1.0); end(T); return T + 0.6;
+};
+
 // ------------------------------------------------------------------ recall: cover and fill, then new cases
-// { title, clue, lines: ['text with ｛hidden words｝' | [skeleton index, text], ...], casesTitle, ask, cases: [[situation, answer, detail, clue]] }
+// { title, clue, lines: ['text with ｛hidden words｝' | [skeleton index, text], ...], casesTitle, ask, cases: [[situation, answer, detail, clue, label]] }
+// Without `lines` only the cases run: a month film asks one quick question per topic that way (label = the topic's name).
 // A plain string takes the skeleton question at its own position; give [index, text] when the film walked only some questions.
 // A clue is something that was there at learning (the pack's `quick.clue`): shown before the wait, it must not contain the answer.
 export const recall = (d) => (t0) => {
   const { c, end } = chap(t0), Q = SK.q; at(t0 + 0.5);
-  const A = [on(el(c, 'a h1', d.title, 'left:98px;top:150px'))]; wait(1.6);
-  const rows = d.lines.map((x, i) => Array.isArray(x) ? x : [i, x]), y0 = d.clue ? 372 : 330;
+  const A = [], rows = (d.lines || []).map((x, i) => Array.isArray(x) ? x : [i, x]), y0 = d.clue ? 372 : 330;
+  if (rows.length) { A.push(on(el(c, 'a h1', d.title, 'left:98px;top:150px'))); wait(1.6);
   if (d.clue) A.push(on(el(c, 'a nw', d.clue, 'left:150px;top:268px;font-size:32px;color:#b9bac2'), { dy: 0 }));
   const think = 8, tReveal = T + rt(d.clue || '', ...rows.map(r => r[1])) * 0.8 + think, blanks = [];
   rows.forEach(([qi, s], i) => { const y = y0 + i * 132, q = Q[qi] || [], col = q[2] || '#fff';
@@ -276,12 +316,12 @@ export const recall = (d) => (t0) => {
     const e = el(c, 'a nw', s.replace(/｛(.+?)｝/g, (m, w) => `<span class="bk" style="display:inline-block;padding:0 14px;margin:0 6px;border-radius:10px;font-weight:500">${w}</span>`), `left:480px;top:${y - 4}px;font-size:${tw(s, 42) > 1330 ? 34 : 42}px`);
     A.push(on(e, { t: T + 0.3 + i * 0.5, read: false })); e.querySelectorAll('.bk').forEach(b => blanks.push([b, tReveal + i * 2.0, col])); });
   fn((t) => blanks.forEach(([b, tr, col]) => { const open = t >= tr; b.style.color = open ? col : 'transparent'; b.style.background = open ? 'transparent' : 'rgba(242,184,75,.16)'; b.style.outline = open ? 'none' : '1.5px dashed #f2b84b'; }));
-  ring(c, 1760, 190, tReveal - think, tReveal); at(tReveal + rows.length * 2.0 + 4.5); A.forEach(r => off(r));
+  ring(c, 1760, 190, tReveal - think, tReveal); cue('recall', tReveal - think, tReveal); at(tReveal + rows.length * 2.0 + 4.5); A.forEach(r => off(r)); }
   if (d.cases && d.cases.length) { on(el(c, 'a h1', d.casesTitle, 'left:98px;top:150px'), { t: T + 0.6 });
-    d.cases.forEach(([q, a1, a2, clue], i) => { wait(0.6); const B = [], tq = rt(q, clue || '') + 1.5;
-      B.push(on(el(c, 'a s', `${i + 1} / ${d.cases.length}`, 'left:150px;top:300px;letter-spacing:.14em;color:#6fdc9b'), { dy: 0 })); B.push(on(el(c, 'a h1', q, 'left:150px;top:350px;right:300px;font-size:56px')));
-      if (clue) B.push(on(el(c, 'a nw', clue, 'left:300px;top:298px;font-size:28px;color:#b9bac2'), { t: T + rt(q) * 0.6, dy: 0 }));
-      B.push(on(el(c, 'a p', d.ask, 'left:150px;top:560px;font-size:38px;color:#f2b84b'), { t: T + tq - 1.2 })); ring(c, 1700, 420, T + tq, T + tq + 6);
+    d.cases.forEach(([q, a1, a2, clue, lab], i) => { wait(0.6); const B = [], tq = rt(q, clue || '') + 1.5;
+      B.push(on(el(c, 'a s nw', `${i + 1} / ${d.cases.length}` + (lab ? `<span style="margin-left:24px;color:#f3f3f5;letter-spacing:.06em">${lab}</span>` : ''), 'left:150px;top:300px;letter-spacing:.14em;color:#6fdc9b'), { dy: 0 })); B.push(on(el(c, 'a h1', q, 'left:150px;top:350px;right:300px;font-size:56px')));
+      if (clue) B.push(on(el(c, 'a nw', clue, 'left:150px;top:520px;font-size:30px;color:#b9bac2'), { t: T + rt(q) * 0.6, dy: 0 }));
+      B.push(on(el(c, 'a p', d.ask, `left:150px;top:${clue ? 580 : 560}px;font-size:38px;color:#f2b84b`), { t: T + tq - 1.2 })); ring(c, 1700, 420, T + tq, T + tq + 6); cue('recall', T + tq, T + tq + 6);
       B.push(on(el(c, 'a', a1, 'left:150px;top:660px;right:200px;font-size:44px;font-weight:500'), { t: T + tq + 6.2 })); B.push(on(el(c, 'a p', a2 || '', 'left:150px;top:744px;right:200px;font-size:36px;color:#f3f3f5'), { t: T + tq + 6.2 + rt(a1) }));
       wait(tq + 6.2 + rt(a1, a2 || '') + 2.5); B.forEach(r => off(r)); }); }
   end(T); return T + 0.6;

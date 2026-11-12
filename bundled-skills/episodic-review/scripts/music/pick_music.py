@@ -33,10 +33,16 @@ os.makedirs(os.path.dirname(USED), exist_ok=True)
 LIB_DIR = os.path.join(HERE, 'library')
 LIB_JSON = os.path.join(LIB_DIR, 'library.json')
 
-STYLE_MOOD = {'rooms': 'warm', 'board': 'curious', 'rewind': 'reflective'}
-STYLE_ALT = {'rooms': 'reflective', 'board': 'warm', 'rewind': 'warm'}
+# 'map' (full-frame topic films, no narration): ONE theme for the whole film. Opening, body and ending are the same composition
+# (same seed, same arrangement), so the opening states the melody, the body restates it and carries on as one continuous piece
+# (not a bed, not one piece per chapter), and the ending brings it back. The body only sits 3 dB lower.
+# (A different density would change the melody: the generator draws a sparse melody differently.)
+STYLE_MOOD = {'rooms': 'warm', 'board': 'curious', 'rewind': 'reflective', 'map': 'warm'}
+STYLE_ALT = {'rooms': 'reflective', 'board': 'warm', 'rewind': 'warm', 'map': 'warm'}
+ONE_THEME = ('map',)
+THEME_LEVEL = {'opening': 'full', 'ending': 'full', 'overview': 'light', 'topic': 'light', 'closure': 'light'}     # loudness only
 # film keys = keys every mood the style can use is happy in (piano/strings/music-box ranges were tuned for these)
-STYLE_KEYS = {'rooms': ['C', 'D', 'Eb', 'F', 'G'], 'board': ['C', 'D', 'F', 'G'], 'rewind': ['C', 'D', 'Eb', 'F', 'G']}
+STYLE_KEYS = {'rooms': ['C', 'D', 'Eb', 'F', 'G'], 'board': ['C', 'D', 'F', 'G'], 'rewind': ['C', 'D', 'Eb', 'F', 'G'], 'map': ['C', 'D', 'Eb', 'F', 'G']}
 SEGMENTS = ['opening', 'overview', 'topic', 'recall', 'reveal', 'closure', 'ending', 'quiz']
 OPEN_TONIC = ('reveal', 'closure')        # after a recall countdown (V9sus4) these start on I
 
@@ -140,7 +146,23 @@ class Picker:
         self.room_keys[room] = k
         return k
 
+    def theme_seed(self):
+        """One seed per film (kept across calls for the same film; never the previous film's)."""
+        if getattr(self, '_theme', None) is None:
+            earlier = [r.get('seed') for r in self.used['history'] if r['film'] == self.film and r.get('style') in ONE_THEME and r.get('seed')]
+            prev = {r.get('seed') for r in self.prev}
+            self._theme = earlier[-1] if earlier else next(s for s in (seed_for(self.film, 'theme', None, self.det, k) for k in range(24)) if s not in prev)
+        return self._theme
+
     def pick(self, segment, dur, room=None):
+        if self.style in ONE_THEME and segment in THEME_LEVEL:
+            mood, density, seed = STYLE_MOOD[self.style], 'full', self.theme_seed()
+            plan = mg.plan_only(mood, seed, dur, density, self.film_key)
+            rec = dict(film=self.film, style=self.style, segment=segment, room=room, dur=dur, kind='generated', mood=mood, seed=seed,
+                       density=density, key=plan['key'].split()[0], bpm=plan['bpm'], form=plan['form'], instruments=plan['instruments'],
+                       lufs=mg.DENSITY_LUFS[THEME_LEVEL[segment]])
+            self.records.append(rec)
+            return rec
         cands = candidates(self.style, segment, dur)
         prev_moods = {r.get('mood') for r in self.prev_same(segment)}
         w = np.array([wt * (0.35 if (mood in prev_moods and len(cands) > 1) else 1.0) for mood, wt, _ in cands])
@@ -205,7 +227,7 @@ def credits(records):
 def render_record(r, out_path, extra=0.0):
     dur = r['dur'] + extra
     if r['kind'] == 'generated':
-        mg.generate(r['mood'], r['seed'], dur, out_path, r['density'], r.get('key'), open_tonic=r['segment'] in OPEN_TONIC)
+        mg.generate(r['mood'], r['seed'], dur, out_path, r['density'], r.get('key'), lufs_target=r.get('lufs'), open_tonic=r['segment'] in OPEN_TONIC)
     else:   # library track: cut to length with a fade, normalised to the segment's loudness
         tgt = mg.DENSITY_LUFS['full' if r['segment'] in ('opening', 'ending') else 'bed']
         raw = subprocess.run(['ffmpeg', '-v', 'error', '-i', r['path'], '-t', f'{dur:.3f}', '-ac', '2', '-ar', str(mg.SR), '-f', 'f32le', '-'],
@@ -219,7 +241,43 @@ def render_record(r, out_path, extra=0.0):
     return out_path
 
 
-def assemble(cues, records, outdir, total, overlap):
+def merge_body(cues):
+    """Consecutive topic-like cues become one: the body of a one-theme film is a single continuous piece."""
+    out = []
+    for c in cues:
+        if out and c['segment'] in ('topic', 'overview', 'closure') and out[-1]['segment'] == c['segment'] and abs(out[-1]['start'] + out[-1]['dur'] - c['start']) < 0.5:
+            out[-1] = dict(out[-1], dur=round(c['start'] + c['dur'] - out[-1]['start'], 3))        # cue times are rounded: allow a small gap
+        else:
+            out.append(dict(c))
+    return out
+
+
+def apply_marks(score, marks, key, outdir, depth_db=-9.0):
+    """Recall moments: the music steps back while the viewer thinks (it keeps going, quieter), and one clean chime marks the reveal."""
+    if not marks:
+        return score
+    chime = os.path.join(outdir, 'reveal_chime.wav')
+    mg.generate('chime', 1, 4.0, chime, 'full', key)
+    raw = subprocess.run(['ffmpeg', '-v', 'error', '-i', chime, '-f', 'f32le', '-'], capture_output=True, check=True).stdout
+    ch = np.frombuffer(raw, np.float32).reshape(-1, 2).astype(np.float64) * 10 ** (-3 / 20)
+    g = np.ones(len(score))
+    lo, down, up = 10 ** (depth_db / 20), int(0.8 * mg.SR), int(1.5 * mg.SR)
+    for m in marks:
+        a, b = int(m['start'] * mg.SR), int((m['start'] + m['dur']) * mg.SR)
+        a0 = max(0, a - down)
+        g[a0:a] = np.minimum(g[a0:a], np.linspace(1, lo, a - a0))
+        g[a:b] = lo
+        b1 = min(len(g), b + up)
+        g[b:b1] = np.minimum(g[b:b1], np.linspace(lo, 1, b1 - b))
+    score = score * g[:, None]
+    for m in marks:
+        b = int((m['start'] + m['dur']) * mg.SR)
+        y = ch[:max(0, len(score) - b)]
+        score[b:b + len(y)] += y
+    return score
+
+
+def assemble(cues, records, outdir, total, overlap, marks=None, key=None):
     N = int(round(total * mg.SR))
     score = np.zeros((N + 12 * mg.SR, 2))
     for i, (c, r) in enumerate(zip(cues, records)):
@@ -237,6 +295,7 @@ def assemble(cues, records, outdir, total, overlap):
         print(f'  [{i + 1}/{len(cues)}] {c["start"]:7.2f}s {r["segment"]:8s} {r.get("mood", "")}/{r.get("density", "")} '
               f'seed={r.get("seed", "-")} key={r.get("key", "-")} -> {os.path.basename(path)}', file=sys.stderr)
     score = score[:N]
+    score = apply_marks(score, marks, key, outdir)
     score, _ = mg.limiter(score, -1.5)
     mg.write_wav24(os.path.join(outdir, 'score.wav'), score)
     return os.path.join(outdir, 'score.wav')
@@ -255,7 +314,7 @@ def write_score_meta(outdir, out):
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument('--film', help='片的 id，例：rooms-oct')
-    ap.add_argument('--style', choices=list(STYLE_MOOD), help='rooms / board / rewind')
+    ap.add_argument('--style', choices=list(STYLE_MOOD), help='rooms / board / rewind / map (one theme through the whole film)')
     ap.add_argument('--segment', choices=SEGMENTS)
     ap.add_argument('--room', type=int, help='第幾個房間/主題（同房間共用調性）')
     ap.add_argument('--dur', type=float, default=30.0)
@@ -278,13 +337,15 @@ def main():
         sheet = json.load(open(a.cues))
         film, style = a.film or sheet['film'], a.style or sheet['style']
         cues = sorted(sheet['cues'], key=lambda c: c['start'])
+        if style in ONE_THEME:
+            cues = merge_body(cues)
         p = Picker(film, style, a.deterministic, a.allow_course, a.library_weight, key_policy=a.key_policy)
         recs = [p.pick(c['segment'], c['dur'], c.get('room')) for c in cues]
         total = sheet.get('duration') or max(c['start'] + c['dur'] for c in cues)
         out = dict(film=film, style=style, previous_film=p.prev_film, film_key=p.film_key, key_policy=a.key_policy, duration=total, cues=[])
         if a.render:
             os.makedirs(a.render, exist_ok=True)
-            out['score'] = assemble(cues, recs, a.render, total, a.overlap)
+            out['score'] = assemble(cues, recs, a.render, total, a.overlap, marks=sheet.get('marks') if style in ONE_THEME else None, key=p.film_key)
         for c, r in zip(cues, recs):
             out['cues'].append(dict(start=c['start'], **{k: v for k, v in r.items() if k not in ('film', 'style', 'path')}))
         out['credits'] = credits(recs)

@@ -12,6 +12,7 @@ Three length tiers exist and nothing else (`templates/length.json`, also read by
 
 - Order of authority: what the user said this time; the `length` of a pending plugin request; ask once after reading (offer the three tiers with what each would cover); when nobody can be asked, the plugin setting `episodicLength`; otherwise medium.
 - Which topics: the user's named topics first; then the pack's ranking; prefer topics that reach L3-L4 and whose cards have gone badly. If fewer topics are deep enough than the tier holds, say so and make fewer. Do not pad.
+- A month overview (long tier) is built with `scripts/month_film.py` (§2). With 14 topics it runs about ten minutes, most of it the quick questions; cut topics from the questions before cutting links from the map.
 - Depth before breadth: a shorter film takes fewer skeleton questions, not shallower chapters.
 - **Aiming at a length.** `--data` prints the seconds of every part. Measured on the template: opening 40-50 s (with the history line), skeleton about 20 s, relation map 50-90 s, recall 60-90 s, close 40-50 s, so about four minutes before any chapter; a chapter is 50-130 s, a beat 25-60 s. A film of two chapters therefore lands near seven minutes. To go shorter, drop parts whole (the history in the opening, the links out, the areas in the close, a second new case) before thinning a chapter.
 - Report the topics not filmed. They are the candidates next time and they still have their cards.
@@ -47,7 +48,16 @@ The template:
 | `film.example.js` | a complete small film about an invented person's notes. Replace its content; keep or change its patterns |
 | `film.gallery.js`, `figs/` | the patterns the example does not use, and a sample figure |
 
-Write the film as `film.js` in the project: it is a list of chapters, each a call to a pattern with data, or your own beat. The data shape of every pattern is in the comment above it in `patterns.js`. Put images the film embeds in the project's `figs/`.
+A month overview film is generated, not written:
+
+```bash
+python3 .claude/skills/engram-quest-episodic-review/scripts/month_film.py --pack engram-quest/episodic-review/packs/2026-10/pack.json \
+  --links <work>/links.json --sentences <work>/sentences.json --out $STUDIO/projects/<id>/film.js
+```
+
+`sentences.json` is `{ "<topic id>|<topic id>": "the sentence that states the relation" }`, written after reading the linking notes. A link with no sentence is not drawn and is listed on the terminal.
+
+Write a topic film as `film.js` in the project: it is a list of chapters, each a call to a pattern with data, or your own beat. The data shape of every pattern is in the comment above it in `patterns.js`. Put images the film embeds in the project's `figs/`.
 
 Chapters with a `strip` number are the ones walked for a skeleton question: they light that question in the strip and are written to `CHAPTERS` with the topic id. A chapter may set `cue` to name its own music segment.
 
@@ -58,6 +68,7 @@ Reuse across runs is weak: the fingerprint covers the whole page, so an edit to 
 ## 3. Checking before the full render
 
 1. `READING` in `film-data.json` (also printed by `--data`): every text that is on screen for less than it needs. A text leaves when it, its card or its chapter leaves. Fix the timing or cut words.
+   `--data` also prints layout problems: text outside the frame, and two texts whose boxes overlap, measured in the browser at each fullest moment and in the middle of every text's time on screen. Zero problems does not mean the frame is good, only that nothing collides.
 2. `--stills auto` takes a still just before each beat is cleared and each chapter ends, when the frame is fullest. Look at them at full size: overlaps, text outside its card, type too small, an empty half of the frame. The patterns place things by rule; long names and long relations are where the rules run out.
 3. Read the on-screen text in order as a stranger would (`onscreen` in `film-data.json`). Then look at the `--notext` stills. For medium and long tiers give both to a fresh agent that has not seen the notes.
 4. Every question: was its answer on screen before it was asked?
@@ -67,15 +78,18 @@ Changing timing after the score is generated means regenerating the cue sheet; d
 ## 4. Sound
 
 - No narration is assumed. Where speech synthesis is available it must say what the picture shows, in the film's language.
-- Music comes from `scripts/music/` (procedural score on sampled instruments; it needs numpy and scipy). `--data` writes the cue sheet `music-cues.json` from the film's `CUES`, one segment per chapter: `opening`, `topic` for everything between, `ending`. It is rewritten on every run, so it cannot lag behind a retimed film.
+- Music comes from `scripts/music/` (procedural score on sampled instruments; it needs numpy and scipy). `--data` writes the cue sheet `music-cues.json` from the film's `CUES` and the recall countdowns (`marks`). It is rewritten on every run, so it cannot lag behind a retimed film.
 
   ```bash
   python3 -I .claude/skills/engram-quest-episodic-review/scripts/music/pick_music.py --cues projects/<id>/music-cues.json --render projects/<id>/audio/
-  python3 .claude/skills/engram-quest-episodic-review/scripts/mix.py --score projects/<id>/audio/score.wav --duration <seconds> --out projects/<id>/narration.wav
+  python3 .claude/skills/engram-quest-episodic-review/scripts/mix.py --score projects/<id>/audio/score.wav --duration <seconds> --out projects/<id>/narration.wav --lufs -25 --air 3
   node render_stage.cjs projects/<id> --poster 30        # picks up narration.wav
   ```
   The credits text is in `audio/cues.json`.
-- Quiet beds under content, the thinnest texture during recall, one clean pitched sound at a reveal. Never noise, hiss or room tone.
+- **What the score is for.** A film of six to ten minutes with no narration needs something that is heard as a piece of music: light, slow, with a melody. The cue sheet's style `map` gives one theme for the whole film: the opening states the melody (piano over long strings), the body restates it and carries on as one continuous piece 3 dB lower, the ending brings it back. One key, one tempo, no new piece per chapter. A bed without melody under a long film is heard as no music at all.
+- **Level.** The viewer is reading. `--lufs -25` is the level for a film with music only (measured: about -25 in the opening and ending, -28 in the body); `-16.5` is for a film with narration. `--air 3` lifts the top a little so a quiet score survives small speakers.
+- **Recall.** During each countdown the music steps back about 9 dB and keeps going; one clean chime marks the reveal. Both come from the `marks` in the cue sheet (the `recall` pattern emits them; your own beat can call `cue('recall', t0, t1)`).
+- Never noise, hiss or room tone. The older styles (`rooms`, `board`, `rewind`: a new piece per segment, beds under topics) remain for the legacy shells.
 - Pass the credits text to `deliver.py`.
 
 ## 5. Delivering

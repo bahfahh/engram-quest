@@ -1,7 +1,7 @@
 // film.gallery.js — the beats film.example.js does not use, one after another, so they can be seen before choosing:
 //   node render_stage.cjs projects/<id> --film gallery --stills auto
 // Same invented person and notes as the example. Not a film to deliver.
-import { skeleton, chapter, table, axisMap, spans, figure } from './patterns.js';
+import { skeleton, chapter, table, axisMap, spans, figure, monthMap, recall } from './patterns.js';
 
 export const FILM = {
   id: 'gallery', topicId: 't-study-method', crumb: ['示範', '展示方式'], badge: '展示方式一覽',
@@ -33,5 +33,14 @@ export const FILM = {
                    { at: [0.625, 0.23], label: '第 6 天', text: '再一次，之後掉得更慢。', color: 'green' },
                    { label: '這張圖沒說的', text: '間隔該多長，筆記裡沒有寫。' }],
           caption: '每回想一次，忘得更慢。' })] }) },
+    // for a film about the whole month: topics by area, the real links one at a time, then the ones that stand alone; then one quick question per topic
+    { name: '這個月', run: monthMap({ title: '十月：7 個主題，怎麼接在一起',
+        areas: [{ name: '學習', topics: [['study', '讀書方法'], ['vocab', '英文單字'], ['notes', '筆記怎麼寫']] }, { name: '生活', topics: [['sleep', '睡眠'], ['coffee', '手沖咖啡']] }, { name: '工作', topics: [['meet', '開會紀錄'], ['plan', '週計畫']] }],
+        links: [['study', 'vocab', '背單字用的是讀書方法裡的同一招：先想，再看。'], ['notes', 'meet', '開會紀錄照「筆記怎麼寫」的格式：先寫結論。'], ['sleep', 'study', '睡眠那篇引了同一個實驗：睡前回想留得更久。']],
+        shared: [['plan', 'notes', '同一篇筆記：〈每週回顧範本〉兩邊都收了。']],
+        alone: '手沖咖啡這個月沒有接到別的主題。', caption: '三條連結，都繞著「先想，再看」。' }) },
+    { name: '快問', cue: 'topic', run: recall({ casesTitle: '每個主題一題', ask: '先自己講一次。',
+        cases: [['為什麼讀四遍，隔週還是忘？', '重讀養出的是熟悉感，不是想得出來。', '一週後還留著的，是回想的那一組。', '線索　那次模擬考', '讀書方法'],
+                ['手沖時水溫太高，味道會怎樣？', '偏苦。', '萃取過頭；筆記裡寫的是降到 90 度上下再試。', '線索　上次那包淺焙', '手沖咖啡']] }) },
   ],
 };

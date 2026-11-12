@@ -4,7 +4,7 @@
 <link rel="stylesheet" href="look.css">
 <body><div id="v"><div id="crumb"></div><div id="count"></div><div id="mini"></div><div id="badge"></div></div>
 <script type="module">
-import { render, fn, fontsReady, imagesReady, icons, readingReport, onscreen, peaks, ease, clamp } from './engine.js';
+import { render, fn, fontsReady, imagesReady, icons, readingReport, onscreen, peaks, marks, ease, clamp } from './engine.js';
 import { SK } from './patterns.js';
 window.studioReady = (async () => {
   await icons(['moon', 'mic', 'check', 'x', 'file-text', 'database', 'network', 'clock', 'search', 'link']);
@@ -16,6 +16,7 @@ window.studioReady = (async () => {
   window.CHAPTERS = B.filter(b => b.strip != null).map(b => ({ title: b.name, topicId: F.topicId, from: +b.t0.toFixed(1), to: +b.t1.toFixed(1) }));
   // music cues, in the words scripts/music/pick_music.py uses. A chapter may name its own: { name, cue: 'recall', run }
   window.CUES = B.map((b, k) => ({ t0: b.t0, t1: b.t1, kind: F.chapters[k].cue || (k === 0 ? 'opening' : k === B.length - 1 ? 'ending' : 'topic') }));
+  window.MARKS = marks().map(m => ({ kind: m.kind, start: +m.t0.toFixed(2), dur: +(m.t1 - m.t0).toFixed(2) }));   // recall countdowns: the score steps back, a chime at the end
   window.PARTS = B.map(b => ({ name: b.name || '(opening)', seconds: +(b.t1 - b.t0).toFixed(1) }));
   // chrome: where we are (path), which chapter, and the skeleton as a strip with the active question lit
   const crumb = document.getElementById('crumb'), count = document.getElementById('count'), mini = document.getElementById('mini'), badge = document.getElementById('badge');
