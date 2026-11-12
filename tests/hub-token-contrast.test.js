@@ -21,6 +21,16 @@ function contrast(a, b) {
   return (hi + 0.05) / (lo + 0.05);
 }
 
+const pages = String(require("../src/styles/hub-pages"));
+
+/** The design token a rule in hub-pages.js gives one property, e.g. token(".lh-syg-edge", "color") → "text". */
+function token(selector, property) {
+  const rule = pages.split("\n").find((line) => line.startsWith(`${selector} {`));
+  const value = rule && rule.match(new RegExp(`[{ ;]${property}:var\\(--([a-z0-9]+)\\)`));
+  if (!value) throw new Error(`${selector} sets no ${property} token`);
+  return value[1];
+}
+
 const TEXT = ["text", "text2", "text3", "mstt", "duet", "lrnt", "newt", "tint"];
 const SURFACES = ["base", "card"];
 
@@ -40,6 +50,33 @@ describe("design token contrast", () => {
 
     it(`keeps button text readable in ${name}`, () => {
       expect(contrast(tokens.onbtn, tokens.btn)).toBeGreaterThanOrEqual(4.5);
+    });
+
+    // The Synapse map: the reason on each connector is the content, so it and the lines under each
+    // node are checked on the surface they are actually drawn on, desktop and phone.
+    it(`keeps the Synapse map's reasons, subtitles and states at 4.5:1 in ${name}`, () => {
+      const panel = { desktop: token(".lh-syg", "background"), phone: token("body.is-phone .lh-syg", "background") };
+      const node = { desktop: token(".lh-syg-node.is-link", "background"), phone: token("body.is-phone .lh-syg-node.is-link", "background") };
+      const onPanel = { reason: ".lh-syg-edge", "explicit link": ".lh-syg-edge.is-explicit", "group label": ".lh-syg-tree > .lh-syg-grp", note: ".lh-syg-note" };
+      const onNode = {
+        title: ".lh-syg-tt", subtitle: ".lh-syg-meta",
+        mastered: '.lh-syg-st[data-state="mastered"]', learning: '.lh-syg-st[data-state="learning"]',
+        seen: '.lh-syg-st[data-state="seen"]', unseen: '.lh-syg-st[data-state="unseen"]',
+      };
+      const failures = [];
+      const check = (what, selector, surface, where) => {
+        const ratio = contrast(tokens[token(selector, "color")], tokens[surface]);
+        if (ratio < 4.5) failures.push(`${what} on the ${where}: ${ratio.toFixed(2)}`);
+      };
+      for (const device of ["desktop", "phone"]) {
+        for (const [what, selector] of Object.entries(onPanel)) check(what, selector, panel[device], `${device} panel`);
+        // A node that opens something has its own surface; a recall topic and a next step sit on the panel.
+        for (const [what, selector] of Object.entries(onNode)) {
+          check(what, selector, node[device], `${device} node`);
+          check(what, selector, panel[device], `${device} panel`);
+        }
+      }
+      expect(failures).toEqual([]);
     });
   }
 });

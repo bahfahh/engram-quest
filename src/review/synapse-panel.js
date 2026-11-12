@@ -1,20 +1,29 @@
 "use strict";
-// Draws the Synapse relation map inside the review card: the card at the root, one branch per
-// related thing, the reason written on each connecting line, and a second step nested under the
-// branch it hangs from. One layout serves phone and desktop (the line text sits above the node on
-// a narrow screen, beside it on a wide one). The graph itself comes from synapse-graph.js; this
-// file only turns it into DOM and reports clicks.
+// Draws the Synapse relation map inside the review card. On a wide panel it is a mind map: the card
+// being reviewed in the middle, what the user already knows branching out to its left, where the
+// card comes from and what is still ahead to its right, each reason written on its connector and a
+// second step hanging under the branch it belongs to. On a phone, or a narrow window, the same
+// elements stack into a tree in the same order. The graph comes from synapse-graph.js and its
+// arrangement from synapse-layout.js; this file only builds DOM, draws the connectors and reports clicks.
 
 const { t: c, interpolate: K } = require("../i18n");
-const { icon } = require("../hub/ui");
+const { icon, featureIcon, isPhone } = require("../hub/ui");
+const { isLearned } = require("./synapse-graph");
+const { arrangeSynapseMap } = require("./synapse-layout");
 
+const MAP_MIN_WIDTH = 640; // narrower than this the side columns cannot hold a readable node
+const SVG_NS = "http://www.w3.org/2000/svg";
+
+// `feature` is the Hub's own icon for that kind of content, so a type looks here as it does in the
+// sidebar. A note is the user's, not a Hub feature, and keeps a plain line icon. `cue` tells what a
+// click does; a recall topic has no page of its own, so it has none and is drawn flat.
 const TYPES = {
-  card: { icon: "deck", label: "SYNAPSE_TYPE_CARD" },
-  note: { icon: "doc", label: "SYNAPSE_TYPE_NOTE" },
-  explainer: { icon: "sparkle", label: "TAB_EXPLAINER" },
-  lesson: { icon: "book", label: "SYNAPSE_TYPE_LESSON" },
-  video: { icon: "video", label: "SYNAPSE_TYPE_VIDEO" },
-  topic: { icon: "recall", label: "SYNAPSE_TYPE_TOPIC" },
+  card: { feature: "review", icon: "deck", label: "SYNAPSE_TYPE_CARD", cue: "chevron" },
+  note: { icon: "doc", label: "SYNAPSE_TYPE_NOTE", cue: "external" },
+  explainer: { feature: "explainer", icon: "doc", label: "TAB_EXPLAINER", cue: "arrow" },
+  lesson: { feature: "lesson", icon: "book", label: "SYNAPSE_TYPE_LESSON", cue: "arrow" },
+  video: { feature: "video", icon: "video", label: "SYNAPSE_TYPE_VIDEO", cue: "play" },
+  topic: { feature: "episodic", icon: "recall", label: "SYNAPSE_TYPE_TOPIC", cue: null },
 };
 // Wording for the explicit links (synapse-graph.js `rel`); inferred links carry the skill's own sentence.
 const RELS = {
@@ -27,6 +36,7 @@ const RELS = {
   "topic-cites": "SYNAPSE_REL_TOPIC_CITES",
   "topic-note": "SYNAPSE_REL_TOPIC_NOTE",
 };
+const GROUPS = { recall: "SYNAPSE_GROUP_RECALL", source: "SYNAPSE_GROUP_SOURCE", next: "SYNAPSE_GROUP_NEXT" };
 
 function stateLabel(node) {
   if (node.state === "mastered") return "SYNAPSE_STATE_MASTERED";
@@ -37,7 +47,7 @@ function stateLabel(node) {
 }
 
 /**
- * opts = { t, card, loading, graph, revealed, expandedId, onSelect(node), renderBack(el, node) }
+ * opts = { t, plugin, card, loading, graph, revealed, expandedId, onSelect(node), renderBack(el, node) }
  *   loading     the content the links resolve against is still being read
  *   expandedId  the card node whose answer is open
  */
@@ -53,10 +63,20 @@ function renderSynapseMap(parent, opts) {
 
   if (graph.branches.length) {
     const map = panel.createEl("div", { cls: "lh-syg-map" });
-    const root = map.createEl("div", { cls: "lh-syg-root", attr: { title: c(t, "SYNAPSE_CENTER") } });
-    icon(root, "deck");
-    root.createEl("span", { text: card.front || "" });
-    renderBranches(map, graph.branches, opts);
+    map.appendChild(activeDocument.createElementNS(SVG_NS, "svg")).setAttribute("class", "lh-syg-wires");
+    const root = map.createEl("div", { cls: "lh-syg-root" });
+    root.createEl("span", { cls: "lh-syg-root-cap", text: c(t, "SYNAPSE_CENTER") });
+    root.createEl("span", { cls: "lh-syg-root-tt", text: card.front || "" });
+    const sides = arrangeSynapseMap(graph.branches);
+    for (const side of ["left", "right"]) {
+      if (!sides[side].length) continue;
+      const list = map.createEl("ul", { cls: `lh-syg-tree lh-syg-side is-${side}` });
+      for (const part of sides[side]) {
+        if (part.labelled) list.createEl("li", { cls: "lh-syg-grp", text: c(t, GROUPS[part.group]), attr: { "data-group": part.group } });
+        renderBranches(list, part.branches, opts);
+      }
+    }
+    watchLayout(map);
   } else if (!graph.more) {
     panel.createEl("div", { cls: "lh-syg-note", text: c(t, "SYNAPSE_EMPTY") });
   }
@@ -68,27 +88,27 @@ function renderSynapseMap(parent, opts) {
   return panel;
 }
 
-function renderBranches(parent, nodes, opts) {
+function renderBranches(list, nodes, opts) {
   const { t } = opts;
-  const list = parent.createEl("ul", { cls: "lh-syg-tree" });
   for (const node of nodes) {
     const type = TYPES[node.type];
-    const item = list.createEl("li", { cls: "lh-syg-br" });
+    const item = list.createEl("li", { cls: "lh-syg-br" + (isLearned(node) ? "" : " is-next") });
     const row = item.createEl("div", { cls: "lh-syg-row" });
     row.createEl("span", { cls: "lh-syg-edge" + (node.inferred ? "" : " is-explicit"), text: node.reason || c(t, RELS[node.rel] || "SYNAPSE_REL_RELATED") });
 
-    // A recall topic has no page of its own to open; every other node does something on click.
-    const opens = node.type !== "topic";
-    const el = row.createEl("div", { cls: "lh-syg-node" + (opens ? " is-link" : ""), attr: { "data-type": node.type, "data-state": node.state || "none" } });
-    icon(el.createEl("span", { cls: "lh-syg-ic" }), type.icon);
+    const el = row.createEl("div", { cls: "lh-syg-node" + (type.cue ? " is-link" : ""), attr: { "data-type": node.type } });
+    if (type.feature) featureIcon(el, opts.plugin, type.feature, { size: 32, fallback: type.icon });
+    else icon(el.createEl("span", { cls: "lh-syg-ic" }), type.icon);
     const text = el.createEl("span", { cls: "lh-syg-tx" });
     text.createEl("span", { cls: "lh-syg-tt", text: node.title });
-    text.createEl("span", { cls: "lh-syg-sub", text: [c(t, type.label), node.sub].filter(Boolean).join(" · ") });
+    const meta = text.createEl("span", { cls: "lh-syg-meta" });
     const state = stateLabel(node);
-    if (state) el.createEl("span", { cls: "lh-syg-st", text: c(t, state) });
+    if (state) meta.createEl("span", { cls: "lh-syg-st", text: c(t, state), attr: { "data-state": node.state } });
+    meta.createEl("span", { cls: "lh-syg-sub", text: [c(t, type.label), node.sub].filter(Boolean).join(" · ") });
 
-    if (opens) {
+    if (type.cue) {
       const expanded = node.type === "card" && opts.expandedId === node.id;
+      icon(el.createEl("span", { cls: "lh-syg-cue" + (expanded ? " is-open" : "") }), type.cue);
       el.setAttribute("role", "button");
       el.setAttribute("tabindex", "0");
       if (node.type === "card") el.setAttribute("aria-expanded", String(expanded));
@@ -97,7 +117,49 @@ function renderBranches(parent, nodes, opts) {
       el.addEventListener("keydown", (ev) => { if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); select(ev); } });
       if (expanded) opts.renderBack(item.createEl("div", { cls: "lh-syg-back" }), node);
     }
-    if (node.children.length) renderBranches(item, node.children, opts);
+    if (node.children.length) renderBranches(item.createEl("ul", { cls: "lh-syg-tree" }), node.children, opts);
+  }
+}
+
+// Picks map or tree from the room there is, and redraws the connectors whenever they move: the
+// panel changes size (a window resize, an answer expanding under a card), or the review scrolls
+// and the card in the middle, which stays in view, slides along the map.
+function watchLayout(map) {
+  const update = () => {
+    map.toggleClass("is-map", !isPhone() && map.clientWidth >= MAP_MIN_WIDTH);
+    drawWires(map);
+  };
+  update();
+  const scrolling = new AbortController();
+  const observer = new ResizeObserver(() => {
+    if (map.isConnected) update();
+    else { observer.disconnect(); scrolling.abort(); }
+  });
+  observer.observe(map);
+  activeDocument.addEventListener("scroll", () => { if (map.isConnected) drawWires(map); }, { capture: true, passive: true, signal: scrolling.signal });
+}
+
+// One curve from the card to each branch next to it, ending where the line under the branch's
+// reason begins, so the reason reads as written on the connector.
+function drawWires(map) {
+  const svg = map.querySelector(".lh-syg-wires");
+  svg.replaceChildren();
+  if (!map.hasClass("is-map")) return;
+  const box = map.getBoundingClientRect();
+  const root = map.querySelector(".lh-syg-root").getBoundingClientRect();
+  const y1 = root.top + root.height / 2 - box.top;
+  for (const side of map.querySelectorAll(".lh-syg-side")) {
+    const left = side.hasClass("is-left");
+    const x1 = (left ? root.left : root.right) - box.left;
+    for (const branch of side.querySelectorAll(":scope > .lh-syg-br")) {
+      const edge = branch.querySelector(".lh-syg-edge").getBoundingClientRect();
+      const x2 = (left ? edge.right : edge.left) - box.left;
+      const y2 = edge.bottom - box.top - 0.75;
+      const mid = (x1 + x2) / 2;
+      const path = svg.appendChild(activeDocument.createElementNS(SVG_NS, "path"));
+      path.setAttribute("d", `M${x1} ${y1}C${mid} ${y1} ${mid} ${y2} ${x2} ${y2}`);
+      if (branch.hasClass("is-next")) path.setAttribute("class", "is-next");
+    }
   }
 }
 

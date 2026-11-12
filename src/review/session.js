@@ -844,7 +844,7 @@ var Q=class extends I.Modal{
       return;
     }
     renderSynapseMap(parent,{
-      t, card, revealed:this.answerShown,
+      t, card, plugin:this.plugin, revealed:this.answerShown,
       graph:this._synapseGraph(card,this.answerShown),
       expandedId:this._synapseExpandedId,
       renderBack:(el,node)=>{
