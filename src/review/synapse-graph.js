@@ -10,7 +10,6 @@
 const { MASTERED_STABILITY_THRESHOLD } = require("./synapse");
 
 const MAX_NODES = 12; // the centre card included
-const RELATION_TYPES = ["lesson", "video", "explainer", "note", "topic"];
 const LESSONS_DIR = "engram-quest/lessons";
 const VIDEOS_DIR = "engram-quest/videos";
 const TOPIC_PATH = /^engram-quest\/episodic-review\/topics\/([^/]+)\/topic\.json$/;
@@ -214,4 +213,4 @@ function buildSynapseGraph({ card, sourcePaths = [], index, resolvedLinks = {}, 
   return { branches, count: shown.size, more: [...full.keys()].filter((id) => !shown.has(id)).length };
 }
 
-module.exports = { MAX_NODES, RELATION_TYPES, buildContentIndex, buildSynapseGraph, isLearned, leaksAnswer };
+module.exports = { MAX_NODES, buildContentIndex, buildSynapseGraph, isLearned, leaksAnswer };
