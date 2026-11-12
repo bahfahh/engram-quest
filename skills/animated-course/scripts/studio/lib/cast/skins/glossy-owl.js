@@ -1,10 +1,14 @@
-// 亮面公仔・貓頭鷹（v2，依使用者設計圖重做）：講解者＝焦糖色胖胖貓頭鷹（沉穩、博學、一針見血）。
-//   大大的圓方頭幾乎和身體一樣寬、額頭高、眼睛低；奶油色眼盤、琥珀棕大眼、粗框紫色方圓眼鏡、羽毛眉（一邊會挑起）、
-//   橘色小鉤喙、耳羽各三根成冠、臉頰一圈羽尖；翅膀當手臂，末端是羽毛「手指」，左翅握一支橘色鉛筆（紫色筆尾）；
-//   胸前一枚浮雕「翻開的書」徽章。羽毛是 sheen 緞面（不是硬亮面），只有眼睛、鏡框、喙、鉛筆是亮面。
-// 學習者＝紫丁香兔（沿用亮面動物）。化身＝湖水綠螢火蟲（尾燈就是它的狀態燈）。
-// 簽名＝胸前書本徽章發狀態光＋頭頂浮出的標點：think 藍光脈動＋「…」三點輪流亮、耳羽豎起、翅膀羽指點太陽穴；
-//        aha 綠光＋「!」彈出＋星芒、耳羽全豎、滿意地點頭；doubt 琥珀光閃爍＋「?」搖晃、一邊耳羽垂下、一邊眉毛挑高另一眼瞇起。
+// Glossy figure: owl (v2, rebuilt to match its design image). Teacher = a plump caramel owl (calm, learned, to the point).
+//   A big rounded-square head almost as wide as the body, high forehead, low eyes; cream eye discs, big amber-brown eyes,
+//   thick purple rounded-square glasses, feather brows (one can lift), a small orange hooked beak, three ear tufts each
+//   forming a crest, a ring of feather tips round the cheeks; wings as arms ending in feather "fingers", the left wing
+//   holding an orange pencil (purple end); an embossed "open book" emblem on the chest. Feathers are satin sheen (not hard
+//   gloss); only the eyes, glasses frame, beak and pencil are glossy.
+// Student = a lilac bunny (from the glossy animals). Embodiment = a teal firefly (its tail light is its state light).
+// Signature = the chest book emblem glows the state, plus punctuation rising above the head: think = blue pulse + "…"
+//   with its three dots lighting in turn, ear tufts up, a wing-finger tapping the temple; aha = green light + a popping
+//   "!" + sparkle, all tufts up, a satisfied nod; doubt = amber flicker + a wobbling "?", one tuft drooping, one brow
+//   raised and the other eye narrowed.
 import * as THREE from 'three';
 import { mergeVertices } from 'three/addons/utils/BufferGeometryUtils.js';
 

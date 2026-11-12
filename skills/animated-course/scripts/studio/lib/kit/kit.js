@@ -206,7 +206,7 @@ export function card({ w, hgt, pad = 24, title, radius = 18, style } = {}, ...ki
   el.append(...kids);
   return el;
 }
-/** Small grey section label above a group, like "使用者在 App 上看到的". K.label('看到的廣告', {icon:'smartphone'}) */
+/** Small grey section label above a group, like "What the user sees in the app". K.label('The ad they see', {icon:'smartphone'}) */
 export function label(text, { icon: ic, color } = {}) { return h('div.k-label', { style: { color: color || '' } }, ic && icon(ic, { size: 24 }), text); }
 /** Dark (or coloured) solid tag pill: K.tag('Concept A', {color:'a'}) */
 export function tag(text, { color = 'neutral', icon: ic } = {}) { return h('div.k-tag', { style: { background: tone(color) } }, ic && icon(ic, { size: 20 }), text); }
@@ -239,7 +239,7 @@ export function avatar(name = 'A', { color = '#7B61FF', size = 32, img } = {}) {
   return a;
 }
 /**
- * A believable app-install ad creative (fills its container). K.creative({headline:'5 分鐘背 20 個單字', sub:'免費下載', color:'a', app:'LingoLeaf', style:'phone'|'bold'|'photo'})
+ * A believable app-install ad creative (fills its container). K.creative({headline:'20 words in 5 minutes', sub:'Free download', color:'a', app:'LingoLeaf', style:'phone'|'bold'|'photo'})
  */
 export function creative({ headline = EN_() ? '5 minutes a day\nto learn new words' : '每天 5 分鐘\n學會新單字', sub = EN_() ? 'Free download' : '免費下載', color = 'a', app = 'LingoLeaf', look = 'phone', glyph = 'sparkles', badge = true } = {}) {
   const c = tone(color);
@@ -449,7 +449,7 @@ export const am = {
 };
 
 /* ============================== annotations ============================== */
-/** Callout label: K.callout('沒設定轉換事件', {sub:'系統不知道誰裝了 App', tone:'red', icon:'triangle-alert', solid:false, pill:false}) */
+/** Callout label: K.callout('No conversion event set', {sub:"The system doesn't know who installed the app", tone:'red', icon:'triangle-alert', solid:false, pill:false}) */
 export function callout(text, { sub, tone: tn = 'red', icon: ic, solid = false, pill = false, size = 1 } = {}) {
   const el = h(`div.k-callout${solid ? '.solid' : ''}${pill ? '.pill' : ''}`, { style: { '--c': tone(tn), fontSize: '', transform: '' } });
   if (ic) el.append(icon(ic, { size: (sub ? 34 : 28), stroke: 2.4 }));
@@ -566,7 +566,7 @@ export function counter({ value = 0, prefix = '', suffix = '', decimals = 0, sty
 
 /* ============================== screen chrome ============================== */
 /**
- * Top chapter indicator (screen space). K.chapterBar(S.screen, {lesson:'第 3 課', chapters:[{name:'競價怎麼決定', start:0}, {name:'...', start:22}], duration})
+ * Top chapter indicator (screen space). K.chapterBar(S.screen, {lesson:'Lesson 3', chapters:[{name:'How the auction decides', start:0}, {name:'...', start:22}], duration})
  *  -> {el, update(t)}  (K.render(tl, cam, bar) calls update). Hide it during the title card by tweening el opacity.
  */
 export function chapterBar(parent, { lesson, chapters = [], duration = 60 } = {}) {
@@ -596,7 +596,7 @@ export function chapterBar(parent, { lesson, chapters = [], duration = 60 } = {}
     },
   };
 }
-/** Opening title (screen space, full-bleed). K.titleCard(S.screen, {lesson:'第 3 課', title:'...', question:'...'}) -> {el, hide(tl, at)} */
+/** Opening title (screen space, full-bleed). K.titleCard(S.screen, {lesson:'Lesson 3', title:'...', question:'...'}) -> {el, hide(tl, at)} */
 export function titleCard(parent, { lesson = EN_() ? 'Lesson 1' : '第 1 課', title = '', question = '', deco } = {}) {
   const el = h('div.k-title', h('div.no', lesson), h('h1', title), question ? h('div.q', h('div.qm', '?'), h('div', question)) : null, deco ? h('div.deco', deco) : null);
   parent.append(el);
@@ -607,7 +607,7 @@ export function titleCard(parent, { lesson = EN_() ? 'Lesson 1' : '第 1 課', t
     hide(tl, at, dur = 0.6) { tl.to(el, { opacity: 0, duration: dur, ease: 'power1.inOut' }, at); tl.set(el, { display: 'none' }, at + dur); return this; },
   };
 }
-/** Closing recap sheet (note-paper look). K.recap(S.screen, {title:'重點回顧', points:['...', '...']}) -> {el, points, show(tl, at, gap=1.2)} ; use **bold** for marker highlight */
+/** Closing recap sheet (note-paper look). K.recap(S.screen, {title:'Recap', points:['...', '...']}) -> {el, points, show(tl, at, gap=1.2)} ; use **bold** for marker highlight */
 export function recap(parent, { title = EN_() ? 'Recap' : '重點回顧', points = [], colors = ['#E5484D', '#0F9D8F', '#F2780C', '#1877F2'] } = {}) {
   const dim = h('div.k-recap-dim');
   const el = h('div.k-recap', h('h2', { html: `<u>${title}</u>` }));
@@ -657,7 +657,7 @@ export function barChart({ w = 720, h: hh = 380, data = [], max, format = {}, gr
   const grow = (tl, at, dur = 0.8, stagger = 0.2) => { tl.fromTo(bars, { '--k': 0 }, { '--k': 1, duration: dur, stagger, ease: 'power2.out', immediateRender: true }, at); tl.fromTo(values, { '--k': 0 }, { '--k': 1, duration: 0.3, stagger, immediateRender: true }, at + dur * 0.7); };
   return { el, bars, values, grow };
 }
-/** Funnel. K.funnel({w:760, stages:[{label:'看到廣告', value:100000, color:'#1877F2'}, ...]}) -> {el, stages:[el]} (widths shrink with value, min 32%) */
+/** Funnel. K.funnel({w:760, stages:[{label:'Saw the ad', value:100000, color:'#1877F2'}, ...]}) -> {el, stages:[el]} (widths shrink with value, min 32%) */
 export function funnel({ w = 760, stages = [], format = {} } = {}) {
   const el = h('div.k-funnel');
   const max = Math.max(...stages.map(s => s.value), 1), min = Math.max(1, Math.min(...stages.map(s => s.value)));

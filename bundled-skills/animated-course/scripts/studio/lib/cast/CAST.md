@@ -1,8 +1,8 @@
 # Cast skins: the contract
 
-A **skin** is the look of one character family: a **cast of three** (teacher, student, embodiment) in one visual language. Teachers (`reference/11-teachers.md`, `teachers.json`) point to a skin by id; swapping a skin changes no script. Skins were developed in the lab notebook's experiment 14 (`研究/實驗14-角色畫風（11 種）/`).
+A **skin** is the look of one character family: a **cast of three** (teacher, student, embodiment) in one visual language. Teachers (`reference/11-teachers.md`, `teachers.json`) point to a skin by id; swapping a skin changes no script.
 
-**Quality bar (user, 2026-11-02)**: rounded, refined, friendly; the teacher must look like someone who knows a lot. Rejected looks: boxy glass with a screen face, a flat ink figure with a tiny face, a teacher and student who are the same robot in two sizes. Teacher and student must differ at a glance by **silhouette + colour identity + role props**. When the user gives a design image, follow it closely (the owl v1 that deliberately departed from the design was rejected); the user's design images live in `assets/cast-designs/` of this skill.
+**Quality bar**: rounded, refined, friendly; the teacher must look like someone who knows a lot. Rejected looks: boxy glass with a screen face, a flat ink figure with a tiny face, a teacher and student who are the same robot in two sizes (too little difference, too little finish). Teacher and student must differ at a glance by **silhouette + colour identity + role props**. When there is a design image, follow it closely (a version that deliberately departed from its design was rejected); design images live in `assets/cast-designs/` of this skill.
 
 Studio: `scripts/studio` of this skill (Node + headless Chromium + three.js r170).
 
@@ -18,9 +18,9 @@ export async function create(env) { return { teacher, student, embodiment }; }
 ### The three roles (distinct silhouettes, same family)
 | role | job in a lesson | size on screen |
 |---|---|---|
-| `teacher` (講解者) | explains, points at the real interface | ~400 px tall |
-| `student` (學習者) | owns the project, guesses wrong, reacts | ~300 px |
-| `embodiment` (化身) | the system or thing being taught, acting it out (e.g. a small drone, a data spark, a coin sprite) — floats or hops | ~180 px |
+| `teacher` | explains, points at the real interface | ~400 px tall |
+| `student` | owns the project, guesses wrong, reacts | ~300 px |
+| `embodiment` | the system or thing being taught, acting it out (e.g. a small drone, a data spark, a coin sprite) — floats or hops | ~180 px |
 Each must read clearly at those sizes, on a light blurred UI background, and be told apart by silhouette alone, not only colour.
 
 ### Character object
@@ -44,7 +44,7 @@ Rendering is frame-by-frame and out of order: no `Math.random()` (use `env.rng(s
 | `turn` | −1…1 | yaw (+ = towards viewer's right); 2D may skew/flip or ignore |
 | `state`, `stateK` | `'idle'|'think'|'aha'|'doubt'`, 0–1 | drives the face and the **signature** |
 
-### Colour sets (optional)
+### Colour sets (optional: only a change of colours, so it has to look good and actually work)
 A skin may offer a few **colour sets** of the same characters, so the learner can pick a colour they like. Same shapes, props, faces and signature; only colours change, and the three roles change **together** (a designed set, not a free colour picker).
 ```js
 export const variants = [ { id: 'classic', name: { 'zh-tw': '…', en: '…' }, swatch: ['#teacher', '#trim', '#student'], col: { /* palette overrides */ } }, … ];  // first = default
@@ -63,7 +63,7 @@ Every style has one signature element that also shows the state (think / aha / d
 - Faces need eyes; talking must be visible; arms or an equivalent must be able to point and wave.
 - No professor clichés (round glasses, bow ties, mortarboards, beards). No look-alikes of trademarked characters (LEGO minifigures or studs, Grok's black ball bot, Mario, Pac-Man, Mickey, Pokémon, etc.).
 - Performance: 3D — no shadow maps, no transmission/refraction (fake glass with opacity + fresnel/rim), keep each cast under ~40k triangles; 2D — fine to rebuild paths every pose.
-  - Measured 2026-11-02 (`lab.html`, 6 s = 180 frames at 1080p30, `RENDER_GPU=1`, 4-core cloud container; old → current look): robot 57 s → 74 s (+30 %, 31.8k → 73.8k triangles, over budget), glass 65 s → 91 s (+40 %, 42.2k → 42.1k), ink 77 s → 91 s (+19 %, 42.5k → 43.4k), capsule 60 s → 68 s (+14 %, 21.7k → 39.6k); owl 59 s; nova (2026-11-03, replaced the capsule) 63 s, 43.0k. **Layers of see-through glass and glow cost more than triangles** (glass v3 has the same triangle count as v2 and is the slowest). In a real lesson the room costs more than the cast: stock lesson 1's classroom opening (2–8 s, same 180 frames) took 300 s with the old robot and 326 s with the current one (+8 %), about 6–7 extra minutes for a lesson with ~98 s of classroom. Modelling is a one-time cost; render cost is paid in every frame a character is on screen.
+  - Measured 2026-11-02 (`lab.html`, 6 s = 180 frames at 1080p30, `RENDER_GPU=1`, 4-core cloud container; old → current look): robot 57 s → 74 s (+30 %, 31.8k → 73.8k triangles, over budget), glass 65 s → 91 s (+40 %, 42.2k → 42.1k), ink 77 s → 91 s (+19 %, 42.5k → 43.4k), capsule 60 s → 68 s (+14 %, 21.7k → 39.6k); owl 59 s; nova (2026-11-03, replaced the capsule) 63 s, 43.0k. **Layers of see-through glass and glow cost more than triangles** (glass v3 has the same triangle count as v2 and is the slowest). In a real lesson the room costs more than the cast: one lesson's classroom opening (2–8 s, same 180 frames) took 300 s with the old robot and 326 s with the current one (+8 %), about 6–7 extra minutes for a lesson with ~98 s of classroom. Modelling is a one-time cost; render cost is paid in every frame a character is on screen.
 - Keep the characters' inner proportions stable under `pose` (no stretching faces when arms move).
 
 ## How to test (do it; look at the pictures)
@@ -81,7 +81,7 @@ node render.cjs projects/<lab> --scene "hero.html?style=<id>&role=teacher&pose=i
 The 6-second lab sequence (`labPoses` in `stage.js`): 0–1 idle · 1–2 teacher talks and points right, others look at the teacher · 2–3 student thinks · 3–4 student aha (arms up, hop) · 4–5 student doubts, embodiment thinks then aha · 5–6 everyone waves, teacher aha. Check every state reads, then do **at least two improvement rounds** on what looks off (proportions, face, materials, silhouette, pointing). Also crop/zoom a full-res still to judge detail. Examples of a good look: `skins/glossy-owl.js` (3D, the user's favourite); built from the user's design images (2026-11-02/03) and accepted as the current looks: `glossy-bot.js` (v2), `glass.js` (v3), `ink.js` (v3), `glossy-nova.js` (v1; it replaced the candy capsule that was designed without an image and called ugly), `porcelain.js` (v3, approved 2026-11-04; teacher ≈ 40.5k triangles, whole cast ≈ 76k — over the budget, render time not yet measured; it replaced the retired ink scholar: the teacher is a hooded cloth spirit built from `shellGeo` (a lathe with a front opening that changes with height), `bandGeo` (cloth bands on a surface), gold `edgeTube` piping, a felt texture with sheen and a canvas face with almond eyes; the embodiment is the porcelain tutor-bot with the LED face `makeWiseFace`). **A look made without a design image has been rejected every time; when there is none, show the user a few directions to pick from before polishing one.** Their helpers are worth copying: `superGeo` with taper, `onSurf`, `holdProp` (a held prop keeps a readable body-relative angle), a canvas LED face, `makeMarks` for "?" / "!" sprites.
 
 ## Deliver
-- `lib/cast/skins/<id>.js`, its 6-frame sheet and teacher portrait (copy them to the lab notebook's experiment record), and a line in `teachers.json` → `skins` (`version`, `look`, `design`, `portrait`). A skin that a registry teacher uses also replaces `assets/portraits/<teacher>.jpg` (hero.html, teacher, idle, `turn=0.3&px=800`, crop x 490–1430, y 75–1015, 640 px). Keep the previous version only in the lab notebook (`實驗14…/製作檔/styles/<id>-v<n>.js`), never next to the live skin.
+- `lib/cast/skins/<id>.js`, its 6-frame sheet and teacher portrait (keep a copy with your experiment records), and a line in `teachers.json` → `skins` (`version`, `look`, `design`, `portrait`). A skin that a registry teacher uses also replaces `assets/portraits/<teacher>.jpg` (hero.html, teacher, idle, `turn=0.3&px=800`, crop x 490–1430, y 75–1015, 640 px). Keep a previous version only with your experiment records, never next to the live skin.
 - Report: what the three characters are, what the signature does per state, known weaknesses.
 
 ## Using a skin in a scene
@@ -98,8 +98,8 @@ Rule: `reference/01-principles.md` §2. When the narration names a thing on scre
 ```js
 import { cueTrack, headOf } from '/lib/cast/cue.js';
 const cues = cueTrack(T, [
-  { line: 'A05', word: '預算', target: () => budgetRow },          // DOM element, {x0,y0,x1,y1}, {x,y} or [x,y]; a function is read at t
-  { line: 'A07', word: '學習期', target: [1320, 420], point: false },  // look only
+  { line: 'A05', word: 'budget', target: () => budgetRow },        // DOM element, {x0,y0,x1,y1}, {x,y} or [x,y]; a function is read at t
+  { line: 'A07', word: 'learning', target: [1320, 420], point: false },  // look only
 ]);
 cues.check('teacher', { x: 150, y: 930, px: 390, skin: 'glossy-bot' });   // once after building the page: prints placement warnings
 window.CUES = cues.report;
@@ -112,5 +112,5 @@ cues.apply('student', sp, t, { x: 1745, y: 940, px: 330 });
 - One cue per thing the viewer must find, not one per sentence. Things that are only mentioned get none.
 - **Placement**: every skin's `point` arm goes out horizontally to the viewer's right, so a pointing teacher stands **left of the target**, with the target at arm height. The arm height differs per skin (`ARM` in `cue.js`, measured: glossy-bot 0.43, glossy-owl 0.42, porcelain 0.57, glass 0.48, glossy-nova 0.53, clay 0.26 of the on-screen height): pass `skin: cast.skin.id` in `at` (flat stage) or to `headOf(…, { skin })`. A target to the teacher's left, or whose box the arm's horizontal line does not cross (±12 px; a bare point ±40 px — rows of a list sit 40–80 px apart, so a looser rule lands on the neighbouring row), turns the cue into a look and records a warning (`cues.check`, `cues.warnings`, printed with `console.error` so `render.cjs` shows it). Move the teacher or the target rather than accept it. On flat stages the tip must also land **inside** the target: `REACH` in `cue.js` (glossy-bot 0.63, glass 0.70 of the on-screen height right of the feet x) gives where the stick or hand ends; a target the tip stops short of or passes over turns the cue into a look with a warning. Put what the teacher points at so its left edge sits just left of the tip (≈ 40 px), and draw it below the character (`flat.content`, not `flat.over`) so the tip is visible on it (experiment 21: lessons 2, 3, 6, 7 pointed at blank space with 0 warnings before this check).
 - Followers: the student follows the teacher's cues with the eyes and body (`follow`, default `['student']`); a cue with `who: 'student'` moves the student only.
-- The clay cast: `makeCast('clay-snackshop')` characters now have `poseNative` (skin fields → clay, `skinToClay` in `classroom.js`; `point` lifts the chopstick arm to the viewer's right) and `height`, so the same cues work for 包老師 and 芋圓.
-- Test page: `cue-lab.html?style=<skin id | clay-snackshop>` (copy it into a project folder like `lab.html`): four targets — high, low, look-only and one on the wrong side, which must show a warning. Verified 2026-11-06 with every registry skin and the clay cast (lab notebook: `研究/00-教學影片變好的其他維度.md`).
+- The clay cast: `makeCast('clay-snackshop')` characters now have `poseNative` (skin fields → clay, `skinToClay` in `classroom.js`; `point` lifts the chopstick arm to the viewer's right) and `height`, so the same cues work for Professor Bao and Taro.
+- Test page: `cue-lab.html?style=<skin id | clay-snackshop>` (copy it into a project folder like `lab.html`): four targets — high, low, look-only and one on the wrong side, which must show a warning. Verified with every registry skin and the clay cast.

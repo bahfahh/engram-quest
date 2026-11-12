@@ -1,16 +1,21 @@
-// 1g 書頁精靈（2026-11-04 照使用者的設計圖做，取代 Rumi 的水墨書生；v3 定案）
-// 老師：深藍書頁精靈。尖頂兜帽像書頁一層層包住一張發暖光的臉（杏仁形琥珀色眼睛、深色睫毛線、細眉、淺笑、偶爾眼裡閃光），
-//        青綠內襯、金色滾邊、毛氈布料帶金粉；兩側各一片翻出青綠內襯的書頁層；長袍 A 字、下襬尖角帶金邊；青綠斜帶；
-//        胸口透出的柔光＝狀態燈；鐘形袖、發光的手；指＝掌心朝上往右遞。身邊飄著幾顆小光點。
-//        氣質：知道很多但不急著表現、耐心、從容、偶爾幽默，靠眼神、表情、動作呈現。
-// 化身：白金瓷導師機器人（設計圖的另一款）：圓頂頭、深藍面罩＋細金邊、暖金 LED 眼、鼠尾草綠圍巾、胸前寶石、霧金底座。
-// 學生：戴杏橘針織帽的圓滾滾小白瓷機器人（帽頂毛球＝狀態燈）、抱筆記本。
-// 狀態：老師胸口的光、化身的寶石、學生的毛球：平常暖金、思考藍、頓悟綠（老師閉眼笑）、懷疑橘紅＋「?」。
+// 1g Book-page spirit (built to match its design image; v3).
+// Teacher: a deep-blue book-page spirit. A pointed hood wraps a warm glowing face like layered pages (amber almond eyes,
+//        dark lash lines, thin brows, a small smile, an occasional twinkle), teal lining, gold piping, felt cloth with gold
+//        dust; on each side a page layer folded back to show the teal lining; an A-line robe with a pointed, gold-edged hem;
+//        a teal sash; a soft light through the chest = the state light; bell sleeves, glowing hands; pointing = an open palm
+//        offered upward to the right. A few small motes of light float around.
+//        Temperament (like Dumbledore inside): knows a lot without rushing to show it, patient, unhurried, now and then
+//        humorous, shown through eyes, expression and movement.
+// Embodiment: a white-and-gold porcelain tutor-bot (the design's other figure): dome head, navy visor with a thin gold
+//        rim, warm gold LED eyes, a sage scarf, a gem on the chest, a matte-gold base.
+// Student: a round little white porcelain bot in an apricot knit cap (the pompom = the state light), holding a notebook.
+// States: the teacher's chest light, the embodiment's gem, the student's pompom: warm gold at rest, think = blue,
+//        aha = green (the teacher laughs with eyes closed), doubt = orange-red + "?".
 import * as THREE from 'three';
 
 export const meta = {
   id: 'porcelain', no: '1g', name: '書頁精靈', kind: '3d',
-  note: '老師胸口透出的光、化身胸前的寶石、學生帽頂的毛球是狀態燈：平常暖金，思考藍色脈動、老師手指靠下巴眼睛往上；頓悟綠色爆光、老師閉眼笑手按胸口、光點變亮；懷疑橘紅閃爍、單邊眉毛挑高並冒「?」。老師眼裡偶爾閃一下光',
+  note: 'The light through the teacher chest, the gem on the embodiment chest and the pompom on the student cap are the state lights: warm gold at rest; think = blue pulse, the teacher with a finger to the chin and eyes up; aha = green burst, the teacher laughing with eyes closed and a hand on the chest, the motes brightening; doubt = orange-red flicker, one brow raised and a "?". Now and then a twinkle in the teacher eyes',
 };
 
 const COL = {
@@ -703,7 +708,7 @@ function makeHoloWarm(w, h) {
   return { mesh: m, mat };
 }
 
-// ---------- embodiment: the porcelain tutor-bot (the user's "白金 AI 導師" design, shown small beside the teacher) ----------
+// ---------- embodiment: the porcelain tutor-bot (the design's white-and-gold AI tutor, shown small beside the teacher) ----------
 function makeTutorBot(rng) {
   const M = mats();
   const root = new THREE.Group(), body = new THREE.Group(); root.add(body);

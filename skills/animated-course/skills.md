@@ -7,11 +7,11 @@ description: Make animated teaching videos (a whole course, a few lessons, or a 
 
 ## How this skill is written
 
-**Purpose** (what the viewer should understand, do or feel), **reason** (user quote or experiment), **options** with when they fit: judge by situation. Numbers are what approved films measured; tools measure, you judge. Firm only: product decisions, technical contracts, truthfulness.
+**Purpose** (what the viewer should understand, do or feel), **reason** (what was observed), **options** with when they fit: judge by situation. Numbers are what approved films measured; tools measure, you judge. Firm only: product decisions, technical contracts, truthfulness. Everything else is guidance, because fixed rules make an AI force-fit content.
 
 ## One line
 
-**Every frame exists to make the viewer understand.** The skeleton carries the lesson; the middle changes with the content. For each segment, first decide how a learner would best understand and absorb it, then pick an approved way of showing it or design one. The adapter pattern is a metaphor, not a menu: forcing content into an existing method is the worst outcome (user, 2026-10-31).
+**Every frame exists to make the viewer understand.** The skeleton carries the lesson; the middle changes with the content. For each segment, first decide how a learner would best understand and absorb it, then pick an approved way of showing it or design one. The adapter pattern is a metaphor, not a menu: forcing content into an existing method is the worst outcome.
 
 ## What the user decides, what you decide
 
@@ -21,15 +21,15 @@ description: Make animated teaching videos (a whole course, a few lessons, or a 
 | The scope: a whole course, a few lessons, or one lesson for one missing concept | How the scope is split into lessons and segments |
 | Their own teaching approach, if they have one (then follow it) | Everything about pacing, visuals, wording, checks |
 | Language of the video: what the user says now, else `settings.json` → `narrationLang`; `follow` or unset means the language of the source notes, else the language the user writes in | |
-| **Who teaches**: one teacher, picked in the plugin (`settings.json` → `cast.teacher`), or chosen at the syllabus checkpoint when none is set. Free = Nico only; Pro = Nova, 包老師, Luna, Iris, Alden; every teacher has the same floor, Pro teachers add the curiosity-and-depth devices (`reference/11-teachers.md` §1b) | How every beat is said in that teacher's style (`reference/11-teachers.md`) |
+| **Who teaches**: one teacher, picked in the plugin (`settings.json` → `cast.teacher`), or chosen at the syllabus checkpoint when none is set. Free = Nico only; Pro = Nova, Professor Bao, Luna, Iris, Alden; every teacher has the same floor, Pro teachers add the curiosity-and-depth devices (`reference/11-teachers.md` §1b) | How every beat is said in that teacher's style (`reference/11-teachers.md`) |
 | **The syllabus checkpoint** (once, before production): the lesson list with learning goals, the student's project, the teacher | |
 | **Voice engine**, only if an AI voice key exists and they fixed nothing: asked once, at the syllabus checkpoint | No key → edge-tts, no question (`reference/07-voice-and-language.md` §1c) |
 | **What to leave out**: the course is made in the full version; the learner may turn off modules (`settings.json` → `course.off`, e.g. review cards), not the skeleton (`reference/12-modules.md`) | How each module is shown in a lesson, or skipping it for a lesson where it cannot be done honestly (reason in `NOTES.md`) |
 | Approval: only the user's review of the **finished films** marks a method "approved" | |
 
-**Run end to end without stopping** (the user's decision, quotes below): the user gives what to learn and the goal (optionally scope, language, their own approach); you go all the way to delivered films. Reviews before delivery are internal (host, separate reviewer). Missing scope or details → decide, write it in the series plan. **One checkpoint before production**: once the series plan is written, show the syllabus (lessons, what each lets them do, the real examples used) and ask, in one `AskUserQuestion`, which teacher (if `settings.json` names none), whether the lesson structure is right, the student's project setting, and any open decision about the user's own material; ask the goal there too if it is missing. Their answers go into the series plan; then no more questions until the user reviews the finished films.
+**Run end to end without stopping** (a product decision): the user gives what to learn and the goal (optionally scope, language, their own approach); you go all the way to delivered films. Reviews before delivery are internal (host, separate reviewer). Missing scope or details → decide, write it in the series plan. **One checkpoint before production**: once the series plan is written, show the syllabus (lessons, what each lets them do, the real examples used) and ask, in one `AskUserQuestion`, which teacher (if `settings.json` names none), whether the lesson structure is right, the student's project setting, and any open decision about the user's own material; ask the goal there too if it is missing. Their answers go into the series plan; then no more questions until the user reviews the finished films.
 
-
+Why both halves: without the checkpoint the user has no say over the syllabus, the learning goals or the teacher; any question after it hands the user a decision that belongs to the producer.
 
 ## Requests from the plugin
 
@@ -44,7 +44,7 @@ The learner can queue what they want to learn in the plugin. Each request is a s
 
 Unless the user specifies otherwise (`reference/02-learning-design.md`):
 1. **Learning map first** (≈10% of the effort): research how this subject is learned before writing anything. Write down *why* (the learner's goal), *what* (concepts, facts, procedures — which is hardest), *how* (the project and path).
-2. **Project-based**: build the course around one concrete project the learner is trying to finish (AdsDemo example: an app developer with NT$3,000 validating the app with Meta ads). Each lesson brings in a concept at the moment the project needs it — pain point first, concept second.
+2. **Project-based**: build the course around one concrete project the learner is trying to finish (for example: a café owner with a small budget testing whether online ads bring in new customers). Each lesson brings in a concept at the moment the project needs it — pain point first, concept second.
 3. **Real context**: show the real thing in the situation it is used in (real UI, real numbers, real organs, the real derivation), so no transfer from an abstract example is needed.
 4. **Direct and active**: the learner predicts, gets something wrong, sees the consequence; key points lead to a real action ("tomorrow you open X and check Y").
 
@@ -68,14 +68,14 @@ Read `reference/09-pitfalls.md` first: every mistake so far, and what helped.
 0. **The run does not stop mid-way**: goal in, one syllabus checkpoint, finished films out. Ask only before irreversible actions on the user's things (deleting branches or old videos). **The voice engine** joins the checkpoint only when `resolve.cjs` says `engine.askUser`; no key → edge-tts without asking (`reference/07-voice-and-language.md` §1c).
 1. **Understanding first.** The signpost test: mute the narration and look only at the picture — if the viewer learns only *what the topic is*, it is a signpost; a mechanism, relation or difference is what teaches. **Every frame has a focus**: at a glance the viewer knows where to look and what the frame is about. Complex is fine when the real thing is (real screens, code, a 3D organ) with a focus; crowded with no focus is not; clean is not empty. A map serves the whole; a whole film of map does not teach (`reference/01-principles.md` §1).
 2. **Choose by diagnosis, finely.** Approved methods are options, not quotas: use one where the segment's diagnosis calls for it (`reference/05-presentation-methods.md` §1). Diagnose each segment, then choose layer by layer (stage, segment shape, moment device; rhythm baseline kept), `reference/03-adapter-pattern.md` §1. The catalogue (`05`) holds approved starting points per layer; if the content fits none, design from learning principles; different subjects grow their own way of showing (biology: realistic diagram animation of the heart or nucleus; math: a question, then the derivation step by step with the graph; physics: the Atlas diagram world, `lib/atlas/ATLAS.md`).
-3. **The skeleton carries the lesson; the middle changes.** Hook, course map, one-liner in the first 60 s, the middle's rhythm baseline (approved films: speech ≈ 80% or less, real silences, recall questions, the picture following each new sentence — `reference/04-skeleton.md` §2, measured by `pacecheck.py` and `livecheck.py`), a recap image after each segment, a structured (mindmap) ending, continuity with the previous and next lesson. The classroom head and tail are what): the blackboard carries the point being taught, one idea at a time; the 3D course map shows where the lesson sits; the blackboard mindmap shows the whole (`reference/04-skeleton.md`). The middle shows the real thing in its own look, one consistent look per film and course; the Engram studio (明棚 / 暗棚) only when the user asks for it (`reference/01-principles.md` §1). The teacher is the learner's choice (`reference/11-teachers.md`); every teacher keeps the same beats and changes how each is said.
+3. **The skeleton carries the lesson; the middle changes.** Hook, course map, one-liner in the first 60 s, the middle's rhythm baseline (approved films: speech ≈ 80% or less, real silences, recall questions, the picture following each new sentence — `reference/04-skeleton.md` §2, measured by `pacecheck.py` and `livecheck.py`), a recap image after each segment, a structured (mindmap) ending, continuity with the previous and next lesson. The classroom head and tail are the default, and each part has a job: the blackboard carries the point being taught, one idea at a time; the 3D course map shows where the lesson sits; the blackboard mindmap shows the whole (`reference/04-skeleton.md`). The middle shows the real thing in its own look, one consistent look per film and course; the Engram studio (light / dark) only when the user asks for it (`reference/01-principles.md` §1). The teacher is the learner's choice (`reference/11-teachers.md`); every teacher keeps the same beats and changes how each is said.
 4. **Build on what was approved.** A new round changes what needs changing; versions are not either/or.
 5. **Define before use.** First appearance of a term: full name + one plain-language sentence, said and written. Vague pronouns and AI-speak ("that cell", "this box") leave the viewer guessing.
 6. **The real thing on the main screen.** Analogies help when the real thing cannot be drawn and is hard to grasp; then back to the real thing.
 7. **Every number is real** (truthfulness, firm): recompute each one and keep it consistent across frames. Mark wrong intuitions on screen as wrong, or the picture teaches them.
 8. **Two stages, `readcheck.cjs` and a silent review before any full render**: a render is costly; the silent review catches what producer and host miss. Check full-resolution frames, not only thumbnails.
-9. **One cloud session per lesson**, archived as soon as its parts are collected (per part piled up 115 child sessions, experiments 7–10).
-10. Do not read the vault's `Clippings/` (vault rule). Look up any unfamiliar term on the web before writing about it.
+9. **One cloud session per lesson**, archived as soon as its parts are collected (one session per part piled up over a hundred child sessions).
+10. Follow the project's rules on which sources are off limits (for example raw web clippings). Look up any unfamiliar term on the web before writing about it.
 11. **Hands, eyes and the picture go where the words go**, so attention lands where the narration points. When the narration names a thing the viewer must find, the teacher looks and points at it on that word and the student looks too (`lib/cast/cue.js`), not a fixed "point while talking". New information lands best when something happens on the object on its word (`reference/01-principles.md` §2). Holding the rest still while the thing to learn changes keeps the eye on it; the approved aha is the same picture reassembled, not a cut to a new picture at the reveal (`reference/04-skeleton.md` §2). The voice marks the structure: idea groups, layered pauses, a pause before the focus word (`reference/07-voice-and-language.md` §1b-4).
 
 ## Files
@@ -87,7 +87,7 @@ reference/
   02-learning-design.md       Ultralearning default, learning map, series plan, single-lesson scope
   03-adapter-pattern.md       the metaphor, diagnosis + layer-by-layer judgment (stage, shape, device), subjects improvise, borrowing
   04-skeleton.md              head / middle / tail, course map visibility, sound, picture spec, length
-  05-presentation-methods.md  stages, segment shapes, moment devices, links and endings done so far, with status (approved = available, not required); the demo films (minimum bar)
+  05-presentation-methods.md  stages, segment shapes, moment devices, links and endings done so far, with status (approved = available, not required)
   06-workflow.md              producer stages, host duties, silent review, cloud render, delivery
   07-voice-and-language.md    voices, Chinese and English conventions, TTS and ASR traps
   08-tools.md                 studio setup and commands, script.json, scene.html contract, components
@@ -97,7 +97,7 @@ reference/
   12-modules.md               the full version by default, the learner subtracts: cards (review cards, needs rework); transfer rejected
 templates/                    SERIES, UNDERSTANDING, CARD, SCRIPT, FACTS, NOTES, BRIEF (producer task), SILENT-REVIEW
 scripts/
-  studio/                     render.cjs, compose.py, voice.py (idea groups, pause layers, focus pauses), asr.py, tonecheck.py (which reading a polyphonic character got), bgm2.py, readcheck.cjs, pacecheck.py, livecheck.py (narration over a frozen picture), remiddle.py, sfx.py, package.json, lib/ (components + docs; lib/atlas = Atlas diagram world; lib/cast = teacher registry teachers.json, skins and their contract CAST.md, cue.js = hands and eyes go where the words go; lib/course/modules.json = default-on modules; lib/classroom = the skeleton's head and tail: the classroom, blackboard, one 3D course map per course, blackboard mindmap; lib/house = the Engram studio (明棚 light / 暗棚 dark), only when the user asks for it)
+  studio/                     render.cjs, compose.py, voice.py (idea groups, pause layers, focus pauses), asr.py, tonecheck.py (which reading a polyphonic character got), bgm2.py, readcheck.cjs, pacecheck.py, livecheck.py (narration over a frozen picture), remiddle.py, sfx.py, package.json, lib/ (components + docs; lib/atlas = Atlas diagram world; lib/cast = teacher registry teachers.json, skins and their contract CAST.md, cue.js = hands and eyes go where the words go; lib/course/modules.json = default-on modules; lib/classroom = the skeleton's head and tail: the classroom, blackboard, one 3D course map per course, blackboard mindmap; lib/house = the Engram studio (light / dark), only when the user asks for it)
   farm/                       cloud render: one session per lesson, plan, collect, seam check, screening room; localfarm.sh renders on this machine
   deliver.py                  music, holds, poster, subtitles, meta.json entry
   burnsubs.py                 a separate copy with subtitles burned in, for social platforms
@@ -106,12 +106,12 @@ scripts/
 assets/
   music/                      Morning.mp3 (CC BY 4.0, credit required) — opening and ending only
   looks/                      stills from the demo films, with what to learn and what not to copy
-  cast-designs/               the user's design images for character skins (build to match them)
+  cast-designs/               design images the character skins are built to match
   portraits/                  one portrait per registry teacher in its current look (picker cards)
 ```
 
-The lab notebook (every experiment, the user's exact words, rejected versions) lives in the vault at (not public). This skill holds only the distilled, reviewed guidance; when they disagree, update both (`reference/10-iteration-and-records.md`).
+This skill holds only distilled, reviewed guidance. If the project keeps a lab notebook (every experiment, what reviewers said, rejected versions), it lives outside the skill; when the two disagree, update both (`reference/10-iteration-and-records.md`).
 
 ## Reporting problems
 
-The user develops engram-quest. This skill is still in development, so a bug in it (wrong path, broken script, unclear guidance) is confirmed, fixed here directly, verified, and reported to the user as what changed — no ticket. A bug in the plugin, or in a skill that already ships in engram-quest, gets a ticket in `debug/` as the vault's `AGENTS.md` describes, and the user is told.
+A bug in this skill (wrong path, broken script, unclear guidance): confirm it, fix it in the copy you maintain, verify, and report what changed. A bug in the EngramQuest plugin goes through the project's bug-reporting process, and the user is told.

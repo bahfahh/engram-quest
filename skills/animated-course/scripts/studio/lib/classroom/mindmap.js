@@ -1,8 +1,9 @@
-// 結尾黑板的心智圖／圖解（BRIEF3 規則 10）。說明：/lib/classroom/MINDMAP.md
+// The ending blackboard's mindmap / diagram. Doc: /lib/classroom/MINDMAP.md
 //   import { makeMindmap } from '/lib/classroom/mindmap.js';
 //   const mm = await makeMindmap(board, { layout: 'radial', center: {text, t}, nodes: [{id, text, t, icon|photo|doodle, edge:{label}}] });
-//   window.renderAt = t => { ...; mm.update(t); renderer.render(scene, cam); }     // mm.update(t) 是 t 的純函數
-// 座標都是黑板畫布 px（2048×1068，cast.js 的 BOARD）。粉筆用 cast.js 的 chalk()（有顆粒）；照片是「紙」，不加顆粒。
+//   window.renderAt = t => { ...; mm.update(t); renderer.render(scene, cam); }     // mm.update(t) is a pure function of t
+// All coordinates are blackboard-canvas px (2048×1068, cast.js's BOARD). Chalk uses cast.js's chalk() (grainy); photos are
+// "paper" and get no grain.
 import * as S from '/lib/stage.js';
 import * as C from '/lib/classroom/cast.js';
 
@@ -202,15 +203,15 @@ const RADIAL = {
 
 /**
  * const mm = await makeMindmap(board, spec)
- *   board : C.makeBoard() 的回傳值（{cv, ctx, tex}）；也可以給 null，之後用 mm.drawOn(ctx, t)
- *   spec.layout  'radial'（放射心智圖）| 'tree'（決策樹，由上往下）| 'flow'（流程，由左往右）| 'compare'（左右對照）
+ *   board : the return value of C.makeBoard() ({cv, ctx, tex}); or null, then draw with mm.drawOn(ctx, t)
+ *   spec.layout  'radial' (radial mindmap) | 'tree' (decision tree, top down) | 'flow' (process, left to right) | 'compare' (side by side)
  *   spec.center  {text, t, color:'yellow', size:84, frame:'ellipse'|'box'|'underline'|'none', icon, photo, doodle, pos:[x,y]}
  *   spec.nodes   [{id, text, t, parent:'center'|id, color, size, icon, iconSize, photo:{src|img, w, h, crop, rot}, doodle:{w,h,draw}, pic:'top'|'left', frame, pos:[x,y], dx, dy, side:'left'|'right', head,
  *                 edge:{label, style:'line'|'arrow'|'dashed'|'dashedArrow'|'none', color, t, bend, from}}]
- *   spec.edges   額外連線 [{from, to, label, style, color, t, bend, fromSide, toSide}]
- *   spec.area    {x,y,w,h} 黑板上可以用的範圍；spec.screenScale 黑板 px → 螢幕 px（BC 鏡頭＝0.9），用來檢查字有沒有 50px
- *   spec.wipe    {at, dur:0.6, prev:(ctx)=>{…}}：at 之前畫 prev（你自己的板），at 開始用板擦擦掉，再畫心智圖
- *   spec.lang    'en'：英文粉筆字（CHALK_EN＝Kalam 700），書寫速度、lint 改用英文的「字數」（詞）；spec.font / spec.fontWeight 可自己指定字型
+ *   spec.edges   extra links [{from, to, label, style, color, t, bend, fromSide, toSide}]
+ *   spec.area    {x,y,w,h} the usable area of the board; spec.screenScale board px → screen px (BC shot = 0.9), to check text reaches 50 px
+ *   spec.wipe    {at, dur:0.6, prev:(ctx)=>{…}}: before at, draw prev (your own board); at at, the eraser wipes it, then the mindmap draws
+ *   spec.lang    'en': English chalk (CHALK_EN = Kalam 700); writing speed and lint count English words; spec.font / spec.fontWeight set any font
  */
 export async function makeMindmap(board, spec = {}) {
   const area = { ...AREA, ...(spec.area || {}) };

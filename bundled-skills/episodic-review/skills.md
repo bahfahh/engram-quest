@@ -24,7 +24,7 @@ Films are expensive. A film that is only watched once gives a feeling, not a mem
 | Output | For | Cost |
 |---|---|---|
 | **Recall pack**: one cached content file per topic, retrieval cards in the Review Deck, an overview page, a ranking of which topics deserve a film | every topic touched in the period | reading tokens only, no rendering |
-| **Topic film**: one topic, full depth, 4-10 minutes | the one to three topics chosen | a few minutes of rendering per film |
+| **Topic film**: one topic, full depth, 4-10 minutes | the one or two topics the tier holds | a few minutes of rendering per film |
 | **Month film**: the period's topics by area, the real links between them one at a time, the topics that stand alone, then one quick question per topic | once per period, in the long tier or when asked | generated from the pack and the links; one sentence written per link |
 | Links between the two: each film chapter carries the topic id, so a failed card can jump to the right passage | — | — |
 

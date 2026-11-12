@@ -24,9 +24,9 @@ const map = await makeCourseMap4({ lesson: 10, lang: 'en', t0: Ls('O02'),
 ```
 All other parameters, return values, timing and camera behave exactly as in `COURSEMAP4.md`.
 
-### 1.1 Text on the model — AdsDemo course example (replace for your course)
+### 1.1 Text on the model — the ads course's example (replace for your course)
 
-The built-in English labels use standard Meta Ads terms, because the 13-part model is AdsDemo-specific.
+The built-in English labels use standard Meta Ads terms, because the 13-part model belongs to one ads course.
 
 | Lesson | Name plate (`PARTS4_EN[n].short`) | Question-sign tag (`.name`) | Text on the part |
 |---|---|---|---|
@@ -122,5 +122,3 @@ C.makeBox({ lang: 'en', label: 'Container', stickers: [['Creative', 'Website']] 
 `RENDER_GPU=1 node render.cjs <project> --scene 'classroom.html?lesson=10' --stills 5.9`
 
 Default ride timing in English mode (question sign appears / part colours in): lesson 8 5.41 / 6.71; lesson 10 5.08 / 6.38; lesson 13 4.97 / 6.27.
-
-The original demo project (`projects/_en-components-demo/`) is not included with this skill.

@@ -1,6 +1,6 @@
 # DOM explainer kit (`/lib/kit/`)
 
-Realistic UI mocks placed on a big **world** canvas, a deterministic **camera**, annotation primitives (callouts, curved connectors, highlight rings, cursor, counters) and the screen chrome (chapter bar, title card, recap). The built-in UI mocks (Instagram, Ads Manager, Play Store) come from the AdsDemo Meta Ads course; the stage, camera, annotations and chrome are subject-neutral. The original demo project (`projects/_kit-demo/`) is not included with this skill; start from the skeleton below.
+Realistic UI mocks placed on a big **world** canvas, a deterministic **camera**, annotation primitives (callouts, curved connectors, highlight rings, cursor, counters) and the screen chrome (chapter bar, title card, recap). The built-in UI mocks (Instagram, Ads Manager, Play Store) come from one Meta Ads course; the stage, camera, annotations and chrome are subject-neutral. The original demo project (`projects/_kit-demo/`) is not included with this skill; start from the skeleton below.
 
 ## Skeleton
 
@@ -24,16 +24,14 @@ const post = K.ig.post({ user: 'lingoleaf.app', media: K.creative({ color: 'a' }
 feed.scroll.append(post.el);
 W.add(ph.el, 600, 700);                                       // world coords, anchor = centre by default
 
-// rendered text: "No conversion event set" / "The system doesn't know who installed the app"
-const warn = W.add(K.callout('沒設定轉換事件', { sub: '系統不知道誰裝了 App', tone: 'red', icon: 'triangle-alert' }), 1100, 500, { anchor: 'left' });
+const warn = W.add(K.callout('No conversion event set', { sub: "The system doesn't know who installed the app", tone: 'red', icon: 'triangle-alert' }), 1100, 500, { anchor: 'left' });
 const line = K.connector(W, { from: warn, to: post.cta, color: 'red', dashed: true, progress: 0 });
 
-// "Lesson 3"; chapters "What an ad looks like", "Reports"
-const bar = K.chapterBar(st.screen, { lesson: '第 3 課', duration: T.duration, chapters: [{ name: '廣告長什麼樣', start: 0 }, { name: '報表', start: 40 }] });
+const bar = K.chapterBar(st.screen, { lesson: 'Lesson 3', duration: T.duration, chapters: [{ name: 'What an ad looks like', start: 0 }, { name: 'Reports', start: 40 }] });
 cam.set(ph.el);                                   // first shot
-cam.to(T.word('L03', '安裝'), [ph.el, warn], 1.4); // pan/zoom to fit both, starting on the narration word 安裝 ("install")
-tl.from(warn, { opacity: 0, x: -30, duration: .5 }, T.word('L03', '安裝') + .6);
-tl.to(line, { progress: 1, duration: .8 }, T.word('L03', '安裝') + .8);
+cam.to(T.word('L03', 'install'), [ph.el, warn], 1.4); // pan/zoom to fit both, starting on the narration word "install"
+tl.from(warn, { opacity: 0, x: -30, duration: .5 }, T.word('L03', 'install') + .6);
+tl.to(line, { progress: 1, duration: .8 }, T.word('L03', 'install') + .8);
 
 window.DURATION = T.duration;
 window.renderAt = K.render(tl, cam, bar);         // = t => { tl.seek(t,false); cam.update(t); bar.update(t) }
@@ -60,7 +58,7 @@ window.studioReady = K.ready();                   // MUST be last: loads every g
   - `cam.frame(target, pad)` → `{x,y,zoom}` (after ready). `cam.maxZoom = 3` default. Zoom is interpolated geometrically so zooms feel even.
   - Text stays crisp at zoom > 1 (no `will-change`), so zoom in on table rows / captions freely (2–2.5× is fine).
 - Tips: lay the lesson out like a map — one "station" per idea, 1000–1800px apart; move the camera on narration words (`T.word(lineId, 'word')`); keep 0.6–1.5 s per move; at most one zoom-out overview per video.
-  Put a station label above each station, VibeAcademy-style, e.g. `K.label('使用者在 IG 看到的', {icon:'smartphone'})` ("What the user sees on IG").
+  Put a station label above each station, VibeAcademy-style, e.g. `K.label('What the user sees on IG', {icon:'smartphone'})`.
 
 ## Components (all return DOM elements or `{el, …parts}`)
 
@@ -77,7 +75,7 @@ window.studioReady = K.ready();                   // MUST be last: loads every g
 | `K.cursor(W, {x,y})` | `cur.moveTo(tl, target, at, dur, {dx,dy}).click(tl, at)`; hide via `cur.el` opacity. |
 | `K.counter({value, prefix:'NT$', suffix:'%', decimals})` | `tl.to(c, {value: 12000, duration: 1.5})`; put `c.el` anywhere. `K.fmt(v, opts)` formats once. |
 | `K.chapterBar(st.screen, {lesson, chapters:[{name,start}], duration})` | top progress bar (80px; bottom stays clear for subtitles); pass to `K.render`. |
-| `K.titleCard(st.screen, {lesson:'第 3 課', title, question, deco})` | full-bleed opening (`'第 3 課'` = "Lesson 3") → `.intro(tl, at)`, `.hide(tl, at)`. |
+| `K.titleCard(st.screen, {lesson:'Lesson 3', title, question, deco})` | full-bleed opening → `.intro(tl, at)`, `.hide(tl, at)`. |
 | `K.recap(st.screen, {title, points:['…**key**…']})` | note-paper ending (LXGW WenKai, numbered circles, `**marker**`) → `.show(tl, at, gap)`. |
 | `K.barChart({w, h, data:[{label, value, color}], format:{prefix:'NT$'}, grid:4})` | `{el, bars, values, grow(tl, at, dur, stagger)}`. |
 | `K.funnel({w, stages:[{label, value, color, text}]})` | stages shrink (log scale, min 42%) → `{el, stages}`. |
@@ -86,7 +84,7 @@ window.studioReady = K.ready();                   // MUST be last: loads every g
 | `K.icon(name, {size, color, stroke, fill})` | inline lucide icon (preload names via `K.init([...])`). |
 | helpers | `K.h('div.cls', {style}, ...kids)`, `K.tone('a')`, `K.rng`, `K.prog`, `K.ease`, `K.clamp`, `K.lerp`. |
 
-### AdsDemo course example (replace for your course): Meta / app-install UI pieces
+### Ads course example (replace for your course): Meta / app-install UI pieces
 | | usage |
 |---|---|
 | `K.ig.feed(ph.body, {stories:true})` | IG home: wordmark bar, stories row, tab bar → `{el, scroll, tabbar}`; append posts to `scroll`, tween `scroll` `y` to scroll. |

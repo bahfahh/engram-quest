@@ -1,264 +1,259 @@
-# 課程地圖：AI Engineering 補洞課 `coursemap-aieng.js`
+# Classroom course map — example course `coursemap-aieng.js`
 
-> 八課 AI Engineering 補洞課（ae-l01-learned … ae-l08-slo）共用的課程地圖。API 形狀照 `coursemap-stock.js`（`times`、`cam(t)`、`applyCam`、`update(t, cam)`、`texts(cam)`、`readNeed`、`shot`、`review`），呼叫方式一樣；多了 `inShot(obj, cam)`、`clearX(obj, side)`（角色站位）和 `tableBox()`；`stops` 可以分組。
-> 依照 `reference/04-skeleton.md` §5、§5b 做的：全景時八個零件和八個名牌都在畫面裡；看某一課就推到那個零件、其他零件變淡、字和名牌藏起來；一次只亮一組；第 1 課第一次看全貌每個零件 3.6 s；問題卡停到讀完（自動算，含卡上的「第 N 課 · 名牌」）。
-> 測試頁：`projects/zz-aiengmap-test/classroom.html`（`?case=l1|l1g|l4|l5|l8&skin=…`；黏土教室＋該課老師的角色；0–2 s 教室全景 → 地圖段 → 拉回全景）。`shoot.sh <case> <skin|-> <秒,…>` 出定格。
+> The course map for an example eight-lesson course (AI Engineering: learned programs, bias / variance, error analysis, metrics, eval sets, data processing, drift and cost, SLOs and incidents). Copy it as the starting point for a new course's map: keep the API and the staging, replace the eight parts with your course's mechanisms.
+> It implements `reference/04-skeleton.md` §5 and §5b: in the wide shot all eight parts and all eight name plates are in frame; looking at one lesson pushes in on its part while the other parts dim and their text and plates hide; one group is lit at a time; on the first full look (lesson 1) each part holds 3.6 s; the question card stays up until it has been read (computed automatically, including its "Lesson N · plate name" tag).
 
-## 桌上有什麼
+## What is on the table
 
-**兩階的展示台，像兩行字**：前階第 1～4 課、後階（墊高 0.23）第 5～8 課，兩行都是左到右。
-- **前排名牌掛在前階的邊上**（在零件下面），**後排名牌立在零件後面的小招牌上**（在零件上面）：全景裡名牌排成上下兩條帶子（上：5 6 7 8，下：1 2 3 4），**名牌永遠不擋零件、零件也不擋名牌**。
-- 名牌整塊對著鏡頭（billboard），畫面邊上的名牌不會歪；全景時字高約 50 px（前排）／ 46 px（後排）。
-- 後排零件畫大 12 %（比較遠）。
+**A two-step display stand that reads like two lines of text**: lessons 1–4 on the front step, 5–8 on the back step (raised 0.23), both left to right.
+- **Front-row plates hang on the front step's edge** (below their parts); **back-row plates stand on small signs behind their parts** (above them). In the wide shot the plates form two bands (top: 5 6 7 8, bottom: 1 2 3 4), so **a plate never covers a part and a part never covers a plate**.
+- Plates are full billboards (they face the camera on every axis), so plates near the frame edge never look skewed. In the wide shot their text is about 50 px high (front row) / 46 px (back row).
+- Back-row parts are drawn 12 % larger (they are further away), so both rows look the same size.
 
-八個零件各是那課核心機制的小模型，每個都會真的演一遍：
+Each part is a small working model of that lesson's core mechanism and really plays it out:
 
-| 課 | 名牌 | 演什麼（一輪，速度 1） | 一輪 |
+| Lesson | Plate (on screen) | What it plays (one run, speed 1) | One run |
 |---|---|---|---|
-| 1 | 學來的程式 | 左：深色程式碼卡，`費用 = 0` 那一行亮紅（寫出來的程式有「那一行」可以修）。右：藍色資料點上長出一條藍色曲線（學來的傾向）；同一張「?」問題卡投進去兩次，第一次跳出 ✓ 綠、第二次跳出 ✗ 紅；最後一支放大鏡掃過曲線（推近時寫「找不到『那一行』」） | 5.0 s |
-| 2 | 偏差／變異 | 兩個標靶，藍色飛鏢一支一支射：左邊擠成一團但偏離中心，右邊散開圍著中心。最後左邊長出紅箭頭（中心 → 那一團＝偏差），右邊套上紅圈（散開＝變異）；推近時下面是紅底「偏差」「變異」 | 4.4 s |
-| 3 | 錯誤分類 | 10 張紅色錯誤卡一張張掉進 4 個黃色分類格，格子後面的長條跟著長：4／3／2／1 格（＝40／30／20／10 %），最後最高那根轉成正紅、跳一下。推近時格子前寫「沒撈到 40%」「沒用上 30%」「問題模糊 20%」「其他 10%」（SERIES 第 2 節的共用數字） | 4.2 s |
-| 4 | 指標 | 池裡 5 顆綠球（該撈的）、4 顆灰球（不該撈的）。黃色網子撈起 3 綠 1 灰倒進籃子 → 籃子後面立「3/4」（精確率）；池裡還留的 2 顆綠球套上綠圈 → 池子後面立「3/5」（召回率）。推近時「精確率」「召回率」字卡 | 4.4 s |
-| 5 | 考題集 | 左後一疊對話紀錄 → 挑出 3 張排到前面 → 貼上 ✓／✗／✓ → 一張張夾進深藍考題冊、闔上。右邊黃銅天平（評審）：左盤人工 ✓、右盤評審 ✗，天平晃 → 右盤翻成 ✓ → 擺平（校準）。推近時「考題冊」「人工」「評審」 | 5.0 s |
-| 6 | 資料處理 | 輸送帶載 7 張資料卡（三類，用中性色分）。重複的那張在黃色閘門掉進灰盤（去重）；其他分三疊 3／2／1 → 多的一張拿掉、少的那疊補一張帶亮光的合成卡 → 一條線拉平 2／2／2 → 印章蓋下，字卡出現「v1.1」。推近時「去重」「配額」 | 4.6 s |
-| 7 | 漂移與成本 | 白板上一座藍色小山（提問分布）往右滑，原位置留虛線輪廓，紅箭頭標出位移；旁邊 5 枚銀幣（每則成本）飛走 3 枚、剩 2 枚。推近時「提問分布」「建 eval 時」「現在」「每則成本」 | 4.4 s |
-| 8 | 約定與事故 | 綠色錯誤預算電池（10 格）；前面紅燈閃（事故）→ 右邊 3 格變紅、扣掉 → 黃色檢討單飛來貼在電池上（推近時寫「檢討／不責備」）→ 左邊尺上的紫色標準線往上調，上方紫色迴圈箭頭轉一圈。推近時「錯誤預算」「SLO」 | 4.4 s |
+| 1 | 學來的程式 (learned program) | Left: a dark code card whose bug line lights red (written code has *the line* you can fix). Right: blue data points grow a blue curve (the learned tendency); the same "?" question card goes in twice and comes out once ✓ green, once ✗ red; finally a magnifier sweeps the curve (push-in caption: no such line can be found) | 5.0 s |
+| 2 | 偏差／變異 (bias / variance) | Two targets, blue darts one by one: left they cluster off-centre, right they scatter round the centre. Then a red arrow grows on the left (centre → cluster = bias) and a red ring on the right (scatter = variance); push-in shows red "bias" / "variance" labels | 4.4 s |
+| 3 | 錯誤分類 (error analysis) | 10 red error cards fall into 4 yellow bins; the bars behind grow to 4 / 3 / 2 / 1 cards (= 40 / 30 / 20 / 10 %), and the tallest turns full red and bumps. Push-in shows the four category names with their shares | 4.2 s |
+| 4 | 指標 (metrics) | A pool of 5 green balls (should catch) and 4 grey (should not). A yellow net lifts 3 green + 1 grey into the basket → "3/4" stands behind it (precision); the 2 green balls left get green rings → "3/5" behind the pool (recall). Push-in shows "precision" / "recall" labels | 4.4 s |
+| 5 | 考題集 (eval set) | A stack of chat logs at the back → 3 picked to the front → marked ✓ / ✗ / ✓ → filed one by one into a dark-blue eval booklet that closes. Right: a brass balance (the judge): left pan human ✓, right pan judge ✗, it wobbles → the right pan flips to ✓ → level (calibration). Push-in labels: booklet, human, judge | 5.0 s |
+| 6 | 資料處理 (data processing) | A conveyor carries 7 data cards (three categories in neutral colours). The duplicate drops at the yellow gate into a grey tray (dedup); the rest sort into piles 3 / 2 / 1 → the tall pile loses one, the short pile gains a glowing synthetic card → a line levels them at 2 / 2 / 2 → a stamp lands and "v1.1" appears. Push-in labels: dedup, quota | 4.6 s |
+| 7 | 漂移與成本 (drift and cost) | On a whiteboard a blue hill (the question distribution) slides right, leaving a dashed outline where it was, a red arrow marks the shift; beside it 3 of 5 silver coins (cost per answer) fly off. Push-in labels: the distribution, "when the eval was built", "now", cost per answer | 4.4 s |
+| 8 | 約定與事故 (SLOs and incidents) | A green error-budget battery (10 cells); a red lamp flashes (incident) → the 3 right cells turn red and burn off → a yellow review note flies onto the battery (push-in: "review / blameless") → the purple standard line on the left ruler moves up and a purple loop arrow turns once. Push-in labels: error budget, SLO | 4.4 s |
 
-**顏色（SERIES §5，一種顏色一種量，整張地圖都一樣）**：
+**Colours (the course's `SERIES.md` §5: one colour = one quantity, the same on the whole map)**:
 
-| 顏色 | 只代表 | 出現在 |
+| Colour | Means only | Where |
 |---|---|---|
-| 藍 `#2F6FD6`（概念） | 資料與模型學到的行為 | 1 資料點和學來的曲線、2 飛鏢落點、7 提問分布 |
-| 黃 `#E9B320`（方法） | 方法工具 | 3 分類格、4 網子、5 天平、6 去重閘門、8 檢討單 |
-| 綠 `#1F9D55`（可直接用） | 對的／可以直接用 | 1 ✓、4 該撈的球和召回圈、5 ✓、8 還能用的錯誤預算 |
-| 紅 `#E5484D`（診斷結論） | 錯的／診斷出來的問題 | 1 那一行和 ✗、2 偏差箭頭和變異圈、3 錯誤卡和最高長條、5 ✗、7 漂移箭頭、8 事故燈和扣掉的預算 |
-| 紫 `#7C5CD6`（迴圈） | 迴圈 | 8 事故 → 檢討 → 調高標準 |
-| 灰 | 不相關 | 4 不該撈的球、6 重複卡的灰盤 |
+| Blue `#2F6FD6` (concept) | Data and learned model behaviour | 1 data points and learned curve, 2 dart hits, 7 question distribution |
+| Yellow `#E9B320` (method) | Methods and tools | 3 bins, 4 net, 5 balance, 6 dedup gate, 8 review note |
+| Green `#1F9D55` (ready to use) | Right / usable as is | 1 ✓, 4 should-catch balls and recall rings, 5 ✓, 8 remaining error budget |
+| Red `#E5484D` (diagnosis) | Wrong / a diagnosed problem | 1 bug line and ✗, 2 bias arrow and variance ring, 3 error cards and tallest bar, 5 ✗, 7 drift arrow, 8 incident lamp and burned budget |
+| Purple `#7C5CD6` (loop) | A loop | 8 incident → review → raise the standard |
+| Grey | Irrelevant | 4 should-not-catch balls, 6 the duplicate's tray |
 
-資料類別（6）用三個中性色（奶油、木、石板），不帶意義。名牌和問題卡的黃底是地圖本身的「亮起來」狀態色，沿用已核准的 coursemap4 外觀，跟零件裡的「黃＝方法」分開（不同形狀：名牌是長條牌，不是零件）。
+Data categories (part 6) use three neutral colours (cream, wood, slate) that carry no meaning. The yellow of the name plates and the question card is the map's own "lit" state colour (the same look as `coursemap4.js`); it is a different shape (a long plate, not a part) and is not the parts' "yellow = method".
 
-**小字只在推近時出現**：零件上的字卡（偏差、變異、精確率、召回率、考題冊、人工、評審、去重、配額、每則成本、SLO、錯誤預算、檢討）、程式碼卡的字、白板上的字。全景時程式碼卡畫成灰條，字卡整個藏起來（不畫成小方塊，免得變雜點）。全景要讀的**只有名牌**，加上兩個本身就是機制一部分的大字：「3/4」「3/5」和「v1.1」（全景約 18～22 px，推近 60 px 以上）。推近時字卡字高約 32～40 px。
+**Small text appears only on a push-in**: captions on parts, the code card's text, the whiteboard's text. In the wide shot the code card is drawn as grey bars and captions are hidden entirely (not drawn as tiny boxes, which would read as noise). The wide shot asks the viewer to read **only the name plates**, plus two large figures that are part of a mechanism: "3/4" "3/5" and "v1.1" (about 18–22 px in the wide shot, 60 px or more pushed in). Pushed-in captions are about 32–40 px high.
 
-同一個零件的三種狀態跟 STOCK 版一樣：**亮**（有顏色、正在演、名牌變黃、底下一圈淡黃光）／**學過的**（有顏色，停在演完的樣子）／**還沒學或別的零件正在亮**（變淡）。推近時其他零件更淡（0.9）、它們的字和名牌藏起來，只有這課的零件會顯示小字。
+Each part has three states: **lit** (coloured, playing, plate turns yellow, a soft yellow glow underneath) / **learned** (coloured, resting in its finished pose) / **not yet learned, or another part is lit** (dimmed). On a push-in the other parts dim further (0.9) and their text and plates hide; only this lesson's part shows its small text.
 
-全課收尾（`shot: 'chain'`）：前階前面、後階零件前面各出現一條木走道和箭頭（1 → 2 → 3 → 4、5 → 6 → 7 → 8）；一張對話紀錄卡（帶黃光）從 1 走到 4，**像換行一樣跳到後階的 5**（約 1 s 的拋物線），再走到 8。**走過的路變成金色**（看得到已經走了幾課），走到哪個零件那個就從頭演一次、名牌變黃；演過的保持有顏色（微淡），還沒輪到的很淡；最後八個一起亮、停住。
+Course closing (`shot: 'chain'`): a wooden walkway with arrows appears in front of the front step and in front of the back-step parts (1 → 2 → 3 → 4, 5 → 6 → 7 → 8). A chat-log card (with a yellow glow) walks from 1 to 4, **jumps to 5 on the back step like a line break** (a parabola of about 1 s), and walks on to 8. **The path already walked turns gold** (you can see how many lessons have been covered); each part replays from the start and its plate turns yellow as the card reaches it; parts already played stay coloured (slightly dimmed), parts not reached yet stay faint; finally all eight light together and hold.
 
-## 1. 用法
+## 1. Usage
 
 ```js
-import { makeCourseMapAIEng } from '/lib/classroom/coursemap-aieng.js';   // 也可以 import { makeCourseMap } 或 default
-const map = await makeCourseMapAIEng({ lesson: 3, t0: Ls('O05'), question: '該先修哪個錯？', camFrom: CAMS.W, camBlend: 1.0 });
+import { makeCourseMapAIEng } from '/lib/classroom/coursemap-aieng.js';   // also: import { makeCourseMap } or default
+const map = await makeCourseMapAIEng({ lesson: 3, t0: Ls('O05'), question: '該先修哪個錯？', camFrom: CAMS.W, camBlend: 1.0 });   // question: "Which error do we fix first?"
 scene.add(map.root);
 
 window.renderAt = (t) => {
   const onMap = t >= map.times.start && t < map.times.end;
-  map.root.visible = onMap;                     // 或整段都留著（桌子本來就在教室裡）：map.update 在地圖段外也能叫
-  if (onMap) { map.applyCam(cam, t); map.update(t, cam); }    // update 放在設好鏡頭之後（名牌和問題卡要轉向鏡頭、判斷有沒有出框）
-  else { /* 你自己的鏡頭 */ }
+  map.root.visible = onMap;                     // or keep it visible throughout (the table belongs in the classroom): map.update also works outside the map segment
+  if (onMap) { map.applyCam(cam, t); map.update(t, cam); }    // call update after the camera is set (plates and question card turn to the camera and check the frame)
+  else { /* your own camera */ }
   renderer.render(scene, cam);
 };
 window.TEXTS = (t) => [...myOtherTexts(t), ...(map.root.visible ? map.texts(cam) : [])];   // readcheck.cjs
 ```
-匯出：`makeCourseMapAIEng`（主要）、`makeCourseMap`（別名）、`default`、`COL`（顏色意義表）、`PARTS_AIENG`（八個名牌名）、`readNeed(text)`（§5b 的閱讀秒數公式，跟 readcheck 一樣）。
+Exports: `makeCourseMapAIEng` (main), `makeCourseMap` (alias), `default`, `COL` (colour meanings), `PARTS_AIENG` (the eight plate names), `readNeed(text)` (the §5b reading-time formula, the same as readcheck).
 
-`update(t, cam)`、`cam(t)`、`applyCam(cam, t)` 都是 **t 的純函數**（任何順序、任何時間，同一格畫面一樣；沒有 Date、沒有 Math.random，散點用 `S.rng` 種子）。頁面記得 `RENDER_GPU=1`。字型：元件自己載入 Chiron GoRound TC 700 和 Inter 800。
+`update(t, cam)`, `cam(t)` and `applyCam(cam, t)` are all **pure functions of t** (any order, any time, the same frame; no `Date`, no `Math.random`; scatter uses seeded `S.rng`). Pages need `RENDER_GPU=1`. Fonts: the component loads Chiron GoRound TC 700 and Inter 800 itself.
 
-### 參數 `makeCourseMapAIEng(o)`
+### Parameters `makeCourseMapAIEng(o)`
 
-| 參數 | 預設 | 說明 |
+| Parameter | Default | Description |
 |---|---|---|
-| `lesson` | 必填 | 這一課，1～8 |
-| `t0` | `0` | 地圖段開始的秒數 |
-| `shot` | `'ride'` | `'ride'` 開場（全景 → 依序亮 → 推到這課的零件 + 問題卡）／`'chain'` 全課收尾（第 8 課）／`'finale'` 從這課零件的近景拉回全景／`'overview'` 停在全景。`shot: 'overview', allLit: true` 用在 `lesson: 8` 時等於 `'chain'` |
-| `question` | `''` | 問題卡的字（`ride` 才有）。一行約 12 個中文字以內，要兩行用 `'\n'`。卡上方自動加「第 N 課 · 名牌名」。卡站在這課零件**旁邊、同一階**（第 1、2、5、6 課在右，第 3、4、7、8 課在左，蓋在變淡的鄰居上），尖角指向零件 |
-| `times` | 自動 | 跟旁白對時間用，**絕對秒數**，見 §3 |
-| `stops` | 第 1 課 `[1..8]`；第 N 課 `[1..N−1]` | `ride` 推近之前，在全景裡亮的零件。**可以分組**：`[[1],[2,3],[4,5,6],[7,8]]`，同一組的零件在全景裡一起亮、一起演一個視窗（1 個 4.0 s、2 個 4.6 s、3 個以上 5.2 s），組和組輪流 |
-| `review` | 第 1～4 課 `'wide'`；第 5～8 課 `'group'` | `'wide'`：每個 stop 輪流在全景裡亮。`'group'`：學過的零件**一起亮、一起演**一個視窗（＝`stops` 只有一組；4 個以上 5.2 s）。`'push'`：鏡頭推到每個 stop（慢，每個 stop 至少給 3 s）。`stops` 是分組寫法時 `review` 不影響分組 |
-| `camFrom` | 無 | `{pos, look, fov}`（世界座標 `THREE.Vector3`）：從你的鏡頭在 `t0` 開始平滑接進地圖鏡頭 |
-| `camBlend` | `1.2` | 這段接進來要幾秒（建議 1.0） |
-| `allLit` | `false` | `overview` 時八個都亮（lesson 8 時變成 `chain`） |
-| `place` | `{x:0.2, y:0, z:-0.95, rotY:0, scale:0.6}` | 地圖桌放哪（黑板前、老師和學生中間；用地圖時不要再放 `C.makeLowTable()`）。桌子世界座標約 x −0.87～1.27、z −1.53～−0.37（`map.tableBox()`）。縮放不影響畫面上的大小（鏡頭會自己對準），只影響會不會撞到教室裡的人 |
-| `table` | `true` | `false`：不要展示桌腳，台子直接放在 `place.y` |
-| `parts` | `{}` | 改名牌：`{n: {name}}`。預設名牌照 BRIEF 附錄，非必要不要改 |
-| `times.hold` | 無（＝原本的做法） | x30r（實驗 20 測試 21）加的，只在 `ride`。每一組 stop 一個秒數或 `null`：有給的那一組，鏡頭在這個秒數停到它（推近 1.1 s，仰角 0.9，含名牌），它亮起來但**停在開頭不演**，到 `times.parts[i]` 才演；前一組的視窗在這個秒數結束；停下的時候，別的零件的小字、字卡和名牌都收起來，直到鏡頭到這課的零件。用在「上一課先用問的」：`stops: [[1,2,3,4],[5]], times: { parts: [Wd('M01r','課') - 0.05, Wd('M01a','真實')], hold: [null, Wd('M01q','第五') - 0.1], … }`。沒給就跟以前逐格一樣（x29 地圖定格前後逐位元相同） |
-| `groupTags` | 無 | x30r 加的，只在 `ride`。每一組 stop 一個字或 `null`：那一組亮著的時候，上面出現一塊深色小牌（問題卡標籤的樣子），例：`['複習']`（實驗 16 P13：一起複習那格曾被讀成「亮錯站」）。前排的組放在後階的立面上、組的正中；後排的組放在名牌上方。會回報給 readcheck（`map-tag-i`） |
+| `lesson` | required | This lesson, 1–8 |
+| `t0` | `0` | Second at which the map segment starts |
+| `shot` | `'ride'` | `'ride'` opening (wide → learned parts light in turn → push in on this lesson's part + question card) / `'chain'` course closing (lesson 8) / `'finale'` pull back from this lesson's close-up to the wide shot / `'overview'` hold the wide shot. `shot: 'overview', allLit: true` on `lesson: 8` equals `'chain'` |
+| `question` | `''` | Question-card text (`ride` only). Keep a line to about 12 CJK characters; use `'\n'` for two lines. A tag "Lesson N · plate name" (drawn as `第 N 課 · <plate>`) is added above it. The card stands **beside this lesson's part, on the same step** (right of lessons 1, 2, 5, 6; left of 3, 4, 7, 8, covering a dimmed neighbour), its pointer aimed at the part |
+| `questionTag` | `第 N 課 · <plate>` | Replaces the tag above the question, e.g. for an extra lesson that sits next to a numbered one (see §2) |
+| `times` | auto | Sync to narration, **absolute seconds**; see §3 |
+| `stops` | lesson 1: `[1..8]`; lesson N: `[1..N−1]` | Parts lit in the wide shot before a `ride` pushes in. **May be grouped**: `[[1],[2,3],[4,5,6],[7,8]]` — parts in one group light and play together in one window (1 part 4.0 s, 2 parts 4.6 s, 3 or more 5.2 s), groups take turns |
+| `review` | lessons 1–4 `'wide'`; 5–8 `'group'` | `'wide'`: each stop lights in turn in the wide shot. `'group'`: all learned parts **light and play together** in one window (= `stops` as a single group; 5.2 s for 4 or more). `'push'`: the camera pushes in on each stop (slow; give each stop at least 3 s). With grouped `stops`, `review` does not change the grouping |
+| `camFrom` | none | `{pos, look, fov}` (world `THREE.Vector3`): blend smoothly from your camera into the map camera, starting at `t0` |
+| `camBlend` | `1.2` | Length of that blend in seconds (1.0 recommended) |
+| `allLit` | `false` | `overview` with all eight lit (on lesson 8 it becomes `chain`) |
+| `place` | `{x:0.2, y:0, z:-0.95, rotY:0, scale:0.6}` | Where the map table stands (in front of the blackboard, between teacher and student; do not also add `C.makeLowTable()`). The table's world extent is about x −0.87…1.27, z −1.53…−0.37 (`map.tableBox()`). Scale does not change its size on screen (the camera frames it), only whether it collides with people in the classroom |
+| `table` | `true` | `false`: no display-table legs; the stand sits directly at `place.y` |
+| `parts` | `{}` | Rename plates: `{n: {name}}` |
+| `times.hold` | none | `ride` only. Per group of stops, a second or `null`. For a group with a second, the camera stops on that group at that second (1.1 s push, elevation 0.9, plates included); the group lights up but **rests at the start of its run** until its play time `times.parts[i]`; the previous group's window ends at the hold; while the camera is stopped, the other parts' small text, captions and plates hide until the camera reaches this lesson's part. Use it when narration asks about a learned lesson before naming it: `stops: [[1,2,3,4],[5]], times: { parts: [Wd('M01r','課') - 0.05, Wd('M01a','真實')], hold: [null, Wd('M01q','第五') - 0.1], … }`. Without it the camera stays wide while stops play |
+| `groupTags` | none | `ride` only. Per group of stops, a string or `null`: while that group is lit, a small dark tag (the question card's tag look) shows above it, e.g. `['複習']` ("Review"), so a group lit together reads as a review and not as the wrong part lighting up. Front-row groups get the tag on the back step's riser, centred on the group; back-row groups above their plates. Reported to readcheck as `map-tag-i` |
 
-### 回傳
+### Return value
 
-| 名稱 | 說明 |
+| Name | Description |
 |---|---|
-| `root` | 加到 scene 的 Group |
-| `update(t, cam)` | 擺好第 t 秒的所有東西（要傳 `cam`：名牌轉向、出框判斷、推近時的小字） |
-| `cam(t)` / `applyCam(cam, t)` | 地圖鏡頭（世界座標 `{pos, look, fov}`）／直接套到 `PerspectiveCamera` |
-| `texts(cam)` | `[{id, text, x0, y0, x1, y1}]`：畫面上的名牌（`map-plate-n`）和問題卡（`map-question`，含標籤），頁面像素座標。放進 `window.TEXTS`。只回報完整在框內的名牌；問題卡長到 90% 才算出現 |
-| `times` | `ride`：`{ start, overview, groups:[{parts, t, end}], stops:[{n, t, end, rate}], push, arrive, colorIn, ask, readQ, end, lit }`；`chain`：`{ start, join:[a,b], flow:[f1..f8], per?, allOn, end, lit }` |
-| `review` | 實際用的 review 模式 |
-| `cams.overview()`、`cams.part(n)`、`cams.chain()` | 固定鏡頭：全景／零件 n 的近景（這課的零件會包含問題卡；後排的近景從比較高的角度看，前排零件不會擋住）／收尾全景（含走道） |
-| `partWorld(n)` / `itemWorld(n)` | 零件 n 的世界座標／它正在動的東西（曲線板、標靶、最高長條、籃子、天平橫桿、v1.1 字卡、白板、電池格）的世界座標 |
-| `inShot(obj, cam)` | 角色（任何 Object3D）在這個鏡頭裡是 `'in'`／`'part'`（被畫面邊切到）／`'out'`。地圖段每個鏡頭都應該是 `'out'` 或 `'in'`，不要 `'part'` |
-| `clearX(obj, side)` | 把角色往外（side −1 左、+1 右）移到地圖段每個鏡頭都看不到它為止，回傳新的 x（§5） |
-| `tableBox()` | 桌子的世界座標 Box3（站位用） |
-| `parts`、`land`、`stops`、`duration` | 內部物件／`end − t0` |
+| `root` | The Group to add to the scene |
+| `update(t, cam)` | Poses everything for second t (pass `cam`: plates turn to it, frame checks, push-in text) |
+| `cam(t)` / `applyCam(cam, t)` | The map camera (world `{pos, look, fov}`) / apply it directly to a `PerspectiveCamera` |
+| `texts(cam)` | `[{id, text, x0, y0, x1, y1}]`: the plates on screen (`map-plate-n`), group tags (`map-tag-i`) and the question card (`map-question`, tag included), in page pixels. Put it into `window.TEXTS`. Only plates fully inside the frame are reported; the question card counts once it has grown to 90 % |
+| `times` | `ride`: `{ start, overview, groups:[{parts, t, end, hold?}], stops:[{n, t, end, rate}], push, arrive, colorIn, ask, readQ, end, lit }`; `chain`: `{ start, join:[a,b], flow:[f1..f8], per?, allOn, end, lit }`. `console.log(JSON.stringify(map.times))` shows the actual numbers |
+| `review` | The review mode actually used |
+| `cams.overview()`, `cams.part(n)`, `cams.group(ns)`, `cams.chain()` | Fixed cameras: wide / close-up of part n (this lesson's includes the question card; back-row close-ups look from higher up so the front row does not block them) / a held group with its plates / closing wide shot (walkway included) |
+| `partWorld(n)` / `itemWorld(n)` | World position of part n / of its moving item (curve board, target, tallest bar, basket, balance beam, v1.1 caption, whiteboard, battery), as last posed by `update` |
+| `inShot(obj, cam)` | Is a character (any Object3D) `'in'` / `'part'` (cut by the frame edge) / `'out'` of this camera. Every map camera should see each character as `'out'` or `'in'`, never `'part'` |
+| `clearX(obj, side)` | Moves a character outward (side −1 left, +1 right) until every map camera sees it as `'out'`; returns the new x (§5) |
+| `tableBox()` | World-space Box3 of the table (for staging) |
+| `parts`, `land`, `stops`, `duration` | Internals / `end − t0` |
 
-## 2. 每一課怎麼呼叫（建議值）
+## 2. Calling it per lesson (recommended values)
 
-下面的秒數是**預設值**（`t0 = 0`、`camBlend: 1.0`、只給 `question`）；實際用時把 `t0` 換成你那句旁白的開始，或用 `times.parts` / `arrive` 對到字。問題卡的字是 BRIEF 的「這課回答的問題」，各課製作者可以換（≤ 12 字）。
+The seconds below are **defaults** (`t0 = 0`, `camBlend: 1.0`, only `question` given); in practice set `t0` to the start of your narration line, or sync with `times.parts` / `arrive`. The questions are the example course's "question this lesson answers"; keep yours to about 12 characters per line.
 
-### 第 1 課（ae-l01-learned）：第一次看全貌，八個依序各演一次，再推到零件 1 + 問題卡
+### Lesson 1: the first full look, all eight play in turn, then push in on part 1 + question card
 ```js
-makeCourseMapAIEng({ lesson: 1, t0: Ls('O0x'), question: 'AI 答錯了，為什麼\n找不到錯的那一行？', camFrom: CAMS.W, camBlend: 1.0 })
-// 對旁白：times: { parts: [Ls('a'), …8 個], arrive: Ls('mapbeat') + 0.2 }（每個 stop 間隔 ≥ 3.0 s）
+makeCourseMapAIEng({ lesson: 1, t0: Ls('O0x'), question: 'AI 答錯了，為什麼\n找不到錯的那一行？', camFrom: CAMS.W, camBlend: 1.0 })   // "The AI got it wrong — why can't we find the wrong line?"
+// sync to narration: times: { parts: [Ls('a'), … 8 of them], arrive: Ls('mapbeat') + 0.2 } (≥ 3.0 s between stops)
 ```
-| 段 | 秒（相對 t0） | 停多久 | 畫面 |
+| Beat | Seconds (from t0) | Hold | Picture |
 |---|---|---|---|
-| 接進來＋全景 | 0–2.6 | 2.6 s（含 1.0 s 接鏡頭） | 八個都淡著、整個台子在畫面裡 |
-| 零件 1～8 依序亮 | 2.6 / 6.2 / 9.8 / 13.4 / 17.0 / 20.6 / 24.2 / 27.8 | 各 **3.6 s**（1.35～1.6× 演完一輪再停） | 全景，一次只有一個有顏色、名牌變黃 |
-| 推到零件 1 | 31.4–32.5 | 1.1 s | 推近，其他變更淡、字和名牌藏起來；零件 1 從 31.55 再演一次（1×） |
-| 問題卡 | 32.5–39.5 | **7.0 s**（兩行 18 字＋標籤，讀完要 6.6 s） | 卡在零件右邊（蓋在零件 2 上） |
-| **合計** | | **39.5 s** | 想縮短：給 `times.parts` 讓每個 stop 3.0 s，約 34 s；或 `stops: [1,2,3,4]` 加 `review:'group'` 的二段式（自己排） |
+| Blend in + wide | 0–2.6 | 2.6 s (incl. 1.0 s blend) | All eight dim, the whole stand in frame |
+| Parts 1–8 light in turn | 2.6 / 6.2 / 9.8 / 13.4 / 17.0 / 20.6 / 24.2 / 27.8 | **3.6 s** each (one run at 1.35–1.6×, then rest) | Wide; only one part coloured at a time, its plate yellow |
+| Push in on part 1 | 31.4–32.5 | 1.1 s | Others dim further, their text and plates hide; part 1 replays from 31.55 (1×) |
+| Question card | 32.5–39.5 | **7.0 s** (two lines, 18 characters + tag: 6.6 s to read) | Card right of the part (covering part 2) |
+| **Total** | | **39.5 s** | To shorten: `times.parts` at 3.0 s per stop (about 34 s), or the grouped version below |
 
-### 第 1 課分組版（建議，一針見血要在 60 s 內時）：全課八個分四組演完，再推到零件 1 + 問題卡
+### Lesson 1, grouped (recommended when the opening must stay under 60 s): eight parts in four groups, then push in on part 1 + question card
 ```js
-makeCourseMapAIEng({ lesson: 1, t0: Ls('O0x'), question: '為什麼找不到錯的那一行？', camFrom: CAMS.W, camBlend: 1.0,
-  stops: [[1], [2, 3], [4, 5, 6], [7, 8]] })   // 分組照 SERIES 的因果線：為什麼不可預測｜診斷＋分類｜量＋考題＋資料｜上線營運
-// 對旁白：times: { parts: [Ls('a'), Ls('b'), Ls('c'), Ls('d')] }（一組一個秒數）
+makeCourseMapAIEng({ lesson: 1, t0: Ls('O0x'), question: '為什麼找不到錯的那一行？', camFrom: CAMS.W, camBlend: 1.0,   // "Why can't we find the wrong line?"
+  stops: [[1], [2, 3], [4, 5, 6], [7, 8]] })   // grouped along the course's causal line: why it is unpredictable | diagnose + classify | measure + eval set + data | operate in production
+// sync to narration: times: { parts: [Ls('a'), Ls('b'), Ls('c'), Ls('d')] } (one second per group)
 ```
-| 段 | 秒（相對 t0） | 停多久 | 畫面 |
+| Beat | Seconds (from t0) | Hold | Picture |
 |---|---|---|---|
-| 接進來＋全景 | 0–2.6 | 2.6 s | 八個都淡著 |
-| 組 1：零件 1 | 2.6–6.6 | 4.0 s（1.43×） | 一次只有這組有顏色、名牌變黃 |
-| 組 2：零件 2、3 | 6.6–11.2 | 4.6 s（約 1.1×） | 兩個一起演 |
-| 組 3：零件 4、5、6 | 11.2–16.4 | 5.2 s（1×） | 前階右邊＋後階左邊兩個 |
-| 組 4：零件 7、8 | 16.4–21.0 | 4.6 s（1×） | 後階右邊兩個 |
-| 推到零件 1 | 21.0–22.1 | 1.1 s | 零件 1 從 21.15 再演一次 |
-| 問題卡 | 22.1–28.2 | **6.1 s**（「第 1 課 · 學來的程式 為什麼找不到錯的那一行？」讀完 5.7 s） | 卡在零件 1 右邊 |
-| **合計** | | **28.2 s** | 測試頁 `?case=l1g` |
+| Blend in + wide | 0–2.6 | 2.6 s | All eight dim |
+| Group 1: part 1 | 2.6–6.6 | 4.0 s (1.43×) | Only this group coloured, plate yellow |
+| Group 2: parts 2, 3 | 6.6–11.2 | 4.6 s (about 1.1×) | Both play together |
+| Group 3: parts 4, 5, 6 | 11.2–16.4 | 5.2 s (1×) | Right of the front step + the two left back-step parts |
+| Group 4: parts 7, 8 | 16.4–21.0 | 4.6 s (1×) | The two right back-step parts |
+| Push in on part 1 | 21.0–22.1 | 1.1 s | Part 1 replays from 21.15 |
+| Question card | 22.1–28.2 | **6.1 s** (tag + question: 5.7 s to read) | Card right of part 1 |
+| **Total** | | **28.2 s** | |
 
-### 第 2～4 課：學過的零件在全景裡輪流複習（2×），推到這課零件 + 問題卡
+### Lessons 2–4: learned parts reviewed one by one in the wide shot (2×), push in on this lesson's part + question card
 ```js
-makeCourseMapAIEng({ lesson: 4, t0: Ls('O0x'), question: '「答得好」怎麼量？', camFrom: CAMS.W, camBlend: 1.0 })
+makeCourseMapAIEng({ lesson: 4, t0: Ls('O0x'), question: '「答得好」怎麼量？', camFrom: CAMS.W, camBlend: 1.0 })   // "How do you measure 'a good answer'?"
 ```
-| 課 | 全景 | 複習（各 2.7 s） | 推近 | 問題卡（例） | 合計 |
+| Lesson | Wide | Review (2.7 s each) | Push in | Question card (example) | Total |
 |---|---|---|---|---|---|
-| 2 | 0–1.8 | 1.8 | 4.5–5.6 | 5.6 起，讀完 + 0.4 | 約 10.5～11 s |
-| 3 | 0–1.8 | 1.8 / 4.5 | 7.2–8.3 | 8.3 起 | 約 13 s |
-| 4 | 0–1.8 | 1.8 / 4.5 / 7.2 | 9.9–11.0 | 11.0–15.5（「「答得好」怎麼量？」讀完 4.1 s） | **15.5 s** |
+| 2 | 0–1.8 | 1.8 | 4.5–5.6 | from 5.6, read time + 0.4 | about 10.5–11 s |
+| 3 | 0–1.8 | 1.8 / 4.5 | 7.2–8.3 | from 8.3 | about 13 s |
+| 4 | 0–1.8 | 1.8 / 4.5 / 7.2 | 9.9–11.0 | 11.0–15.5 (4.1 s to read) | **15.5 s** |
 
-### 第 5～8 課：學過的零件**一起**複習（`review: 'group'` 是預設），推到這課零件 + 問題卡
+### Lessons 5–8: learned parts reviewed **together** (`review: 'group'` is the default), push in on this lesson's part + question card
 ```js
-makeCourseMapAIEng({ lesson: 5, t0: Ls('O0x'), question: '一份考題集怎麼建？', camFrom: CAMS.W, camBlend: 1.0 })
-// 想逐個複習：review: 'wide'（第 8 課要 1.8 + 7×2.7 + 1.1 + 卡 ≈ 27 s）
+makeCourseMapAIEng({ lesson: 5, t0: Ls('O0x'), question: '一份考題集怎麼建？', camFrom: CAMS.W, camBlend: 1.0 })   // "How is an eval set built?"
+// to review one by one: review: 'wide' (lesson 8 then takes 1.8 + 7 × 2.7 + 1.1 + card ≈ 27 s)
 ```
-
-**An extra lesson next to a lesson** (e.g. a single-concept lesson that fills a gap next to lesson 7): ride to that lesson's part and replace the small tag above the question: `makeCourseMapAIEng({ lesson: 7, …, question: '客人等 8 秒，先快哪段？', questionTag: '補一課 · 第 7 課旁' })` (default tag: `第 N 課 · <part name>`).
-| 段 | 秒 | 停多久 |
+| Beat | Seconds | Hold |
 |---|---|---|
-| 接進來＋全景 | 0–1.8 | 1.8 s |
-| 學過的一起亮、一起演 | 1.8–7.0 | **5.2 s**（4 個以上；約 1×） |
-| 推到這課零件（後排，鏡頭從比較高的地方看） | 7.0–8.1 | 1.1 s（7.5 起開演） |
-| 問題卡 | 8.1 起 | 讀完 + 0.4（「一份考題集怎麼建？」約 4.8 s） |
-| **合計** | | **約 13～14 s**（第 5 課測試：13.4 s） |
+| Blend in + wide | 0–1.8 | 1.8 s |
+| Learned parts light and play together | 1.8–7.0 | **5.2 s** (4 or more parts; about 1×) |
+| Push in on this lesson's part (back row: the camera looks from higher up) | 7.0–8.1 | 1.1 s (plays from 7.5) |
+| Question card | from 8.1 | read time + 0.4 (about 4.8 s for this question) |
+| **Total** | | **about 13–14 s** (lesson 5: 13.4 s) |
 
-### 第 8 課收尾：`chain`（全課接成一條），然後再轉黑板畫心智圖
+**An extra lesson next to a numbered lesson** (e.g. a single-concept lesson that fills a gap next to lesson 7): ride to that lesson's part and replace the tag above the question: `makeCourseMapAIEng({ lesson: 7, …, question: '客人等 8 秒，先快哪段？', questionTag: '補一課 · 第 7 課旁' })` (question: "The customer waits 8 s — which step do we speed up first?"; tag: "Extra lesson · next to lesson 7").
+
+### Lesson 8 closing: `chain` (the whole course as one line), then turn to the blackboard for the mindmap
 ```js
 const mapEnd = await makeCourseMapAIEng({ lesson: 8, t0: Ls('E01'), shot: 'chain', camFrom: CAMS.BFULL, camBlend: 1.0,
-  times: { flow: ['E02','E03','E04','E05','E06','E07','E08','E09'].map(Ls), end: Le('E10') } });   // 每句旁白講一課，零件跟著亮
+  times: { flow: ['E02','E03','E04','E05','E06','E07','E08','E09'].map(Ls), end: Le('E10') } });   // one narration line per lesson; the parts light with it
 ```
-預設（只給 `t0`）：
+Defaults (only `t0` given):
 
-| 段 | 秒 | 停多久 |
+| Beat | Seconds | Hold |
 |---|---|---|
-| 全景（八個都有顏色）→ 走道和箭頭出現 | 0–2.4 | 2.4 s |
-| 卡片走到零件 1～8，各演一次 | 3.0 / 6.6 / 10.2 / 13.8 / 17.4 / 21.0 / 24.6 / 28.2 | 各 **3.6 s**（4 → 5 換行那一跳約 1 s，包含在 5 的視窗裡） |
-| 八個一起亮、停住 | 31.5–34.9 | 3.4 s |
-| **合計** | | **34.9 s** |
+| Wide (all eight coloured) → walkways and arrows appear | 0–2.4 | 2.4 s |
+| The card reaches parts 1–8, each plays once | 3.0 / 6.6 / 10.2 / 13.8 / 17.4 / 21.0 / 24.6 / 28.2 | **3.6 s** each (the 4 → 5 line-break jump, about 1 s, is inside 5's window) |
+| All eight light together and hold | 31.5–34.9 | 3.4 s |
+| **Total** | | **34.9 s** |
 
-只給 `end` 不給 `flow`：八段平均分（每段 2.4～4.5 s），最後 3 s 全亮。每段 < 3 s 會偏快（「收整門課時更要慢」），整段請給 ≥ 30 s。
+With `end` but no `flow`: the eight beats share the time evenly (2.4–4.5 s each) and the last 3 s are all lit. Beats under 3 s feel rushed (closing the whole course needs more time, not less), so give the segment ≥ 30 s.
 
-## 3. 對時間（`times`，全部是絕對秒數）
+## 3. Syncing to narration (`times`, all absolute seconds)
 
-跟 `COURSEMAP-STOCK.md` §3 完全一樣（`overview`、`parts`/`stops`、`arrive`、`push`、`colorIn`/`play`、`rate`、`ask`、`end`；chain 的 `join`、`flow`、`end`），只差：
-- 第 1 課每個 stop 預設 3.6 s（STOCK 3.8 s；八個零件）；分組時一組的視窗 = 1 個 4.0 s、2 個 4.6 s、3 個以上 5.2 s（STOCK 的 group 是 3.6 s）。`times.parts` 在分組時是**一組一個秒數**。
-- chain 的 `flow` 是 8 個；預設每段 3.6 s。
-- 每個 stop 的視窗請給 ≥ 2.5 s；第一次看全貌（第 1 課）建議 ≥ 3.0 s。演的速度自動算：`rate = clamp(一輪 / (視窗 − 0.5), 1, 上限)`，上限第 1 課 1.8、複習 2.0。
-- **自己給 `end` 時，`end − ask` 不要小於 `times.readQ`**（否則 readcheck 會報問題卡太短）。
+`ride`:
 
-## 4. 每個零件停幾秒（速查）
+| Key | Default | Description |
+|---|---|---|
+| `overview` | `t0` | Wide shot starts |
+| `parts` (or `stops`) | auto | The second each stop lights, one per stop — or **one per group** when `stops` is grouped or `review` is `'group'`. With `arrive` but no `parts`: spread evenly between the end of the wide hold and the push. Without either: the wide shot holds 2.6 s (lesson 1) / 1.8 s (with `camBlend: 1.0`), then each stop gets 3.6 s (lesson 1) / 2.7 s (review); a group window is 4.0 s (1 part), 4.6 s (2), 5.2 s (3 or more) |
+| `hold` | none | Per group, where the camera stops on that group before it plays (§1) |
+| `arrive` | last stop's end + 1.1 s | The camera has pushed in on this lesson's part; the question card appears here by default |
+| `push` | `arrive − 1.1` | Push-in starts; the last stop stays lit until here. 0.55 s into the push, the other parts' text and plates hide |
+| `colorIn` (or `play`) | lesson 1: `push + 0.15`; others: `arrive − 0.6` | This lesson's part colours in and plays from the start |
+| `rate` | `1` | Playback speed of this lesson's part |
+| `ask` | `arrive` | Question card pops up |
+| `end` | `max(ask + max(2.8, readQ + 0.4), colorIn + one run + 0.4)` | Map segment ends; the camera stops moving after `end − 0.5`. **If you give `end` yourself, keep `end − ask` ≥ `times.readQ`** (otherwise readcheck reports the question card as too short) |
 
-| 情況 | 停多久 |
+- A stop's window runs from its lighting to the next stop (or to `push`). Playback speed is automatic: `rate = clamp(one run / (window − 0.5), 1, cap)`, cap 1.8 on lesson 1 and 2.0 for reviews. **Give each window ≥ 2.5 s**; ≥ 3.0 s on the first full look (lesson 1).
+- Learned parts rest in their finished pose before their stop and play from the start when lit; parts not yet learned rest in their starting pose.
+
+`chain`:
+
+| Key | Default | Description |
+|---|---|---|
+| `join` | `t0 + 0.5 + camBlend × 0.5` | Walkways start to appear (1.4 s to finish; arrows pop in one after another) |
+| `flow` | auto | `[f1, …, f8]`: the second the card reaches part n and it starts playing. Each beat's speed follows from the gap to the next (1–2×) |
+| `end` | `allOn + 3.4` | End. With `end` but no `flow`: eight even beats (2.4–4.5 s each), the last 3 s all lit |
+
+`finale` / `overview`: only `end` (default `t0 + 4.0`).
+
+## 4. How long each beat holds (quick reference)
+
+| Situation | Hold |
 |---|---|
-| 全景（第一次看全貌） | ≥ 2.5 s（預設 2.6 s，含 1.0 s 接鏡頭） |
-| 全景（第 2～8 課） | ≥ 1.5 s（預設 1.8 s） |
-| 一個零件亮（第一次） | ≥ 3.0 s（預設 3.6 s） |
-| 一個零件亮（複習 wide） | ≥ 2.5 s（預設 2.7 s，約 2×） |
-| 一組一起演（分組 `stops` 或 group） | 4.0 s（1 個）／4.6 s（2 個）／5.2 s（3 個以上） |
-| 推近 | 1.1 s |
-| 問題卡 | 讀完的時間 + 0.4 s（`times.readQ`） |
-| 收尾接成一條 | 走道 1.4 s ＋ 每段 ≥ 3.0 s（預設 3.6 s）＋ 全亮停 ≥ 3 s；整段 ≥ 30 s |
+| Wide (first full look) | ≥ 2.5 s (default 2.6 s incl. 1.0 s blend) |
+| Wide (lessons 2–8) | ≥ 1.5 s (default 1.8 s) |
+| One part lit (first look) | ≥ 3.0 s (default 3.6 s) |
+| One part lit (wide review) | ≥ 2.5 s (default 2.7 s, about 2×) |
+| A group playing together (grouped `stops` or `'group'`) | 4.0 s (1 part) / 4.6 s (2) / 5.2 s (3 or more) |
+| Push in | 1.1 s |
+| Question card | read time + 0.4 s (`times.readQ`) |
+| Closing chain | walkways 1.4 s + ≥ 3.0 s per beat (default 3.6 s) + ≥ 3 s all lit; whole segment ≥ 30 s |
 
-## 5. 角色站位（教室裡配各課老師）
+## 5. Staging the cast (the classroom with each lesson's teacher)
 
-- 地圖桌預設在 x −0.87～1.27、z −1.53～−0.37（`map.tableBox()`）。STOCK 各課的站位（老師 `(-2.25, 0, -0.7)`、學生 `(2.1, 0, 0.05)`）不會撞到桌子。
-- **但地圖段的全景比 STOCK 版寬**（八個零件），比較寬的角色站在 STOCK 位置會被全景的畫面邊切到一點。實測（第 1 課分組版，地圖段每 0.25 s 一個鏡頭，`clearX` 的結果）：
+- The table occupies about x −0.87…1.27, z −1.53…−0.37 (`map.tableBox()`). The classroom's default spots (teacher `(-2.25, 0, -0.7)`, student `(2.1, 0, 0.05)`) do not collide with it.
+- **The wide shot of an eight-part stand is wide**, so a broad character at the default spot can be cut by the frame edge during the map. Character widths differ a lot between skins (a round glass student is about twice as wide as a narrow one); measured moves stay within about 0.25 m, but they depend on each lesson's camera timing, so **call `clearX` per lesson** instead of reusing someone else's numbers.
+- **How: after building the map, call `map.clearX(teacher.root, -1)` and `map.clearX(student.root, 1)` once.** Each moves the character outward from where it stands until every map camera (sampled every 0.25 s, from the end of the `camFrom` blend to `times.end`) sees it as `'out'`, and returns the new x (moves at most 1.6 m).
+- After that move, a broad character may be cut slightly in the classroom wide shot: either use two spots (the `clearX` spot during the map segment, the usual spot elsewhere), or hide the cast during the map segment (`teacher.root.visible = !onMap`). Some large teachers are already slightly cut at the default spot in the classroom wide shot (`inShot = 'part'`), independent of the map.
+- To check by hand: `map.applyCam(probeCam, t)` at a few key seconds, then `map.inShot(teacher.root, probeCam)`. Only visible meshes count (glass shells included; flat contact-shadow planes and hidden state marks do not).
+- The teacher can `point` at the stand during the map; when the teacher is out of frame the pose does not matter.
 
-  | 皮膚（老師） | 老師 x | 學生 x |
-  |---|---|---|
-  | glossy-owl（Luna） | −2.25（不用動） | 2.10（不用動） |
-  | glossy-bot（Nico） | −2.25 | 2.10 |
-  | glass（Iris） | **−2.50** | **2.35** |
-  | glossy-nova（Nova，取代 glossy-capsule） | **−2.40** | 2.10 |
-  | ink（Rumi） | −2.25（不用動） | 2.10（不用動） |
+## 6. Handoff and camera
 
-  移動都在 0.25 m 以內。各課的鏡頭時間不同，**每課自己叫一次 `clearX`**，不要抄表。
-- **做法：建好地圖之後叫一次 `map.clearX(teacher.root, -1)`、`map.clearX(student.root, 1)`**：它把角色從現在的位置往外移，移到地圖段每個鏡頭（每 0.25 s 取一次，從 `camFrom` 接進來之後算起）都是 `'out'` 為止，回傳新的 x（最多移 1.6 m）。測試頁就是這樣做的。
-- 移出去之後，教室全景 `W`（`(0.1,1.52,6.3)` 看 `(0,1.12,-1.2)`）裡寬的角色可能被畫面邊切到一點：那一課就在地圖段前後用兩個站位（地圖段用 clearX 的位置），或在地圖段把人藏起來（STOCK 各課的做法：`teacher.root.visible = !onMap`）。注意 glossy-owl 老師（很大）在 STOCK 位置的 `W` 鏡頭本來就有一點出框（`inShot = 'part'`，跟地圖無關）。
-- 想自己檢查：`map.applyCam(probeCam, t)` 套在幾個關鍵秒數，再 `map.inShot(teacher.root, probeCam)`；只算看得到的網格（玻璃外殼也算；不算平貼地面的接觸陰影、藏起來的狀態記號）。
-- 老師在地圖段可以 `point` 指向台子（測試頁這樣做）；人不在畫面裡時姿勢不影響畫面。
+- From the classroom: `camFrom` + `camBlend` (1.0 s recommended). Back to your camera: lerp yourself after `times.end` (e.g. 1.2 s back to the classroom wide shot).
+- Handoff to a DOM page: the camera settles at `end − 0.5`; render the last frame with `RENDER_GPU=1 node render.cjs <project> --scene classroom.html --stills <end>` and use it as the texture.
+- On a push-in, this lesson's plate gives way to the question card; the card is a full billboard. The bottom 140 px stay empty (the wide-shot plates end at about 925 px).
+- Back-row close-ups use a higher elevation (0.62 rad; front row 0.42), looking over the front-row parts.
 
-## 6. 交接與鏡頭
+## 7. Render cost
 
-- 從教室接進來：`camFrom` + `camBlend`（建議 1.0 s）。接回你的鏡頭：在 `times.end` 之後自己 lerp（測試頁：1.2 s 拉回 `W`）。
-- 交接到 DOM 頁：鏡頭在 `end − 0.5` 停住；最後一格用 `RENDER_GPU=1 node render.cjs <project> --scene classroom.html --stills <end>` 出圖當貼圖。
-- 推近時，這課零件的名牌讓位給問題卡；問題卡是完整的 billboard。底部 140 px 沒有東西（全景名牌下緣約 925 px）。
-- 後排零件的近景鏡頭仰角比較高（0.62 rad，前排 0.42），從前排零件上方看過去。
+1920×1080, SwiftShader, classroom + map + cast: about 4–6 s per frame (stills including start-up about 3 s or more each); the first frame adds about 10 s (fonts, canvas textures, shaders). Canvases that change (code card, curve board, drift whiteboard) redraw only when their content changes. Set `map.root.visible = false` when the map is off screen. `readcheck.cjs` over a 43 s map segment takes about a minute.
 
-## 7. 算圖成本
+## 8. Known limitations
 
-1920×1080、SwiftShader、教室＋地圖＋角色：每格約 4～6 s（定格含啟動每張約 3 s 以上），第一格再加約 10 s（字型、canvas 貼圖、shader）。會重畫的 canvas（程式碼卡、曲線板、漂移白板）只在內容變了才重畫。地圖不在畫面上時設 `map.root.visible = false`。`readcheck.cjs` 對第 1 課測試頁（43 s）約 1 分鐘。
+- On-screen text is Chinese in this example. Plate names can be overridden with `parts`; the other labels (captions, the code card, the whiteboard) live in the part builders, and the font preload string in `makeCourseMapAIEng` must cover any new characters.
+- Numbers inside the parts are illustrative: part 3's 40 / 30 / 20 / 10 are the example course's shared figures; part 4's 3/4 and 3/5 are ball counts on screen, not real metrics; part 7's coins only mean "cost per answer goes down" and show no amount (real prices belong in the lesson's own scenes).
+- Part 6's synthetic card only shows "the short category gains a card", not the limits of synthetic data (taught in the lesson).
+- Part 8's rising standard line stands for "raise the SLO standard after the review"; alerting and on-call roles are not in the part.
+- Plates and the question card are billboards; front-row plates hang on the step's edge, so from a very low angle (elevation < 0.3 rad) they look like they float in front of it.
+- No sound: if wanted, add a small "pop" when each stop lights, at `times.ask`, at each chain `flow`, and at the line-break jump (`flow[4] − 1`); part 3's falling cards can take a "tick".
+- The API only grows: published parameters and return values do not change.
 
-## 8. 已知限制
+## 9. Design decisions
 
-- 零件裡的數字是示意：3 的 40／30／20／10 是 SERIES 共用數字；4 的 3/4、3/5 是畫面上的球數（不是本案的真實指標）；7 的銀幣只表示「每則成本變少」，不寫金額（價格在正課畫面用 FACTS 的官方價格）。
-- 6 的「合成卡」只演「少的類別補一張」，不演合成資料的限制（正課講）。
-- 8 的標準線往上調＝檢討後把 SLO 標準調高的示意；告警、一人三角色不在零件裡。
-- 名牌和問題卡是 billboard；前排名牌掛在台階邊上，從很低的角度看（仰角 < 0.3 rad）會看到它浮在台階前面。
-- 沒有音效：要的話在每個 stop 亮起、`times.ask`、chain 的每個 `flow`、換行那一跳（`flow[4] − 1`）加一個小「pop」，3 的錯誤卡落下可以用「tick」。
-- API 只會長大：已公開的參數和回傳不改。
+The principles behind this map, to keep when building a map for another course:
 
-## 新想法（trial）
-
-可以超越 skill 原本的限制，只要教學效果更好。下面是這個元件超出 skill / STOCK 版做法的地方，**使用者還沒看過成品**，都算 trial。
-
-1. **兩階台子＋名牌上下兩條帶子（前排掛在台階邊、後排立在招牌上）**
-   - 做了什麼：八個零件放兩階，名牌不站在零件前面，而是前排掛在前階邊上（零件下面）、後排立在零件後面的招牌上（零件上面）。
-   - 為什麼教學效果更好：第一版照 STOCK 把名牌立在零件前面，全景裡後排名牌蓋住後排零件的前半（演的東西被擋），前排零件也擋到後排名牌。上下兩條名牌帶子讓「全景要讀的只有名牌」變成真的：一眼掃過去就是兩行目錄，零件的機制完全不被擋。
-   - 寫進 skill 要改：`reference/04-skeleton.md` §5 第 2、3 點後加一句「零件多於 5 個時排成兩行，名牌排成帶子，不站在零件前面」。
-2. **名牌整塊 billboard（不只繞垂直軸）**
-   - 做了什麼：名牌整塊面向鏡頭。
-   - 為什麼：從高角度看，只繞垂直軸轉的名牌在畫面左右兩邊會歪（看起來像斜貼的），斜字比較難讀；STOCK 文件也把這列在已知限制。
-   - 寫進 skill 要改：`COURSEMAP-STOCK.md` §7 第 4 點可以拿掉（若 STOCK 版也改）；`04-skeleton.md` §5 第 3 點「Name tags readable」補「face the camera」。
-3. **兩行像換行一樣讀（都左到右），收尾時卡片「換行」跳過去，走過的路變金色**
-   - 做了什麼：後排也是左到右（5 在左上），chain 時卡片走完第一行、拋物線跳到第二行開頭；走道上走過的部分變成金色。
-   - 為什麼：觀眾讀名牌的順序和讀字一樣；U 形（後排右到左）會讓上面那條帶子讀成 8 7 6 5。金色路徑讓「整門課走到哪了」在畫面上看得見，收尾時一眼看出八課是一條線。
-   - 寫進 skill 要改：`04-skeleton.md` §3 或 §5 加「全課收尾的地圖：一個東西走過全部零件、走過的路留下痕跡」。
-4. **第 5～8 課預設一起複習（group）；第 1 課全課地圖可以分組演（`stops: [[1],[2,3],[4,5,6],[7,8]]`）**
-   - 做了什麼：`review` 的預設依課數變：前 4 課逐個複習，第 5 課起學過的一起亮 5.2 s。第 1 課的全貌可以照因果線分四組演，整段 28 s（逐個演要 39 s）。
-   - 為什麼：逐個複習到第 8 課要 19 s，地圖段會壓到一針見血（60 s 內）；後面的課學生已經看過每個零件多次，一起亮就認得。
-   - 寫進 skill 要改：`04-skeleton.md` §1 第 3 點補「後半段的課，學過的零件可以一起複習」。
-5. **後排零件畫大 12 %、後排近景用比較高的仰角**
-   - 為什麼：遠的零件在全景裡比較小，放大後兩排看起來一樣大；近景從高處看，前排零件不會擋住後排。
-   - 寫進 skill：不用改規則，寫在元件文件即可。
-6. **`inShot(obj, cam)` / `clearX(obj, side)` 站位檢查**
-   - 做了什麼：檢查角色在地圖鏡頭裡是不是被畫面邊切一半；`clearX` 自動把它移到每個地圖鏡頭外。
-   - 為什麼：五套角色寬度差很多（glass 的球體學生比 owl 寬一倍），STOCK 的固定站位會讓寬角色在全景邊上露半個身體（09-pitfalls：subject cut off、half-visible）。
-   - 寫進 skill 要改：`reference/11-teachers.md` §6「Classroom scenes」加一句「換老師時用地圖的 inShot 檢查站位」。
+1. **More than five parts: two rows, plates in two bands.** Plates stand above the back row and below the front row instead of in front of the parts. Plates in front of the parts would cover the back-row mechanisms and be covered by the front row; two bands keep "in the wide shot the viewer reads only the plates" literally true — one glance reads like two lines of a table of contents, and no mechanism is blocked.
+2. **Plates are full billboards.** A plate that turns only about the vertical axis looks skewed near the frame edges when the camera is high, and slanted text is harder to read.
+3. **Both rows read left to right, like lines of text.** A U-shaped order would make the top band read 8 7 6 5. In the closing, the card "line-breaks" from the end of the first row to the start of the second, and the gold trail makes "how far through the course" visible; at the end the whole course reads as one line.
+4. **Later lessons review learned parts together; the first full look can be grouped.** Reviewing one by one grows with every lesson (lesson 8 would spend about 19 s); by then the viewer has seen each part several times and recognizes them lit together. Lesson 1's full look can be grouped along the course's causal line (about 28 s instead of 39 s).
+5. **Back-row parts are drawn larger and seen from higher up**, so both rows read at the same size and the front row never blocks a back-row close-up.
+6. **Staging is checked, not assumed.** Characters differ a lot in width, so a fixed spot that clears one cast cuts another in half at the frame edge; `inShot` / `clearX` measure it against the map's own cameras.

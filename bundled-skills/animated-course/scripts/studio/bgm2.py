@@ -11,7 +11,7 @@ Shape (YouTube-style):
   outro  : the music fades in under the last --outro s of speech (default 14), rises after the last line,
            the last frame is held for --tail s (default 5) and the music fades out over the last 3 s.
            The whole ending sits --outro-level dB (default -3) under the intro level.
-Default track for the course videos: Morning (Kevin MacLeod, CC BY 4.0) — chosen by the user 2026-10-30.
+Default track for the course videos: Morning (Kevin MacLeod, CC BY 4.0).
 The narration is untouched; the mix is loudness-normalised to -16 LUFS. --vtt shifts the subtitles by --solo; --height 720 makes a web copy.
 """
 import json, os, re, subprocess, sys, tempfile
@@ -22,7 +22,7 @@ video, music, out = a[:3]
 opt = lambda k, d: float(a[a.index('--' + k) + 1]) if '--' + k in a else d
 solo, until, outro, tail = opt('solo', 3.0), opt('until', 14.0), opt('outro', 14.0), opt('tail', 5.0)
 full, duck = opt('full', -22.0), opt('duck', -18.0)
-outro_rel = opt('outro-level', -3.0)  # the ending sits this many dB under the intro
+outro_rel = opt('outro-level', -3.0)  # the ending sits this many dB under the intro (a slightly quieter ending)
 height = int(opt('height', 0))  # e.g. 720 for a web copy; 0 keeps the source size
 SR = 48000
 

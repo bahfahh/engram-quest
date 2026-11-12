@@ -1,6 +1,6 @@
 # 03 Adapter pattern: the skeleton is fixed, the middle follows the content
 
-> It is a **metaphor**, not a menu to choose from.
+> It is a **metaphor**, not a menu to choose from. When no approved way of showing fits, improvise: maths, for example, may suit none of the realistic-animation methods, so work out from good teaching videos how the subject is best taught. Force-fitting is the worst outcome.
 
 The spirit: **diagnose first, then choose** from purpose, reason and options that worked.
 
@@ -11,10 +11,11 @@ The spirit: **diagnose first, then choose** from purpose, reason and options tha
 | Sources of different shapes | Each piece of content: a procedure, a rule, numbers, a scale, a structure, a derivation, an anatomy… |
 | The adapter turns a source into the interface | **The way of showing it**: turns this shape of content into a picture the viewer can take in |
 
-The skeleton stays because): the board carries the point, one idea at a time; the course map shows where the lesson sits; the mindmap shows the whole.
+The skeleton stays because each part carries meaning: the board carries the point, one idea at a time; the course map shows where the lesson sits; the mindmap shows the whole.
 
 ## 1. The judgment, layer by layer (for every lesson and every segment)
 
+When one lesson's middle was made several different ways, more than one worked: the adapter pattern still holds (the content decides), but one choice per lesson is too coarse.
 
 "How it is shown" is not one choice. Experiment 17 needed five choices at different scales, made top down, each in the understanding card with its reason. Choosing is the producer's job (the user decides goal, scope, teacher and approval), so **don't ask the user which method they prefer**.
 
@@ -40,13 +41,13 @@ Written per segment in `UNDERSTANDING.md` before choosing; a choice without a di
 
 | The lesson is about | Stage | Approved example |
 |---|---|---|
-| Operating a tool | The real interface | AdsDemo lessons; experiment 17 D |
+| Operating a tool | The real interface | the ads course; experiment 17 D |
 | A process, pipeline or system in a concept lesson | An **isometric diagram world**: the process built as one place, stations in reading order, labels on the margin with leader lines | Experiment 17 A |
 | What is inside something, thousands of things flowing, or a moment that must make people look up | A **3D model** that can turn transparent, be cut open and explode, with the real operation as particles | Experiment 17 B |
 | Geometry or motion | The Atlas diagram world | Experiment 13 |
 | Organs and cells | A realistic anatomy diagram (trial) | Experiment 12 |
 
-**Look of head and tail**: the classroom — blackboard, 3D course map, blackboard mindmap — is the default for every lesson (`01-principles.md` §1, `04-skeleton.md`). The stage above is for the middle; a real interface keeps its real look. The Engram studio (明棚 / 暗棚, lights down) is used only when the user asks for it; in such a film the classroom, course map, recap cards and mindmap follow its mode (`scripts/studio/lib/house/HOUSE.md`).
+**Look of head and tail**: the classroom — blackboard, 3D course map, blackboard mindmap — is the default for every lesson (`01-principles.md` §1, `04-skeleton.md`). The stage above is for the middle; a real interface keeps its real look. The Engram studio (light / dark, lights down) is a narrow option, used only when the user asks for it; in such a film the classroom, course map, recap cards and mindmap follow its mode (`scripts/studio/lib/house/HOUSE.md`).
 
 - **One stage for the whole middle usually serves best**: a place the viewer knows, so they never feel lost; segments are stations in it. Switch when a point cannot be shown there (typically the closing real action on the real screen).
 - Reifying the real objects counts as the real thing (`01-principles.md` §1): each card is a real record, a bin's height is the real share, the two rooms are the two real sets. A foreign metaphor ("an eval set is a restaurant") does not.
@@ -74,7 +75,7 @@ A middle can meet the rhythm baseline and still feel like non-stop talk; experim
    - a segment that grows out of the previous answer's limit: open it from that limit (question ladder, `05` §3d);
    - a result that contradicts the rule just learned, with the mechanism in the next line: the student may ask that why (Pro, `05` §3c).
 
-   All are options; a lesson can use none. Planted piece, visible reasoning, the question ladder, anticipation, recall with a new case, a real case of the same mistake, the student's deep why, the rule's radius, stepping down into one run and the decision-maker's misreading are Pro-teacher devices (`11-teachers.md` §1b; free is Nico only); the bet, a plain question and stating the belief are for every teacher.
+   All are options; a lesson can use none. They are not rules: the situation decides, and a device used because it exists is force-fitted. Planted piece, visible reasoning, the question ladder, anticipation, recall with a new case, a real case of the same mistake, the student's deep why, the rule's radius, stepping down into one run and the decision-maker's misreading are Pro-teacher devices (`11-teachers.md` §1b; free is Nico only); the bet, a plain question and stating the belief are for every teacher.
 
    A procedure is usually carried by the next step's goal alone ("now we need the price"). A short, concrete point may need nothing; a question the material doesn't raise sounds staged. Example only, for cause material: the clue board (`05` §3b).
 2. **Picture first, narration for what the picture cannot say.** What worked: two columns — first what the viewer sees, beat by beat, then narration only where the picture cannot carry the point (the reason, the term, the consequence). A line describing what is visible can usually go.
@@ -91,12 +92,13 @@ Per segment, `UNDERSTANDING.md` §3 notes what carries the viewer (or "nothing n
 Against the learning principles (`01-principles.md` §2), the signpost test, the rhythm baseline (`pacecheck.py`), §1.4, and the question: *"What understanding does this picture give that listening alone would not?"* No answer: look elsewhere.
 
 - **Demo films are not templates**: they and the catalogue are a minimum bar, not a format to copy.
-- The skeleton is judged by its functions too: hook, place in the course, one-liner, recap per segment, structured ending, continuity. The classroom (blackboard, course map, mindmap) is the skeleton's default look for every subject; the clay cast was how the AdsDemo course did it, and the learner's teacher now stands in the same classroom (`makeCast`, `11-teachers.md`). The Engram studio only when the user asks for it (`01-principles.md` §1).
+- The skeleton is judged by its functions too: hook, place in the course, one-liner, recap per segment, structured ending, continuity. The classroom (blackboard, course map, mindmap) is the skeleton's default look for every subject; the clay cast was how the first course did it, and the learner's teacher now stands in the same classroom (`makeCast`, `11-teachers.md`). The Engram studio only when the user asks for it (`01-principles.md` §1).
 
 ## 2. Different subjects: the way of showing grows out of the subject
 
+> Different subjects improvise: biology should be realistic (the heart, the cell nucleus as diagram animations), maths needs derivation and thinking problems through, and so on.
 
-All approved methods so far come from one course (AdsDemo, Meta ads — an operating-a-tool subject). For another subject, first ask **"how do people in this subject come to understand this?"**, then animate that process. Examples (not a list to pick from):
+All approved methods so far come from one course (an ads course — an operating-a-tool subject). For another subject, first ask **"how do people in this subject come to understand this?"**, then animate that process. Examples (not a list to pick from):
 
 | Subject | How people understand it | What the animation should do |
 |---|---|---|
@@ -106,7 +108,7 @@ All approved methods so far come from one course (AdsDemo, Meta ads — an opera
 | Programming, systems | Seeing data and state move while the code runs | Code and execution state side by side: which line runs, how variables and memory change, how a request travels between services |
 | Chemistry | Seeing molecules and reactions | Molecular models, electrons and bonds changing, before/after comparison |
 | History, geography | Cause and effect in time and space | Timelines and maps in motion: who was where, in what order, how territories and routes changed |
-| Operating a tool or setting (e.g. AdsDemo) | Doing it once on the real interface | Real interface operation (`05-presentation-methods.md`) |
+| Operating a tool or setting (e.g. an ads manager) | Doing it once on the real interface | Real interface operation (`05-presentation-methods.md`) |
 
 Common to every row: the picture is the thing itself and how it works, readable with the sound off.
 

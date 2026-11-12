@@ -15,12 +15,13 @@ import { makeMindmap } from '/lib/classroom/mindmap.js';
 const board = C.makeBoard(); board.g.position.set(0, 1.85, -2.36); scene.add(board.g);
 const mm = await makeMindmap(board, {
   layout: 'radial',
-  center: { text: '先買答案，再買效率', t: W('E02', '先買') },          // "Buy answers first, then efficiency"
+  lang: 'en',                                                         // omit for a Chinese board
+  center: { text: 'Change one thing, then measure', t: W('E02', 'change') },
   nodes: [
-    { id: 'goal',   text: '選 App promotion', t: W('E03', 'App'), photo: { src: 'snaps/objective.jpg', crop: [395, 515, 455, 300], w: 340 }, edge: { label: '買什麼？' } },  // "Pick App promotion" / "Buy what?"
-    { id: 'budget', text: '預算放 Ad set 層', t: W('E04', '預算'), doodle: cboDoodle, edge: { label: '錢放哪？' } },      // "Budget at ad-set level" / "Where does money go?"
-    { id: 'test',   text: '只差一個變因',     t: W('E05', '一個'), doodle: oneVarDoodle, edge: { label: '怎麼比？' } },   // "Differ by one variable" / "How to compare?"
-    { id: 'wait',   text: '跑滿 7 天不動', parent: 'test', t: W('E05', '7 天'), icon: 'lock', pic: 'left', color: 'yellow' },  // "Run 7 days untouched"
+    { id: 'goal',   text: 'Pick one goal', t: W('E03', 'goal'), photo: { src: 'snaps/objective.jpg', crop: [395, 515, 455, 300], w: 340 }, edge: { label: 'Measure what?' } },
+    { id: 'budget', text: 'Fix the budget', t: W('E04', 'budget'), doodle: cboDoodle, edge: { label: 'How much?' } },
+    { id: 'test',   text: 'Differ by one change', t: W('E05', 'one'), doodle: oneVarDoodle, edge: { label: 'How to compare?' } },
+    { id: 'wait',   text: 'Run 7 days untouched', parent: 'test', t: W('E05', '7 days'), icon: 'lock', pic: 'left', color: 'yellow' },
   ],
 });
 window.renderAt = t => {
@@ -63,16 +64,16 @@ Give any node `pos: [x, y]` (board px, node center) to use your coordinates; `dx
 ```
 - **Photos**: render a still from a DOM scene (`node render.cjs projects/<yours> --stills 82` → `stills/t-82.jpg`), copy it into your folder, and cut the region with `crop` (source px). At 300–360px wide on the board, UI text inside is only recognizable, not readable; put the point in the chalk text.
 - **Edges**: `style` = `line` (radial default), `arrow` (tree / flow default), `dashed`, `dashedArrow`, `none`. Radial edges from the center curve slightly. `label` sits at the middle of the edge and the line breaks around it (`labelMode: 'beside'` puts it next to the line). An edge starts drawing 0.5 s before its node by default; change with `edge.t`.
-- **Extra edges** (cross-branch cause, contrast): `edges: [{ from: 'budget', to: 'test', label: '所以', style: 'dashedArrow', bend: 0.2, t }]` (`'所以'` = "so").
+- **Extra edges** (cross-branch cause, contrast): `edges: [{ from: 'budget', to: 'test', label: 'so', style: 'dashedArrow', bend: 0.2, t }]`.
 
 ## Chalk doodles `doodle` (redraw a key-point figure small)
 `draw` runs once at build time and records every stroke; playback draws them in order (finished in `dur` seconds). Coordinates are the doodle's own `0..w, 0..h`.
 ```js
-const oneVarDoodle = { w: 300, h: 180, dur: 1.3, draw: d => {        // "two groups differ by one variable"
+const oneVarDoodle = { w: 300, h: 180, dur: 1.3, draw: d => {        // two groups that differ by one change
   for (const [x, c] of [[10, 'teal'], [170, 'orange']]) {
     d.rect(x, 4, 120, 172, { r: 12 });
     for (let i = 1; i < 5; i++) d.line(x + 8, 4 + i * 34, x + 112, 4 + i * 34, { width: 5, color: 'grey' });
-    d.hatch(x + 6, 142, 108, 28, { color: c });                       // only the creative cell is coloured
+    d.hatch(x + 6, 142, 108, 28, { color: c });                       // only the changed cell is coloured
   }
   d.text('≠', 150, 158, { size: 50, color: 'yellow' });
 } };
@@ -100,7 +101,7 @@ const oneVarDoodle = { w: 300, h: 180, dur: 1.3, draw: d => {        // "two gro
 ## Timing
 - All times are absolute seconds; get them from `T.word()` / `T.line()`. Nodes without `t` start at 0 and follow every 1.4 s (drafting only).
 - One node: picture (photo 0.4 s, icon 0.7 s, doodle `dur`) → text (0.075 s per Chinese character) → frame. `mm.start` / `mm.end` are the times of the first and last stroke. The last frame, held 5 s at delivery, is the finished clean board.
-- `mm.add(...els)` adds your own timed elements: `import { el } from '/lib/classroom/mindmap.js'`, then `el.text('對！', x, y, {size: 64, color: 'yellow'}, t)` (`'對！'` = "Right!"), `el.stroke(pts, {color}, t, dur)`, `el.custom(t, dur, (c, k) => …)`; elements with `layer: 'paper'` draw on the photo layer.
+- `mm.add(...els)` adds your own timed elements: `import { el } from '/lib/classroom/mindmap.js'`, then `el.text('Right!', x, y, {size: 64, color: 'yellow'}, t)`, `el.stroke(pts, {color}, t, dur)`, `el.custom(t, dur, (c, k) => …)`; elements with `layer: 'paper'` draw on the photo layer.
 
 ## Render cost
 - Classroom pages use `RENDER_GPU=1` as usual.

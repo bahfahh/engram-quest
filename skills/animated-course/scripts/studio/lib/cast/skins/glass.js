@@ -1,14 +1,22 @@
-// 實驗 14 畫風 2（v3，2026-11-02 照使用者的設計圖重做）：玻璃・Iris（多維思考：沉穩、清楚、溫柔好奇）
-//   講解者 Iris：冰藍色亮面玻璃機器人。頭身一體的豆形（上寬下窄），大片黑色亮面面罩上兩顆青色發光膠囊眼 + 小微笑，
-//     兩側圓耳盤（金屬框 + 青色發光環），半透明身體裡一顆發光的藍色「原子核心」（球 + 軌道環 + 小粒子 + 透明氣泡），
-//     胖胖的玻璃手臂（肩、腕有金屬環），兩隻圓玻璃腳（金屬邊）；頭頂一個小槽、左上一顆小按鈕。
-//   學習者：圓滾滾的淡紫玻璃球（沒有分開的頭），同款面罩，桃紫色原子核心（兩道交叉軌道），短手、圓腳、香檳金屬環。
-//   化身：漂浮的薄荷綠多面水晶球，同款小面罩，青綠核心，周圍小星光，地上一圈柔和綠光；指東西時核心的小衛星飛出去當「手指」。
-// 簽名＝體內的原子核心（狀態燈）：idle 慢慢轉；think 轉藍、轉快、多出一道陀螺儀軌道（粒子繞著轉），一隻手托腮；aha 轉金、脈衝向外擴散光環 + 星芒；
-//   doubt 變暗閃爍、軌道歪斜搖晃、粒子下沉 + 「?」。核心的光也染到玻璃身體（老師連耳環一起）。
-// 假玻璃（不用 transmission）：透明殼 + fresnel 邊緣 + 視角固定的柔光箱反光與玻璃球弧形高光（在 tone mapping 之後疊上，才不會被洗灰）+ 核心光染色；
-//   核心畫在殼之後（renderOrder 5+）保持鮮豔；軌道環是一條 neon 管（沿管截面算亮度，端看時也亮）；
-//   手、腳、金屬環是不透明的亮面玻璃 → 不會有透明物件前後排序錯（v1 的問題）。
+// Glass: Iris (v3, rebuilt to match its design image; think in dimensions: calm, clear, gently curious).
+//   Teacher Iris: an ice-blue glossy glass robot. A bean-shaped head-and-body in one (wide on top, narrow below), two cyan
+//     glowing capsule eyes and a small smile on a big black glossy visor, round ear discs on both sides (metal rim + cyan
+//     glowing ring), a glowing blue "atom core" inside the translucent body (sphere + orbit rings + small particles + clear
+//     bubbles), plump glass arms (metal rings at shoulder and wrist), two round glass feet (metal rims); a small slot on
+//     top of the head and a small button on the upper left.
+//   Student: a round lilac glass ball (no separate head), the same visor, a magenta-purple atom core (two crossed orbits),
+//     short arms, round feet, champagne metal rings.
+//   Embodiment: a floating mint faceted crystal ball, the same small visor, a teal core, small sparkles around it, a soft
+//     green ring of light on the ground; when pointing, the core's small satellite flies out as the "finger".
+// Signature = the atom core inside the body (the state light): idle = slow spin; think = turns blue, spins faster, gains a
+//   gyroscope orbit (particles circling), one hand to the chin; aha = turns gold, a pulse ring spreading out + a starburst;
+//   doubt = dims and flickers, the orbits tilt and wobble, particles sink + "?". The core light also tints the glass body
+//   (on the teacher, the ear rings too).
+// Fake glass (no transmission): a transparent shell + fresnel rim + a view-fixed softbox reflection and the glass ball's
+//   arc highlight (added after tone mapping so they are not washed grey) + core-light tint;
+//   the core is drawn after the shell (renderOrder 5+) to stay vivid; an orbit ring is a neon tube (brightness computed
+//   across the tube section, so it is lit end-on too);
+//   hands, feet and metal rings are opaque glossy glass, so transparent objects never sort front-to-back wrongly (v1's problem).
 import * as THREE from 'three';
 
 export const meta = {

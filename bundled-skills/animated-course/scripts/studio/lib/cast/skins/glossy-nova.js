@@ -1,17 +1,20 @@
-// 1f 亮面公仔・Nova（2026-11-03 照使用者的 Nova 設計圖做）
-// 老師 Nova：一體成形的軟糖／蛋形珍珠白身體（頭身同一塊，下半最寬）、正面大片黑色亮面面罩＋淡紫色厚邊框；
-//            青色發光的「得意」表情（平頂半月眼、往中間壓的眉毛、淡紫色 D 字嘴）；頭頂白色圓鈕＋洋紅色四角星；
-//            左上側一片淡紫＋粉紅的掠過式飾板、左下側淡紫＋粉紅弧形色帶；肚子一條發光的淡紫色膠囊燈；
-//            短手臂＋淡紫色袖口＋白色卡通手套（會伸食指、比讚、張開手）；左手淡紫色指揮棒（發光球頭）；短胖腳＋淡紫色厚鞋底。
-//            指的時候旁邊浮出一張淡紫色全息小卡（流程圖）。
-// 學生：同一套語言但更圓、更小、面罩比例更大；陽光黃＋蜜桃色（取代淡紫＋粉紅），頭頂兩顆圓圓的小芽燈，左手抱筆記本。
-// 化身：小小的洋紅色四角星無人機，中間一個小面罩，左右兩角是手。
-// 狀態燈 = 頭頂的星（學生是兩顆芽燈）＋肚子的膠囊燈：平常洋紅（學生暖黃）、思考藍色脈動、頓悟綠色爆光加光環、懷疑橘紅閃爍加「?」。
+// 1f Glossy figure: Nova (built to match its design image).
+// Teacher Nova: a one-piece gumdrop / egg body in pearl white (head and body one piece, widest at the bottom), a big black
+//   glossy visor on the front with a thick lilac bezel; a cyan glowing smug face (flat-topped half-moon eyes, brows pressed
+//   inward, a lilac D-shaped mouth); a white round knob with a magenta four-point star on top; a lilac + pink swoosh panel on
+//   the upper left and a curved lilac + pink band on the lower left; a glowing lilac capsule light on the belly; short arms
+//   with lilac cuffs and white cartoon gloves (points, thumbs-up, open hand); a lilac wand with a glowing ball in the left
+//   hand; stubby feet with thick lilac soles. A small lilac holo card (a flow diagram) floats up beside her when she points.
+// Student: the same language, rounder, smaller, with a larger visor; sunny yellow + peach (instead of lilac + pink), two
+//   round bud lights on top, a notebook in the left hand.
+// Embodiment: a tiny magenta four-point-star drone with a small visor in the middle; its left and right points are hands.
+// State light = the star on top (the student: the two bud lights) + the belly capsule: magenta at rest (student warm
+//   yellow), think = blue pulse, aha = green burst with a ring, doubt = orange-red flicker with a "?".
 import * as THREE from 'three';
 
 export const meta = {
   id: 'glossy-nova', no: '1f', name: '亮面公仔・Nova', kind: '3d',
-  note: '頭頂的四角星和肚子的膠囊燈是狀態燈：平常洋紅／淡紫，思考時藍色脈動、星星慢轉；頓悟時綠色爆光、光環和小星星、眨單眼比讚；懷疑時橘紅閃爍、星星歪一邊並冒「?」。學生是兩顆芽燈，化身是整顆星',
+  note: 'The star on top and the belly capsule are the state lights: magenta / lilac at rest; think = blue pulse, the star turning slowly; aha = green burst, a ring and small stars, a wink and a thumbs-up; doubt = orange-red flicker, the star tilting with a "?". The student has two bud lights; the embodiment is the whole star',
 };
 
 const COL = {

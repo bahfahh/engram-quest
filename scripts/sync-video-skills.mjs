@@ -9,15 +9,15 @@ import crypto from 'crypto';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { OVERLAY_DIR, filmPhrases, imageHash, isRemoved, lineHash, linesToReview, needsReview, ownerPhrases, publicFilter, reachesScreen, readApproved, readPrivateTerms, readReviewedLines, shapeForPublic, writeReviewedLines } from './video-public.mjs';
+import { danglingMentions, imageHash, isRemoved, lineHash, linesToReview, needsReview, ownerPhrases, publicFilter, readApproved, readPrivateTerms, readReviewedLines, shapeForPublic, writeReviewedLines } from './video-public.mjs';
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const vaultRoot = path.resolve(process.env.ENGRAMQUEST_VAULT_ROOT || path.join(repoRoot, '..', 'Obsidian_Note'));
 const SKILLS = [
-  // The vault's development copy is the installed folder's name with `dev-` in front; `name` is what the
-  // published copy is called.
+  // The vault's development copy carries a `dev-` name so it never clashes with the installed copy; `name` is
+  // what the published copy is called.
   { id: 'animated-course', dir: 'dev-engram-quest-animated-course', name: 'engram-quest-animated-course' },
-  { id: 'episodic-review', dir: 'engram-episodic-review' },
+  { id: 'episodic-review', dir: 'engram-episodic-review', name: 'engram-episodic-review' },
 ];
 const terms = readPrivateTerms(vaultRoot);
 const { publicText, findPrivate } = publicFilter(terms);
@@ -79,42 +79,42 @@ const proSkinFiles = new Set(registry.skins
 // Everything is built and checked in memory first, so a failed check leaves the last good copy untouched.
 const approved = readApproved(repoRoot);
 const leaks = [];
-const phrases = new Set();
 const ownerWords = new Set();
 const built = SKILLS.map(({ id, dir, name }) => {
   const root = path.join(vaultRoot, '.claude', 'skills', dir);
   if (!fs.existsSync(root)) throw new Error(`Skill not found: ${root}`);
-  const overlay = path.join(repoRoot, OVERLAY_DIR, id);
-  const replaced = fs.existsSync(overlay) ? walk(overlay) : [];
   const texts = [];
   const binaries = [];
-  for (const rel of [...new Set([...walk(root), ...replaced])].sort()) {
-    const isReplaced = replaced.includes(rel);
-    if (isRemoved(rel)) {
-      if (isReplaced) throw new Error(`${OVERLAY_DIR}/${id}/${rel} would never ship: that path is on the removed list`);
+  const left = [];
+  for (const rel of walk(root)) {
+    if (isRemoved(id, rel)) {
+      left.push(rel);
       continue;
     }
     leaks.push(...findPrivate(rel).map((hit) => `${id}/${rel} (file name) ${hit.match}`));
-    const buf = fs.readFileSync(path.join(isReplaced ? overlay : root, rel));
-    if (needsReview(rel) && !isReplaced && approved[id][rel] !== imageHash(buf)) {
+    const buf = fs.readFileSync(path.join(root, rel));
+    if (needsReview(rel) && approved[id]?.[rel] !== imageHash(buf)) {
       console.warn(`Not published, image not reviewed: ${id}/${rel} (${imageHash(buf)})`);
+      left.push(rel);
       continue;
     }
     if (isBinary(rel, buf)) { binaries.push({ rel, buf }); continue; }
     const source = buf.toString('utf8');
-    filmPhrases(rel, source).forEach((phrase) => phrases.add(phrase));
     if (!/\.(m?js|cjs|py|html|css|sh)$/i.test(rel)) ownerPhrases(source).forEach((phrase) => ownerWords.add(phrase));
-    let text = rewritePaths(publicText(shapeForPublic(rel, source), rel));
+    let text = rewritePaths(publicText(shapeForPublic(id, rel, source), rel));
     if (name && rel === 'SKILL.md') text = text.replace(/^name: .*$/m, `name: ${name}`);
     leaks.push(...findPrivate(text).map((hit) => `${id}/${rel}:${hit.line} ${hit.match}`));
     texts.push({ rel, text });
   }
   if (!texts.some(({ rel }) => rel === 'SKILL.md')) throw new Error(`${dir} has no SKILL.md`);
-  return { id, texts, binaries };
+  return { id, texts, binaries, left };
 });
-for (const { id, texts } of built) {
+// A left-out file (removed, or an image nobody approved) must not still be pointed to.
+for (const { id, texts, binaries, left } of built) {
+  for (const { rel, name } of danglingMentions(texts, [...texts, ...binaries].map((f) => f.rel), left)) {
+    leaks.push(`${id}/${rel} points to ${name}, which the public copy leaves out: drop the mention with a rule, or approve the image`);
+  }
   for (const { rel, text } of texts) {
-    if (reachesScreen(rel)) for (const phrase of phrases) if (text.includes(phrase)) leaks.push(`${id}/${rel} film wording: ${phrase}`);
     for (const phrase of ownerWords) if (text.includes(phrase) && !terms.keptPhrases?.includes(phrase)) leaks.push(`${id}/${rel} someone's words: ${phrase}`);
   }
 }
@@ -130,14 +130,14 @@ if (leaks.length) throw new Error(`Private details left in the public skills; ad
 
 // Lines a person has read are remembered by hash, so only new or changed ones stop the sync.
 const reviewed = readReviewedLines(repoRoot);
-const unread = built.flatMap(({ id, texts }) => texts.flatMap(({ rel, text }) => linesToReview(rel, text)
+const unread = built.flatMap(({ id, texts }) => texts.flatMap(({ rel, text }) => linesToReview(text)
   .filter((line) => !reviewed.has(lineHash(line)))
   .map((line) => ({ where: `${id}/${rel}`, line }))));
 if (unread.length && process.argv.includes('--approve-lines')) {
   unread.forEach(({ line }) => reviewed.add(lineHash(line)));
   writeReviewedLines(repoRoot, reviewed);
 } else if (unread.length) {
-  throw new Error(`${unread.length} published lines nobody has read yet. Add a rule for anyone's words or film text; once every line below is fine, rerun with --approve-lines:\n${unread.map(({ where, line }) => `${where}: ${line.trim().slice(0, 300)}`).join('\n')}`);
+  throw new Error(`${unread.length} published lines nobody has read yet. Add a rule for anyone's words; once every line below is fine, rerun with --approve-lines:\n${unread.map(({ where, line }) => `${where}: ${line.trim().slice(0, 300)}`).join('\n')}`);
 }
 
 const proFiles = (files) => files.filter((f) => proSkinFiles.has(f));

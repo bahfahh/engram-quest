@@ -173,7 +173,7 @@ export function makeHolo(room) {
   }
   /** Holo shell around any geometry (a sphere of ideas, a glass case). */
   function shellOf(geo, { tint = '#5FD3FF', a0 = 0.04, a1 = 0.55 } = {}) { const m = new THREE.Mesh(geo, fresnelMat(tint, a0, a1)); m.renderOrder = 3; return noRefl(m); }
-  /** Edge lines (稜線) of a geometry; 1 px cyan, never in the floor mirror (they shimmered there). */
+  /** Edge lines of a geometry; 1 px cyan, never in the floor mirror (they shimmered there). */
   function edges(geo, { color, op = 0.7, thresh = 28 } = {}) {
     const m = new THREE.LineBasicMaterial({ color: color || LIGHT.line, transparent: true, opacity: op, depthWrite: false, toneMapped: false });
     const l = new THREE.LineSegments(new THREE.EdgesGeometry(geo, thresh), m); noRefl(l);

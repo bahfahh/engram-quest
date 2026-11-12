@@ -1,4 +1,4 @@
-// AI Engineering 補洞課 (ae-l01 … ae-l08): course data for lib/house/coursemap.js.
+// Example course data for lib/house/coursemap.js: an eight-lesson AI Engineering course that fills common gaps.
 // One entry per lesson: name (the plate, same names as lib/classroom/coursemap-aieng.js), cycle (s for one run at
 // speed 1) and pic(c, L, u, o): the lesson's core mechanism as a holo mini picture, drawn in a ±440 × ±250 box,
 // u = 0 … 1 one run (a pure function of u). House colours: cyan = the system / normal, magenta = wrong / warning,
@@ -10,7 +10,7 @@ const { rr, dot, ring, line, arrow, text, check, cross, prog, clamp, lerp, sm, o
 const rng = seed => { let a = seed >>> 0; return () => { a = (a + 0x6D2B79F5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; };
 const card = (c, x, y, w, h, L, { fill, edge, r = 12, lw = 6 } = {}) => { rr(c, x, y, w, h, r); c.fillStyle = fill || L.shell; c.fill(); c.lineWidth = lw; c.strokeStyle = edge || L.line; c.stroke(); };
 
-// 1 — 學來的程式: written code has "the line" you can fix; a learned curve has none (the magnifier finds nothing)
+// 1 — Learned program: written code has "the line" you can fix; a learned curve has none (the magnifier finds nothing)
 function pic1(c, L, u) {
   rr(c, -420, -215, 330, 430, 26); c.fillStyle = '#0b111c'; c.fill(); c.lineWidth = 6; c.strokeStyle = L.line; c.stroke();
   const ws = [210, 150, 240, 120, 200, 170];
@@ -26,7 +26,7 @@ function pic1(c, L, u) {
   if (u > 0.6) { c.save(); c.globalAlpha = clamp((u - 0.6) * 8); ring(c, mx, my, 54, L.ink, 10); line(c, [[mx + 40, my + 40], [mx + 92, my + 92]], L.ink, 14); c.restore(); }
   if (u > 0.92) text(c, '?', mx, my + 4, 64, L.magenta);
 }
-// 2 — 偏差／變異: left darts cluster off the centre (bias), right darts scatter round it (variance)
+// 2 — Bias / variance: left darts cluster off the centre (bias), right darts scatter round it (variance)
 function pic2(c, L, u) {
   const tg = (x) => { for (const r of [190, 125, 60]) ring(c, x, 0, r, L.line, 7); dot(c, x, 0, 16, L.line); };
   tg(-215); tg(215);
@@ -35,7 +35,7 @@ function pic2(c, L, u) {
   arrow(c, -215, 0, -215 + 66, -60, L.magenta, 10, sm(prog(u, 0.62, 0.8)));
   if (u > 0.78) { c.save(); c.globalAlpha = sm(prog(u, 0.78, 0.92)); c.setLineDash([22, 14]); ring(c, 215, 0, 168, L.magenta, 9); c.restore(); }
 }
-// 3 — 錯誤分類: ten error cards fall into four bins; the bars become 4 / 3 / 2 / 1 and the tallest one is the fix
+// 3 — Error analysis: ten error cards fall into four bins; the bars become 4 / 3 / 2 / 1 and the tallest one is the fix
 function pic3(c, L, u) {
   const BX = [-300, -100, 100, 300], to = [0, 1, 0, 2, 0, 1, 3, 0, 1, 2], cnt = [0, 0, 0, 0];
   for (let i = 0; i < 10; i++) { const k = clamp((u * 0.85 - i * 0.07) * 9); if (k >= 1) cnt[to[i]]++; }
@@ -47,7 +47,7 @@ function pic3(c, L, u) {
   for (let i = 0; i < 10; i++) { const k = clamp((u * 0.85 - i * 0.07) * 9); if (k <= 0 || k >= 1) continue; const x = BX[to[i]], y = lerp(-250, 150 - cnt[to[i]] * 82, k * k); rr(c, x - 44, y - 30, 88, 60, 10); c.fillStyle = L.magenta; c.fill(); }
   if (hot > 0) { c.save(); c.globalAlpha = hot; const y = 190 - cnt[0] * 82 - 40 - 10 * Math.sin(hot * Math.PI); arrow(c, -300, y - 70, -300, y, L.magenta, 10); c.restore(); }
 }
-// 4 — 指標: a net scoops 3 good + 1 wrong into the basket (3/4 precision); 2 good stay in the pool (3/5 recall)
+// 4 — Metrics: a net scoops 3 good + 1 wrong into the basket (3/4 precision); 2 good stay in the pool (3/5 recall)
 function pic4(c, L, u) {
   c.save(); c.beginPath(); c.ellipse(-190, 120, 230, 105, 0, 0, 7); c.fillStyle = L.cyan; c.globalAlpha = 0.14; c.fill(); c.globalAlpha = 1; c.lineWidth = 7; c.strokeStyle = L.line; c.stroke(); c.restore();
   const balls = [[-330, 120, 1], [-260, 160, 0], [-250, 90, 1], [-180, 140, 1], [-120, 95, 0], [-90, 170, 1], [-30, 120, 0], [-200, 60, 0], [-60, 50, 1]];
@@ -59,7 +59,7 @@ function pic4(c, L, u) {
   const k2 = sm(prog(u, 0.68, 0.82)); for (const i of [5, 8]) if (k2 > 0) { c.save(); c.globalAlpha = k2; ring(c, balls[i][0], balls[i][1], 40, L.line, 7); c.restore(); }
   if (u > 0.82) text(c, '3/5', -190, -70, 76, L.ink, 'center', 800);
 }
-// 5 — 考題集: from the pile of chats, three are picked, marked ✓ ✗ ✓ and filed into the eval booklet
+// 5 — Eval set: from the pile of chats, three are picked, marked ✓ ✗ ✓ and filed into the eval booklet
 function pic5(c, L, u) {
   for (let i = 4; i >= 0; i--) card(c, -420 + i * 14, -170 - i * 14, 230, 150, L, { edge: L.ink3 });
   const SL = [[-40, -150], [-40, 10], [-40, 170]];
@@ -74,7 +74,7 @@ function pic5(c, L, u) {
   c.save(); c.translate(320, 0); rr(c, -120, -170, 240, 320, 20); c.fillStyle = L.line; c.globalAlpha = lerp(0.35, 1, bk); c.fill(); c.globalAlpha = 1; line(c, [[-90, -170], [-90, 150]], L.anchorFill, 8);
   for (let j = 0; j < 3; j++) { rr(c, -60, -110 + j * 60, 140, 16, 8); c.fillStyle = L.anchorFill; c.globalAlpha = bk; c.fill(); c.globalAlpha = 1; } c.restore();
 }
-// 6 — 資料處理: raw chats leave their pile and ride the belt; the duplicate is stopped at the gate and drops into the
+// 6 — Data processing: raw chats leave their pile and ride the belt; the duplicate is stopped at the gate and drops into the
 // bin; every other card drops onto its category's pile (3 / 2 / 1); the piles are levelled (one card taken off the
 // tall one, a synthetic card added to the short one: 2 / 2 / 2) and the version stamp lands.
 // Beats (u): cards ride 0–.57 (the duplicate drops ≈ .38), level .6–.76, stamp .8–.95.
@@ -113,7 +113,7 @@ function pic6(c, L, u) {
     c.beginPath(); c.arc(0, 0, 88, 0, 7); c.fillStyle = L.anchorFill; c.fill(); c.lineWidth = 10; c.strokeStyle = L.line; c.stroke(); c.setLineDash([9, 7]); c.beginPath(); c.arc(0, 0, 70, 0, 7); c.lineWidth = 3; c.stroke(); c.setLineDash([]);
     text(c, 'v1.1', 0, 4, 58, L.cyanInk); c.restore(); }
 }
-// 7 — 漂移與成本: the questions drift (the hill slides away from where the eval was built); cost per answer drops
+// 7 — Drift and cost: the questions drift (the hill slides away from where the eval was built); cost per answer drops
 function pic7(c, L, u) {
   const hill = (dx, col, w, dash, k = 1) => { const pts = []; for (let x = -420; x <= 140; x += 10) pts.push([x + dx, 170 - 300 * Math.exp(-Math.pow((x + 150) / 85, 2))]); line(c, pts, col, w, k, dash); };
   line(c, [[-440, 175], [180, 175]], L.ink3, 6);
@@ -123,7 +123,7 @@ function pic7(c, L, u) {
   for (let i = 0; i < 5; i++) { const gone = i >= 2 ? sm(prog(u, 0.6 + (i - 2) * 0.1, 0.78 + (i - 2) * 0.1)) : 0; c.save(); c.globalAlpha = 1 - gone; const x = 320 + gone * 90, y = 170 - i * 46 - gone * 160;
     c.beginPath(); c.ellipse(x, y, 74, 22, 0, 0, 7); c.fillStyle = L.shell; c.fill(); c.lineWidth = 6; c.strokeStyle = L.ink3; c.stroke(); c.restore(); }
 }
-// 8 — 約定與事故: an error budget (10 cells); an incident burns 3 cells; the review raises the standard line
+// 8 — SLOs and incidents: an error budget (10 cells); an incident burns 3 cells; the review raises the standard line
 function pic8(c, L, u) {
   rr(c, -300, -60, 560, 170, 22); c.lineWidth = 9; c.strokeStyle = L.ink3; c.stroke(); rr(c, 262, -10, 26, 70, 8); c.fillStyle = L.ink3; c.fill();
   const burn = sm(prog(u, 0.3, 0.55)), flash = u > 0.15 && u < 0.6 ? 0.5 + 0.5 * Math.sin(u * 60) : 0;

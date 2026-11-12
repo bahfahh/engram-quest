@@ -3,6 +3,13 @@
 
   python3 collect.py --vault <vault> --start 2026-10-01 --end 2026-10-31 --out <output folder> [--render]
 
+Optional per-vault settings, <vault>/engram-quest/videos/episodic-collect.json (every key optional):
+  {"utcOffsetHours": 8,             the person's time zone; default: this computer's
+   "dayStartsAt": 5,                hour a learning day begins; default 5
+   "knowledgeBase": "Knowledge",    folder of distilled notes; each is filed under the topic of the note its
+                                    "source:" line names, instead of becoming a topic of its own
+   "layerFolders": ["notes", "log"]} folder names inside an area that split it into layers, not topics
+
 Writes:
   <out>/pack.json            everything (topics, each note, each day, canvases, backlinks, review history, diary entries)
   <out>/topics/<topic>.md    one pack per topic, the material for writing that topic's entry
@@ -10,7 +17,7 @@ Writes:
 
 Rules:
 - One note is one unit; notes are not split into sections.
-- Time is counted in learning days: UTC+8, and anything before 05:00 belongs to the day before.
+- Time is counted in learning days: anything before the day's start hour (default 05:00) belongs to the day before.
 - Topics follow the person's own structure first: folders (map series), canvases, links.
 - Only days when content really changed count: commits that move the whole vault (mass renames, link-only edits) do not.
 """
@@ -24,7 +31,29 @@ PROJECT_DIR = re.compile(FOLDER_PREFIX + r'(專案|projects?)$', re.I)
 AREA_DIR = re.compile(FOLDER_PREFIX + r'(領域|areas?)$', re.I)
 BULK_FILES = 150
 STRUCT_RX = re.compile(r'(偏好|wiki)\.md$|(^|/)index\.md$|INDEX\.md$|preferences\.md$', re.I)
-TZ = dt.timezone(dt.timedelta(hours=8))
+CONFIG_FILE = os.path.join('engram-quest', 'videos', 'episodic-collect.json')
+TZ = dt.datetime.now().astimezone().tzinfo
+DAY_START = 5
+KNOWLEDGE_BASE = None
+LAYER_FOLDERS = ()
+
+
+def load_config(vault):
+    global TZ, DAY_START, KNOWLEDGE_BASE, LAYER_FOLDERS
+    path = os.path.join(vault, CONFIG_FILE)
+    if not os.path.isfile(path):
+        return
+    c = json.load(open(path, encoding='utf-8'))
+    if 'utcOffsetHours' in c:
+        TZ = dt.timezone(dt.timedelta(hours=c['utcOffsetHours']))
+    DAY_START = c.get('dayStartsAt', DAY_START)
+    KNOWLEDGE_BASE = c.get('knowledgeBase') or None
+    LAYER_FOLDERS = tuple(c.get('layerFolders', ()))
+
+
+def day_start(day):
+    """The moment a learning day begins, for git --since / --until."""
+    return dt.datetime.combine(dt.date.fromisoformat(day), dt.time(DAY_START), TZ).isoformat()
 
 
 def git(vault, *args):
@@ -34,7 +63,7 @@ def git(vault, *args):
 
 def learn_day(ts):
     t = dt.datetime.fromisoformat(ts).astimezone(TZ)
-    if t.hour < 5:
+    if t.hour < DAY_START:
         t -= dt.timedelta(days=1)
     return t.date().isoformat()
 
@@ -51,7 +80,7 @@ def norm_rename(p):
 
 def rename_map(vault, start):
     """Every rename since the period began (later whole-vault moves included): follows an old path to its current one."""
-    out = git(vault, 'log', f'--since={start}T00:00:00+08:00', '-M', '--name-status', '--diff-filter=R', '--format=@@%h')
+    out = git(vault, 'log', f'--since={day_start(start)}', '-M', '--name-status', '--diff-filter=R', '--format=@@%h')
     ren = {}
     for block in reversed(out.split('@@')[1:]):          # oldest first
         for ln in block.strip().split('\n'):
@@ -68,8 +97,8 @@ def rename_map(vault, start):
 
 def scan_commits(vault, start, end):
     """Returns {path: set(learning days)} (only real content changes) and the days of commits judged to be bulk moves."""
-    since = f'{start}T05:00:00+08:00'
-    until = (dt.date.fromisoformat(end) + dt.timedelta(days=1)).isoformat() + 'T05:00:00+08:00'
+    since = day_start(start)
+    until = day_start((dt.date.fromisoformat(end) + dt.timedelta(days=1)).isoformat())
     out = git(vault, 'log', f'--since={since}', f'--until={until}', '-M', '-w', '--ignore-cr-at-eol',
               '--numstat', '--format=@@%H|%aI')
     days = collections.defaultdict(set)
@@ -108,7 +137,7 @@ def history_covers(vault, start):
     """Git can be trusted for this period only when the vault is the repo root and history reaches back before it."""
     try:
         return git(vault, 'rev-parse', '--show-prefix').strip() == '' and \
-            git(vault, 'log', '-1', '--format=%H', f'--before={start}T05:00:00+08:00').strip() != ''
+            git(vault, 'log', '-1', '--format=%H', f'--before={day_start(start)}').strip() != ''
     except (OSError, subprocess.CalledProcessError):
         return False
 
@@ -203,12 +232,12 @@ def link_index(vault, files):
 
 def topic_key(p):
     parts = p.split('/')
-    if parts[0] == '0.職人知識庫':
-        return '0.職人知識庫'
+    if KNOWLEDGE_BASE and parts[0] == KNOWLEDGE_BASE:
+        return KNOWLEDGE_BASE
     if PROJECT_DIR.match(parts[0]) and len(parts) > 2:
         return parts[0] + '/' + parts[1]
     if AREA_DIR.match(parts[0]) and len(parts) > 2:
-        rest = [x for x in parts[2:-1] if x not in ('知識', '紀錄')]
+        rest = [x for x in parts[2:-1] if x not in LAYER_FOLDERS]
         if not rest:
             return parts[1]
         for i, x in enumerate(rest):
@@ -259,6 +288,7 @@ def main():
 
     if not os.path.isdir(a.vault):
         sys.exit(f'vault folder not found: {a.vault}')
+    load_config(a.vault)
     has_git = history_covers(a.vault, a.start)
     if not has_git:
         print('No git history covers this period: using file modification times instead. Each note counts only on the day '
@@ -283,13 +313,13 @@ def main():
 
     topics = collections.defaultdict(lambda: dict(notes=[], canvases=set(), craft=[]))
     for p, n in notes.items():
-        if p.startswith('0.職人知識庫'):
+        if KNOWLEDGE_BASE and p.startswith(KNOWLEDGE_BASE + '/'):
             src = read(a.vault, p)[:1500]
             m = re.search(r'來源[:：]\s*(.+)', src)
             hit = None
             if m:
                 for q in notes:
-                    if not q.startswith('0.職人知識庫') and os.path.splitext(os.path.basename(q))[0] in m.group(1):
+                    if not q.startswith(KNOWLEDGE_BASE + '/') and os.path.splitext(os.path.basename(q))[0] in m.group(1):
                         hit = topic_key(q); break
             if hit:
                 topics[hit]['craft'].append(p); continue

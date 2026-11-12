@@ -8,7 +8,7 @@ Two roles. With one lesson you may be both; with several lessons, the **host** (
 |---|---|
 | Working studio (renders, scratch) | `$STUDIO` — a scratchpad folder; set up with `cp -r scripts/studio "$STUDIO" && (cd "$STUDIO" && npm install)` |
 | One lesson's working project | `$STUDIO/projects/<id>/` |
-| Permanent record of each lesson (the "lab archive") | in the vault, (not public) — `00-紀錄.md` for the round; the **archive dir** `各片/` holds `<id>/` with `UNDERSTANDING.md`, `CARD.md`, `SCRIPT.md`, `NOTES.md`, `SILENT.md`, `src/` (from `scripts/farm/bundle.py`) and `parts/` (cloud renders), plus `parts-<id>.json` |
+| Permanent record of each lesson (the "lab archive") | a folder the project keeps outside the studio, one per round, with a record file for the round; its **archive dir** holds `<id>/` with `UNDERSTANDING.md`, `CARD.md`, `SCRIPT.md`, `NOTES.md`, `SILENT.md`, `src/` (from `scripts/farm/bundle.py`) and `parts/` (cloud renders), plus `parts-<id>.json` |
 | Delivered films | `engram-quest/videos/<series>/` (`<id>.mp4`, `.jpg`, `.vtt`, `meta.json`); `FACTS.md` goes to the lesson archive |
 
 ## 1. Producer: one lesson
@@ -29,7 +29,7 @@ Producer contract (the studio is shared): write only in your own project folder;
 ## 2. Host
 
 1. **Before work**: write the series plan (`templates/SERIES.md`) and the producer brief (`templates/BRIEF.md`). The brief starts from the skeleton and the approved methods; wording like "don't reuse last round's shell" invites a full redesign and loses what was approved. Shared components (map, recap card, mindmap) go to a component maker first, in parallel with the producers' stage 1.
-2. **Review stage 1 yourself, then send each producer straight into stage 2** with your fixes: length, term definitions, facts, whether each segment's method was chosen well (fits the content, not forced), the one-liner, continuity between lessons. **Stage 1 is not shown to the user for approval** (`SKILL.md` rule 0): the user gave the goal; the run is yours. Decisions you would have asked about (cut a line or keep it, which pronunciation) you make and write in `00-紀錄.md`.
+2. **Review stage 1 yourself, then send each producer straight into stage 2** with your fixes: length, term definitions, facts, whether each segment's method was chosen well (fits the content, not forced), the one-liner, continuity between lessons. **Stage 1 is not shown to the user for approval** (`SKILL.md` rule 0): the user gave the goal; the run is yours. Decisions you would have asked about (cut a line or keep it, which pronunciation) you make and write in the round's record file.
 3. **Silent review** (after stage 2, before rendering): a separate reviewer who sees **only the stills**, not the script, first writes what they understood from the pictures, then compares with the understanding design card and lists fixes (`templates/SILENT-REVIEW.md`). It catches what producer and host miss: numbers that don't add up, a switch drawn the wrong way, a picture that suggests the wrong answer, a wrong intuition written on screen without being marked wrong.
 4. **Render**:
    - Three.js frames take ≈2.5–3 s each, DOM frames ≈0.3 s, so full films render in the cloud; locally, stills and previews.

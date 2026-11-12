@@ -1,4 +1,4 @@
-/* 圖解重點（keypoint.js）。<link rel="stylesheet" href="/lib/kit/keypoint.css">，放在 kit.css 後面。 */
+/* Key-point card (keypoint.js). <link rel="stylesheet" href="/lib/kit/keypoint.css">, after kit.css. */
 .kp-wash { position: absolute; inset: 0; background: rgba(244,242,238,.80); z-index: 52; visibility: hidden; pointer-events: none; }
 .kp-card { position: absolute; left: 50%; top: 112px; width: 1640px; height: 800px; margin-left: -820px; box-sizing: border-box;
   background: #fff; border-radius: 40px; z-index: 53; visibility: hidden;

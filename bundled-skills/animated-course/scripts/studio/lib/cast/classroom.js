@@ -9,7 +9,7 @@
 //   // or the skin's own fields (CAST.md): point, wave, hop, state 'think'|'aha'|'doubt', stateK …
 //   cast.teacher.poseNative({ t, talk, point: 1, state: 'aha', stateK: 1 });
 //
-// 'clay-snackshop' returns the clay 包老師 / 芋圓 unchanged, so a scene can always go through makeCast().
+// 'clay-snackshop' returns the clay Professor Bao / Taro unchanged, so a scene can always go through makeCast().
 // Skins are scaled to the clay characters' heights, get a contact shadow, and get their own reflection
 // map (the classroom's own materials are not touched). 2D skins cannot go into a 3D classroom: use
 // lib/cast/stage.js for those.
@@ -61,7 +61,7 @@ export function claySToSkin(s = {}) {
   };
 }
 
-/** Skin pose fields (CAST.md) → the clay cast's fields, so cue.js and poseNative() work on 包老師 / 芋圓 too.
+/** Skin pose fields (CAST.md) → the clay cast's fields, so cue.js and poseNative() work on Professor Bao / Taro too.
  *  The clay teacher's right-hand chopstick is on the viewer's right, like every skin's `point` arm. */
 export function skinToClay(s = {}) {
   const t = s.t || 0, arm = v => 0.35 + 2.2 * clamp(v || 0, 0, 1);

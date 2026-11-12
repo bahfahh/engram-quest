@@ -1,8 +1,6 @@
 // What may leave the private vault when the video skills are published.
-import fs from "fs";
-import path from "path";
 import { describe, it, expect } from "vitest";
-import { blankShellContent, filmPhrases, imageHash, isRemoved, lineHash, linesToReview, needsReview, ownerPhrases, publicFilter, shapeForPublic } from "../scripts/video-public.mjs";
+import { danglingMentions, imageHash, isRemoved, lineHash, linesToReview, needsReview, ownerPhrases, publicFilter, shapeForPublic } from "../scripts/video-public.mjs";
 
 const { publicText, findPrivate } = publicFilter({
   aliases: [["Acme", "DemoCo"], ["Globex", "SampleApp"]],
@@ -110,19 +108,16 @@ describe("lines a person has to read", () => {
     "使用者 2026-11-03：可以超越",
     "> 使用者：",
     "the user, on Iris's sample: 「太長」",
+    "(user 2026-11-10; reference/07.md)",
+    "（使用者 2026-11-10 決定）",
+    "decided 2026-11-10 by the owner",
+    "auto means edge-tts (user, 2026-11-10; reference/07.md §1c)",
   ])("asks about %s, whichever rule missed it", (line) => {
-    expect(linesToReview("reference/a.md", line)).toEqual([line]);
+    expect(linesToReview(line)).toEqual([line]);
   });
 
-  it("asks about any Chinese left in shell code", () => {
-    expect(linesToReview("assets/shells/rooms/draw.js", "const a = '料號';")).toHaveLength(1);
-    expect(linesToReview("assets/shells/rooms/old/words.js", "text: '真實句子'")).toHaveLength(1);
-  });
-
-  it("does not ask about markers, short categories, or plain notes", () => {
-    expect(linesToReview("assets/shells/rooms/content.js", "{ id: 'a', where: '白板', use: '小標', text: '{{FILL:a}}' },")).toEqual([]);
-    expect(linesToReview("assets/shells/rewind/content.js", "S('a', 0, 1, '{{FILL:a}}', '小標', '螢幕');")).toEqual([]);
-    expect(linesToReview("reference/a.md", "普通的一行中文")).toEqual([]);
+  it("does not ask about plain lines", () => {
+    expect(linesToReview("普通的一行中文\nA user can press space.")).toEqual([]);
   });
 
   it("recognises a line by its content, ignoring indentation", () => {
@@ -147,12 +142,23 @@ describe("lines a person has to read", () => {
 });
 
 describe("which files ship", () => {
-  it("leaves out records of real films but not the shell's code", () => {
-    expect(isRemoved("assets/shells/rooms/STORYBOARD.md")).toBe(true);
-    expect(isRemoved("assets/shells/rooms/old/storyboard.MD")).toBe(true);
-    expect(isRemoved("assets/shells/board/onscreen.txt")).toBe(true);
-    expect(isRemoved("assets/shells/rooms/README.md")).toBe(false);
-    expect(isRemoved("templates/STORYBOARD.md")).toBe(false);
+  it("leaves out the recall skill's legacy material and nothing of another skill", () => {
+    for (const rel of ["legacy/README.md", "assets/shells/rooms/content.js", "scripts/onscreen.py", "scripts/farm.sh", "scripts/studio/render.cjs", "scripts/studio/lib/stage.js"]) {
+      expect(isRemoved("episodic-review", rel)).toBe(true);
+    }
+    for (const rel of ["SKILL.md", "templates/film/engine.js", "scripts/studio/render_stage.cjs", "scripts/collect.py"]) {
+      expect(isRemoved("episodic-review", rel)).toBe(false);
+    }
+    expect(isRemoved("animated-course", "assets/looks/a.jpg")).toBe(false);
+  });
+
+  it("leaves out the teaching skill's kits and maps built for one series, not the generic ones", () => {
+    for (const rel of ["scripts/studio/lib/azure/kit.js", "scripts/studio/lib/classroom/coursemap-stock.js", "scripts/studio/lib/classroom/COURSEMAP-PSTACK.md", "scripts/studio/lib/house/coursemap-azure.js", "scripts/studio/lib/house/coursemap-ops.js"]) {
+      expect(isRemoved("animated-course", rel)).toBe(true);
+    }
+    for (const rel of ["scripts/studio/lib/classroom/coursemap-aieng.js", "scripts/studio/lib/classroom/coursemap4.js", "scripts/studio/lib/house/coursemap.js", "scripts/studio/lib/house/coursemap-aieng.js"]) {
+      expect(isRemoved("animated-course", rel)).toBe(false);
+    }
   });
 
   it("asks for review of every image, wherever it is", () => {
@@ -168,194 +174,45 @@ describe("which files ship", () => {
   });
 });
 
-describe("shell code", () => {
-  const list = "const all = TEXT.join('') + '乙甲乙審核單在這裡ABC要多備貨0123456789丙';";
+describe("per-file rules", () => {
+  const shape = (rel, text) => shapeForPublic("animated-course", rel, text);
 
-  it("keeps every glyph of the preload list but none of its sentences", () => {
-    const out = shapeForPublic("assets/shells/rooms/film.js", list);
-    const glyphs = out.match(/\+ '(.*)';/)[1];
-    expect(new Set(glyphs)).toEqual(new Set("乙甲乙審核單在這裡ABC要多備貨0123456789丙"));
-    expect(glyphs).not.toContain("審核單");
+  it("drops the pointers to left-out course maps and demo films", () => {
+    expect(shape("SKILL.md", "methods; the demo films (minimum bar)\nnext")).toBe("methods\nnext");
+    expect(shape("reference/08-tools.md", "| a |\n| `classroom/coursemap-stock.js` | b |\n| c |\n")).toBe("| a |\n| c |\n");
+    expect(shape("scripts/studio/lib/house/HOUSE.md", "| `coursemap.js` | x |\n| `coursemap-ops.js` | y |\n")).toBe("| `coursemap.js` | x |\n");
   });
 
-  it("removes film titles from a page title and comments", () => {
-    expect(shapeForPublic("assets/shells/rooms/scene.html", "<title>倒帶回十月</title>")).toBe("<title>Film</title>");
-    expect(shapeForPublic("assets/shells/rooms/world.js", "// 〈倒帶〉 world: built once\nconst a = '〈字〉';")).toBe("// world: built once\nconst a = '〈字〉';");
+  it("cuts the demo-film section up to the next section, not to the end of the file", () => {
+    const doc = "a, `coursemap-stock.js` (also §5b), `coursemap-pstack.js` (§5 only)\n`coursemap4.js`, `coursemap-stock.js` and `coursemap-pstack.js` silently ignore them\n## 4. The demo films\nfilms\n## 5. Next\nkept";
+    expect(shape("reference/05-presentation-methods.md", doc)).toBe("a\n`coursemap4.js` silently ignores them\n## 5. Next\nkept");
   });
 
-  it("asks for an update on a content file it does not know", () => {
-    for (const rel of ["assets/shells/rooms/content.en.js", "assets/shells/rooms/old/content.js", "assets/shells/rooms/content.ts"]) {
-      expect(() => shapeForPublic(rel, "export const TEXT = [];")).toThrow(/film content/);
-    }
+  it("drops the rows of stills that are not published", () => {
+    expect(shape("assets/looks/README.md", "| `1a-l01-x.jpg` | ok |\n| `1b-l01-y.jpg` | no |\n")).toBe("| `1a-l01-x.jpg` | ok |\n");
   });
 
-  it("turns words a scene draws directly into markers", () => {
-    const out = shapeForPublic("assets/shells/rooms/demos.js", "  E2: { text: PC[0], short: '料號', sub: '採購', band: 1 },");
-    expect(out).toBe("  E2: { text: PC[0], short: '{{FILL:demo.E2.short}}', sub: '{{FILL:demo.E2.sub}}', band: 1 },");
+  it("stops when a rule no longer finds its text in the master", () => {
+    expect(() => shape("SKILL.md", "rewritten without that clause")).toThrow(/no longer finds/);
+  });
+
+  it("leaves other files and other skills alone", () => {
+    expect(shapeForPublic("episodic-review", "reference/08-tools.md", "coursemap-stock.js")).toBe("coursemap-stock.js");
+    expect(shape("reference/02-content.md", "字")).toBe("字");
   });
 });
 
-describe("shell content", () => {
-  const ui = "const UI_SETS = { 'zh-tw': { notice: '畫面是比喻' }, en: { notice: 'Pictures' } };\nexport const UI = UI_SETS['en'];\n";
+describe("pointers to left-out files", () => {
+  const texts = [{ rel: "SKILL.md", text: "see legacy-shells.md, film.js, README.md and figs/sample.png" }];
 
-  it("replaces a film's words with markers and keeps its structure", () => {
-    const out = blankShellContent("rooms", `${ui}export const TL = { open: [0, 8] };
-export const TEXT = [
-  { id: 'r1.q', t0: 52.5, t1: 186, kind: 'world', where: '白板標題', use: '問題', text: '業務規則該寫在哪裡？', sub: '說明', card: true },
-  { id: 'r1.a', t0: 1, t1: 2, kind: 'dom', use: '揭曉', text: UI.notice, src: 'note name' },
-];
-`);
-    expect(out).toContain("text: '{{FILL:r1.q}}', sub: '{{FILL:r1.q.sub}}'");
-    expect(out).toContain("use: '問題'");
-    expect(out).toContain("where: '白板'");
-    expect(out).toContain("t0: 52.5");
-    expect(out).toContain("text: UI.notice, src: '{{FILL:r1.a.src}}'");
-    expect(out).toContain("notice: '畫面是比喻'");
-    expect(out).toContain("export const TL = { open: [0, 8] }");
-    expect(out).not.toContain("業務規則");
+  it("finds a shipped text naming a removed file or an unapproved image", () => {
+    expect(danglingMentions(texts, ["SKILL.md"], ["reference/legacy-shells.md", "figs/sample.png"])).toEqual([
+      { rel: "SKILL.md", name: "legacy-shells.md" },
+      { rel: "SKILL.md", name: "sample.png" },
+    ]);
   });
 
-  it("leaves the separators the shell code splits on", () => {
-    const out = blankShellContent("rooms", `export const TEXT = [
-  { id: 'a', text: '甲・乙／丙' },
-  { id: 'r3.sig1', text: '監督式：有答案' },
-];
-`);
-    expect(out).toContain("'{{FILL:a.1}}・{{FILL:a.2}}／{{FILL:a.3}}'");
-    expect(out).toContain("'{{FILL:r3.sig1.1}}：{{FILL:r3.sig1.2}}'");
-  });
-
-  it("keeps prose whole even when it holds a separator", () => {
-    const out = blankShellContent("rooms", "export const TEXT = [{ id: 'r3.recall.a', text: '會／不會' }];\n");
-    expect(out).toContain("'{{FILL:r3.recall.a}}'");
-  });
-
-  it("drops topic words from the place notes and keeps the place", () => {
-    const out = blankShellContent("rooms", "export const TEXT = [{ id: 'a', text: 'x', where: '採購單旁的黑便條' }, { id: 'b', text: 'y', where: '螢幕（LLM 候選字清單）' }, { id: 'c', text: 'z', where: '某個專案的桌上' }, { id: 'd', text: 'w', where: '白板上寫著真實訂單' }];\n");
-    expect(out).toContain("where: '便條'");
-    expect(out).toContain("where: '螢幕'");
-    expect(out).toContain("where: ''");
-    expect(out).toContain("where: '白板'");
-    expect(out).not.toContain("真實訂單");
-  });
-
-  it("stops on wording in a form the rules do not handle", () => {
-    expect(() => blankShellContent("rooms", "export const TEXT = [{ id: 'a', text: x ? '真實甲' : '真實乙' }];\n")).toThrow(/真實甲/);
-    expect(() => blankShellContent("rooms", "export const TEXT = [{ id: 'a', text: L('真實甲') }];\n")).toThrow(/真實甲/);
-    expect(() => blankShellContent("rewind", "const S = () => 0;\nS('a', 0, 1, x ? '真實甲' : 'y', '片頭', '畫面');\n")).toThrow(/真實甲/);
-  });
-
-  it("blanks a template string in a text call", () => {
-    const out = blankShellContent("rewind", "const S = () => 0;\nS('a', 0, 1, `真實`, '片頭', '畫面');\n");
-    expect(out).toContain("S('a', 0, 1, '{{FILL:a}}', '片頭', '畫面');");
-  });
-
-  it("removes a leading comment without touching the code after it", () => {
-    const out = blankShellContent("rooms", "export const TEXT = [\n  /* 真實專案 */ { id: 'a', text: 'x' },\n];\n");
-    expect(out).toContain("  { id: 'a', text: '{{FILL:a}}' },");
-    expect(out).not.toContain("真實專案");
-  });
-
-  it("refuses a shell it does not know", () => {
-    expect(() => shapeForPublic("assets/shells/castle/content.js", "export const TEXT = [];\n")).toThrow(/Unknown shell/);
-  });
-
-  it("blanks the arguments of a text call but not its structure", () => {
-    const out = blankShellContent("rewind", "const S = () => 0;\nS('s1_q', 1 + 2, 3, '影片好不好看，\\n要在哪？', '問題', '便條（窗上）');\n");
-    expect(out).toContain("S('s1_q', 1 + 2, 3, '{{FILL:s1_q}}', '問題', '便條');");
-  });
-
-  it("names nested board cards and treats every screen string as wording", () => {
-    const out = blankShellContent("board", `export const CARDS = [
-  { id: 'c1.grid', kind: 'grid', at: 'b', rows: [['一', '']], colA: { head: '欄', cells: ['格'] }, icons: ['person'] },
-  { id: 'c2.inc', kind: 'file', lines: ['14:20　開始出錯'] },
-  { id: 'p', kind: 'photo', src: 'assets/fig', caption: UI.noteFigure },
-  { id: 'K', kind: 'q', src: '〈筆記〉' },
-];
-export const SCREEN_TXT = { 'c3-valid': { from: '外面的請求', name: '說明' } };
-export const BEATS = [{ id: 'quiz2', kind: 'quiz', hint: 'pool', hintCap: '提示', note: '鏡頭', cards: ['c1.grid'] }];
-`);
-    expect(out).toContain("rows: [['{{FILL:c1.grid.rows.1.1}}', '']]");
-    expect(out).toContain("colA: { head: '{{FILL:c1.grid.colA.head}}', cells: ['{{FILL:c1.grid.colA.cells.1}}'] }");
-    expect(out).toContain("icons: ['person']");
-    expect(out).toContain("lines: ['{{FILL:c2.inc.lines.1.time}}　{{FILL:c2.inc.lines.1}}']");
-    expect(out).toContain("src: 'assets/fig'");
-    expect(out).toContain("src: '{{FILL:K.src}}'");
-    expect(out).toContain("from: '{{FILL:scr.c3-valid.from}}', name: '{{FILL:scr.c3-valid.name}}'");
-    expect(out).toContain("hint: 'pool', hintCap: '{{FILL:quiz2.hintCap}}', note: ''");
-  });
-
-  it("takes film titles and film words out of comments", () => {
-    const out = blankShellContent("rewind", `// 〈倒帶回十月〉: every piece of text.
-// use: 片頭 / 全貌
-// ---------- room 1: 輕量 DDD
-/* ---------- 第 1 站　外觀 ---------- */
-const a = 1; // 禍 → 那一關
-const S = () => 0;
-S('x', 0, 1, '字', '片頭', '畫面');
-`);
-    expect(out).toContain("// every piece of text.");
-    expect(out).toContain("// use: 片頭 / 全貌");
-    expect(out).toContain("// ---------- room 1\n");
-    expect(out).toContain("/* ---------- */");
-    expect(out).toContain("const a = 1;\n");
-    expect(out).not.toMatch(/倒帶回|輕量|外觀|禍/);
-  });
-
-  it("stops rather than ship film text outside the known places", () => {
-    expect(() => blankShellContent("rooms", "export const TEXT = [{ id: 'a', text: 'x' }];\nconst stray = '真實內容';\n")).toThrow(/真實內容/);
-  });
-
-  it("asks for an update when the film data is not where it expects", () => {
-    expect(() => blankShellContent("rooms", "export const OTHER = [];\n")).toThrow(/No film wording/);
-    expect(() => blankShellContent("rooms", "export const TEXT = mk([{ id: 'a', text: 'x' }]);\n")).toThrow(/not plain data/);
-  });
-
-  it("stops on a new field rather than guessing what it is", () => {
-    expect(() => blankShellContent("rooms", "export const TEXT = [{ id: 'a', text: 'x', align: 'left' }];\n")).toThrow(/New field "align"/);
-  });
-
-  it("stops on English wording outside the film data, not only on Chinese", () => {
-    expect(() => blankShellContent("rooms", "export const TEXT = [{ id: 'a', text: 'x' }];\nconst extra = [{ text: 'A real sentence' }];\n")).toThrow(/A real sentence/);
-  });
-
-  it("stops on a long sentence hiding in a field that may keep a short word", () => {
-    expect(() => blankShellContent("rooms", "export const TEXT = [{ id: 'a', text: 'x', use: '這是一句很長的真實內容' }];\n")).toThrow(/真實內容/);
-    expect(() => blankShellContent("rooms", "export const TEXT = [{ id: 'a', text: 'x', use: 'A very long real sentence' }];\n")).toThrow(/long real/);
-  });
-
-  it("stops on English sentences wherever they sit in the content file", () => {
-    expect(() => blankShellContent("rooms", "export const TEXT = [{ id: 'a', text: 'x' }];\nconst extra = ['A real sentence from the film'];\n")).toThrow(/real sentence/);
-    expect(() => blankShellContent("rewind", "const S = () => 0;\nS('a', 0, 1, x ? 'A real sentence' : 'b', '片頭', '畫面');\n")).toThrow(/real sentence/);
-    expect(() => blankShellContent("rooms", "export const TEXT = [{ id: 'a', text: 'x', extra: y ? 'A real sentence' : 'b' }];\n")).toThrow(/New field "extra"/);
-  });
-
-  it("lists the film's phrases for the check across other files", () => {
-    const phrases = filmPhrases("assets/shells/rooms/content.js", "export const TEXT = [{ id: 'a', text: '業務規則該寫在哪裡', sub: '短' }];\n");
-    expect(phrases).toEqual(["業務規則該寫在哪裡"]);
-    expect(filmPhrases("assets/shells/rooms/film.js", "const a = 1;")).toEqual([]);
-  });
-
-  it("only touches the shells' content files, and notes the missing stills", () => {
-    expect(shapeForPublic("assets/shells/rooms/demos.js", "const a = '字';")).toBe("const a = '字';");
-    const readme = shapeForPublic("assets/demos/README.md", "# 目錄\n\n內文");
-    expect(readme.split("\n")[2]).toContain("沒有定格");
-  });
-
-  const published = path.join(__dirname, "..", "skills", "episodic-review", "assets", "shells");
-  describe.runIf(fs.existsSync(published))("published shells", () => {
-    it.each(["rooms", "rewind", "board"])("%s carries only markers in its film data", (shell) => {
-      const text = fs.readFileSync(path.join(published, shell, "content.js"), "utf8");
-      expect(findPrivate(text)).toEqual([]);
-      expect((text.match(/\{\{FILL:/g) || []).length).toBeGreaterThan(100);
-      const rest = text
-        .replace(/const UI_SETS = \{[\s\S]*?\n\};/, "")
-        .replace(/\/\/ (use|countdowns):.*/g, "")
-        .replace(/use: '[^']*'|where: '[^']*'|name: '案件.'/g, "")
-        .replace(/, '[^',]*', '[^',]*'\);$/gm, "")
-        .replace(/^.*(WORD =|\/\^ja|\[㐀-鿿\]).*$/gm, "")
-        .replace(/\{\{FILL:[^}]+\}\}/g, "");
-      expect(rest).not.toMatch(/[㐀-鿿]/);
-    });
+  it("ignores names a shipped file shares, and film.js", () => {
+    expect(danglingMentions(texts, ["SKILL.md", "templates/README.md"], ["legacy/README.md", "assets/shells/board/film.js"])).toEqual([]);
   });
 });

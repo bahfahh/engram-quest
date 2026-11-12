@@ -1,12 +1,14 @@
-// 1a 亮面公仔・白色機器人 v2（2026-11-02 照使用者的設計圖重做）
-// 老師 Nico：大頭、深藍背心配金邊、藍色發光耳環與關節燈、胸口藍環；左手平板、右手教鞭。
-// 學生芋圓：矮胖、頭更大、橘色耳罩與天線燈、橘色書包與背帶、橘色鞋底；左手平板。
-// 兩人共用：黑色亮面面罩上的發光表情（平常是彎彎的笑眼 ^^）、天線燈 = 狀態燈。
+// 1a Glossy figure: white robot, v2 (rebuilt to match its design image).
+// Teacher Nico: big head, navy vest with gold trim, blue glowing ear rings and joint lights, a blue chest ring; tablet in the
+//   left hand, pointer in the right.
+// Student Taro: short and stout, an even bigger head, orange ear cups and antenna lamp, orange backpack and straps, orange
+//   soles; tablet in the left hand.
+// Both: a glowing face on a black glossy visor (curved smiling eyes ^^ at rest); the antenna lamp is the state light.
 import * as THREE from 'three';
 
 export const meta = {
   id: 'glossy-bot', no: '1a', name: '亮面公仔・白色機器人', kind: '3d',
-  note: '天線燈（老師連耳環一起）是狀態燈：待機老師藍／學生暖黃、思考藍色脈動、頓悟綠色爆光加光環、懷疑橘紅閃爍加「?」；面罩上的笑眼 ^^ 隨狀態換成思考眼、> < 興奮眼、擔心眉',
+  note: 'The antenna lamp (on the teacher, with the ear rings) is the state light: idle blue for the teacher and warm yellow for the student, think = blue pulse, aha = green burst with a ring, doubt = orange-red flicker with a "?"; the smiling ^^ eyes on the visor change with the state to thinking eyes, excited > < eyes, a worried brow',
 };
 
 const COL = {
@@ -450,7 +452,7 @@ function makeTeacher() {
   };
 }
 
-// ---------- student 芋圓: short and round, even bigger head, orange ear cups + antenna lamp, orange backpack, tablet ----------
+// ---------- student Taro: short and round, even bigger head, orange ear cups + antenna lamp, orange backpack, tablet ----------
 /** flat strap (rectangular cross-section) along a curve; width w, thickness th, the flat side faces away from the torso */
 function ribbonGeo(curve, TR, w, th) {
   const N = 48, P = [], idx = [];

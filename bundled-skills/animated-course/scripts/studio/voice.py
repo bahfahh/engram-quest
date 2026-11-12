@@ -14,7 +14,7 @@ script.json:
   "lines": [
     {"id": "L01", "speaker": "student", "text": "欸，Docker 到底是什麼？", "pauseAfter": 0.4},
     {"id": "beat-recall", "silence": 2.5},                       # visual-only beat, no speech
-    {"id": "L02", "speaker": "teacher", "text": "...", "sub": "字幕想跟念的不一樣時才填"},
+    {"id": "L02", "speaker": "teacher", "text": "...", "sub": "(only when the subtitle should differ from what is spoken)"},
     {"id": "L03", "speaker": "teacher", "text": "...", "rate": "+10%", "pitch": "+15Hz"}  # per-line override of the voice's rate/pitch
   ],
   "sfx": [{"file": "sfx/pop.wav", "line": "L02", "word": "Docker", "offset": 0.0, "gain": 0.14}]   # optional;

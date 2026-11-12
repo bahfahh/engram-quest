@@ -430,9 +430,7 @@
      }
     ]
    },
-   "voiceNote": {
-    "zh-tw": "8 個候選中選了 Vivienne（多語聲音念中文，不是台灣口音；例外於「中文只用台灣聲音」）。"
-   }
+   "voiceNote": "zh-tw uses a multilingual voice (Vivienne) reading Chinese, not a Taiwan accent: the one exception to Taiwan-only Chinese voices, picked from 8 candidates because it sounded better."
   },
   {
    "id": "nova",
@@ -621,7 +619,7 @@
    "status": "approved",
    "look": {
     "zh-tw": "黏土小籠包老師戴紅領結；學生芋圓（紫色芋頭）",
-    "en": "Clay soup-dumpling teacher with a red bow tie; taro student 芋圓"
+    "en": "Clay soup-dumpling teacher with a red bow tie; taro student Taro"
    },
    "portrait": "assets/portraits/bao.jpg"
   },
@@ -654,7 +652,7 @@
    "design": "assets/cast-designs/glossy-bot.jpg",
    "look": {
     "zh-tw": "白色大頭機器人，深藍金邊背心、藍光耳環、教鞭和平板；學生芋圓矮圓、橘耳罩和橘書包；燈號：藍＝想、綠＝懂了、橘紅＝疑問",
-    "en": "Big-headed white robot in a navy vest with gold trim, blue ear rings, pointer and tablet; student 芋圓 shorter and rounder with orange ear cups and backpack; lamp blue = think, green = aha, orange-red = doubt"
+    "en": "Big-headed white robot in a navy vest with gold trim, blue ear rings, pointer and tablet; student Taro shorter and rounder with orange ear cups and backpack; lamp blue = think, green = aha, orange-red = doubt"
    },
    "portrait": "assets/portraits/nico.jpg",
    "variants": [
@@ -777,6 +775,6 @@
   "zh-tw": "Taiwan voices first. Student = HsiaoYu (reserved). Female teachers = HsiaoChen, male teachers = YunJhe; teachers sharing a voice differ by rate, pitch, pace and wording (one teacher per film, so sharing never collides, except with an extra speaker such as the decision-maker, reference/05-presentation-methods.md §3c: her voice must not be the teacher's; with a HsiaoChen teacher (Luna, Iris, Nova) the student reads her line, or she gets another voice, checked with ASR and by ear first). Exception chosen by the user: Alden speaks with fr-FR-VivienneMultilingualNeural (a multilingual voice reading Chinese; not a Taiwan accent).",
   "en": "US voices. Student = Ava (reserved). Each teacher has its own voice.",
   "other": "Add a voice block per language (teacher and studentVoices) from edge-tts --list-voices; test with ASR and re-measure punctuation pauses before use.",
-  "engines": "edge-tts by default. An AI voice (GEMINI_API_KEY, AZURE_SPEECH_KEY+AZURE_SPEECH_REGION, or TTS_CUSTOM_CMD) is used only when the user chose it (named in the request or a standing rule -> --engine, VOICE_ENGINE, settings.json voice.engine, or their answer to the one start-up question, written as script.json \"engine\"); a key alone never switches it, and unset or \"auto\" means edge-tts (user, 2026-11-10; reference/07-voice-and-language.md §1c). If the chosen engine fails, the whole narration is redone with edge-tts. voice.gemini presets are per language ({\"zh-tw\": {voice, style}, \"en\": {voice, style}}; resolve.cjs picks the film's language) and only fill in the voice once Gemini is chosen; they are untested defaults: check gender and accent by ear before relying on them. Azure uses the same voice names as edge-tts."
+  "engines": "edge-tts by default. An AI voice (GEMINI_API_KEY, AZURE_SPEECH_KEY+AZURE_SPEECH_REGION, or TTS_CUSTOM_CMD) is used only when the user chose it (named in the request or a standing rule -> --engine, VOICE_ENGINE, settings.json voice.engine, or their answer to the one start-up question, written as script.json \"engine\"); a key alone never switches it, and unset or \"auto\" means edge-tts (reference/07-voice-and-language.md §1c). If the chosen engine fails, the whole narration is redone with edge-tts. voice.gemini presets are per language ({\"zh-tw\": {voice, style}, \"en\": {voice, style}}; resolve.cjs picks the film's language) and only fill in the voice once Gemini is chosen; they are untested defaults: check gender and accent by ear before relying on them. Azure uses the same voice names as edge-tts."
  }
 }

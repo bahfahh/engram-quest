@@ -3,8 +3,8 @@
 //
 //   import { makeBoard } from '/lib/house/board.js';
 //   const B = makeBoard(C.board.panel);                    // C = makeClassroom(); or any H.panel({…})
-//   B.text('月底任務：考題換血', 120, 150, { size: 72, weight: 900, read: 'title' }, T.word('O01', '任務'));
-//   B.chip('隨機抽的 50 則', 860, 210, { tone: 'student', read: 'rnd' }, tGrid);
+//   B.text('This month: replace the test set', 120, 150, { size: 72, weight: 900, read: 'title' }, T.word('O01', 'month'));
+//   B.chip('50 drawn at random', 860, 210, { tone: 'student', read: 'rnd' }, tGrid);
 //   B.sel(1560, 690, 1990, 770, { tone: 'warn' }, tZero);
 //   window.renderAt = t => { B.update(t); … };   window.TEXTS = t => B.texts(t).map(b => ({ ...b, ...C.board.boxToScreen(b.x0, b.y0, b.x1, b.y1) }));
 //

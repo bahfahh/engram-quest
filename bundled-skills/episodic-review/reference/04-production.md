@@ -7,7 +7,7 @@ Three length tiers exist and nothing else (`templates/length.json`, also read by
 | | Short | Medium | Long |
 |---|---|---|---|
 | Recall pack | every topic | every topic | every topic |
-| Films | one topic | two topics, or one in full depth | three topics, or a month overview plus two |
+| Films | one topic, two of its skeleton questions | one topic, every skeleton question | a month overview plus two topics in full depth |
 | Checks | self-check: reading report, key stills | words and pictures once each | both checks, twice |
 
 - Order of authority: what the user said this time; the `length` of a pending plugin request; ask once after reading (offer the three tiers with what each would cover); when nobody can be asked, the plugin setting `episodicLength`; otherwise medium.
@@ -17,7 +17,7 @@ Three length tiers exist and nothing else (`templates/length.json`, also read by
 - **Aiming at a length.** `--data` prints the seconds of every part. Measured on the template: opening 40-50 s (with the history line), skeleton about 20 s, relation map 50-90 s, recall 60-90 s, close 40-50 s, so about four minutes before any chapter; a chapter is 50-130 s, a beat 25-60 s. A film of two chapters therefore lands near seven minutes. To go shorter, drop parts whole (the history in the opening, the links out, the areas in the close, a second new case) before thinning a chapter.
 - Report the topics not filmed. They are the candidates next time and they still have their cards.
 
-Reference point, one deep topic (about 10 minutes, 9 chapters): 14,232 frames of which 4,875 were captured, 4 minutes on 4 CPU cores. The time ranges in `length.json` predate this structure and have not been re-measured; treat them as loose.
+Reference point, one deep topic (about 10 minutes, 9 chapters): 14,232 frames of which 4,875 were captured, 4 minutes on 4 CPU cores. The time ranges in `length.json` come from these measurements.
 
 ## 2. Building
 

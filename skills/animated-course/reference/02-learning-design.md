@@ -16,7 +16,7 @@ Ultralearning is an aggressive, self-directed way of learning built on nine prin
 
 Before planning lessons, about **10% of the total effort** goes into researching *how this subject is learned*: how experts explain it, which ideas beginners get stuck on, which projects people learn it through, what good teaching of this subject looks like on video. The three cores then go into `SERIES.md`:
 
-| Core | Question | Example (AdsDemo Meta ads course) |
+| Core | Question | Example (an ads course) |
 |---|---|---|
 | **Why** (motivation) | What does the learner want to achieve? What hurts now? | An indie developer must find out, with NT$3,000, whether strangers want the app |
 | **What** (knowledge structure) | Which concepts, facts, procedures? Which one is hardest? | Auction, campaign / ad set / ad, measurement, metrics, kill criteria, scaling; hardest: reading metrics as one funnel |

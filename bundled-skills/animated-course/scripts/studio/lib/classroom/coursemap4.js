@@ -1,13 +1,14 @@
-// 課程地圖第四版（共用元件，實驗 10）：桌上一座黏土模型，就是「一則廣告和 NT$3,000 真正走的路」。
-// 13 課＝13 個零件，排成一個迴圈；學過的零件有顏色、在演自己的機制；這一課的零件先灰、問題牌出現、再上色；還沒學的灰、不動。
-// 說明：/lib/classroom/COURSEMAP4.md（第二次交）
+// Course map, version 4 (shared component): a clay model on a table showing "the path one ad and NT$3,000 actually travel".
+// 13 lessons = 13 parts arranged in a loop. Learned parts are coloured and act out their own mechanism; this lesson's part starts
+// grey, the question sign appears, then it colours in; not-yet-learned parts are grey and still.
+// Docs: /lib/classroom/COURSEMAP4.md
 //
 //   import { makeCourseMap4 } from '/lib/classroom/coursemap4.js';
-//   const map = await makeCourseMap4({ lesson: 10, t0: 2, shot: 'ride', question: '每天要看哪幾格？' });
+//   const map = await makeCourseMap4({ lesson: 10, t0: 2, shot: 'ride', question: '每天要看哪幾格？' });   // question drawn on screen ("Which cells do I check daily?")
 //   scene.add(map.root);
 //   window.renderAt = t => { map.applyCam(cam, t); map.update(t, cam); renderer.render(scene, cam); };
 //
-// update(t) / cam(t) 都是 t 的純函數：每次把每個會動的屬性重設一次，不累積狀態。
+// update(t) / cam(t) are pure functions of t: every call resets every moving property, no state accumulates.
 import * as THREE from 'three';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
@@ -161,7 +162,7 @@ function tube(points, r, mat, seg = 40) { const curve = new THREE.CatmullRomCurv
 // key moment starts (it plays when the card passes); t is the part's local time (may be negative before the pass)
 // k: 0..1 "switched on" (the colour-in moment of this lesson), alive: true when learned (moving)
 
-// 1 拍賣台: a viewer with a phone; three ad cards compete for one slot in his feed. Next to each card a column:
+// 1 Auction: a viewer with a phone; three ad cards compete for one slot in his feed. Next to each card a column:
 // coins (bid) + blue (estimated action rate) + green (ad quality). The tallest column wins — not the one with the most coins.
 const AUCTION = [ // [kind, coins, rate, quality]
   ['X', 13, 0.012, 0.012], ['A', 5, 0.056, 0.036], ['Y', 8, 0.016, 0.012]];
@@ -205,7 +206,7 @@ function p1() {
   } };
 }
 
-// 2 數據回流管: two troughs from the app store back to the dashboard. Android: clear single dots, on time.
+// 2 Return pipes: two troughs from the app store back to the dashboard. Android: clear single dots, on time.
 // iOS: an ATT gate at the entrance blocks part of the dots; what passes merges into one blurry lump that arrives late (SKAN).
 function p2() {
   const g = new THREE.Group();
@@ -248,7 +249,7 @@ function p2() {
   } };
 }
 
-// 3 岔路: after the click the road splits — to the App store (lit; AdsDemo takes it) or to a web sign-up page (grey: only before launch)
+// 3 Fork: after the click the road splits — to the App store (lit; the course's advertiser takes it) or to a web sign-up page (grey: only before launch)
 function p3() {
   const g = new THREE.Group();
   const road = M('#f4dfae'), dim = M('#c9c2b4', { keep: true });
@@ -278,7 +279,7 @@ function p3() {
   } };
 }
 
-// 4 Campaign 水龍頭: NT$3,000 in coins feeds a tap labelled 「買：安裝」; the water splits into two equally thick streams (A, B)
+// 4 Campaign budget tap: NT$3,000 in coins feeds a tap labelled 「買：安裝」 ("Buy: Installs"); the water splits into two equally thick streams (A, B)
 function p4() {
   const g = new THREE.Group();
   const coin = M('#e8b84a', { emissive: '#7a5a10', ei: 0.12 });
@@ -294,7 +295,7 @@ function p4() {
   const handle = ANIM(new THREE.Group()); handle.position.set(0.09, 0.19, -0.03); g.add(handle);
   handle.add(mesh(cyl(0.004, 0.004, 0.02, 8, 154, 0), M('#7a8794'), 0, -0.01, 0));
   const hb = mesh(rbox(0.06, 0.012, 0.012, 0.005, 155), M(RED)); handle.add(hb);
-  // tag 「買：安裝」 hanging from the arm
+  // the "Buy: Installs" tag hanging from the arm
   const tag = EN
     ? face(0.13, 0.04, dualTex(340, 104, (c, w, h) => { c.fillStyle = '#ffffff'; rr(c, 4, 4, w - 8, h - 8, 18); c.fill(); c.strokeStyle = META; c.lineWidth = 8; c.stroke(); c.fillStyle = '#1a3d7a'; fitFont(c, 'Buy: Installs', w - 34, 54); c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('Buy: Installs', w / 2, h / 2 + 3); }))
     : face(0.1, 0.04, dualTex(260, 104, (c, w, h) => { c.fillStyle = '#ffffff'; rr(c, 4, 4, w - 8, h - 8, 18); c.fill(); c.strokeStyle = META; c.lineWidth = 8; c.stroke(); c.fillStyle = '#1a3d7a'; c.font = `${FW} 54px "${FONT}"`; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('買：安裝', w / 2, h / 2 + 3); }));
@@ -304,7 +305,7 @@ function p4() {
   } };
 }
 
-// 5 Ad set 圍欄: two fenced crowds (A teal, B orange). Solid fence = hard limit; dashed start ring = a soft suggestion the system searches out from
+// 5 Ad set fences: two fenced crowds (A teal, B orange). Solid fence = hard limit; dashed start ring = a soft suggestion the system searches out from
 function pen(col, seed) {
   const g = new THREE.Group(), post = M(col), rail = M(col);
   const W = 0.22, D = 0.17;
@@ -344,7 +345,7 @@ function p5() {
   } };
 }
 
-// 6 Ad 卡片: 2–3 9:16 cards planted in each pen; A and B differ only in the sentence
+// 6 Ad cards: 2–3 9:16 cards planted in each pen; A and B differ only in the sentence
 function p6() {
   const g = new THREE.Group();
   const tA = cardTex('A'), tB = cardTex('B');
@@ -357,7 +358,7 @@ function p6() {
   } };
 }
 
-// 7 政策關卡: a gate in front of the auction. A 「你＋屬性」 card bounces back (red); the rewrite with a new subject passes (green)
+// 7 Policy gate: a gate in front of the auction. A "you + attribute" card bounces back (red); the rewrite with a new subject passes (green)
 function p7(opt = {}) {
   const g = new THREE.Group(), stone = M('#efe3cf'), cap = M('#d9c6a8');
   for (const sx of [-1, 1]) { g.add(mesh(rbox(0.035, 0.15, 0.035, 0.008, 300 + sx), stone, sx * 0.065, 0.075, 0)); g.add(mesh(rbox(0.045, 0.018, 0.045, 0.006, 302 + sx), cap, sx * 0.065, 0.158, 0)); }
@@ -368,9 +369,9 @@ function p7(opt = {}) {
   const good = ANIM(adCard(cardTex('OK'), { w: 0.034 })); g.add(good);
   bad.rotation.y = good.rotation.y = -Math.PI / 2;
   return { g, h: 0.22, key: 0.8, act(k, t, alive) {
-    // loop 3 s: the 「你＋屬性」 card runs into the gate, the lamp turns red, it bounces back and tips over;
-    // the rewritten card (主角換人) passes, the lamp turns green
-    if (opt.settled && alive) {     // after the lesson: the rewrite passes, green; the 「你＋屬性」 card stays tipped over outside the gate
+    // loop 3 s: the "you + attribute" card runs into the gate, the lamp turns red, it bounces back and tips over;
+    // the rewritten card (a new subject) passes, the lamp turns green
+    if (opt.settled && alive) {     // after the lesson: the rewrite passes, green; the "you + attribute" card stays tipped over outside the gate
       const c2 = pm(t, 2.4) / 2.4;
       bad.visible = true; bad.position.set(0.02, 0, -0.16); bad.rotation.x = -0.6;
       good.visible = true; good.position.set(-0.02, 0, lerp(-0.22, 0.24, c2));
@@ -387,10 +388,10 @@ function p7(opt = {}) {
   } };
 }
 
-// 8 素材工作台（＝第 8 課「審片台」拉遠）: Hook / Body / CTA blocks snap into one little film strip; beside it a grid of
+// 8 Creative workbench (lesson 8's review desk, seen from afar): Hook / Body / CTA blocks snap into one little film strip; beside it a grid of
 // viewers — as the playhead runs along the strip, the ones who swipe away go dark (most of them during the Hook)
 function blockTex(txt, bg, ink = '#fff') { return dualTex(220, 90, (c, w, h) => { c.fillStyle = bg; c.fillRect(0, 0, w, h); c.fillStyle = ink; fitFont(c, txt, w - 20, 58); c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(txt, w / 2, h / 2 + 3); }); }
-const STRIP = [['Hook', '#7C5CD6', 0.05, '#ffffff'], ['Body', '#2B8FD6', 0.1, '#ffffff'], ['CTA', '#C2338A', 0.045, '#ffffff']];   // lesson 8's colours (desk.css)
+const STRIP = [['Hook', '#7C5CD6', 0.05, '#ffffff'], ['Body', '#2B8FD6', 0.1, '#ffffff'], ['CTA', '#C2338A', 0.045, '#ffffff']];   // the same colours as lesson 8's own scene
 function filmStrip(hookCol, seed, { H = 0.045, D = 0.022 } = {}) {
   const g = new THREE.Group(), blocks = []; let x = 0;
   const total = STRIP.reduce((a, s) => a + s[2], 0);
@@ -447,7 +448,7 @@ function p8(opt = {}) {
     // shown when the playhead has passed the end of the Hook and the end of the clip. counts: 'none' = lights only
     if (opt.counts !== 'none' && alive) {
       gc.textAlign = 'center'; gc.textBaseline = 'middle';
-      if (EN8) {   // "30 left" is wider than 「剩 30」: keep it inside the board
+      if (EN8) {   // "30 left" is wider than the Chinese label: keep it inside the board
         const put = (txt, x) => { const hw = gc.measureText(txt).width / 2 + 10; gc.fillText(txt, clamp(x, hw, CW - hw), CH - 44); };
         if (p >= segEnd[0] - 0.001) { gc.fillStyle = RED; gc.font = `${W8} 56px "${F8}"`; put(`${Math.round(N * KEEP[1])} left`, segEnd[0] / 2 * CW); }
         if (p >= 0.999) { gc.fillStyle = '#5b5560'; gc.font = `${W8} 48px "${F8}"`; put(`${Math.round(N * KEEP[3])} left`, (segEnd[1] + 1) / 2 * CW); }
@@ -476,10 +477,10 @@ function p8(opt = {}) {
   } };
 }
 
-// 9 測試台（＝第 9 課「賽季快轉」拉遠，畫法照 projects/r4-l09-testing 的測試台）: two phones side by side — Hook on top,
-// the message (訊息, the sentence) in the middle, CTA at the bottom; only the middle block differs (A teal / B orange).
+// 9 Test bench (lesson 9's season fast-forward, seen from afar; drawn like that lesson's test bench): two phones side by side — Hook on top,
+// the message (the sentence) in the middle, CTA at the bottom; only the middle block differs (A teal / B orange).
 // They are pushed into the system together; a small tracking sheet grows one row per round.
-// opts.parts[9] = { labels: ['Hook', '訊息 A', '訊息 B', 'CTA'] }
+// opts.parts[9] = { labels: ['Hook', '訊息 A', '訊息 B', 'CTA'] }   (zh defaults; 訊息 = "Message")
 function p9(opt = {}) {
   const lb = opt.labels || (EN ? ['Hook', 'Message A', 'Message B', 'CTA'] : ['Hook', '訊息 A', '訊息 B', 'CTA']);
   const g = new THREE.Group();
@@ -501,7 +502,7 @@ function p9(opt = {}) {
   };
   const a = phoneOf(TEAL, lb[1], 510), b = phoneOf(ORANGE, lb[2], 520);
   a.position.set(-0.075, 0.02, 0.0); b.position.set(0.005, 0.02, 0.0); a.rotation.x = b.rotation.x = -0.22; g.add(a, b);
-  // 「只差這一塊」: a red ≠ between the two message blocks
+  // "only this block differs": a red ≠ between the two message blocks
   const ne = face(0.026, 0.026, dualTex(64, 64, (c) => { c.fillStyle = RED; c.beginPath(); c.arc(32, 32, 30, 0, 7); c.fill(); c.fillStyle = '#fff'; c.font = `${FW} 48px "${FONT}"`; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('≠', 32, 35); }));
   ne.position.set(-0.035, 0.085, 0.03); ne.rotation.x = -0.22; g.add(ne);
   // tracking sheet: rows grow (round counter)
@@ -528,7 +529,7 @@ function p9(opt = {}) {
   } };
 }
 
-// 10 儀表板（＝第 10 課「報表顯影」拉遠，畫法照 projects/r4-l10-metrics/FUNNEL.md）: B-group dots stream out of a phone feed
+// 10 Dashboard (lesson 10's report development, seen from afar; drawn like that lesson's funnel): B-group dots stream out of a phone feed
 // through five gates; at each gate some stop and pile up grey under it (pile size = how many left); fewer walk on.
 // Gate state colours: green = normal, red = the first abnormal gate (read left to right, fix only the first red), grey = right of it (not read yet).
 // opts.parts[10] = { redGate: 1..5 | 0 (none), labels: [[line1, line2?], ×5] }
@@ -587,17 +588,18 @@ function p10(opt = {}) {
   } };
 }
 
-// 11 決策桿（＝第 11 課「紅色的形狀」拉遠）: a small grid — rows = the sentence (A, B), columns = traffic sources, a little
-// funnel in every cell. How big the red patch is decides the level you stop: one cell → 素材, one column → 渠道,
-// the D7 step everywhere → 產品, the whole grid → 定位. The matching word lights up and the lever goes to 停.
+// 11 Decision lever (lesson 11's shape of the red, seen from afar): a small grid — rows = the sentence (A, B), columns = traffic sources, a little
+// funnel in every cell. How big the red patch is decides the level you stop: one cell → creative, one column → channel,
+// the D7 step everywhere → product, the whole grid → positioning. The matching word lights up and the lever goes to Stop.
 const LEVELS = ['素材', '渠道', '產品', '定位'];
 const LEVELS_EN = ['Creative', 'Channel', 'Product', 'Positioning'];
-// opts.parts[11] = { levels: ['素材', '渠道', '產品', '定位'], lever: null (cycle the four red shapes, lever to 停) | '停' | '續' | '加碼' (hold that) }
+// opts.parts[11] = { levels: ['素材', '渠道', '產品', '定位'] (zh defaults: creative, channel, product, positioning),
+//                    lever: null (cycle the four red shapes, lever to Stop) | '停' (Stop) | '續' (Keep) | '加碼' (Scale) (hold that) }
 function p11(opt = {}) {
   const LV = opt.levels || (EN ? LEVELS_EN : LEVELS);
   const F11 = FONT, W11 = FW, EN11 = EN;      // the board is redrawn at update time: keep this map's language
   let lvFs = 42; if (EN) { const mc = document.createElement('canvas').getContext('2d'); for (const l of LV) lvFs = Math.min(lvFs, fitFont(mc, l, 184, 42)); }
-  // state: 'cycle' = the four red shapes in turn (lever to 停); 'scale' = the verdict after lesson 11: row B all green, lever on 加碼, no loop
+  // state: 'cycle' = the four red shapes in turn (lever to Stop); 'scale' = the verdict after lesson 11: row B all green, lever on Scale, no loop
   const state = opt.state ?? (opt.lever === '加碼' ? 'scale' : opt.lever ? 'hold' : (opt.settled || (opt.lesson ?? 0) >= 12) ? 'scale' : 'cycle');
   const hold = state === 'hold' ? opt.lever : null;
   const g = new THREE.Group();
@@ -653,10 +655,10 @@ function p11(opt = {}) {
     tex.needsUpdate = true;
   };
   return { g, h: 0.15, key: 0.2, act(k, t, alive) {
-    // loop 8 s: one cell → one column → the D7 step everywhere → the whole grid (2 s each); the lever snaps to 停 each time
+    // loop 8 s: one cell → one column → the D7 step everywhere → the whole grid (2 s each); the lever snaps to Stop each time
     const ph = alive ? (((t % 8.0) + 8.0) % 8.0) : 0;
-    if (state === 'scale' && alive) { draw(-2, alive); lever.rotation.z = -0.85; return; }   // settled on 加碼
-    if (hold && alive) {        // a fixed decision: 加碼 / 續 = the grid is all green; 停 = one red cell
+    if (state === 'scale' && alive) { draw(-2, alive); lever.rotation.z = -0.85; return; }   // settled on Scale
+    if (hold && alive) {        // a fixed decision: Scale / Keep = the grid is all green; Stop = one red cell
       draw(hold === '停' ? 0 : -1, alive);
       const e = ease.outBack(clamp(pm(t, 4) / 0.35)), to = hold === '停' ? 0.85 : hold === '續' ? 0 : -0.85;
       lever.rotation.z = lerp(0, to, e); return;
@@ -664,15 +666,15 @@ function p11(opt = {}) {
     const mode = alive ? Math.min(3, Math.floor(ph / 2)) : 0;
     draw(mode, alive);
     const e = alive ? ease.outBack(clamp((ph % 2) / 0.35)) : 0;
-    lever.rotation.z = alive ? lerp(-0.1, 0.85, e) : 0;        // + = toward 停 (left)
+    lever.rotation.z = alive ? lerp(-0.1, 0.85, e) : 0;        // + = toward Stop (left)
   } };
 }
 
-// 12 回頭池（＝第 12 課「系統沙盒」拉遠）: the people the ads reached drop into three pools
-// (Meta 站內互動, Pixel 網頁訪客, SDK App 安裝者); the pools fill over time and the oldest fade out; a pipe goes back to the pens
+// 12 Retargeting pools (lesson 12's system sandbox, seen from afar): the people the ads reached drop into three pools
+// (Meta on-platform engagement, Pixel website visitors, SDK app installers); the pools fill over time and the oldest fade out; a pipe goes back to the pens
 const POOLS = [['互動受眾', '#8f7cc8'], ['網頁訪客', '#6aa6d9'], ['App 安裝者', '#7cb46b']];
-const POOLS_EN = ['Engaged\naudience', 'Website\nvisitors', 'App\ninstallers'];   // EN: two lines ('\n'), the label is taller   // names as in lesson 12 (engagement audiences = 互動受眾)
-// opts.parts[12] = { pools: ['互動受眾', '網頁訪客', 'App 安裝者'] }
+const POOLS_EN = ['Engaged\naudience', 'Website\nvisitors', 'App\ninstallers'];   // EN: two lines ('\n'), the label is taller   // names as in lesson 12
+// opts.parts[12] = { pools: ['互動受眾', '網頁訪客', 'App 安裝者'] }   (zh defaults; English: POOLS_EN)
 function p12(opt = {}) {
   const g = new THREE.Group();
   const rimM = M('#d9c6a8');
@@ -704,7 +706,7 @@ function p12(opt = {}) {
   } };
 }
 
-// 13 放大閥（＝第 13 課「放大沙盤」拉遠）: the valve on the money pipe opens the tap one notch at a time (vertical);
+// 13 Scaling valve (lesson 13's scaling sandbox, seen from afar): the valve on the money pipe opens the tap one notch at a time (vertical);
 // a new pen grows beside the old ones (horizontal; built in the main map); a little staircase: each step = what one more
 // impression costs, the budget line climbs and the higher steps are pricier; a bid knob
 // opts.parts[13] = { steps: 6, color: '#F2780C' }
@@ -959,7 +961,7 @@ export async function makeCourseMap4(o = {}) {
 
   { root.updateMatrixWorld(true); const b = new THREE.Box3().setFromObject(penC.g); for (const cx of [b.min.x, b.max.x]) for (const cy of [b.min.y, b.max.y]) for (const cz of [b.min.z, b.max.z]) parts[13].box.expandByPoint(land.worldToLocal(_v.set(cx, cy, cz))); }
 
-  // ---- 芋圓 pushing an ad card
+  // ---- Taro (the small student) pushing an ad card
   const rider = new THREE.Group(); land.add(rider);
   const rideCard = adCard(cardTex(o.card === 'B' ? 'B' : 'A'), { w: 0.05, stand: false, frame: o.card === 'B' ? '#6b3a12' : '#2c4f4b' }); rideCard.rotation.x = -0.55; rideCard.position.set(0, 0.012, 0.07); rider.add(rideCard);
   rider.add(mesh(rbox(0.07, 0.012, 0.15, 0.005, 990), M('#d9b98a'), 0, 0.006, 0.02));
@@ -1064,7 +1066,7 @@ export async function makeCourseMap4(o = {}) {
       : fit(corners(parts[n].box), { elev: 0.62, margin: 0.62, lift: 0.04 }))),
     /** a travelling shot that follows the card (looks a little toward the row of parts it is passing) */
     track: (u) => { const p = ptU(u); const look = V(p.x, 0.09, p.z + (p.z < 0.02 ? -0.12 : 0.1)); return L2W({ pos: look.clone().add(V(0, 0.72, 1.12)), look, fov: 32 }); },
-    /** this lesson's part with the question sign and 芋圓 */
+    /** this lesson's part with the question sign and Taro */
     part: (n = lesson) => shotCache['c' + n] || (shotCache['c' + n] = L2W(fit([...corners(parts[n].box),
       ...(n === lesson && qs ? [signPos.clone().add(V(-SIGN_W / 2, qs.userData.H * 1.25, 0)), signPos.clone().add(V(SIGN_W / 2, qs.userData.H * 1.25, 0))] : []),
       ...(n === lesson ? [ptU(uEnd).add(V(0, 0.09, 0)), ptU(uEnd)] : [])], { elev: 0.5, margin: 0.9, lift: 0.06 }))),

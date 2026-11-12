@@ -1,10 +1,11 @@
 # The Engram studio (`lib/house/`) — an option, only when the user asks for it
 
-> **Status (user, 2026-11-10): not the default.** Lessons keep the classroom skeleton (blackboard, 3D course map, blackboard mindmap — `reference/04-skeleton.md`, `lib/classroom/`) and show real pictures in their real look. Use this studio only when the user asks for it; the "when" table in §0 applies only inside such a film.
+> **Status: not the default.** The light studio fits very few lessons; made the default, it turned every new course into the same studio film. Lessons keep the classroom skeleton (blackboard, 3D course map, blackboard mindmap — `reference/04-skeleton.md`, `lib/classroom/`) and show real pictures in their real look. Use this studio only when the user asks for it; the "when" table in §0 applies only inside such a film.
 
 
 One studio, two lights. Every film of the series (classroom, course map, middle, key cards, mindmap) is shot in the
-same seamless studio; only the lights change. Built in experiment 19 from experiment 18's S1 (light) and S2 (dark)
+same seamless studio; only the lights change. Built from two looks, S1 (light) and S2 (dark), that reviewed best of several clean looks; like every look, it is chosen
+by situation.
 
 Demo: `projects/x19-house/` (`scene.html` 3D, `flat.html` DOM) — read it next to this file.
 
@@ -107,7 +108,7 @@ Mark inside parts `userData.xrayInner = true` (they stay solid); `userData.xrayI
 ```js
 const ui = makeUI(rootEl, { mode, camera /* THREE camera or null */ });
 ui.lights(k)                                // DOM follows the room
-const L = ui.station(2, '投出光點', { sub: '<b>30,000</b>個' }); L.state('now'|'done'|'later');
+const L = ui.station(2, 'Send out dots', { sub: '<b>30,000</b> dots' }); L.state('now'|'done'|'later');
 const C = ui.label(html, { tone: ''|'now'|'done'|'later'|'student'|'warn', id, n });
 ui.place(L, anchor /* Vector3 or [x,y] */, { dx, dy, a })   // label + leader + anchor; kept in y 130…930 (never the bottom 140 px)
 ui.progress({ brand, title, steps }).set(cur, a)            // progress capsule (the course map in small), every shot
@@ -219,21 +220,20 @@ unchanged from experiment 17). Four new files; nothing else in `lib/house/` was 
 |---|---|
 | `classroom.js` | `makeClassroom({ renderer, scene, camera, mode, skin, variant, teacherAt, studentAt, extraColumns })` → the studio (makeRoom + makeHolo), the **board** (4.6 × 2.4 m `H.panel`, canvas 2048 × 1069, light = holo / dark = frosted glass) floating over a white projector plinth with a light sheet and a halo, the cast (`makeCast` + `room.dress`), and the camera rig `cams` {W, CS, BC, BFULL, `boardAt(bx, by, dist)`, `push(from, to, k)`}. `board.toWorld / toScreen / boxToScreen` convert board px (for TEXTS and anchors). |
 | `board.js` | `makeBoard(panel)`: typeset board content on the narration's words — `text`, `chip` (tones now / done / later / student / warn / accent), `sel` (selection box), `line` / `arrow`, `box`, `card`, `stamp`, `custom`, `phase(until, fn)`; each element `(…, t0)` with `o.dur`, `o.until`, `o.read` (readcheck id). `update(t)` redraws the panel only when a quantised state changed; `texts(t)` gives readable blocks in board px. Also exports the canvas drawing helpers (`drawChip`, `drawSel`, `textOn`, `strokeOn`, `arrowHead`, `fontOf`, `measure`). |
-| `coursemap.js` | `makeCourseMap({ room, H, ui, camera, lessons, lesson, at, t0, times, question })`: one pedestal per lesson, a holo mini picture above it (`pic(c, L, u)` draws the lesson's mechanism; u = one run), a station chip (`ui.station`) per lesson; states done / now / later (later = the picture in grey + "?" on the chip). Two rows when > 5 lessons (1–4 front, 5–8 back, raised and 12 % bigger), chips of the back row above the pictures and of the front row below the pedestals. `times`: `review` (learned lessons light up and play once), `say` (each learned lesson's chip glows as the narration names it), `preview` ([t per lesson n, null to skip]: any lesson's chip glows and its grey picture brightens on its word — for lesson 1, whose map names lessons not learned yet), `arrive` (push 1.1 s to this lesson; the others dim to 22 %, their chips hide), `play` ([[t, u], …] this lesson's run keyed to the words), `ask` / `end` (question card: cyan tab 「第 N 課 · name」 + the question, warns if shorter than its reading time). `cam(t)`, `update(t)`, `on(t)`, `glyphs()`. Chips and the card are DOM with `data-read` (so `ui.TEXTS()` reports them). |
-| `coursemap-ops.js` | Course data for the 8 lessons of `azure-ops-2026` (experiment 21; SERIES appendix) — two rows of four (coursemap.js does this for > 5 lessons). Pictures: 1 容量 (a crowd of 60 dots, a few light up and walk through the door; 30 worker cells fill, the overflow spills magenta) · 2 擴展與部署 (load rises, two machines grow; staging / prod swap) · 3 網域與憑證 (lock on the address bar; validity 200 → 100 → 47 days; the renew arrow refills it) · 4 身分與權限 (three keys — team amber, code cyan, users blue-grey — into three doors; Owner keys 4 → 3) · 5 網路與防護 (requests hit the shield, magenta bounce, cyan pass; the database moves inside the wall) · 6 看得見 (one request, a magnifier follows it, ×21 round trips to the database) · 7 告警與值班 (line over the threshold → bell → a cursor walks back the timeline to the ⇄ swap cell, magenta pin) · 8 SLO 與檢討 (the error-budget bar bitten magenta; a loop arrow back to a 「1」 chip). Name chips read at ≈ 34 px in the wide shot. Demo `projects/ops-map-demo/` (`scene.html?lesson=N`, `?gallery=1&lesson=8`; `pics.html?big=N` = one picture at u 0.2 / 0.45 / 0.7 / 1); stills `stills/part-1…8.jpg`, `overview-all-playing.jpg`, `l1-t6.1.jpg` (lesson 1 preview lighting lesson 4), `l1-t16.jpg`, `l3-` / `l6-close-question.jpg`; readcheck passes for lessons 1 and 6. Lesson 1 pattern: `times: { preview: [null, t2, …, t8], arrive, play, ask, end }`. |
+| `coursemap.js` | `makeCourseMap({ room, H, ui, camera, lessons, lesson, at, t0, times, question })`: one pedestal per lesson, a holo mini picture above it (`pic(c, L, u)` draws the lesson's mechanism; u = one run), a station chip (`ui.station`) per lesson; states done / now / later (later = the picture in grey + "?" on the chip). Two rows when > 5 lessons (1–4 front, 5–8 back, raised and 12 % bigger), chips of the back row above the pictures and of the front row below the pedestals. `times`: `review` (learned lessons light up and play once), `say` (each learned lesson's chip glows as the narration names it), `preview` ([t per lesson n, null to skip]: any lesson's chip glows and its grey picture brightens on its word — for lesson 1, whose map names lessons not learned yet), `arrive` (push 1.1 s to this lesson; the others dim to 22 %, their chips hide), `play` ([[t, u], …] this lesson's run keyed to the words), `ask` / `end` (question card: cyan tab "第 N 課 · name" (Chinese default label, "Lesson N · name") + the question, warns if shorter than its reading time). `cam(t)`, `update(t)`, `on(t)`, `glyphs()`. Chips and the card are DOM with `data-read` (so `ui.TEXTS()` reports them). |
 | `coursemap-aieng.js` | Course data for the 8 AI Engineering lessons (names as `lib/classroom/coursemap-aieng.js`; pictures: code card vs learned curve, two targets, error bins, net and pool 3/4 3/5, eval booklet, the conveyor with dedup gate / piles levelled / v1.1 stamp, drifting hill and coins, error budget). Another course = another data file of the same shape. |
 | `mindmap.js` | `makeMindmap(board, spec)`: **the same data format and layouts as `lib/classroom/mindmap.js`** (radial / tree / flow / compare; center, nodes with icon / photo / doodle, `pic`, `pos`, `edge` {label, style, from, t}, extra `edges`, `mm.add(el.…)`, `mm.point`, lint) drawn in the house look: centre = solid cyan capsule, nodes with a picture = small house panels, nodes without one = chips, links = smooth lines with an anchor dot (S-links from a radial centre), arrows for flow / tree, edge labels = small chips. New: `divider` (`true` = vertical, compare default; `{y}` / `{x}` / `{pts}`, plus `t`), node `tone`, `picScale`, `typeScale` (chalk sizes × 0.86). Chalk colour names map to the grammar: white → blue-grey, yellow / teal / blue / green → cyan, pink / red → magenta, orange → amber, grey → grey. Doodles use the same recorder API (`d.rect`, `d.line`, `d.arrow`, `d.text`, `d.hatch` …), drawn crisp. `mm.texts(t)` gives readable blocks (board px). |
 
 How the lesson-6 page uses them (a recipe for any lesson):
-- **Head**: W (teacher left, board, student right; name chips «Nico» / «AI 工程師» in amber) → CS on the student's wrong
+- **Head**: W (teacher left, board, student right; name chips «Nico» / «AI engineer» in amber) → CS on the student's wrong
   guess → push to BC; board elements appear on the words (task, grid of 50, tally with proportional bars, the zero row
   selected in magenta, the one-liner with its three properties as chips) → `ui.wipe` into the course map (it stands in
   the same studio at x = 24) → review, push to lesson 6, the conveyor plays on M03's words, question card → `ui.wipe`
   back to BC → one-liner → O10: everything but the stack fades, the stack is selected, the camera pushes into it
   (`cams.push(BC, cams.boardAt(…))`) → `ui.wipe` at tHand (the middle opens with the same wipe).
 - **Tail**: `ui.wipe` opens at tOut onto the board (no text in the first 0.5 s), the mindmap builds on E01–E08
-  (flow = the conveyor, properties as chips with brackets, a divider, «明天» chips in amber = the learner's action,
-  «下一課» as a grey «later» chip), W for the student's question, back to BC; the last frame is the finished board.
+  (flow = the conveyor, properties as chips with brackets, a divider, «tomorrow» chips in amber = the learner's action,
+  «next lesson» as a grey «later» chip), W for the student's question, back to BC; the last frame is the finished board.
 - Modes: `?mode=light|dark` only changes `room.lights(k)` / `ui.lights(k)`; boards, pictures and chips redraw with
   `lerpLook(k)`. The wipes at tHand / tOut are `ui.wipe().update(t, tCut)` with the page's lights, so both sides of a
   seam are identical when the middle uses the same mode.
@@ -251,7 +251,7 @@ while it shows; the board has no perspective-correct DOM (everything on it is ca
 - `xray()` gives no clipping plane for the sweep; a page that needs a hard cut builds its own `clippingPlanes` (B did).
 - Many category colours (six data types) conflict with "everything else is blue-grey": keep categories as tints of the
   cyan/blue-grey family plus at most one magenta, or label them; small particles cannot carry six hues (experiment 19 A, B).
-- Candidates to move into `lib/house/` (written in the experiment 19 projects, `研究/實驗19-…/各片/`):
+- Candidates to move into `lib/house/` (written in earlier projects, not part of this skill):
   `isostudio.js` (the studio as the backdrop of an isometric world, the cast on the same iso camera) and `iso.js`
   (white-shell and glass iso materials that follow the lights) from x19-a-light; card-face labels, a term strip, a
   key-sentence banner, fixed-position and multi-anchor `place`, a sized round stamp and an FXAA finish (≈ 20 % cheaper

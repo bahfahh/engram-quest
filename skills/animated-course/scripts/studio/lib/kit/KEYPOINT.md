@@ -1,6 +1,6 @@
 # Key-point card `lib/kit/keypoint.js`
 
-The "key point" beat at the end of each middle segment (4–6 s) consolidates its one point: the real-UI background pushes back and fades, and a white card appears. Top: label "重點 2／3" (Key point 2/3) + progress dots; middle: **your concept figure** (elements appear one by one with the narration); bottom: one bold key sentence (76px; text inside `**…**` gets a highlighter underline).
+The "key point" beat at the end of each middle segment (4–6 s) consolidates its one point: the real-UI background pushes back and fades, and a white card appears. Top: label "Key point 2 / 3" (Chinese mode: 「重點 2／3」) + progress dots; middle: **your concept figure** (elements appear one by one with the narration); bottom: one bold key sentence (76px; text inside `**…**` gets a highlighter underline).
 
 The original demo project (`projects/_keypoint-demo/`, three cards from lesson 4) isn't shipped with this skill.
 
@@ -18,12 +18,12 @@ const T = await S.loadTimeline();
 const st = K.stage({ ... });  /* …your real-UI scene… */
 
 const kp1 = KP.keypoint(st, {
-  ...KP.beat(T, 'K1', '一個變因'),        // = {at: 0.4 s before K1 starts, keyAt: when "一個變因" ("one variable") is spoken, until: K1 end + hold + exit}
+  ...KP.beat(T, 'K1', 'one change'),     // = {at: 0.4 s before K1 starts, keyAt: when "one change" is spoken, until: K1 end + hold + exit}
   index: 1, total: 3,
-  key: '兩組只差**一個變因**',            // "The two groups differ by **one variable**". ≈ 12 characters; longer warns
+  key: 'The groups differ by **one change**',  // Chinese mode: ≈ 12 characters, longer warns; English mode shrinks to fit
   figure: f => {
-    const A = f.card({ x: 410, y: 240, title: 'Ad set A', icon: 'layout-grid', rows: [...], t: T.word('K1', '兩組') });
-    f.badge('≠', { on: A.rows[4], x: 720, t: T.word('K1', '素材') });
+    const A = f.card({ x: 410, y: 240, title: 'Group A', icon: 'layout-grid', rows: [...], t: T.word('K1', 'groups') });
+    f.badge('≠', { on: A.rows[4], x: 720, t: T.word('K1', 'change') });
   },
 });
 window.renderAt = K.render(tl, cam, bar, kp1, kp2, kp3);   // kp.update(t) is a pure function of t; pass it with cam and bar
@@ -46,8 +46,8 @@ Figure before sentence worked: picture first, then words (one idea at a time).
 |---|---|---|
 | `at` | 0 | Card starts entering (entrance 0.5 s) |
 | `dur` / `until` | 5 / — | Total length (incl. enter/exit) or end second |
-| `index`, `total` | 1, 3 | "label index／total" and progress dots (done = grey, current = black bar, upcoming = light grey) |
-| `label` | `'重點'` ("Key point") | Label text |
+| `index`, `total` | 1, 3 | "label index / total" and progress dots (done = grey, current = black bar, upcoming = light grey) |
+| `label` | `'重點'` ("Key point"; `'Key point'` in English mode) | Label text |
 | `key` | — | Key sentence; `**…**` gets a highlighter underline (brushed on 0.45 s after the sentence is written) |
 | `keyAt` | at + min(2.6, dur × 0.5) | When the key sentence writes out left to right |
 | `figure` | — | `f => {…}` (drawing helpers, below) / SVG or HTML string / DOM node |

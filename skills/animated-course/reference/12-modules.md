@@ -1,6 +1,6 @@
 # 12 Modules: the full version by default, the learner subtracts
 
-> Status: the model is **approved**. Each module itself is **trial** until the user has reviewed a finished film that uses it. Experiment 17 (2026-11-06) was that review: `transfer` was **rejected** and removed (§3.1), `cards` **needs rework** (§3). Lab notebook: `研究/00-教學影片變好的其他維度.md`.
+> Status: the model is **approved**: the default is the full version and the learner may only subtract. The skeleton is already optimized; optional parts become modules so it does not grow heavier. Each module itself is **trial** until the user has reviewed a finished film that uses it: `transfer` was **rejected** and removed (§3.1), `cards` **needs rework** (§3).
 
 ## 1. The idea
 
@@ -23,8 +23,8 @@ node scripts/studio/lib/cast/resolve.cjs [--off cards] [--on cards] > projects/<
 
 ## 3. The modules
 
-### `cards` — Review cards (複習卡) — needs rework
-- **Status**: A screenshot of the film's recap card plus "what does it say" is only a second viewing. The new design is being decided with the user (lab notebook, experiment 17); until then the mechanics below still work but are not the target.
+### `cards` — Review cards — needs rework
+- **Status**: useful but plain. A screenshot of the film's recap card plus "what does it say" is only a second viewing; the direction is cards that practise or take the idea apart (hands-on, a 3D breakdown) or show it as a concept map or mindmap. Until a new design is approved, the mechanics below still work but are not the target.
 - **What**: each segment's recap picture becomes one EngramQuest review card, scheduled by the plugin's spaced repetition. The film does not change.
 - **Why**: the two strongest study techniques are retrieval practice and spacing (Dunlosky et al. 2013); a film is watched once, cards bring it back at the right intervals. The recap pictures are already one picture + one sentence: ready-made cards.
 - **How** (stage 2, after the stills are checked): write `projects/<id>/cards.json`, one entry per segment recap:
@@ -32,13 +32,13 @@ node scripts/studio/lib/cast/resolve.cjs [--off cards] [--on cards] > projects/<
   [{ "front": 91.2, "back": 93.6, "q": "…", "a": "…" }]
   ```
   - `front`: a second in `final.mp4` where the recap **figure is complete but its key sentence has not appeared yet** (otherwise the answer is on the front). `back`: a second where the full card with the sentence is shown. Check both frames.
-  - **Each recap card reads on its own**, because months later it is seen without the film: the totals it compares, what was changed, the numbers it relies on are on the card itself (experiment 17's silent review: card 2 had no 8 s total, card 3 never said what was changed — both unreadable alone). The silent review looks at every recap card this way.
+  - **Each recap card reads on its own**, because months later it is seen without the film: the totals it compares, what was changed, the numbers it relies on are on the card itself (a card without the total it compares, or one that never says what was changed, is unreadable alone). The silent review looks at every recap card this way.
   - `q` / `a` follow the plugin's image-card rules (`.obsidian/plugins/engram-quest/bundled-skills/review-deck/references/image-cards.md`): the question asks for the picture's reasoning rather than its name ("what does this diagram show?" is out there: a glance answers it); the answer opens with the key sentence and quotes something visible in the picture so the learner can check themselves. In the film's language.
   - `scripts/deliver.py` cuts the frames into `<series>/cards/`, writes the deck `engram-review/ai-cards/video-<series>-<id>.md` (tag `<flashcardTags prefix>/videos/<series>`; frontmatter `video` = the delivered film and `video_times` = the second to rewatch per card, for the plugin's "rewatch" button; `%%card%%` image cards ending with the film title and that second), and adds `"cards"` to the video's `meta.json` entry. Turned off (`course.off` or `--no-cards`) → no deck; an existing deck is kept.
 - **Where**: `06-workflow.md` step 6, `scripts/deliver.py`.
 
-### 3.1 Rejected: `transfer` — Somewhere else (換個地方)
-A 10–15 s beat before the mindmap that showed the lesson's mechanism once in a far, everyday context (experiment 17: cooking a curry). Why it failed: (1) placed after everything was understood, it helps no one understand; (2) the analogy was structurally wrong (in a kitchen steps run at the same time, so the waterfall premise does not hold); (3) a default-on module forced a far context into every lesson — a force-fit. The user closed it (quote above), so it stays out in any analogy form.
+### 3.1 Rejected: `transfer` — Somewhere else
+A 10–15 s beat before the mindmap that showed the lesson's mechanism once in a far, everyday context (for example, cooking a meal). It was redundant, its meaning unclear, and the analogy odd. Why it failed: (1) placed after everything was understood, it helps no one understand; (2) the analogy was structurally wrong (in a kitchen steps run at the same time, so the waterfall premise does not hold); (3) a default-on module forced a far context into every lesson — a force-fit. It stays out in any analogy form.
 
 ## 4. Adding a module
 

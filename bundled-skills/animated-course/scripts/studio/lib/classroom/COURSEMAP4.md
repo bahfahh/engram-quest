@@ -1,8 +1,8 @@
 # Course map, version 4 `coursemap4.js`
 
-> **Scope.** The course map's job — recall what was already learned, show where this lesson sits in the whole course, and raise this lesson's question — is part of every course's skeleton. This particular 13-part tabletop model is **AdsDemo-specific** (AdsDemo Meta Ads Playbook). For another course, build a new model with the same API shape (`makeCourseMap4`-style options, `update(t, cam)` / `cam(t)` / `applyCam`, `times`, `shot: 'ride' | 'finale' | 'overview'`). Older map versions are not included.
+> **Scope.** The course map's job — recall what was already learned, show where this lesson sits in the whole course, and raise this lesson's question — is part of every course's skeleton. This particular 13-part tabletop model belongs to **one example course** (a Meta Ads playbook course). For another course, build a new model with the same API shape (`makeCourseMap4`-style options, `update(t, cam)` / `cam(t)` / `applyCam`, `times`, `shot: 'ride' | 'finale' | 'overview'`). Older map versions are not included.
 >
-> **Status: needs rework.** User feedback 2026-11-01: map shots are too fast, the camera is too close, and overall recognizability is too low. Visibility rules for any map (this one or a new one):
+> **Status: needs rework.** Its map shots are too fast, the camera sits too close, and the parts are hard to recognize. Visibility rules for any map (this one or a new one):
 > - Each part / group the viewer must look at holds **2–3 s** on screen.
 > - Either the **whole table is in frame**, or the camera **pushes in on one part with the others dimmed** — nothing in between.
 > - Light **one group at a time**.
@@ -49,7 +49,7 @@ window.renderAt = (t) => {
 | `times` | auto | Sync to narration, **absolute seconds**: `ride` uses `{ arrive, colorIn, end }`; `finale` / `overview` use `{ end }`. See section 3 |
 | `stops` | auto | Learned parts the `ride` stops at (array of lesson numbers, in path order), e.g. `[9, 1, 2]`. Defaults in section 2 |
 | `card` | `'A'` | The card Taro pushes: `'A'` teal / `'B'` orange |
-| `parts` | `{}` | Per-part text and state (AdsDemo section) |
+| `parts` | `{}` | Per-part text and state (see the example-course section) |
 | `allLit` | `true` for `overview` on lesson 13 | All parts coloured and moving |
 | `loopDur` | `10` | `overview` + `allLit`: seconds for the card to run one loop |
 | `camFrom` | none | `{pos, look, fov}` (world `THREE.Vector3`): blend smoothly from your camera (e.g. the classroom wide shot) into the map camera starting at `t0` |
@@ -58,7 +58,7 @@ window.renderAt = (t) => {
 | `table` | `true` | `false`: no display table, the clay board sits directly at `place.y` |
 | `lang` | `'zh'` | `'en'` for English labels; see `EN.md` |
 
-**In `overview` / `finale` every part rests in its "after you learned it" correct state**, never in a bad state of its loop (see the AdsDemo section for what that means per part). Parts that act out facts (viewers dropping off, data being blocked) play as usual.
+**In `overview` / `finale` every part rests in its "after you learned it" correct state**, never in a bad state of its loop (see the example-course section for what that means per part). Parts that act out facts (viewers dropping off, data being blocked) play as usual.
 
 ### Return value
 
@@ -77,7 +77,7 @@ window.renderAt = (t) => {
 
 | `shot` | Camera | Length |
 |---|---|---|
-| `'ride'` (opening) | Wide (whole loop visible, which parts are lit) → follow Taro's card past learned parts, pausing at `stops` to watch them act (auction pause about 1 s, close enough to see three columns) → stop at this lesson's part: question sign pops up (part still grey) → `colorIn`: colour in, act from the start → slow push-in | 8–9 s (AdsDemo table below) |
+| `'ride'` (opening) | Wide (whole loop visible, which parts are lit) → follow Taro's card past learned parts, pausing at `stops` to watch them act (auction pause about 1 s, close enough to see three columns) → stop at this lesson's part: question sign pops up (part still grey) → `colorIn`: colour in, act from the start → slow push-in | 8–9 s (per-lesson table below) |
 | `'finale'` (ending) | This lesson's part already coloured and running; camera pulls back from its close-up to the wide shot | 4 s default (change with `times.end`; 3–5 s recommended) |
 | `'overview'` | Wide. With `allLit` (lesson 13): the whole system runs, one card leaves the first part and runs a full loop, each part acts once as the card passes; camera slowly pushes in and back out | Lesson 13: `loopDur` + 1.8 s (default 11.8 s); other lessons 4 s |
 
@@ -199,9 +199,9 @@ window.studioReady = Promise.resolve();
 
 ---
 
-## AdsDemo course example (replace for your course)
+## Example course: the ads model (replace for your course)
 
-Everything in this section is specific to the AdsDemo Meta Ads Playbook model: **the path one ad and NT$3,000 actually travel**. 13 lessons = 13 parts arranged in a loop. Taro pushes an AdsDemo ad card (default teal A, `card: 'B'` for orange).
+Everything in this section is specific to the example ads course's model: **the path one ad and NT$3,000 actually travel**. 13 lessons = 13 parts arranged in a loop. Taro pushes the advertiser's ad card (default teal A, `card: 'B'` for orange).
 
 ### Layout: what connects to what
 
@@ -220,7 +220,7 @@ Zh name plates are listed with an English gloss; English mode labels are in `EN.
 
 | Lesson | Part (plate) | What it acts out (one loop) |
 |---|---|---|
-| 1 | 拍賣台 Auction | In front of an audience (adult dots + phone), three cards each with a column: gold coin stack (bid) + blue (estimated action rate) + green (creative quality). Columns grow → the pink card has the most gold but the lowest total; the AdsDemo teal card is tallest, a crown pops up → the teal card flies into the empty feed slot on the phone. 3.2 s |
+| 1 | 拍賣台 Auction | In front of an audience (adult dots + phone), three cards each with a column: gold coin stack (bid) + blue (estimated action rate) + green (creative quality). Columns grow → the pink card has the most gold but the lowest total; the advertiser's teal card is tallest, a crown pops up → the teal card flies into the empty feed slot on the phone. 3.2 s |
 | 2 | 回流管 Return pipes | Two open channels from the app store back to the dashboard. Android: white dots flow on time. iOS: a red ATT gate at the inlet blocks two of three dots (they fall out); those that pass merge into a blurry cloud that moves slowly, with a small clock beside it (late) |
 | 3 | 岔路 Fork | Person dots walk to the fork and into the lit app-download icon; the web-form path stays grey |
 | 4 | 水龍頭 Budget tap | NT$3,000 coin pile → tap (hanging sign 「買：安裝」 "Buy: Installs") → water Y-splits into two equally thick streams, one into fence A, one into fence B; droplets flow on both at equal spacing and speed |

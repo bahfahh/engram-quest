@@ -1,123 +1,40 @@
 {
- "version": 3,
- "note": "三檔的唯一來源（skill 的工具和插件都讀這一份）。只有三個選項：短、中、長，沒有自訂。三檔是『AI token 花費的檔位』：越短，主題越少、精緻度越低、檢驗越輕、算圖越快。片長是範圍，不是固定秒數：照內容需要自然落在範圍內，超出只提醒，不當錯誤。數字來自第三輪三支片的實測（2026-11-01），見 reference/10-片長與成本.md。",
+ "version": 4,
+ "note": "Single source for the three tiers (the skill and the plugin both read this file). There are only three options, short, medium and long, and no custom tier. A tier is a budget of tokens and attention: it decides how many topics become films and how many of each topic's skeleton questions a film walks. seconds is the total running time of the tier's films, a range rather than a target; going outside it gives a warning, not an error. Measured: one topic walking two questions runs about 7-8 minutes, one topic walking all four about 10 minutes, a month overview of 14 topics about 10 minutes (reference/04-production.md section 1).",
  "default": "medium",
  "presets": {
   "short": {
    "label": "短",
    "label_en": "Short",
-   "summary": "1 個主題；內容和流程講清楚就好，外觀用現成的，檢驗從簡，算得最快、花最少 token",
-   "topics": [
-    1,
-    1
-   ],
-   "seconds": [
-    120,
-    270
-   ],
-   "overview_max_s": 12,
-   "quiz": 1,
-   "effort": {
-    "polish": "精簡",
-    "look": "照用認可的外殼和 assets/demos 的現成演示元件，不新做鏡頭、不調氛圍細節（光、景深、轉場照外殼原樣）",
-    "demos": "只用現成元件，換內容和參數；沒有合適的元件就用最簡單的圖解（筆記自己的圖優先），不新寫演示",
-    "content": "CONTENT 只寫這一個主題的 10 項＋沒選的主題清單；不寫其他主題",
-    "checks": "自查：onscreen.py 通過＋看一次關鍵定格（有字、遮字各 3 張）；不開字的檢驗、畫面的檢驗的子 agent",
-    "key_stills": 3,
-    "render_width": 1280,
-    "music": "pick_music 預設，不挑第二次"
-   },
+   "summary": "1 個主題，走 2 個問題",
+   "summary_en": "One topic, walking two of its skeleton questions; the others stay on the skeleton screen, dimmed.",
+   "topics": [1, 1],
+   "seconds": [420, 480],
    "token_hint": 0.25
   },
   "medium": {
    "label": "中",
    "label_en": "Medium",
-   "summary": "2 個主題；外觀照外殼，演示以現成元件為主、必要的才新做，檢驗各做一次",
-   "topics": [
-    2,
-    2
-   ],
-   "seconds": [
-    300,
-    480
-   ],
-   "overview_max_s": 20,
-   "quiz": 2,
-   "effort": {
-    "polish": "標準",
-    "look": "照用認可的外殼；氛圍（光、景深、轉場）照外殼，只對這支片最重要的 2～3 個鏡頭加工",
-    "demos": "現成元件為主；每個主題最多新做 1 個專屬演示",
-    "content": "CONTENT 寫選中的 2 個主題＋沒選的主題清單；全貌每個一句",
-    "checks": "第一階段：字的檢驗、畫面的檢驗各一次；修完自查，不再開第二輪",
-    "key_stills": 6,
-    "render_width": 1920,
-    "music": "pick_music 依段落挑"
-   },
-   "token_hint": 0.55
+   "summary": "1 個主題，走完全部問題",
+   "summary_en": "One topic in full depth, walking every skeleton question.",
+   "topics": [1, 1],
+   "seconds": [540, 660],
+   "token_hint": 0.4
   },
   "long": {
    "label": "長（完整）",
    "label_en": "Long (full)",
-   "summary": "3 個主題；第三輪的完整做法，氛圍、演示、檢驗都做足",
-   "topics": [
-    3,
-    4
-   ],
-   "seconds": [
-    480,
-    780
-   ],
-   "overview_max_s": 30,
-   "quiz": 2,
-   "effort": {
-    "polish": "精緻",
-    "look": "照用認可的外殼，再把氛圍做足：有來由的光、景深、緩入緩出的鏡頭、空間裡的轉場、一套色調",
-    "demos": "現成元件＋每個主題 2～3 個專屬演示，每個概念都演出來",
-    "content": "CONTENT 完整（全貌、每個主題 10 項、快問、沒選的主題清單）",
-    "checks": "兩種檢驗各做第一階段、第二階段重驗；每個字卡抽定格確認讀得到",
-    "key_stills": 8,
-    "render_width": 1920,
-    "music": "pick_music 依段落挑，另外聽過音效和配樂的比例"
-   },
+   "summary": "月總覽＋2 個主題",
+   "summary_en": "A month overview of every topic (scripts/month_film.py), plus two topics in full depth.",
+   "topics": [2, 2],
+   "seconds": [1200, 1800],
    "token_hint": 1.0
   }
  },
- "token_hint_note": "token_hint 是相對『長』的粗估倍數，不是實測：主要看主題數、有沒有新寫演示、有沒有開檢驗的子 agent。參考單位：同類的一個子 agent 任務（讀程式、整理、驗證）約 24～26 萬 token（第三輪收進 skill 的三個 agent 實測）。之後每支片交付時記下 session 的 usage，回來校正這個欄位。",
- "model": {
-  "per_topic_s": 160,
-  "overhead_s": {
-   "1": 50,
-   "2": 75,
-   "3": 110,
-   "4": 130,
-   "5": 150
-  },
-  "overhead_note": "開銷 = 片頭 + 全貌 + 片尾快問 + 結尾。主題數越少，全貌越短、快問越少。給估算用的中間值；實際片長照內容，落在 seconds 的範圍裡就好。",
-  "topic_floor_s": 120,
-  "topic_floor_note": "一個主題再壓也不低於約 2 分鐘；要更短就少走一個主題，不要把每個主題削淺（深度優先）。『精簡』是少做精緻度（氛圍、新演示、檢驗），不是少講內容。"
- },
- "render": {
-  "fps": 24,
-  "parts_per_session": 4,
-  "session_s": 225,
-  "session_note": "一個雲端 session 同時算 4 段、每段約 56 秒（約 1,350 格）；一輪約 40～70 分，場景越重越慢（9 月的 3D 房子比 8 月的線索板慢）。",
-  "wall_minutes": [
-   40,
-   70
-  ],
-  "join_qa_deliver_minutes": [
-   20,
-   35
-  ],
-  "file_mb_estimate_per_minute": [
-   6,
-   9
-  ],
-  "draft_width_note": "短版用 1280×720（render.cjs --width 1280；farm.sh 用環境變數 FARM_WIDTH=1280）。實測 3 秒 3D 場景 163 秒 → 128 秒，只快約 2 成：場景本來就用固定解析度算 3D，省的是截圖和編碼。真正省時間和 token 的是主題數、現成元件和檢驗的深度。"
- },
+ "token_hint_note": "token_hint is a rough multiplier relative to 'long', not a measurement. It depends mostly on the number of films, the number of questions walked and whether checking subagents are used. Record the session's usage when a film is delivered and recalibrate this field.",
  "settings_keys": {
-  "note": "插件 data.json 只有一個欄位（照現有的平的命名）。其餘都不設定：主題照排名自動挑，估算和選檔位在同一個問題裡問。",
-  "episodicLength": "short | medium | long（預設 medium）"
+  "note": "The plugin's data.json has a single field for this (following its existing flat naming). Nothing else is configurable: topics are picked automatically from the ranking, and the estimate and the choice of tier are asked in the same question.",
+  "episodicLength": "short | medium | long (default medium)"
  },
- "default_note": "插件設定沒選、又不能問使用者時用這個。skill 在互動時不靠預設，直接問使用者（reference/10 第 2 節）。"
+ "default_note": "Used when the plugin setting is unset and the user cannot be asked. When the user can be asked, the skill asks instead of relying on the default (reference/04-production.md section 1)."
 }

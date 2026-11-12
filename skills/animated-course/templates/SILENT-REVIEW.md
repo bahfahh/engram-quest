@@ -2,7 +2,7 @@
 
 You review **only the pictures**. A ~6-minute teaching film (<course, one sentence on what it teaches and to whom>) is finished but not yet rendered. You get stills (2–5 per segment, file names carry the second) — **no narration, no script**: viewers may watch muted or miss a line; the picture itself has to teach.
 
-Principle: "The map, or anything, is there to help understanding — that is the main point." A **signpost** is a picture that only tells *what the topic is*, not how it works, what it relates to, or what differs. Judge: does a viewer **understand**, **stay with it**, get the **intended feel**?
+Principle: the map, or anything, is there to help understanding. A **signpost** is a picture that only tells *what the topic is*, not how it works, what it relates to, or what differs. Judge: does a viewer **understand**, **stay with it**, get the **intended feel**?
 
 ## Step 1 — blind viewing (write it first, then leave it, so it stays blind)
 Look only at `stills/` (sorted by second). **Don't open other project files** (CARD, SCRIPT, NOTES, UNDERSTANDING, script.json, html …): they would unblind you, and the blind read is the test. In the project folder write `SILENT.md` §1:

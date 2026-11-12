@@ -107,7 +107,7 @@ if (tv && tv.name === studentV.voice) studentV = L === 'en' ? { voice: 'en-US-An
 const beats = {};
 for (const b of ['hook', 'explain', 'pause', 'recap']) { const k = teacher.beats && teacher.beats[b]; beats[b] = { style: k, how: reg.beats[b] && reg.beats[b][k] }; }
 
-// voice engine. Rule (user, 2026-11-02): AI voice key(s) present and no fixed choice -> ask the user ONCE while planning;
+// voice engine. Rule (a product decision): AI voice key(s) present and no fixed choice -> ask the user ONCE while planning;
 // a fixed choice (--engine from the request or a standing rule, VOICE_ENGINE, settings.json voice.engine) -> use it, no question;
 // no key -> edge-tts, no question. voice.py applies the choice via script.json "engine" and falls back to edge-tts on failure.
 const envHas = { gemini: !!process.env.GEMINI_API_KEY, azure: !!(process.env.AZURE_SPEECH_KEY && process.env.AZURE_SPEECH_REGION), custom: !!process.env.TTS_CUSTOM_CMD };
@@ -130,7 +130,7 @@ if (fixedBy) {
   engine = { id: 'edge', askUser: false, reason: 'no AI voice configured -> edge-tts (default), no question' };
 }
 engine.available = available;
-// user, 2026-11-10: an AI voice is the user's choice, never pushed -> the recommended option is always edge-tts (the default)
+// an AI voice is the user's choice, never pushed -> the recommended option is always edge-tts (the default)
 engine.options = available.map(id => ({ id, label: LABEL[id], recommended: id === 'edge' }));
 // course modules (reference/12-modules.md): every module is ON (the full version) unless the learner turned it off
 // in settings.json -> course.off; --off a,b (named in the request) also turns them off, --on a,b turns them back on

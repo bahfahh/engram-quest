@@ -1,25 +1,38 @@
-// 課程地圖：AI Engineering 補洞課（八課）。共用元件，API 形狀照 coursemap-stock.js（times、cam(t)、applyCam、update(t, cam)、texts(cam)、readNeed）。
-// 桌上是兩階的展示台（像兩行字）：前階第 1～4 課、後階第 5～8 課，都是左到右。前排名牌掛在前階的邊上（在零件下面），後排名牌立在零件後面的小招牌上（在零件上面）：名牌永遠不擋零件。
-// 每個零件是那一課核心機制的小模型、真的在動：
-//   1 學來的程式：左邊程式碼卡有一行亮紅（可以修的那一行）；右邊藍色資料點長出一條曲線，同一張問題卡投進去兩次，出來一張 ✓ 綠、一張 ✗ 紅；放大鏡掃過曲線，找不到那一行
-//   2 偏差／變異：兩個標靶，藍色落點左邊擠成一團但偏離中心（紅箭頭＝偏差），右邊散開圍著中心（紅圈＝變異）
-//   3 錯誤分類  ：紅色錯誤卡一張張掉進 4 個黃色分類格，後面的長條長成 40／30／20／10，最高那根轉成正紅
-//   4 指標      ：黃色網子從池裡撈：綠球（該撈的）和灰球（不該撈的）；籃子裡 3 綠 1 灰＝精確率 3/4，池裡還留 2 顆綠＝召回率 3/5
-//   5 考題集    ：一疊對話紀錄 → 挑出 3 張 → 貼 ✓／✗ → 夾進考題冊；旁邊黃銅天平（評審），右盤從 ✗ 翻成 ✓、跟左盤（人工）對齊後擺平
-//   6 資料處理  ：輸送帶：重複的那張在黃色閘門掉下去 → 三類分疊 → 多的拿掉、少的補一張合成 → 蓋上 v1.1 版本章
-//   7 漂移與成本：藍色小山（提問分布）往右滑、留下原本的虛線輪廓，紅箭頭標出位移；旁邊銀幣疊（每則成本）一枚枚飛走
-//   8 約定與事故：綠色錯誤預算電池；紅燈閃（事故）扣掉一截；黃色檢討單貼上去；旁邊紫色標準線往上調（紫色迴圈箭頭）
-// 收尾 shot: 'chain'：兩條走道亮起來（前階前面、後階零件前面），一張對話卡從 1 走到 4，像換行一樣跳到後階的 5，再走到 8；走過的路變成金色，到哪個零件那個就從頭演一次，最後八個一起亮。
-// 顏色（BRIEF / SERIES §5，一種顏色一種量）：藍＝資料與模型學到的行為（概念）、黃＝方法工具、綠＝對的／可以直接用、紅＝錯的／診斷結論、紫＝迴圈；灰＝不相關。
-// 說明：/lib/classroom/COURSEMAP-AIENG.md
+// Classroom course map: the example eight-lesson course (AI Engineering). Shared component; API: times, cam(t), applyCam,
+// update(t, cam), texts(cam), readNeed, inShot, clearX, tableBox.
+// The table is a two-step display stand that reads like two lines of text: lessons 1–4 on the front step, 5–8 on the raised
+// back step, both left to right. Front-row name plates hang on the front step's edge (below their parts); back-row plates stand
+// on small signs behind their parts (above them): a plate never covers a part.
+// Each part is a small working model of that lesson's core mechanism:
+//   1 Learned program: left, a code card with one line lit red (the line you could fix); right, blue data points grow a curve, the
+//                      same question card goes in twice and comes out once ✓ green, once ✗ red; a magnifier sweeps the curve and finds no such line
+//   2 Bias / variance: two targets; blue hits cluster off-centre on the left (red arrow = bias), scatter round the centre on the right (red ring = variance)
+//   3 Error analysis : red error cards drop one by one into 4 yellow bins; the bars behind grow to 40 / 30 / 20 / 10 and the tallest turns full red
+//   4 Metrics        : a yellow net scoops a pool of green balls (should catch) and grey balls (should not); 3 green + 1 grey in the
+//                      basket = precision 3/4, 2 green left in the pool = recall 3/5
+//   5 Eval set       : a pile of chat logs → 3 picked → marked ✓ / ✗ → filed into the eval booklet; beside it a brass balance (the judge)
+//                      whose right pan flips from ✗ to ✓, agrees with the left pan (human) and levels
+//   6 Data processing: a conveyor; the duplicate drops at the yellow gate → three category piles → the tall pile loses one, the short
+//                      one gains a synthetic card → the v1.1 version stamp lands
+//   7 Drift and cost : a blue hill (the question distribution) slides right, leaving its dashed outline, a red arrow marks the shift;
+//                      beside it a stack of silver coins (cost per answer) flies off coin by coin
+//   8 SLOs and incidents: a green error-budget battery; a red lamp flashes (incident) and burns a chunk; a yellow review note sticks
+//                      on; beside it a purple standard line moves up (purple loop arrow)
+// Closing shot 'chain': two walkways light up (in front of the front step, in front of the back-step parts); a conversation card walks
+// 1 → 4, jumps to 5 on the back step like a line break, walks on to 8; the path it has walked turns gold, each part replays as the card
+// reaches it, and finally all eight light together.
+// Colours (the course's SERIES.md §5, one colour = one quantity): blue = data and learned model behaviour (concept), yellow = method /
+// tool, green = right / ready to use, red = wrong / diagnosis, purple = loop; grey = irrelevant.
+// Docs: /lib/classroom/COURSEMAP-AIENG.md
 //
 //   import { makeCourseMapAIEng } from '/lib/classroom/coursemap-aieng.js';
-//   const map = await makeCourseMapAIEng({ lesson: 4, t0: 21.3, question: '「答得好」怎麼量？' });
+//   const map = await makeCourseMapAIEng({ lesson: 4, t0: 21.3, question: '「答得好」怎麼量？' });   // question drawn on screen ("How do you measure 'a good answer'?")
 //   scene.add(map.root);
 //   window.renderAt = t => { map.applyCam(cam, t); map.update(t, cam); renderer.render(scene, cam); };
-//   window.TEXTS = t => map.texts(cam);      // 名牌、問題卡 → readcheck.cjs
+//   window.TEXTS = t => map.texts(cam);      // name plates, question card → readcheck.cjs
 //
-// update(t) / cam(t) 是 t 的純函數：每一格把每個會動的屬性重設一次，不累積狀態；沒有 Date、沒有 Math.random（只用 S.rng 種子）。
+// update(t) / cam(t) are pure functions of t: every frame resets every moving property, no state accumulates; no Date, no
+// Math.random (seeded S.rng only).
 import * as THREE from 'three';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import * as S from '/lib/stage.js';
@@ -30,18 +43,18 @@ const V = (x, y, z) => new THREE.Vector3(x, y, z);
 const ZH = 'Chiron GoRound TC', EN = 'Inter';
 const ASPECT = 16 / 9, DEG = Math.PI / 180;
 
-/** colour meanings (SERIES §5): one colour = one quantity */
+/** colour meanings (the course's SERIES.md §5): one colour = one quantity */
 export const COL = {
-  concept: '#2F6FD6',      // 藍：資料與模型學到的行為（資料點、學來的曲線、預測落點、提問分布）
-  method: '#E9B320',       // 黃：方法工具（分類格、網子、天平、閘門、檢討單）
+  concept: '#2F6FD6',      // blue: data and learned model behaviour (data points, learned curve, prediction hits, question distribution)
+  method: '#E9B320',       // yellow: methods and tools (bins, net, balance, gate, review note)
   methodDk: '#B8860B',
-  ok: '#1F9D55',           // 綠：對的／可以直接用（答對、該撈的、✓、還能用的錯誤預算）
-  diag: '#E5484D',         // 紅：錯的／診斷結論（那一行、答錯、錯誤卡、偏差箭頭、漂移位移、事故）
+  ok: '#1F9D55',           // green: right / ready to use (correct answer, should-catch, ✓, remaining error budget)
+  diag: '#E5484D',         // red: wrong / diagnosis (the bug line, wrong answer, error cards, bias arrow, drift shift, incident)
   diagLt: '#F2A7A7',
-  loop: '#7C5CD6',         // 紫：迴圈（事故 → 檢討 → 調高標準）
-  gray: '#A3A8B0',         // 灰：不相關
+  loop: '#7C5CD6',         // purple: loop (incident → review → raise the standard)
+  gray: '#A3A8B0',         // grey: irrelevant
   paper: '#fffaf0', ink: '#3b2a20', slab: '#f6ecda', wood: '#c98f5c', woodDk: '#8a5a36', navy: '#34405a', cash: '#C9CED6',
-  catA: '#EAD9B6', catB: '#B98256', catC: '#7B8794',   // 資料類別（中性色，不帶意義）
+  catA: '#EAD9B6', catB: '#B98256', catC: '#7B8794',   // data categories (neutral colours, no meaning)
 };
 export const PARTS_AIENG = [null,
   { n: 1, name: '學來的程式' },
@@ -262,7 +275,7 @@ const SLAB = COL.slab;
 // ---------------------------------------------------------------- part 1: a written program has a line to fix; a learned one has none
 function buildP1() {
   const g = new THREE.Group(); slab(g, SLAB, 101);
-  // left: the code card, the bug line (保固內 費用 = 600) lights red: that line can be fixed
+  // left: the code card; the bug line (LINES[HI]) lights red: that line can be fixed
   const code = easel(0.28, 0.3, 500, 540, { frame: '#5b4636', seed: 110, emissive: 0.4 }); code.g.position.set(-0.18, BH, -0.1); g.add(code.g);
   const LINES = ['def 維修費(機型, 保固):', '  if 保固內:', '    費用 = 600', '  else:', '    費用 = 價目表[機型]', '  return 費用'];
   const HI = 2;
@@ -710,7 +723,7 @@ function buildP8() {
   return { g, L, act, item: segs[8] };
 }
 const BUILD = [null, buildP1, buildP2, buildP3, buildP4, buildP5, buildP6, buildP7, buildP8];
-// ---------------------------------------------------------------- name plates & question sign (coursemap4 look)
+// ---------------------------------------------------------------- name plates & question sign (same look as coursemap4.js)
 const PL = {
   alive: { bg: '#fffaf0', ink: '#4a3a2c', border: '#e2c6a2', badge: '#c98f5c', badgeInk: '#fff' },
   cur: { bg: '#f8d867', ink: '#3b2a20', border: '#d79a2b', badge: '#3b2a20', badgeInk: '#f8d867' },
@@ -759,7 +772,8 @@ function questionSign(text, tagText) {
   return g;
 }
 
-/** x30r: a small dark tag (the question card's tag look) shown over a group of stops while it is lit, e.g. 「複習」 (實驗 16 P13) */
+/** a small dark tag (the question card's tag look) shown over a group of stops while it is lit, e.g. 「複習」 ("Review"), so a group
+ *  lit together reads as a review rather than as a wrong part lighting up */
 const TAG_H = 0.15;
 function tagSign(text) {
   const mc = document.createElement('canvas').getContext('2d'), h = 120, fs = 80, w = Math.ceil(measure(mc, text, fs) + 96);
@@ -791,7 +805,7 @@ function fitCam(pts, { elev = 0.5, yaw = 0, fov = 30, xm = 0.9, yTop = 0.86, yBo
   return { pos, look: c.clone().addScaledVector(right, sx).addScaledVector(up, sy), fov };
 }
 
-// ---------------------------------------------------------------- the chain walkway (U-shaped): front walkway → ramp → back walkway
+// ---------------------------------------------------------------- the chain walkway: front walkway → line-break jump → back walkway
 const HOP = 0.55;                                // chain: how high the card jumps from the end of line 1 to the start of line 2
 const PATH = [V(X_START, 0, Z_LF), V(X_STOP, 0, Z_LF), V(X_START, H2, Z_LB), V(X_STOP, H2, Z_LB)];
 const SEG = PATH.slice(1).map((b, i) => ({ a: PATH[i], b, len: b.distanceTo(PATH[i]) }));
@@ -819,10 +833,11 @@ function stripAlong(i, w, h, mat) {
  * @param o.lesson    this lesson, 1..8 (required)
  * @param o.t0        when the map sequence starts (s)
  * @param o.shot      'ride' (opening, default) | 'finale' (pull back from this lesson's part to the whole table)
- *                    | 'overview' (still wide shot) | 'chain' (course closing: a conversation card walks 1 → 8 along the U walkway)
+ *                    | 'overview' (still wide shot) | 'chain' (course closing: a conversation card walks 1 → 8 along the walkways, line-breaking from 4 to 5)
  *                    'overview' with allLit on lesson 8 = 'chain'
  * @param o.question  question card text beside this lesson's part ('\n' for two lines)
- * @param o.questionTag  the small tag above the question (default '第 N 課 · <part name>'; e.g. '補一課 · 第 7 課旁' for an extra lesson)
+ * @param o.questionTag  the small tag above the question (default '第 N 課 · <part name>', i.e. "Lesson N · <part name>";
+ *                    e.g. '補一課 · 第 7 課旁' ("Extra lesson · next to lesson 7") for an extra lesson)
  * @param o.times     absolute seconds; see COURSEMAP-AIENG.md
  * @param o.stops     ride: parts lit in the wide shot before the push (default lesson 1: [1..8] = first look; else the learned parts);
  *                    nested = groups lit and played together: [[1],[2,3],[4,5,6],[7,8]]
@@ -830,10 +845,10 @@ function stripAlong(i, w, h, mat) {
  * @param o.camFrom   {pos, look, fov} world: blend from your camera, starting at t0 (o.camBlend s, default 1.2)
  * @param o.place     { x, y, z, rotY, scale } where the table stands (default: in front of the blackboard, between teacher and student)
  * @param o.parts     per-part name overrides {n: {name}}
- * @param o.times.hold  ride, optional (x30r, 實驗 20 測試 21): per group of stops, the time the camera stops on that group (pushes in, 1.1 s);
+ * @param o.times.hold  ride, optional: per group of stops, the time the camera stops on that group (pushes in, 1.1 s);
  *                    from then it is lit but still (its mechanism rests at the start) until its play time times.parts[i]. The group before
- *                    it ends its window at the hold. null/omitted = A's behaviour (lit = play time, camera stays wide). E.g. [null, Ls('M01q')]
- * @param o.groupTags ride, optional (x30r): per group of stops, a small dark tag over the group while it is lit, e.g. ['複習'] (實驗 16 P13)
+ *                    it ends its window at the hold. null/omitted = no camera stop (lit = play time, camera stays wide). E.g. [null, Ls('M01q')]
+ * @param o.groupTags ride, optional: per group of stops, a small dark tag over the group while it is lit, e.g. ['複習'] ("Review")
  */
 export async function makeCourseMapAIEng(o = {}) {
   const lesson = clamp(Math.round(o.lesson || 1), 1, NP);
@@ -932,7 +947,7 @@ export async function makeCourseMapAIEng(o = {}) {
   const PUSH = 1.1;
   const L = (n) => L_PART[n];
   const review = o.review || (lesson >= 5 ? 'group' : 'wide');
-  let stops = [], plays = [], held = [];      // plays: { n, a (start), b (window end), rate }; held (x30r): [{ parts, hold }]
+  let stops = [], plays = [], held = [];      // plays: { n, a (start), b (window end), rate }; held: [{ parts, hold }]
   if (shot === 'ride') {
     stops = (o.stops ? o.stops.slice() : lesson === 1 ? Array.from({ length: NP }, (_, i) => i + 1) : Array.from({ length: lesson - 1 }, (_, i) => i + 1));
     // groups: stops may be nested ([[1],[2,3],[4,5,6],[7,8]]): each inner list is lit and played together in one window.
@@ -960,7 +975,7 @@ export async function makeCourseMapAIEng(o = {}) {
     const lastEnd = slots ? starts[slots - 1] + (given ? Math.max(2.6, lastLen * 0.85) : lastLen) : t0 + Math.max(1.6, blendIn + 0.8);
     if (arrive == null) arrive = lastEnd + PUSH;
     const pushStart = T.push ?? arrive - PUSH;
-    // x30r: times.hold[i] = the camera stops on group i and it is lit but still until its play time (default: none)
+    // times.hold[i] = the camera stops on group i and it is lit but still until its play time (default: none)
     const holds = Array.isArray(T.hold) ? T.hold.slice(0, slots) : [];
     const litAt = (i) => holds[i] != null ? Math.min(holds[i], starts[i]) : starts[i];
     held = groups.map((g, i) => holds[i] != null ? { parts: g, hold: litAt(i) } : null).filter(Boolean);
@@ -997,7 +1012,7 @@ export async function makeCourseMapAIEng(o = {}) {
   }
   tm.lit = plays.map(p => ({ n: p.n, t: p.a }));
   const learned = (n) => shot === 'overview' ? (o.allLit || n <= lesson) : shot === 'finale' ? n <= lesson : chain ? true : n < lesson;
-  // ---- x30r: o.groupTags[i] over group i while it is lit (none by default)
+  // ---- o.groupTags[i] over group i while it is lit (none by default)
   const gtags = [];
   if (shot === 'ride' && Array.isArray(o.groupTags)) (tm.groups || []).forEach((g, i) => {
     const text = o.groupTags[i]; if (!text) return;
@@ -1026,7 +1041,7 @@ export async function makeCourseMapAIEng(o = {}) {
   const cams = {
     overview: () => cache.ov || (cache.ov = L2W(fitCam(allParts(), { elev: ELEV.ov, fov: 30, xm: 0.95, yTop: 0.88, yBot: -0.72 }))),
     chain: () => cache.ch || (cache.ch = L2W(fitCam([...allParts(), ...PATH.map(p => p.clone().add(V(0, 0.02, 0.05)))], { elev: ELEV.ov, fov: 30, xm: 0.96, yTop: 0.9, yBot: -0.64 }))),
-    /** x30r: the camera stop of a held group: its parts and name plates, from higher up than a push-in (a back-row plate stands
+    /** the camera stop of a held group: its parts and name plates, from higher up than a push-in (a back-row plate stands
      *  high on its posts; at the push-in angle the part came out small under a band of empty wall) */
     group: (ns) => cache['g' + ns.join('_')] || (cache['g' + ns.join('_')] = L2W(fitCam(ns.flatMap(n => [...partPts(n), ...platePts(n)]), { elev: 0.9, fov: 30, xm: 0.95, yTop: 0.9, yBot: -0.72 }))),
     part: (n = lesson) => cache['p' + n] || (cache['p' + n] = L2W(fitCam([...partPts(n),
@@ -1040,7 +1055,7 @@ export async function makeCourseMapAIEng(o = {}) {
     if (shot === 'ride') {
       const ks = [[t0, cams.overview()]];
       if (review === 'push') for (const p of plays) { if (p.current) continue; ks.push([p.a - 0.5, ks[ks.length - 1][1]]); ks.push([p.a + 0.3, cams.part(p.n)]); }
-      for (const g of held) { ks.push([g.hold, ks[ks.length - 1][1]]); ks.push([g.hold + PUSH, cams.group(g.parts)]); }   // x30r: camera stops on a held group
+      for (const g of held) { ks.push([g.hold, ks[ks.length - 1][1]]); ks.push([g.hold + PUSH, cams.group(g.parts)]); }   // camera stops on a held group
       ks.push([tm.push, ks[ks.length - 1][1]]);
       ks.push([tm.arrive, cams.part(lesson)]);
       c = ks[0][1];
@@ -1094,8 +1109,8 @@ export async function makeCourseMapAIEng(o = {}) {
     const focus = new Array(NP + 1).fill(0);
     for (const p of plays) focus[p.n] = Math.max(focus[p.n], winK(t, (p.hold ?? p.a) - 0.15, p.b));
     const allK = chain ? ease.inOut(prog(t, tm.allOn, tm.allOn + 0.6)) : 0;
-    const stopNow = held.find(g => t >= g.hold && t < tm.push) || null;   // x30r
-    const stopPl = t < tm.arrive ? held.filter(g => t >= g.hold).pop() || null : null;   // x30r: from a stop until the camera reaches this lesson's part
+    const stopNow = held.find(g => t >= g.hold && t < tm.push) || null;   // the held group the camera is stopped on
+    const stopPl = t < tm.arrive ? held.filter(g => t >= g.hold).pop() || null : null;   // from a stop until the camera reaches this lesson's part
     for (let n = 1; n <= NP; n++) {
       const P = parts[n];
       let dim;
@@ -1115,10 +1130,10 @@ export async function makeCourseMapAIEng(o = {}) {
       let lt;
       let mine = null; for (const p of plays) if (p.n === n && t >= p.a - 1e-6) mine = p;
       if (mine) lt = (t - mine.a) * mine.rate;
-      else lt = learned(n) && !plays.some(p => p.n === n && p.hold != null && t < p.a) ? 99 : 0;   // x30r: a held part waits at its start
+      else lt = learned(n) && !plays.some(p => p.n === n && p.hold != null && t < p.a) ? 99 : 0;   // a held part waits at its start
       if (shot === 'overview' || shot === 'finale') { const per = L(n) + 2.2; lt = learned(n) ? ((t - t0 + n * 1.3) % per + per) % per : 0; if (shot === 'finale' && n !== lesson) lt = 99; }
       if (chain && t < plays[n - 1].a) lt = t < tm.join[0] ? 99 : 0;
-      const offStop = stopNow && !stopNow.parts.includes(n);   // x30r: the camera has stopped on another (held) group
+      const offStop = stopNow && !stopNow.parts.includes(n);   // the camera has stopped on another (held) group
       DETAIL = !!camera && !offStop && (shot !== 'ride' || n === lesson || t < tm.push) && camera.position.distanceTo(P.holder.getWorldPosition(tmp)) < detailD(n);
       for (const l of P.labels) l.visible = true;
       P.act(clamp(lt, 0, L(n)));
@@ -1131,23 +1146,23 @@ export async function makeCourseMapAIEng(o = {}) {
       const pushedAway = shot === 'ride' && n !== lesson && t > tm.push + 0.3;
       P.plate.userData.setStyle(curK ? 'cur' : !pushedAway && (learned(n) || (shot === 'ride' && lesson === 1 && plays.some(p => p.n === n && t > p.b))) ? 'alive' : 'gray');
       P.glow.material.opacity = 0.75 * Math.max(focus[n], allK);
-      P.plate.visible = !(shot === 'ride' && n !== lesson && t > tm.push + 0.55) && !(stopPl && !stopPl.parts.includes(n) && t > stopPl.hold + 0.55);   // x30r: only the stopped group's plate (no plate flashing past in the move on)
+      P.plate.visible = !(shot === 'ride' && n !== lesson && t > tm.push + 0.55) && !(stopPl && !stopPl.parts.includes(n) && t > stopPl.hold + 0.55);   // only the stopped group's plates (no plate flashing past in the move on)
     }
-    for (const sg of gtags) {   // x30r
+    for (const sg of gtags) {   // group tags
       const p = sg.userData.play, k = winK(t, (p.hold ?? p.a) - 0.15, p.b);
       sg.userData.k = k; sg.visible = k > 0.01; sg.scale.setScalar(Math.max(0.001, 0.85 + 0.15 * k)); sg.userData.faceMesh.material.opacity = k;
     }
     if (qs) {
       const qk = ease.outBack(prog(t, tm.ask - 0.05, tm.ask + 0.4));
       qs.visible = qk > 0.01; qs.position.copy(signPos()); qs.position.y += 0.006 * Math.sin(t * 2.2); qs.scale.setScalar(Math.max(0.001, qk));
-      cur.plate.visible = cur.plate.visible && !qs.visible;   // x30r: && (was =): keeps a plate hidden by a stop hidden; same as before without stops
+      cur.plate.visible = cur.plate.visible && !qs.visible;   // && keeps a plate that a stop hid hidden; without stops this is just !qs.visible
     }
     if (camera) {
       land.worldToLocal(camLocal.copy(camera.position));
       land.getWorldQuaternion(qInv).invert();
       for (let n = 1; n <= NP; n++) parts[n].plate.quaternion.copy(qInv).multiply(camera.quaternion);   // full billboard: name plates never look rolled at the frame edges
       if (qs) qs.quaternion.copy(qInv).multiply(camera.quaternion);
-      for (const sg of gtags) sg.quaternion.copy(qInv).multiply(camera.quaternion);   // x30r
+      for (const sg of gtags) sg.quaternion.copy(qInv).multiply(camera.quaternion);   // group tags face the camera too
       camera.updateMatrixWorld(true);
       for (let n = 1; n <= NP; n++) { const p = parts[n].plate; if (!p.visible) continue; const b = screenBox(p.userData.faceMesh, p.userData.w, p.userData.h, camera); p.visible = !!b && b.x0 >= 0 && b.y0 >= 0 && b.x1 <= window.innerWidth && b.y1 <= window.innerHeight; }
     }
@@ -1178,7 +1193,7 @@ export async function makeCourseMapAIEng(o = {}) {
       const p = parts[n].plate; if (!p.visible) continue;
       const b = screenBox(p.userData.faceMesh, p.userData.w, p.userData.h, camera); if (b) out.push({ id: 'map-plate-' + n, text: names[n], ...b });
     }
-    for (const sg of gtags) if (sg.visible && sg.userData.k > 0.95) { const b = screenBox(sg.userData.faceMesh, sg.userData.W, sg.userData.H, camera); if (b && b.x0 >= 0 && b.y0 >= 0 && b.x1 <= window.innerWidth && b.y1 <= window.innerHeight) out.push({ id: 'map-tag-' + sg.userData.i, text: sg.userData.text, ...b }); }   // x30r
+    for (const sg of gtags) if (sg.visible && sg.userData.k > 0.95) { const b = screenBox(sg.userData.faceMesh, sg.userData.W, sg.userData.H, camera); if (b && b.x0 >= 0 && b.y0 >= 0 && b.x1 <= window.innerWidth && b.y1 <= window.innerHeight) out.push({ id: 'map-tag-' + sg.userData.i, text: sg.userData.text, ...b }); }   // group tags (map-tag-i)
     if (qs && qs.visible && qs.scale.x > 0.9) { const b = screenBox(qs.userData.faceMesh, SIGN_W, qs.userData.H, camera); if (b) out.push({ id: 'map-question', text: `第 ${lesson} 課 · ${names[lesson]} ` + question.replace(/\n/g, ''), ...b }); }
     return out;
   }

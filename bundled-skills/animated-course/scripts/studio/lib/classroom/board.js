@@ -1,5 +1,7 @@
-// docker-a 黑板：每塊板一個觀念，元素在講到的那個詞出現（時間全部來自 timeline.json）。
-// 換板用板擦由左往右擦。只有內容真的變了才重畫、才上傳貼圖。
+// Blackboard director for one example lesson (what a container is). A pattern to copy, not an API: the board content and
+// timing below are hard-coded to that lesson's Chinese narration.
+// One idea per board; each element appears on the word that introduces it (all times come from timeline.json).
+// Boards change with an eraser wiping left to right. The texture is redrawn and re-uploaded only when its content changes.
 import * as S from '/lib/stage.js';
 import * as C from './cast.js';
 

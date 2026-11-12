@@ -1,7 +1,7 @@
-// 圖解重點（BRIEF3 規則 9）：每段講完，畫面靜下來，一張乾淨的圖卡＋一句關鍵句。說明：/lib/kit/KEYPOINT.md
-//   import * as KP from '/lib/kit/keypoint.js';      // 並在 <head> 放 <link rel="stylesheet" href="/lib/kit/keypoint.css">
-//   const kp = KP.keypoint(st, { at, dur: 5, index: 2, total: 3, key: '兩組只差**一個變因**', figure: f => { f.node(...); f.arrow(...) } });
-//   window.renderAt = K.render(tl, cam, bar, kp);    // kp.update(t) 是 t 的純函數
+// Key-point card: after each segment the picture settles into one clean figure card + one key sentence. Doc: /lib/kit/KEYPOINT.md
+//   import * as KP from '/lib/kit/keypoint.js';      // and put <link rel="stylesheet" href="/lib/kit/keypoint.css"> in <head>
+//   const kp = KP.keypoint(st, { at, dur: 5, index: 2, total: 3, key: 'The groups differ by **one change**', figure: f => { f.node(...); f.arrow(...) } });
+//   window.renderAt = K.render(tl, cam, bar, kp);    // kp.update(t) is a pure function of t
 import * as K from './kit.js';
 const { h, tone, clamp, prog, ease, lerp } = K;
 
@@ -18,18 +18,18 @@ const BACKDROPS = new Map();
 
 /**
  * KP.keypoint(stOrParent, opts) -> kp
- *   stOrParent : K.stage() 的回傳值（建議：背景＝它的 viewport，卡片放在章節條下面），或任何 1920×1080 的父元素
- *   opts.at     卡片開始進場的秒數（絕對秒數，用 T.line()/T.word() 取）
- *   opts.dur    總長（含進出場），預設 5；或 opts.until 結束秒數
- *   opts.index, opts.total   「重點 2／3」與進度點
- *   opts.label  標籤字，預設 '重點'；opts.sub 標籤下的一行小字（選用，盡量不要）
- *   opts.key    關鍵句（12 字以內），**包起來**的字會有螢光筆底線
- *   opts.keyAt  關鍵句出現的秒數；預設 at + min(2.6, dur*0.5)
- *   opts.figure SVG/HTML 字串 | DOM 節點 | (f) => {...}（f＝畫圖小工具，見下）
- *   opts.size   圖的尺寸 [w, h]，預設 [1440, 480]（卡片中間那塊）
- *   opts.backdrop 要推遠的背景元素（預設 st 的 .k-viewport）；false＝不動背景
- *   opts.out    false＝不退場（之後你自己切走）
- *   opts.mark   螢光筆顏色，預設 '#FFE27A'
+ *   stOrParent : the return value of K.stage() (recommended: backdrop = its viewport, the card below the chapter bar), or any 1920×1080 parent
+ *   opts.at     when the card starts entering (absolute seconds, from T.line() / T.word())
+ *   opts.dur    total length (entrance and exit included), default 5; or opts.until, the end second
+ *   opts.index, opts.total   "Key point 2 / 3" and the progress dots
+ *   opts.label  label text, default '重點' (Chinese mode) / 'Key point' (English mode); opts.sub one small line under the label (optional, best avoided)
+ *   opts.key    the key sentence (≤ 12 characters in Chinese mode); text wrapped in **…** gets a highlighter underline
+ *   opts.keyAt  when the key sentence appears; default at + min(2.6, dur*0.5)
+ *   opts.figure SVG/HTML string | DOM node | (f) => {...} (f = the small drawing helper, below)
+ *   opts.size   figure size [w, h], default [1440, 480] (the middle of the card)
+ *   opts.backdrop the background element to push back (default st's .k-viewport); false = leave the background alone
+ *   opts.out    false = no exit (you cut away yourself later)
+ *   opts.mark   highlighter colour, default '#FFE27A'
  */
 export function keypoint(parent, opts = {}) {
   const st = parent && parent.frame && parent.screen ? parent : null;
@@ -90,7 +90,7 @@ export function keypoint(parent, opts = {}) {
   /** figure helpers */
   const f = {
     W: FW, H: FH, el: fig, svg: lines,
-    /** icon tile + label. f.node({x, y, icon:'users', label:'受眾', sub, color:'teal', size:'s'|'m'|'l', shape:'tile'|'circle', solid, t}) */
+    /** icon tile + label. f.node({x, y, icon:'users', label:'Audience', sub, color:'teal', size:'s'|'m'|'l', shape:'tile'|'circle', solid, t}) */
     node({ x, y, icon, label, sub, color = 'neutral', size = 'm', shape = 'tile', solid = false, t, anim, iconSize } = {}) {
       const c = tone(color);
       const isz = iconSize || (size === 's' ? 50 : size === 'l' ? 84 : 64);
@@ -109,7 +109,7 @@ export function keypoint(parent, opts = {}) {
     },
     /** any DOM node at (x,y). f.put(node, {x, y, t, anim}) */
     put(node, { x, y, t, anim = 'pop' } = {}) { node = node.el || node; const wrap = place(node, x, y); add(node, { t, anim }, anim); return { el: node, wrap }; },
-    /** dashed group box with a small label on its border. f.group({x, y, w, h, label:'全部一樣', color, dashed:true, t}) — x,y = top-left */
+    /** dashed group box with a small label on its border. f.group({x, y, w, h, label:'All the same', color, dashed:true, t}) — x,y = top-left */
     group({ x, y, w, h: hh, label, color = GREY, dashed = true, radius = 30, width = 3, t, dur = 0.7 } = {}) {
       const c = tone(color);
       const r = svgEl('rect', { x: x + 1, y: y + 1, width: w - 2, height: hh - 2, rx: radius, fill: 'none', stroke: c, 'stroke-width': width });
@@ -288,7 +288,7 @@ function edgePt(b, side, toward, gap) {
 }
 
 /** Helper for scripts: the usual beat — card in just before the teacher's line, key on a word, out after a silence.
- *  KP.beat(T, 'K2', '一個變因', {lead: 0.4, hold: 1.0}) -> {at, keyAt, until} to spread into KP.keypoint opts */
+ *  KP.beat(T, 'K2', 'one change', {lead: 0.4, hold: 1.0}) -> {at, keyAt, until} to spread into KP.keypoint opts */
 export function beat(T, lineId, keyWord, { lead = 0.4, hold = 1.0 } = {}) {
   const L = T.line(lineId);
   return { at: L.start - lead, keyAt: keyWord ? T.word(lineId, keyWord) : L.start + 0.2, until: L.end + hold + 0.45 };

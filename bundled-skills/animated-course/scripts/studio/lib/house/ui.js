@@ -3,7 +3,7 @@
 //   <link rel="stylesheet" href="/lib/house/house.css">
 //   import { makeUI } from '/lib/house/ui.js';
 //   const ui = makeUI(document.getElementById('ui'), { mode: 'light', camera });   // camera: THREE camera (3D anchors) or null
-//   const L = ui.station(2, '投出光點', { sub: '<b>30,000</b> 個' });   L.state('now');
+//   const L = ui.station(2, 'Send out dots', { sub: '<b>30,000</b> dots' });   L.state('now');
 //   window.renderAt = t => { ui.lights(k); ui.place(L, worldPoint, { dy: -110, a }); … };
 //   window.TEXTS = () => ui.TEXTS();
 //

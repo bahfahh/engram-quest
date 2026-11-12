@@ -1,5 +1,6 @@
-// docker-a 黏土班底：包老師（小籠包）、芋圓（學生）、教室、黑板、這一集的道具（程式豆、倒扣紙箱）
-// 全部用幾何體＋程式貼圖組成。外觀語言：霧面、手捏的不平整、暖色柔光、接觸陰影。
+// The clay cast: Professor Bao (a soup dumpling), Taro (the student), the classroom, the blackboard, and the props of the
+// lesson it was first built for (code beans, an upside-down cardboard box).
+// Everything is geometry + procedural textures. Look: matte, hand-pressed unevenness, warm soft light, contact shadows.
 import * as THREE from 'three';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import * as S from '/lib/stage.js';
@@ -198,7 +199,7 @@ function makeMouth(mats, w) {
   return { g, smile, open, grin };
 }
 
-// ---------------------------------------------------------------- 包老師（小籠包）
+// ---------------------------------------------------------------- Professor Bao (soup dumpling)
 export function makeTeacher() {
   const dough = clayMat('#fbeed8', { rough: 0.74, bump: 1.3, repeat: [6, 3] });
   const doughLimb = clayMat('#fbeed8', { rough: 0.74, bump: 1.8, repeat: 1.2 });
@@ -318,7 +319,7 @@ export function makeTeacher() {
   return { root, pose, eyes, mouth, stick, headY: 0.37 * 1.75 };
 }
 
-// ---------------------------------------------------------------- 芋圓（學生）
+// ---------------------------------------------------------------- Taro (the student)
 export function makeStudent() {
   // taro: lavender with darker specks
   const cv = document.createElement('canvas'); cv.width = cv.height = 256; const cx = cv.getContext('2d');
@@ -387,7 +388,7 @@ export function makeStudent() {
   return { root, pose };
 }
 
-// ---------------------------------------------------------------- 程式豆（這集的道具）
+// ---------------------------------------------------------------- code bean (a lesson prop)
 export function makeBean(color, seed = 1, { arms = false } = {}) {
   const g = new THREE.Group();
   const sq = new THREE.Group(); g.add(sq);               // squash around the feet
@@ -431,7 +432,7 @@ export async function loadEnFont(text = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklm
   await document.fonts.load(`${FONT_EN.weight} 64px "${FONT_EN.family}"`, text); await document.fonts.ready;
 }
 
-// ---------------------------------------------------------------- 倒扣的紙箱
+// ---------------------------------------------------------------- upside-down cardboard box
 function cardboardCanvas(label, F = fontOf()) {
   const cv = document.createElement('canvas'); cv.width = 512; cv.height = 512; const c = cv.getContext('2d');
   c.fillStyle = '#c99a63'; c.fillRect(0, 0, 512, 512);
@@ -489,7 +490,7 @@ export function makeBox({ w = 0.46, h = 0.4, d = 0.42, lang, font, fontWeight, l
   return g;
 }
 
-// ---------------------------------------------------------------- 矮桌（示範桌）
+// ---------------------------------------------------------------- low table (demo table)
 export function makeLowTable({ w = 1.8, d = 0.95, h = 0.36 } = {}) {
   const g = new THREE.Group();
   const top = clayMat('#c88a56', { bump: 1.4, repeat: 2 });
@@ -505,7 +506,7 @@ export function makeLowTable({ w = 1.8, d = 0.95, h = 0.36 } = {}) {
   return g;
 }
 
-// ---------------------------------------------------------------- 教室
+// ---------------------------------------------------------------- classroom
 function plankCanvas() {
   const cv = document.createElement('canvas'); cv.width = 1024; cv.height = 1024; const c = cv.getContext('2d');
   const r = S.rng(5);
@@ -605,7 +606,7 @@ function potPlant(size, seed) {
   return g;
 }
 
-// ---------------------------------------------------------------- 黑板
+// ---------------------------------------------------------------- blackboard
 export const BOARD = { w: 4.6, h: 2.4, cw: 2048, ch: 1068 };
 export function makeBoard() {
   const g = new THREE.Group();
@@ -780,7 +781,7 @@ export function makePuff(color = '#fff4e0') {
   return g;
 }
 
-/** A hand-held sign on a stick ("1號"). */
+/** A hand-held sign on a stick (e.g. "No. 1"). */
 export function makeTag(text, { lang, font, fontWeight } = {}) {
   const F = fontOf({ lang, font, fontWeight });
   const g = new THREE.Group();

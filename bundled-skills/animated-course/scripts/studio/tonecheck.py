@@ -9,7 +9,7 @@ only zhòng). It cuts the word at the slot out of each clip (TTS word boundaries
 prints the DTW distance between the test word and every reference. The closest reference is the reading the TTS
 used. The surrounding sentence is identical in all clips, so only the slot differs.
 
-Measured in experiment 17 (zh-TW-YunJheNeural): 重 was read zhòng in 8 of 14 sentences (重跑 mostly), chóng in the
+Measured with zh-TW-YunJheNeural: 重 was read zhòng in 8 of 14 sentences (重跑 mostly), chóng in the
 rest; writing 蟲 in the spoken text fixed all 14 (distance to 崇 smaller than to 眾). The margin is the point: a
 verdict with distances that differ by less than ~0.5 is not a verdict, put the line on the human-ear list.
 

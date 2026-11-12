@@ -5,13 +5,13 @@
 //   import { makeCourseMap } from '/lib/house/coursemap.js';
 //   import { AIENG } from '/lib/house/coursemap-aieng.js';       // course data: [{n, name, cycle, pic(c, L, u, o)}]
 //   const map = makeCourseMap({ room, H, ui, camera, lessons: AIENG, lesson: 6, at: [24, 0], t0: Ls('M01'),
-//     question: '資料怎麼挑、補、整理？', times: { review: [...words], arrive: Ls('M02') + 0.4, end: Le('M03') + 0.35 } });
+//     question: 'How is the data picked, filled in and cleaned?', times: { review: [...words], arrive: Ls('M02') + 0.4, end: Le('M03') + 0.35 } });
 //   window.renderAt = t => { …; if (map.on(t)) { setCam(map.cam(t)); map.update(t); } …; };
 //   window.TEXTS = t => ui.TEXTS();        // chips and the question card are DOM elements with data-read
 //
 // Layout: up to 5 lessons in one row; more in two rows that read like two lines of text (1–4 front, 5–8 back,
 // back row raised so its pictures clear the front ones). Name chips: back row above its pictures, front row below its
-// pedestals, so chips never cover a picture and pictures never cover a chip (experiment 17 map, trial 1).
+// pedestals, so chips never cover a picture and pictures never cover a chip.
 // Beats (04-skeleton §5): overview ≥ 1.5 s, learned lessons light up (on the words that name them, or together),
 // push to this lesson (others dim, their chips hide), the question card stays until it is read.
 import * as THREE from 'three';
@@ -49,7 +49,7 @@ export function greyLook(L) {
  *                            its picture brightens (a not-yet lesson stays grey); use it when the map names lessons not learned yet (lesson 1),
  *                            arrive, ask, end, play: [[t, u], …] (this lesson's run, keyed to the words), push (s, 1.1)}
  * @param {string} [o.question]  question card text (≤ 12 CJK per line, '\n' for two)
- * @param {string} [o.label]     card label (default 「第 N 課 · name」)
+ * @param {string} [o.label]     card label (default "第 N 課 · name", i.e. "Lesson N · name")
  * @param {number} [o.res]   panel canvas width (1024)
  */
 export function makeCourseMap({ room, H, ui, camera, lessons, lesson, at = [24, 0], t0 = 0, times = {}, question = '', label, res = 1024, idPrefix = 'map' }) {

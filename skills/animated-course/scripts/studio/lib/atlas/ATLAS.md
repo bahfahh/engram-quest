@@ -2,7 +2,7 @@
 
 A 3D world drawn like a textbook figure: pale paper solids, ink edges from a normal + depth pass, one lit thing. `render.js` and `parts.js` are copied unchanged from [Atlas of Physics](https://github.com/nathanliow/atlas-of-physics) (MIT, © Nathan Liow — `LICENSE-ATLAS`; keep the header line). Use it when the real thing *is* a geometry or a motion: velocities, forces, fields, mechanisms, a structure seen from a few angles. It is one way of showing, not a default look (`05-presentation-methods.md`).
 
-The reference film: experiment 13, `phys-river` (crossing a river, adding two velocities). Its sources are in the vault lab notebook: `研究/實驗13-Atlas式物理（渡河）/各片/phys-river/src/scene.html` — copy that page as the starting point.
+The reference film was a physics lesson on crossing a river (adding two velocities); its page is not part of this skill, so start from the setup below.
 
 ## Setup (scene.html)
 
@@ -32,14 +32,14 @@ window.renderAt = t => { E.placeCamera(camAt(t)); E.setLit(litAt(t)); /* place t
 
 ## Clocks
 
-- The simulation clock is a function of t: run at a stated rate ("畫面 4 倍速" on screen), **stop while the narration explains a moving thing** (with a "⏸ 時間暫停" badge), then continue.
+- The simulation clock is a function of t: run at a stated rate ("4× speed" on screen), **stop while the narration explains a moving thing** (with a "⏸ time paused" badge), then continue.
 - Background motion (water chips, particles) uses a clock **integrated** from that rate (sample the rate every 0.01 s, accumulate) so pausing and speeding up never make anything jump.
 
 ## Rules learned in experiment 13
 
-- One colour = one quantity for the whole film. A component of the boat's own velocity must not take the water's colour (the silent reviewer read a blue "upstream 1.5" as a second current). Parts of a vector: darker/greyer of the same family, labelled "（船自己的）".
+- One colour = one quantity for the whole film. A component of the boat's own velocity must not take the water's colour (the silent reviewer read a blue "upstream 1.5" as a second current). Parts of a vector: darker/greyer of the same family, labelled "(the boat's own)".
 - When a vector is split, hide the whole one (or grey it) — two red arrows on screen cannot be told apart.
-- Show cancelling as two equal arrows **side by side, pointing opposite**, labelled "抵掉"; show adding as tip-to-tail. Do them as separate steps.
+- Show cancelling as two equal arrows **side by side, pointing opposite**, labelled "cancel out"; show adding as tip-to-tail. Do them as separate steps.
 - Measure a length with a drawn dimension line and ticks, never a floating label; an angle needs its reference line drawn.
 - Arrows ride on the moving thing; hide them when it lands, or they leave the frame.
 - `readcheck` skips WebGL drawing by itself (no page change needed); give a live counter no `data-read` (only its fixed caption), or every frame counts as a new text.

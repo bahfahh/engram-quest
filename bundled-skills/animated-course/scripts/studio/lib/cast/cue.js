@@ -7,8 +7,8 @@
 //
 //   import { cueTrack, headOf } from '/lib/cast/cue.js';
 //   const cues = cueTrack(T, [
-//     { line: 'A05', word: '預算', target: () => budgetRow },        // an element, a {x0,y0,x1,y1} box, {x,y} or [x,y]
-//     { line: 'A07', word: '學習期', target: [1320, 420], point: false },   // look only (no hand)
+//     { line: 'A05', word: 'budget', target: () => budgetRow },      // an element, a {x0,y0,x1,y1} box, {x,y} or [x,y]
+//     { line: 'A07', word: 'learning', target: [1320, 420], point: false },   // look only (no hand)
 //     { at: 12.4, who: 'student', target: { x: 1500, y: 300 }, hold: 1.2 }, // a time in seconds works too
 //   ]);
 //   // per frame, after the scene filled its own pose objects (skin fields, CAST.md):

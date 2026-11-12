@@ -10,7 +10,8 @@
    title card, recap, charts / funnel / crowd, the key-point card (kp-*) and the K.card panel. The real-UI mocks
    (K.phone, ig.*, am.*, K.toggle, the Play Store page) keep kit.css's own colours, shadows and fonts even on a
    data-house page. Why: a real interface stays the real interface — Meta blue, a white Ads Manager, the Instagram
-   wordmark are what the learner will meet on their own screen; the studio styles our notes about it, not the thing. So the kit variables are redefined on the annotation
+   wordmark are what the learner will meet on their own screen; the studio styles our notes about it, not the thing.
+   (A house look over real screens spoils them.) So the kit variables are redefined on the annotation
    elements, not on [data-house] itself, and the hex re-map and stroke / fill re-map only touch annotation elements.
    A mock you build yourself keeps its look as long as it does not sit inside one of those annotation elements.
    Mapping of kit colours (kit.js writes them inline as hex, so they are matched here and replaced):
