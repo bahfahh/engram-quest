@@ -1,0 +1,175 @@
+{
+ "film": "rooms-example",
+ "style": "rooms",
+ "duration": 361,
+ "note": "範例 cue sheet（依 FILM_BRIEF2 的結構估的秒數）：片頭→全貌→4 個房間（主題段/回想倒數/揭曉/收束/回到全貌）→片尾快問 3 題→片尾。實際用時把 start/dur 換成 timeline 的秒數。",
+ "cues": [
+  {
+   "segment": "opening",
+   "start": 0,
+   "dur": 6
+  },
+  {
+   "segment": "overview",
+   "start": 6,
+   "dur": 20
+  },
+  {
+   "segment": "topic",
+   "room": 1,
+   "start": 26,
+   "dur": 34
+  },
+  {
+   "segment": "recall",
+   "room": 1,
+   "start": 60,
+   "dur": 8
+  },
+  {
+   "segment": "reveal",
+   "room": 1,
+   "start": 68,
+   "dur": 4
+  },
+  {
+   "segment": "closure",
+   "room": 1,
+   "start": 72,
+   "dur": 8
+  },
+  {
+   "segment": "overview",
+   "start": 80,
+   "dur": 5
+  },
+  {
+   "segment": "topic",
+   "room": 2,
+   "start": 85,
+   "dur": 34
+  },
+  {
+   "segment": "recall",
+   "room": 2,
+   "start": 119,
+   "dur": 8
+  },
+  {
+   "segment": "reveal",
+   "room": 2,
+   "start": 127,
+   "dur": 4
+  },
+  {
+   "segment": "closure",
+   "room": 2,
+   "start": 131,
+   "dur": 8
+  },
+  {
+   "segment": "overview",
+   "start": 139,
+   "dur": 5
+  },
+  {
+   "segment": "topic",
+   "room": 3,
+   "start": 144,
+   "dur": 34
+  },
+  {
+   "segment": "recall",
+   "room": 3,
+   "start": 178,
+   "dur": 8
+  },
+  {
+   "segment": "reveal",
+   "room": 3,
+   "start": 186,
+   "dur": 4
+  },
+  {
+   "segment": "closure",
+   "room": 3,
+   "start": 190,
+   "dur": 8
+  },
+  {
+   "segment": "overview",
+   "start": 198,
+   "dur": 5
+  },
+  {
+   "segment": "topic",
+   "room": 4,
+   "start": 203,
+   "dur": 34
+  },
+  {
+   "segment": "recall",
+   "room": 4,
+   "start": 237,
+   "dur": 8
+  },
+  {
+   "segment": "reveal",
+   "room": 4,
+   "start": 245,
+   "dur": 4
+  },
+  {
+   "segment": "closure",
+   "room": 4,
+   "start": 249,
+   "dur": 8
+  },
+  {
+   "segment": "overview",
+   "start": 257,
+   "dur": 5
+  },
+  {
+   "segment": "quiz",
+   "room": 5,
+   "start": 262,
+   "dur": 9
+  },
+  {
+   "segment": "reveal",
+   "room": 5,
+   "start": 271,
+   "dur": 4
+  },
+  {
+   "segment": "quiz",
+   "room": 5,
+   "start": 275,
+   "dur": 9
+  },
+  {
+   "segment": "reveal",
+   "room": 5,
+   "start": 284,
+   "dur": 4
+  },
+  {
+   "segment": "quiz",
+   "room": 5,
+   "start": 288,
+   "dur": 9
+  },
+  {
+   "segment": "reveal",
+   "room": 5,
+   "start": 297,
+   "dur": 4
+  },
+  {
+   "segment": "ending",
+   "start": 301,
+   "dur": 60
+  }
+ ]
+}

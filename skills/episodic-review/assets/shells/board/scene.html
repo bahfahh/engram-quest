@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<title>Film</title>
+<link rel="stylesheet" href="/node_modules/@fontsource/noto-sans-tc/400.css">
+<link rel="stylesheet" href="/node_modules/@fontsource/noto-sans-tc/500.css">
+<link rel="stylesheet" href="/node_modules/@fontsource/noto-sans-tc/700.css">
+<link rel="stylesheet" href="/node_modules/@fontsource/lxgw-wenkai-tc/400.css">
+<link rel="stylesheet" href="/node_modules/@fontsource/lxgw-wenkai-tc/700.css">
+<link rel="stylesheet" href="/node_modules/@fontsource/inter/500.css">
+<link rel="stylesheet" href="/node_modules/@fontsource/inter/700.css">
+<style>
+  @font-face { font-family: "JB Mono"; src: url("./fonts/JetBrainsMono-Regular.ttf") format("truetype"); font-weight: 400; }
+  @font-face { font-family: "JB Mono"; src: url("./fonts/JetBrainsMono-Bold.ttf") format("truetype"); font-weight: 700; }
+  :root { --ink: #f4ecdf; }
+  html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; background: #070605; }
+  body { font-family: "Noto Sans TC", Inter, sans-serif; color: var(--ink); }
+  #gl { position: absolute; inset: 0; width: 1920px; height: 1080px; display: block; }
+  .layer { position: absolute; inset: 0; pointer-events: none; }
+  #black { background: #060504; opacity: 1; }
+  /* recall countdown: a quiet ring under the lit card */
+  #count { position: absolute; left: 912px; top: 838px; width: 96px; height: 96px; opacity: 0; }
+  #count svg { position: absolute; inset: 0; transform: rotate(-90deg); }
+  #count .track { stroke: rgba(244,236,223,.16); stroke-width: 3; fill: none; }
+  #ring { stroke: rgba(244,236,223,.85); stroke-width: 3; fill: none; stroke-dasharray: 276.46; }
+  #cnum { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font: 500 38px Inter; color: rgba(244,236,223,.85); }
+  /* quiz: printed on the index card that fills the frame (the room is gone) */
+  #quiz { opacity: 0; }
+  #qn { position: absolute; left: 0; right: 0; top: 196px; text-align: center; font: 700 30px Inter, "Noto Sans TC"; color: rgba(70,52,36,.55); letter-spacing: .24em; }
+  #qq { position: absolute; left: 250px; right: 250px; top: 268px; text-align: center; font-size: 56px; font-weight: 700; line-height: 1.45; color: #2a2119; }
+  #qhint { position: absolute; left: 768px; top: 392px; width: 384px; height: 216px; border-radius: 8px; box-shadow: 0 3px 10px rgba(60,40,20,.28); opacity: 0; }
+  #qhcap { position: absolute; left: 0; right: 0; top: 620px; text-align: center; font: 500 24px "Noto Sans TC"; color: rgba(70,52,36,.72); opacity: 0; }
+  #qa { position: absolute; left: 270px; right: 270px; top: 676px; text-align: center; font-family: "LXGW WenKai TC", "Noto Sans TC"; font-size: 46px; line-height: 1.5; color: #8c2a1e; opacity: 0; }
+  #qcount { position: absolute; left: 912px; top: 668px; width: 96px; height: 96px; opacity: 0; }
+  #qcount svg { position: absolute; inset: 0; transform: rotate(-90deg); }
+  #qcount .track { stroke: rgba(60,44,30,.16); stroke-width: 3; fill: none; }
+  #qring { stroke: rgba(60,44,30,.7); stroke-width: 3; fill: none; stroke-dasharray: 276.46; }
+  #qnum { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font: 500 38px Inter; color: rgba(60,44,30,.75); }
+  .notext #count, .notext #qq, .notext #qa, .notext #qn, .notext #qcount, .notext #qhcap { visibility: hidden; }
+</style>
+<script type="importmap">
+{ "imports": { "three": "/node_modules/three/build/three.module.js", "three/addons/": "/node_modules/three/examples/jsm/" } }
+</script>
+</head>
+<body>
+<canvas id="gl" width="1600" height="900"></canvas>
+<div id="quiz" class="layer">
+  <div id="qn"></div><div id="qq"></div>
+  <canvas id="qhint" width="768" height="432"></canvas><div id="qhcap"></div>
+  <div id="qcount"><svg viewBox="0 0 96 96"><circle class="track" cx="48" cy="48" r="44"/><circle id="qring" cx="48" cy="48" r="44"/></svg><div id="qnum"></div></div>
+  <div id="qa"></div>
+</div>
+<div id="count"><svg viewBox="0 0 96 96"><circle class="track" cx="48" cy="48" r="44"/><circle id="ring" cx="48" cy="48" r="44"/></svg><div id="cnum"></div></div>
+<div id="black" class="layer"></div>
+<script type="module" src="./film.js"></script>
+</body>
+</html>

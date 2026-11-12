@@ -10,6 +10,7 @@ Each skill is installed as an independent module with its own `references/` and 
 | memory-map | `memory-map/skills.md` | Generate `.canvas` memory maps |
 | lesson-academy | `lesson-academy/skills.md` | Build interactive HTML lesson courses for the Lesson Academy tab |
 | quadrant | `quadrant/skills.md` | Upgrade a flashcard into an A4 four-quadrant super-memory card (Pro) |
+| episodic-review | `episodic-review/skills.md` | Turn a period of notes into a recall pack (overview + Review Deck questions for every topic) and full-frame recall films built on maps and diagrams (Pro, Claude Code) |
 
 ---
 
