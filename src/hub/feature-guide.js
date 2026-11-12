@@ -374,7 +374,7 @@ const CONTENT = {
       title: "影片學院 — 一句話，AI 做成教學短片",
       lines: [
         "說一句<strong>想學或想複習什麼</strong>，AI 會自己判斷要讀哪些筆記、拆成幾支<strong>短片</strong>。",
-        "外層是系列書架（可篩選、搜尋），點進系列就是播放器；看到哪裡都會記住，下次<strong>從上次的位置續播</strong>。",
+        "外層是系列書架（可篩選、搜尋），點進系列就是播放器，旁邊的<strong>播放清單</strong>標出每支看完沒、看到哪；下次<strong>從上次的位置續播</strong>。",
         "在「影片設定」<strong>選老師</strong>，每位老師教法不同：Nico 免費，其他老師和替每個系列指定老師需要 <strong>Pro</strong>。畫質、語言這些設一次就好。",
       ],
       first: "按「<strong>新系列</strong>」寫下想學什麼，例如「架設網站」，再把插件給你的提示貼進 <strong>Claude Code</strong>，影片做好就會出現在這裡。",
@@ -383,7 +383,7 @@ const CONTENT = {
       title: "Video Academy — one sentence, AI turns it into short lessons",
       lines: [
         "Say <strong>what you want to learn or review</strong>; the AI decides which notes to use and splits it into <strong>short videos</strong>.",
-        "The outer view is a shelf of series (filter and search); open one to watch. Your place is remembered, so you <strong>resume where you stopped</strong>.",
+        "The outer view is a shelf of series (filter and search); open one to watch, with a <strong>playlist</strong> that shows what you finished and where you stopped. You <strong>resume where you stopped</strong>.",
         "<strong>Pick a teacher</strong> in Video settings; each one teaches differently. Nico is free; the other teachers, and a different teacher for each series, need <strong>Pro</strong>. Quality and language only need setting once.",
       ],
       first: "Press <strong>New series</strong> and write what you want to learn, e.g. \"build a website\"; paste the prompt the plugin gives you into <strong>Claude Code</strong> and the videos appear here when they are done.",

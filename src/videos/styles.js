@@ -103,6 +103,9 @@ body.is-phone .lh-vid-back { height:auto; padding:0 !important; background:none 
 .lh-vid-chapters { display:flex; flex-direction:column; gap:2px; }
 .lh-vid-chapter { display:flex !important; justify-content:flex-start; align-items:center; gap:10px; height:auto !important; padding:5px 8px !important; background:none !important; border:0 !important; box-shadow:none !important; color:var(--text) !important; font-size:13px; text-align:left; white-space:normal; border-radius:8px !important; cursor:pointer; }
 .lh-vid-chapter:hover { background:var(--fill2) !important; }
+body:not(.is-phone) .lh-vid-chapters { display:block; columns:230px; column-gap:8px; }
+body:not(.is-phone) .lh-vid-chapters .lh-vid-side-head { column-span:all; }
+body:not(.is-phone) .lh-vid-chapter { width:100%; margin:0 0 2px; box-sizing:border-box; break-inside:avoid; }
 .lh-vid-chapter-time { flex-shrink:0; font-variant-numeric:tabular-nums; color:var(--tint); font-weight:500; }
 .lh-vid-credits { font-size:12px; line-height:16px; color:var(--text3); }
 .lh-vid-ep-setting { display:flex; align-items:center; flex-wrap:wrap; gap:10px; flex:none; font-size:13px; color:var(--text2); }
@@ -135,12 +138,21 @@ body.is-phone .lh-vid-back { height:auto; padding:0 !important; background:none 
 .lh-vid-item-title { font-size:13px; line-height:18px; font-weight:600; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .lh-vid-status { font-size:12px; line-height:16px; color:var(--text3); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .lh-vid-status.is-done { color:var(--mstt); }
-.lh-vid-status.is-progress { color:var(--lrnt); }
+.lh-vid-status.is-progress,.lh-vid-status.is-playing { color:var(--lrnt); }
+.lh-vid-status .lh-i,.lh-vid-status svg { width:12px; height:12px; margin-right:4px; vertical-align:-1.5px; }
+.lh-vid-status svg:not(.lh-i) { fill:currentColor; }
+:is(.lh-hub,.lh-theme) .lh-vid-status .lh-i { width:12px; height:12px; stroke-width:2.6; }
 
 .lh-vid-chip { display:inline-flex; align-items:center; gap:4px; max-width:220px; padding:2px 8px; border-radius:7px; background:var(--fill); color:var(--text2); font-size:12px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .lh-vid-chip-x { height:auto; padding:0 !important; background:none !important; border:0 !important; box-shadow:none !important; color:var(--tint) !important; font-size:13px; cursor:pointer; }
 
+/* Topic view. Stacked (phone, narrow window): player, title row, playlist, then the video's extras.
+   Wide desktop window: the playlist becomes a column beside the player and scrolls on its own. */
 .lh-vid-topic { display:flex; flex-direction:column; gap:12px; }
+.lh-vid-main { display:contents; }
+.lh-vid-side { order:1; }
+.lh-vid-below { order:2; }
+body:not(.is-phone) .lh-vid > .lh-scroll { container:lh-vid / size; }
 .lh-vid-stage { width:100%; aspect-ratio:16/9; border-radius:16px; overflow:hidden; background:#000; box-shadow:0 14px 34px rgba(0,0,0,.28); flex:none; }
 .lh-vid-player { display:block; width:100%; height:100%; background:#000; }
 .lh-vid-missing { height:100%; display:flex; align-items:center; justify-content:center; padding:20px; text-align:center; background:#1F1F23; color:#BDBDC5; font-size:13px; }
@@ -155,12 +167,21 @@ body.is-phone .lh-vid-back { height:auto; padding:0 !important; background:none 
 .lh-vid-source { color:var(--tint); cursor:pointer; text-decoration:none; }
 .lh-vid-side { background:var(--card); box-shadow:var(--cshadow); border-radius:16px; padding:12px 8px 8px; }
 .lh-vid-side-head { font-size:13px; line-height:18px; font-weight:600; color:var(--text2); padding:0 8px 6px; }
-.lh-vid-side-list { display:flex; gap:4px; overflow-x:auto; scrollbar-width:none; }
-.lh-vid-side-list::-webkit-scrollbar { display:none; }
-.lh-vid-item { display:flex; align-items:center; gap:10px; padding:8px; border-radius:10px; flex:0 0 262px; box-sizing:border-box; min-width:0; cursor:pointer; }
+.lh-vid-side-list { display:flex; flex-direction:column; }
+.lh-vid-item { display:flex; align-items:center; gap:10px; padding:8px; border-radius:10px; box-sizing:border-box; min-width:0; cursor:pointer; }
 .lh-vid-item:hover { background:var(--fill2); }
 .lh-vid-item.is-current { background:var(--tabon); cursor:default; }
 .lh-vid-item-text { min-width:0; }
+body:not(.is-phone) .lh-vid-side-list { display:grid; grid-template-columns:repeat(auto-fill,minmax(250px,1fr)); gap:2px 4px; }
+body:not(.is-phone) .lh-vid-item.is-current .lh-vid-status { color:var(--tint); font-weight:600; }
+body:not(.is-phone) .lh-vid-item-title { white-space:normal; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
+@container lh-vid (min-width:880px) {
+  body:not(.is-phone) .lh-vid-topic { display:grid; grid-template-columns:minmax(0,1fr) clamp(300px,30%,360px); gap:16px; align-items:start; }
+  body:not(.is-phone) .lh-vid-main { display:flex; flex-direction:column; gap:12px; min-width:0; }
+  body:not(.is-phone) .lh-vid-side { position:sticky; top:2px; max-height:100cqh; display:flex; flex-direction:column; box-sizing:border-box; }
+  body:not(.is-phone) .lh-vid-side > .lh-vid-side-head { margin-bottom:4px; padding-bottom:8px; box-shadow:0 .5px 0 var(--sep); }
+  body:not(.is-phone) .lh-vid-side-list { display:flex; flex-direction:column; gap:2px; min-height:0; overflow-y:auto; }
+}
 
 .lh-vid-modal { width:min(92vw,480px) !important; max-width:none !important; padding:0 !important; border-radius:18px !important; overflow:hidden; background:var(--card) !important; color:var(--text); border:0 !important; }
 .lh-vid-modal.lh-vid-settings { width:min(94vw,580px) !important; }

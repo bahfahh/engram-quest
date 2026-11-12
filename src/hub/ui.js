@@ -26,6 +26,7 @@ const PATHS = {
   plus: '<path d="M12 5v14M5 12h14"/>',
   trash: '<path d="M3 6h18"/><path d="m19 6-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/>',
   chevron: '<path d="m9 6 6 6-6 6"/>',
+  fold: '<path d="m11 6-6 6 6 6"/><path d="m18 6-6 6 6 6"/>',
   timer: '<circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2"/><path d="M9 2h6"/>',
   learn: '<path d="M5 5.5A2.5 2.5 0 0 1 7.5 3H19v15H7.5A2.5 2.5 0 0 0 5 20.5z"/>',
   sidebar: '<rect x="3" y="5" width="18" height="14" rx="3"/><path d="M15 5v14"/>',

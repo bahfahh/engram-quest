@@ -173,6 +173,7 @@ module.exports = {
         id: "video", tab: "video", icon: "video", title: "影片學院", tag: "免費 · 更多老師 Pro",
         body: [
           { p: "說一句想學或想複習什麼，AI 會自己決定要讀哪些筆記、拆成幾支短片。外層是系列書架，點進系列就是播放器；看到哪裡都會記住，下次從上次的位置續播。" },
+          { p: "播放清單在播放器旁邊（視窗窄或手機上在影片下方），每支影片都標出長度，以及已看完、看到幾分幾秒或未看。電腦上打開影片時，側邊欄會收成一排圖示，把空間讓給影片；按 Hub 名稱旁的「«」可以展開或再收合（收合後按鈕在標誌下方），你的選擇會記住。" },
           { steps: [
             "按「新系列」寫下想學什麼，可以補充細節、讓 AI 自動挑筆記或指定筆記，也可以不用筆記。",
             "插件記下需求並給你一段提示，貼進 Claude Code，animated-course skill 就會開始做。",
@@ -464,6 +465,7 @@ module.exports = {
         id: "video", tab: "video", icon: "video", title: "Video Academy", tag: "Free · more teachers with Pro",
         body: [
           { p: "Say what you want to learn or review; the AI decides which notes to use and splits it into short videos. The outer view is a shelf of series; open one to watch. Your place is remembered, so you resume where you stopped." },
+          { p: "The playlist sits beside the player (under it in a narrow window or on a phone) and shows each video's length and whether it is watched, where you stopped, or not started. On desktop the sidebar folds into a strip of icons while a video is open, so the video has the room; the « button beside the Hub name opens or folds it (once folded it sits under the logo), and your choice is remembered." },
           { steps: [
             "Press \"New series\" and write what you want to learn. Add details if you like, and let the AI pick relevant notes, drop in notes yourself, or use none.",
             "The plugin saves the request and gives you a prompt. Paste it into Claude Code and the animated-course skill makes the videos.",
