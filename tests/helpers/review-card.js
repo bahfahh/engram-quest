@@ -11,6 +11,8 @@ const obsidian = require("obsidian");
 const { ReviewSessionModal } = require("../../src/review/session.js");
 
 const NOTE = "Git/Git 基礎 閃卡.md";
+// What a card patches while it is on screen, as it was before any card was drawn.
+const ORIGINAL = { contains: obsidian.activeDocument.body.classList.contains, Menu: obsidian.Menu };
 export const CARD = { front: "git status 的用途？", back: "顯示哪些檔案被修改、已暫存或未追蹤。", notePath: NOTE };
 
 export class FakeEl {
@@ -64,8 +66,9 @@ const settle = () => new Promise((resolve) => setTimeout(resolve, 5));
  *   card       the card body, whose children are in reading order
  *   menu()     presses the phone's "more" button and returns the titles the menu offers
  *   panels     how many times the Synapse map was drawn into its container
+ *   done()     puts back what was patched; call it when the test is finished with the card
  */
-export async function drawCard({ phone = false, answerShown = true, pro = true, synapse = true, hasLinks = true, browseOnly = false, queued = false } = {}) {
+export async function drawCard({ phone = false, answerShown = true, pro = true, synapse = true, hasLinks = true, browseOnly = false, queued = false, hints = 0, synapseOpen = false } = {}) {
   const files = { [NOTE]: `${CARD.front} :: ${CARD.back}\n` };
   if (queued) files["engram-quest/explainer/queue.json"] = json({ entries: [{ source: NOTE, q: CARD.front, status: "pending" }] });
   const adapter = vaultAdapter(files);
@@ -94,12 +97,12 @@ export async function drawCard({ phone = false, answerShown = true, pro = true, 
     },
     plugin: { settings: { language: "zh-tw", licenseValid: pro }, saveData: async () => {} },
     contentEl: new FakeEl(),
-    cards: [{ ...CARD }],
+    cards: [{ ...CARD, hint_l1: "先想檔案的三種狀態", hint_l2: "和 git add 有關", hint_l3: "s 開頭" }],
     idx: 0,
     deckName: "flashcards/git",
-    hintLevel: 0,
+    hintLevel: hints,
     answerShown,
-    synapseOpen: false,
+    synapseOpen,
     browseOnly,
     _timeboxMinutes: 0,
     _synapseStatus: { enabled: synapse },
@@ -109,27 +112,24 @@ export async function drawCard({ phone = false, answerShown = true, pro = true, 
   });
 
   const classes = obsidian.activeDocument.body.classList;
-  const kept = { contains: classes.contains, Menu: obsidian.Menu, Platform: obsidian.Platform };
+  // The session asks the page whether it is a phone each time it draws, also on a later redraw
+  // (a press on Synapse), so the answer stays patched until the test calls done().
   classes.contains = (name) => phone && name === "is-phone";
   obsidian.Menu = Menu;
-  obsidian.Platform = { isDesktopApp: !phone, isMobile: phone };
+  const done = () => { classes.contains = ORIGINAL.contains; obsidian.Menu = ORIGINAL.Menu; };
   try {
     session._renderCardContent(session.cards[0]);
     await settle();
-  } finally {
-    classes.contains = kept.contains;
-    obsidian.Platform = kept.Platform;
-  }
+  } catch (error) { done(); throw error; }
   const root = session.contentEl;
   return {
     session,
     root,
-    card: find(root, "lh-review-card"),
+    get card() { return find(root, "lh-review-card"); },
     panels,
+    done,
     async menu() {
-      const more = drawn(root).filter((el) => el.hasClass("lh-sib")).pop();
-      obsidian.Menu = Menu;
-      try { await more.click(); } finally { obsidian.Menu = kept.Menu; }
+      await drawn(root).filter((el) => el.hasClass("lh-sib")).pop().click();
       return menu.items.map((item) => item.title + (item.disabled ? " (off)" : ""));
     },
   };

@@ -593,7 +593,12 @@ var Q=class extends I.Modal{
       // The feature entries (Synapse, Deep Dive queue). Desktop: their own group after the label, the
       // formatting tools keep the far end. Phone: a row under the answer card, drawn further down.
       const features={t,plugin:this.plugin,
-        synapse:synapseHasLinks?{open:this.synapseOpen,toggle:()=>{ this.synapseOpen=!this.synapseOpen; refreshSynapseContainer(); revealSynapse(); return this.synapseOpen; }}:null,
+        // A phone keeps hints and map apart, as its menu entry always did (toggleSynapse); on a desktop
+        // the hints stay above the answer while the map opens below it.
+        synapse:synapseHasLinks?{open:this.synapseOpen,toggle:()=>{
+          if(phone) toggleSynapse(); else { this.synapseOpen=!this.synapseOpen; refreshSynapseContainer(); revealSynapse(); }
+          return this.synapseOpen;
+        }}:null,
         queue:t.licenseValid&&!this.browseOnly?{
           isQueued:()=>readQueue(this.app.vault.adapter).then(_q=>isQueued(_q,e.notePath,e.front)),
           add:async()=>{

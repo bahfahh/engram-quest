@@ -163,6 +163,8 @@ describe("feature entry styles", () => {
     expect(entry.height).toBe("auto");
     expect(entry["white-space"]).toBe("normal");
     expect(declarations(`body.is-phone ${S} .lh-answer-features`).gap).toBe("10px");
+    // Scrolled into view when it opens: clear of the bottom bar, with the row still in sight above it.
+    expect(declarations(`body.is-phone ${S} .lh-synapse-container`)["scroll-margin"]).toBe("66px 0 calc(env(safe-area-inset-bottom,0px) + 150px)");
   });
 
   it("shows done in the finished colour, not the grey of a disabled button", () => {
