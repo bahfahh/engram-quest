@@ -47,6 +47,21 @@ const session = `
 .lh-hub.lh-session .lh-rc-edit-btn.is-danger { color:var(--dang) !important; }
 .lh-hub.lh-session .lh-fmt-btn { opacity:1; }
 .lh-hub.lh-session .lh-rc-edit-btn.is-done { color:var(--mstt) !important; }
+/* Answer header. Synapse and the Deep Dive queue lead into a feature: tinted, and a size above the
+   formatting tools, which stay raised at the far end. Pressed (the map is open) fills with the
+   accent; a card already in the queue is drawn in the finished colour (that button is disabled, but it
+   is a state to read, so its rule is not written as :disabled and its colours are contrast-checked).
+   Grey still only means unavailable. */
+.lh-hub.lh-session .lh-answer-features { display:flex; align-items:center; gap:8px; margin-left:4px; }
+.lh-hub.lh-session .lh-ans-feature { height:36px; padding:0 14px; gap:8px; background:var(--tone) !important; color:var(--tint) !important; box-shadow:var(--tonering); font-size:14px; font-weight:600; }
+.lh-hub.lh-session .lh-ans-feature:hover { background:var(--toneh) !important; }
+.lh-hub.lh-session .lh-ans-feature .lh-i { width:18px; height:18px; stroke-width:2; }
+.lh-hub.lh-session .lh-ans-feature-ic { display:grid; place-items:center; }
+.lh-hub.lh-session .lh-ans-feature[aria-pressed="true"] { background:var(--btn) !important; color:var(--onbtn) !important; box-shadow:inset 0 .5px 0 rgba(255,255,255,.22),0 1px 2px rgba(0,0,0,.16),0 3px 10px rgba(91,72,184,.2); }
+.lh-hub.lh-session .lh-ans-feature[aria-pressed="true"]:hover { background:var(--btnh) !important; }
+.lh-hub.lh-session .lh-ans-feature[aria-pressed="true"] .lh-fi img { filter:brightness(0) invert(1); }
+.lh-hub.lh-session .lh-ans-feature.is-done { background:color-mix(in srgb,var(--mst) 16%,var(--raised)) !important; color:var(--mstt) !important; opacity:1; box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--mstt) var(--ringk),transparent); }
+body:not(.is-phone) .lh-hub.lh-session .lh-answer-header { flex-wrap:wrap; row-gap:8px; }
 .lh-rc-src span { max-width:150px; overflow:hidden; text-overflow:ellipsis; }
 :is(.lh-hub,.lh-theme) .lh-rc-src .lh-i:last-child { width:14px; height:14px; }
 .lh-hub.lh-session .lh-rc-question { color:var(--text) !important; font-size:24px; line-height:1.45; font-weight:650; letter-spacing:-.01em; }
