@@ -16,25 +16,42 @@ const EXPLAINER_QUEUE = "engram-quest/explainer/queue.json";
 const VIDEOS_DIR = "engram-quest/videos";
 const BATCH_MS = 500;
 
-// A link the user rejected in a synapse file is kept as "note|<path>" (see userRejected in src/review/synapse.js).
+// A link the user rejected in a synapse file (userRejected in src/review/synapse.js) is kept as
+// "note|<path>" for a note, "<path>|<front>" for a mastered-card anchor, "<type>|<ref>" for other content.
+const REJECTED_KEY = "userRejected";
 const REJECTED_NOTE = "note|";
 
-/** `value` with every string that is a key of `moves` replaced by its new path; `changed` says whether any was. */
-function replacePaths(value, moves) {
+// The part before the first "|" is the note path; a card front after it may contain "|" itself,
+// but a note path never does.
+function replaceRejectedKey(value, moves, followPathKeys) {
+  const bar = value.indexOf("|");
+  const head = bar === -1 ? "" : value.slice(0, bar);
+  if (head === REJECTED_NOTE.slice(0, -1)) {
+    const ref = value.slice(bar + 1);
+    return moves.has(ref) ? { value: REJECTED_NOTE + moves.get(ref), changed: true } : { value, changed: false };
+  }
+  return followPathKeys && moves.has(head) ? { value: moves.get(head) + value.slice(bar), changed: true } : { value, changed: false };
+}
+
+/**
+ * `value` with every string that is a key of `moves` replaced by its new path; `changed` says whether any was.
+ * Inside a `userRejected` list the keys that start with a path are followed too. Elsewhere a string that
+ * only starts with a path is left alone: it may be a card front.
+ */
+function replacePaths(value, moves, inRejected = false) {
   if (typeof value === "string") {
     if (moves.has(value)) return { value: moves.get(value), changed: true };
-    const rejected = value.startsWith(REJECTED_NOTE) ? value.slice(REJECTED_NOTE.length) : null;
-    return rejected !== null && moves.has(rejected) ? { value: REJECTED_NOTE + moves.get(rejected), changed: true } : { value, changed: false };
+    return replaceRejectedKey(value, moves, inRejected);
   }
   if (Array.isArray(value)) {
     let changed = false;
-    const out = value.map((v) => { const r = replacePaths(v, moves); changed = changed || r.changed; return r.value; });
+    const out = value.map((v) => { const r = replacePaths(v, moves, inRejected); changed = changed || r.changed; return r.value; });
     return { value: changed ? out : value, changed };
   }
   if (value && typeof value === "object") {
     let changed = false;
     const out = {};
-    for (const [k, v] of Object.entries(value)) { const r = replacePaths(v, moves); changed = changed || r.changed; out[k] = r.value; }
+    for (const [k, v] of Object.entries(value)) { const r = replacePaths(v, moves, k === REJECTED_KEY); changed = changed || r.changed; out[k] = r.value; }
     return { value: changed ? out : value, changed };
   }
   return { value, changed: false };

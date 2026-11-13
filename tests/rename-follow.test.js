@@ -28,6 +28,16 @@ const NEW = "Archive/New Name.md";
 const one = (from, to) => new Map([[from, to]]);
 
 describe("followNoteRenames", () => {
+  it("keeps a rejected anchor hidden after the mastered card's note is renamed", async () => {
+    const a = memoryAdapter({
+      "engram-review/synapse/Other.json": json({ cards: { q: { anchors: [{ notePath: OLD, front: "F" }], userRejected: [OLD + "|F"] } } }),
+    });
+    await followNoteRenames(a, one(OLD, NEW));
+    const q = JSON.parse(a.store["engram-review/synapse/Other.json"]).cards.q;
+    expect(q.anchors[0].notePath).toBe(NEW);
+    expect(q.userRejected).toEqual([NEW + "|F"]);
+  });
+
   it("moves the note's anchors file and rewrites paths that cite the note everywhere", async () => {
     const a = memoryAdapter({
       "engram-review/synapse/Study__Old Name.json": json({ _meta: { sourceNotePath: OLD }, cards: {} }),
@@ -116,6 +126,18 @@ describe("queueNoteRename", () => {
 });
 
 describe("replacePaths", () => {
+  it("follows a rejected mastered-card anchor key (<path>|<front>) inside userRejected", () => {
+    const doc = { cards: { q: { userRejected: [OLD + "|What is idempotency?", OLD + "|a | b", "note|" + OLD, "lesson|" + OLD, "Keep.md|Front"] } } };
+    expect(replacePaths(doc, one(OLD, NEW)).value.cards.q.userRejected).toEqual([
+      NEW + "|What is idempotency?", NEW + "|a | b", "note|" + NEW, "lesson|" + OLD, "Keep.md|Front",
+    ]);
+  });
+
+  it("leaves a string that only starts with a path alone outside userRejected", () => {
+    const doc = { cards: { q: { anchors: [{ front: OLD + "|x", notePath: OLD }] } } };
+    expect(replacePaths(doc, one(OLD, NEW)).value.cards.q.anchors).toEqual([{ front: OLD + "|x", notePath: NEW }]);
+  });
+
   it("replaces exact matches only, not substrings", () => {
     expect(replacePaths({ a: OLD, b: OLD + " copy", c: [OLD] }, one(OLD, NEW)).value).toEqual({ a: NEW, b: OLD + " copy", c: [NEW] });
   });

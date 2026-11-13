@@ -6,7 +6,7 @@
 const I = require("obsidian");
 const { t: c, interpolate: K } = require("../i18n");
 const { ProUpgradeModal } = require("../license/upgrade");
-const { presets: LENGTHS } = require("../../skills/episodic-review/templates/length.json");
+const { estimate } = require("./episodic-length");
 const data = require("./data");
 const { renderTopic, renderThumb, queueWrite } = require("./render");
 const { openPromptModal } = require("./request-ui");
@@ -21,11 +21,6 @@ const byNewest = (a, b) => String(b.createdAt || "").localeCompare(String(a.crea
 
 function promptFor(t, request) {
   return K(c(t, "EPISODIC_PROMPT"), { period: periodText(request.period), length: c(t, LENGTH_KEY[request.length]), id: request.id });
-}
-
-function estimate(t, id) {
-  const { seconds: [low, high], topics: [few, many] } = LENGTHS[id];
-  return K(c(t, "EPISODIC_LEN_EST"), { min: Math.round(low / 60), max: Math.round(high / 60), topics: few === many ? few : `${few}–${many}` });
 }
 
 /** Films newest period first; one period can hold several films. */

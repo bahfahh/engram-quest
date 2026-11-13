@@ -476,3 +476,104 @@ describe("dump_sr_pool: unchanged gates", () => {
     expect(JSON.parse(stdout).mode).toBe("error");
   });
 });
+
+describe("dump_sr_pool: the same front in two notes", () => {
+  const OTHER = "Study/Other.md";
+  const OTHER_SR = "engram-review/sr/Study__Other.json";
+  const OTHER_SYNAPSE = "engram-review/synapse/Study__Other.json";
+  const otherAnchor = (front) => ({ front, back: "", notePath: OTHER, stability: 11, score: 8, reason: "same topic" });
+
+  // Both notes hold a "shared hard" card that is not learned yet and a "shared mastered" card that is.
+  function seedTwoNotes({ otherMastered = true } = {}) {
+    seedSr(["shared hard"]);
+    const deck = read(SR_FILE);
+    deck["shared mastered"] = { stability: 30 };
+    write(SR_FILE, deck);
+    write(OTHER_SR, {
+      "shared hard": { stability: 3 },
+      "shared mastered": { stability: otherMastered ? 40 : 1 },
+    });
+  }
+
+  it("lists a card of each note, in the pool and as a target", () => {
+    seedTwoNotes();
+
+    const out = dump();
+
+    expect(out.mode).toBe("full");
+    expect(out.targets.filter((t) => t.front === "shared hard").map((t) => t.notePath).sort()).toEqual([DECK, OTHER]);
+    expect(out.mastered.filter((m) => m.front === "shared mastered").map((m) => m.notePath).sort()).toEqual([DECK, OTHER]);
+    expect(out.stats.masteredCount).toBe(12);
+    expect(out.stats.targetCount).toBe(2);
+  });
+
+  it("queues each note's new target separately, whichever of the two is paired already", () => {
+    seedTwoNotes();
+    write(STATUS_FILE, { enabled: true, masteredPoolSize: 12, generatedAt: "2026-11-01T00:00:00Z" });
+    seedSynapse({ "shared hard": { anchors: [anchor("mastered 3")], userRejected: [] } });
+
+    const out = dump();
+
+    expect(out.mode).toBe("incremental");
+    expect(out.workQueue.map((t) => [t.notePath, t.front, t.reason])).toEqual([[OTHER, "shared hard", "new-target"]]);
+    expect(out.preservedFronts).toEqual(["shared hard"]);
+  });
+
+  it("judges an anchor by the card it names, not by any card with that front", () => {
+    seedTwoNotes({ otherMastered: false });
+    write(STATUS_FILE, { enabled: true, masteredPoolSize: 11, generatedAt: "2026-11-01T00:00:00Z" });
+    seedSynapse({ "shared hard": { anchors: [anchor("shared mastered")], userRejected: [] } });
+    write(OTHER_SYNAPSE, {
+      _meta: { sourceNotePath: OTHER },
+      cards: {
+        "shared hard": { anchors: [otherAnchor("shared mastered")], userRejected: [] },
+        "shared mastered": { anchors: [], userRejected: [] }, // dropped back to a target in this note
+      },
+    });
+
+    const out = dump();
+
+    // Deck's "shared mastered" is still mastered; Other's has dropped back, so only its anchor is stale.
+    expect(out.workQueue.map((t) => [t.notePath, t.front, t.reason])).toEqual([[OTHER, "shared hard", "stale-anchor"]]);
+    expect(out.workQueue[0].staleAnchors).toEqual(["shared mastered"]);
+  });
+
+  it("treats an anchor stored without a note path as live while any card with that front is mastered", () => {
+    seedTwoNotes({ otherMastered: false });
+    write(STATUS_FILE, { enabled: true, masteredPoolSize: 11, generatedAt: "2026-11-01T00:00:00Z" });
+    seedSynapse({ "shared hard": { anchors: [{ front: "shared mastered" }], userRejected: [] } });
+    write(OTHER_SYNAPSE, {
+      _meta: { sourceNotePath: OTHER },
+      cards: {
+        "shared hard": { anchors: [{ front: "shared mastered" }], userRejected: [] },
+        "shared mastered": { anchors: [], userRejected: [] },
+      },
+    });
+
+    expect(dump().mode).toBe("noop");
+  });
+
+  it("skips only the rejected card when a rejection names its note, and every card with that front when it is a bare front", () => {
+    seedTwoNotes();
+    write(STATUS_FILE, { enabled: true, masteredPoolSize: 12, generatedAt: "2026-11-01T00:00:00Z" });
+    seedContent(); // no catalog snapshot yet, so every paired target is queued and carries its rejections
+    const skipFor = (rejected) => {
+      seedSynapse({
+        "hard one": { anchors: [anchor("mastered 1")], userRejected: [] },
+        "hard two": { anchors: [anchor("mastered 2")], userRejected: [] },
+        "shared hard": { anchors: [], userRejected: rejected },
+      });
+      const out = dump();
+      const idOf = (notePath) => out.mastered.find((m) => m.front === "shared mastered" && m.notePath === notePath).id;
+      const target = out.workQueue.find((x) => x.notePath === DECK && x.front === "shared hard");
+      return { skip: target.skip || [], deckCard: idOf(DECK), otherCard: idOf(OTHER) };
+    };
+
+    const byKey = skipFor([`${OTHER}|shared mastered`]);
+    expect(byKey.skip).toContain(byKey.otherCard);
+    expect(byKey.skip).not.toContain(byKey.deckCard);
+
+    const byFront = skipFor(["shared mastered"]);
+    expect(byFront.skip).toEqual(expect.arrayContaining([byFront.deckCard, byFront.otherCard]));
+  });
+});

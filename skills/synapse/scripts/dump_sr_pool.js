@@ -10,10 +10,14 @@
 //   "noop"        — nothing changed since last run. Skill should bump generatedAt
 //                    and exit without an LLM call.
 //
-// Stale-anchor detection: an anchor is stale iff its `front` is NOT in the current
-// mastered pool (stability ≥ 7). This catches cards demoted from mastered (e.g.
-// after Again rating). Anchors that point to a card no longer in sr/ at all are
-// also stale.
+// Cards are identified by note + front: two notes can hold a card with the same front
+// text, and each is its own card in the pools.
+//
+// Stale-anchor detection: an anchor is stale iff its card (`notePath` + `front`) is NOT in
+// the current mastered pool (stability ≥ 7). An anchor stored without a `notePath` (written
+// before anchors carried one) is stale only when no mastered card has that front. This
+// catches cards demoted from mastered (e.g. after Again rating). Anchors that point to a
+// card no longer in sr/ at all are also stale.
 //
 // Empty-anchor targets: a target the skill paired last run but that got no anchor is
 // stored as an entry with `anchors: []`. It is preserved while the mastered pool has
@@ -356,9 +360,12 @@ function skipIdsFor(target, userRejected, { explicit, catalogByKey, masteredByFr
     }
   }
   for (const key of userRejected) {
-    // A relation is rejected as "<type>|<ref>"; an anchor as "<notePath>|<front>" or the bare front.
-    const hit = catalogByKey.get(key) || masteredByKey.get(key) || masteredByFront.get(key);
-    if (hit) skip.add(hit.id);
+    // A relation is rejected as "<type>|<ref>"; an anchor as "<notePath>|<front>", or as the bare
+    // front in older entries, which rejects every mastered card with that front.
+    const hits = catalogByKey.has(key) ? [catalogByKey.get(key)]
+      : masteredByKey.has(key) ? [masteredByKey.get(key)]
+        : masteredByFront.get(key) || [];
+    for (const hit of hits) skip.add(hit.id);
   }
   return [...skip];
 }
@@ -376,12 +383,26 @@ function loadSeenCatalogKeys() {
   return new Set(asList(doc && doc.seen));
 }
 
+// A card's identity across notes. A note path never contains "|"; a front may. The same form is
+// the key the plugin uses in userRejected for an anchor.
+const cardKey = card => `${card.notePath}|${card.front}`;
+
+// Mastered cards grouped by front, for what is stored by front alone (legacy anchors and rejections).
+function groupByFront(cards) {
+  const byFront = new Map();
+  for (const card of cards) {
+    if (!byFront.has(card.front)) byFront.set(card.front, []);
+    byFront.get(card.front).push(card);
+  }
+  return byFront;
+}
+
 function buildPoolsFromSr() {
   if (!fs.existsSync(SR_DIR)) {
     return { error: "sr-dir-missing", path: SR_DIR };
   }
-  const masteredByFront = new Map(); // front -> { id, front, notePath, stability }
-  const targetsByFront = new Map();  // front -> { id, front, notePath, stability }
+  const masteredByKey = new Map(); // "<notePath>|<front>" -> { id, front, notePath, stability }
+  const targetsByKey = new Map();  // "<notePath>|<front>" -> { id, front, notePath, stability }
   const fileErrors = [];
   let mid = 1, tid = 1;
 
@@ -398,13 +419,13 @@ function buildPoolsFromSr() {
       const stability = (meta && typeof meta.stability === "number") ? meta.stability : 0;
       const entry = { front, notePath, stability };
       if (stability >= MASTERED_STABILITY_THRESHOLD) {
-        masteredByFront.set(front, { id: `m${mid++}`, ...entry });
+        masteredByKey.set(cardKey(entry), { id: `m${mid++}`, ...entry });
       } else {
-        targetsByFront.set(front, { id: `t${tid++}`, ...entry });
+        targetsByKey.set(cardKey(entry), { id: `t${tid++}`, ...entry });
       }
     }
   }
-  return { masteredByFront, targetsByFront, fileErrors };
+  return { masteredByKey, targetsByKey, fileErrors };
 }
 
 // A stored entry is found by the synapse file it is in plus the card front. The file named
@@ -418,7 +439,7 @@ function priorEntryOf(existingEntries, target) {
 }
 
 function loadExistingSynapseFiles() {
-  // Map: entryKey -> { front, synapseFile, anchorFronts: Set<front>, relationKeys: Set<"type|ref">, userRejected: string[] }
+  // Map: entryKey -> { front, synapseFile, anchors: [{ front, notePath? }], relationKeys: Set<"type|ref">, userRejected: string[] }
   // Entries written before relations existed simply have no relation keys.
   const existingEntries = new Map();
   const skillFiles = [];
@@ -433,9 +454,9 @@ function loadExistingSynapseFiles() {
     const sourceNotePath = doc._meta && doc._meta.sourceNotePath;
     for (const front of Object.keys(doc.cards)) {
       const entry = doc.cards[front];
-      const anchorFronts = new Set(
-        arrayOrEmpty(entry && entry.anchors).map(a => a && a.front).filter(Boolean)
-      );
+      const anchors = arrayOrEmpty(entry && entry.anchors)
+        .filter(a => a && a.front)
+        .map(a => ({ front: a.front, notePath: typeof a.notePath === "string" && a.notePath ? a.notePath : null }));
       const relationKeys = new Set(
         arrayOrEmpty(entry && entry.relations).filter(r => r && r.type && r.ref).map(catalogKey)
       );
@@ -443,7 +464,7 @@ function loadExistingSynapseFiles() {
         front,
         notePath: sourceNotePath || srFileNameToNotePath(filename.replace(/\.json$/i, "")),
         synapseFile: filename,
-        anchorFronts,
+        anchors,
         relationKeys,
         userRejected: asList(entry && entry.userRejected)
       });
@@ -452,35 +473,36 @@ function loadExistingSynapseFiles() {
   return { existingEntries, skillFiles };
 }
 
-function decideMode({ status, masteredByFront, targetsByFront, existingEntries, forceFull }) {
+function decideMode({ status, masteredCount, forceFull }) {
   if (forceFull) return "full";
   if (!status || !status.generatedAt) return "full";
   if (status.enabled === false) return "full"; // probably first successful run after pool grew
   // Threshold: pool size changed by at least max(10, 20% of last run's size) → force full.
   const last = status.masteredPoolSize || 0;
-  const now = masteredByFront.size;
+  const now = masteredCount;
   if (last > 0 && Math.abs(now - last) >= Math.max(10, last * 0.2)) return "full";
   // Otherwise incremental (workQueue may still end up empty → caller emits noop)
   return "incremental";
 }
 
-function buildWorkQueue({ masteredByFront, targetsByFront, existingEntries, poolGrew, catalogByKey, hasNewContent }) {
+function buildWorkQueue({ masteredByKey, masteredByFront, targetsByKey, existingEntries, poolGrew, catalogByKey, hasNewContent }) {
   const newTargets = [];     // targets with no entry in their note's synapse file
   const staleTargets = [];   // targets whose existing anchors include cards no longer mastered
   const staleRelationTargets = []; // targets with a relation to content that is no longer in the catalog
   const emptyRetryTargets = []; // targets that got no anchors last run, retried after pool growth
   const newContentTargets = []; // otherwise-preserved targets that only need to look at new catalog entries
-  const preservedFronts = []; // targets whose anchors and relations are all still valid
+  const preservedFronts = []; // fronts of targets whose anchors and relations are all still valid
 
-  for (const [front, target] of targetsByFront) {
+  for (const target of targetsByKey.values()) {
     const prior = priorEntryOf(existingEntries, target);
     if (!prior) {
       newTargets.push({ ...target, reason: "new-target" });
       continue;
     }
     const stale = [];
-    for (const anchorFront of prior.anchorFronts) {
-      if (!masteredByFront.has(anchorFront)) stale.push(anchorFront);
+    for (const anchor of prior.anchors) {
+      const mastered = anchor.notePath ? masteredByKey.has(cardKey(anchor)) : masteredByFront.has(anchor.front);
+      if (!mastered) stale.push(anchor.front);
     }
     // Only types the catalog lists can be checked; any other relation is left alone.
     const staleRelations = [...prior.relationKeys].filter(
@@ -490,12 +512,12 @@ function buildWorkQueue({ masteredByFront, targetsByFront, existingEntries, pool
       staleTargets.push({ ...target, reason: "stale-anchor", staleAnchors: stale });
     } else if (staleRelations.length > 0) {
       staleRelationTargets.push({ ...target, reason: "stale-relation", staleRelations });
-    } else if (prior.anchorFronts.size === 0 && poolGrew) {
+    } else if (prior.anchors.length === 0 && poolGrew) {
       emptyRetryTargets.push({ ...target, reason: "empty-retry" });
     } else if (hasNewContent) {
       newContentTargets.push({ ...target, reason: "new-content" });
     } else {
-      preservedFronts.push(front);
+      preservedFronts.push(target.front);
     }
   }
   return { newTargets, staleTargets, staleRelationTargets, emptyRetryTargets, newContentTargets, preservedFronts };
@@ -507,7 +529,7 @@ function main() {
     process.stdout.write(JSON.stringify({ mode: "error", error: result.error, path: result.path }, null, 2));
     process.exit(2);
   }
-  const { masteredByFront, targetsByFront, fileErrors } = result;
+  const { masteredByKey, targetsByKey, fileErrors } = result;
 
   // Called once the run's files are written: remember the catalog the run paired from, so
   // the next run only treats later content as new. If the catalog changed in between
@@ -537,10 +559,11 @@ function main() {
   const status = readJsonOrNull(STATUS_FILE);
   const { existingEntries, skillFiles } = loadExistingSynapseFiles();
 
-  const mode = decideMode({ status, masteredByFront, targetsByFront, existingEntries, forceFull });
+  const masteredArr = [...masteredByKey.values()];
+  const targetsArr = [...targetsByKey.values()];
+  const masteredByFront = groupByFront(masteredArr);
 
-  const masteredArr = [...masteredByFront.values()];
-  const targetsArr = [...targetsByFront.values()];
+  const mode = decideMode({ status, masteredCount: masteredArr.length, forceFull });
 
   // Pool gate (same threshold as runtime) — checked before the note-file reads below
   if (masteredArr.length < 10) {
@@ -572,7 +595,7 @@ function main() {
     explicit,
     catalogByKey: new Map(catalog.map(item => [catalogKey(item), item])),
     masteredByFront,
-    masteredByKey: new Map(masteredArr.map(m => [`${m.notePath}|${m.front}`, m]))
+    masteredByKey
   };
   // Attach what the target must not be paired with, and the rejections to carry over
   // into its written entry. Both fields are omitted when empty.
@@ -623,11 +646,11 @@ function main() {
   const newCatalog = catalog.filter(item => !seen.has(catalogKey(item)));
   for (const item of newCatalog) item.new = true;
 
-  const poolGrew = masteredByFront.size > ((status && status.masteredPoolSize) || 0);
+  const poolGrew = masteredArr.length > ((status && status.masteredPoolSize) || 0);
   const {
     newTargets, staleTargets, staleRelationTargets, emptyRetryTargets, newContentTargets, preservedFronts
   } = buildWorkQueue({
-    masteredByFront, targetsByFront, existingEntries, poolGrew,
+    masteredByKey, masteredByFront, targetsByKey, existingEntries, poolGrew,
     catalogByKey: lookups.catalogByKey, hasNewContent: newCatalog.length > 0
   });
   const workQueue = [

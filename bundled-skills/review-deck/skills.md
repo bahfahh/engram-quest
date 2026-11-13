@@ -54,7 +54,7 @@ For full scanning logic, see `references/plugin-architecture.md`.
 
 ## Output Scope
 
-CRITICAL: When completing any Setup Flow or Single Note Flow, strictly limit your output to:
+CRITICAL: When completing any Setup Flow or Image Card Flow, strictly limit your output to:
 - Generating AI card files at `engram-review/ai-cards/{note-key}.md`
 - Generating hint JSON files at `engram-review/hints/{note-key}.json`
 
@@ -77,7 +77,8 @@ Task is complete when AI card files and JSON hints are generated. The one thing 
 | "Generate image questions from X" / "make cards from these diagrams" | Image Card Flow |
 | Update hints for a topic | Update Flow |
 | Add cards to a topic | Edit note content + update hints |
-| Make a review-deck from a note | Single Note Flow |
+| Make a review-deck from a note | Setup Flow (step 4: a note the user names is read directly, no discovery) |
+| Show how to put a deck in a note | Deck Blocks in a Note |
 | Fix / correct a card | Edit Flow |
 | Change a card's question or answer | Edit Flow |
 | Delete a card | Delete Flow |
@@ -124,7 +125,7 @@ CRITICAL: Follow these steps in order. Do not skip any step.
    - Otherwise:
      a. Check for a graph index (`graphify-out/GRAPH_REPORT.md` or `graph.json`). If found, read it — use its note paths and key concepts directly. No further search needed.
      b. If no graph index → `obsidian search query="path:<topic> OR tag:#<topic>" format=json`
-     c. If `obsidian search` fails (CLI not available) → `bash scripts/search_vault.sh "<topic>" 30`
+     c. If `obsidian search` fails or does not respond (CLI not available) → `bash scripts/search_vault.sh "<topic>" 30`
         WARNING (Windows): always invoke as `bash scripts/search_vault.sh ...`. Running the `.sh` file directly on Windows opens it in an editor instead of executing it. If `bash` is not in PATH, use the full path to Git Bash or WSL bash (e.g. `"C:\Program Files\Git\bin\bash.exe" scripts/search_vault.sh ...`).
 5. Note discovery does NOT require source notes to have flashcard tags. AI can read any source note as content input. The flashcard tag is only required on the **file the plugin will scan** (see Terminology). For AI-generated cards, AI sets the tag on the ai-cards output file.
 6. Only use untagged `question :: answer` notes when the user explicitly wants legacy flashcard migration.
@@ -216,7 +217,7 @@ CRITICAL: Follow these steps in order. Do not skip any step.
 5. Read existing hints JSON if present for non-skipped notes.
 6. Add hints only for new cards in non-skipped notes.
 7. Preserve existing hints when possible.
-8. Update `engram-review/scan-record.json` with processed notes (same as Setup Flow step 11).
+8. Update `engram-review/scan-record.json` with processed notes (same as Setup Flow step 12).
 
 ## Edit Flow
 
@@ -269,7 +270,9 @@ Use when the user wants to remove one or more cards entirely, or remove hints fo
 
 CRITICAL: Never delete the source note itself unless the user explicitly asks to delete the note file.
 
-## Single Note Flow
+## Deck Blocks in a Note
+
+Syntax for a `review-deck` block the user can place in their own note so the plugin draws a deck there. It is a reference, not a deliverable (see Output Scope): give the user the block to paste and never insert it into a source note yourself.
 
 ### Mode A: source note
 ````markdown

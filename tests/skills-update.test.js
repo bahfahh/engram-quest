@@ -2,7 +2,7 @@
 // Regression focus: auto-update must work for claude/codex/gemini installs, which
 // carry no "engram-quest-installer:" marker (the old guard only ever matched Cursor).
 import { describe, it, expect } from "vitest";
-import { autoUpdateSkills, checkSkillsUpdates, getInstallPreview } from "../src/hub/skills.js";
+import { autoUpdateSkills, checkSkillsUpdates, getInstallPreview, doInstall } from "../src/hub/skills.js";
 import createInstaller from "../src/skills/installer.js";
 
 // Same installer + embedded skills that hub/skills.js uses internally, so we can
@@ -128,6 +128,40 @@ describe("Pro video content after a licence ends", () => {
   });
 });
 
+describe("Synapse skill after a licence ends", () => {
+  // The content skills run Synapse whenever its skill is installed, so a lapsed licence takes it away.
+  const preview = async (tool, status) => {
+    const root = { claude: ".claude/skills", codex: ".agents/skills", gemini: ".gemini/skills", cursor: ".cursor/skills" }[tool];
+    const folder = `${root}/engram-quest-synapse`;
+    const plugin = makePlugin({ [folder]: "folder" });
+    plugin.license = { state: { status } };
+    const result = await getInstallPreview(plugin, tool);
+    return { folder, removed: result.items.filter((i) => i.action === "remove").map((i) => i.path) };
+  };
+
+  for (const tool of ["claude", "codex", "gemini", "cursor"]) {
+    it(`is offered for removal in ${tool} when the licence has definitely ended`, async () => {
+      const { folder, removed } = await preview(tool, "inactive");
+      expect(removed).toContain(folder);
+    });
+  }
+
+  it("stays when the check merely failed, and for a licence that is valid", async () => {
+    expect((await preview("claude", "offline")).removed).toEqual([]);
+    expect((await preview("claude", "unavailable")).removed).toEqual([]);
+    const plugin = makePlugin({ ".claude/skills/engram-quest-synapse": "folder" });
+    plugin.settings = { licenseValid: true };
+    plugin.license = { state: { status: "active" } };
+    expect((await getInstallPreview(plugin, "claude")).items.filter((i) => i.action === "remove")).toEqual([]);
+  });
+
+  it("does not offer to remove the free skills", async () => {
+    const plugin = makePlugin({ ".claude/skills/engram-quest-review-deck": "folder" });
+    plugin.license = { state: { status: "inactive" } };
+    expect((await getInstallPreview(plugin, "claude")).items.filter((i) => i.action === "remove")).toEqual([]);
+  });
+});
+
 describe("checkSkillsUpdates", () => {
   it("returns only installed-but-outdated toolIds and caches the result", async () => {
     const entries = await claudeEntries();
@@ -148,5 +182,24 @@ describe("checkSkillsUpdates", () => {
     await autoUpdateSkills(plugin); // doInstall runs and clears the cache
     expect(plugin._skillsUpdateStatus).toBe(null);
     expect(await checkSkillsUpdates(plugin)).toEqual([]);
+  });
+});
+
+describe("a failed video asset download", () => {
+  it("still writes the text files, and the error says why the download failed", async () => {
+    const plugin = makePlugin({});
+    plugin.settings = { licenseValid: true };
+    plugin.manifest = { version: "0.0.0-test" };
+    const preview = await getInstallPreview(plugin, "claude");
+    expect(preview.items.some((i) => i.pack)).toBe(true);
+
+    const failure = await doInstall(plugin, preview).then(() => null, (e) => e);
+
+    // The modal shows this message and stays open; it has to say what went wrong, not only that something did.
+    expect(failure).toBeInstanceOf(Error);
+    expect(failure.message).toMatch(/^Couldn.t download the video assets./);
+    expect(failure.message).toMatch(/(.+)$/);
+    for (const entry of preview.items.filter((i) => !i.pack && i.action !== "remove")) expect(plugin.writes[entry.path]).toBe(entry.content);
+    for (const entry of preview.items.filter((i) => i.pack)) expect(plugin.writes[entry.path]).toBeUndefined();
   });
 });

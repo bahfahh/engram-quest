@@ -175,6 +175,10 @@ available, running in fallback mode (full rebuild every run)."
 }
 ```
 
+- A card is one note plus one front. Two notes can hold a card with the same front text, and
+  each appears in `mastered[]` or `targets` on its own, with its own `notePath`. Read a
+  `workQueue` entry together with its `notePath`: the same front can also be listed in
+  `preservedFronts` for the other note, whose entry stays as it is.
 - `catalog` — titles only; `group` is the course or series a lesson or video belongs to.
   `new: true` appears in incremental mode on entries added since the last run. It is `[]`
   when the vault has no such content; then only anchors are paired.
@@ -483,7 +487,7 @@ The dumper alone decides which targets are queued and why; do not re-derive it. 
 
 - **Never pad weak links.** If AI cannot find ≥7-score anchors or relations, return `[]`.
   The plugin's ⚡ button will simply be dimmed for that card. Better dim than misleading.
-- **Same-card pairing**: a card cannot anchor itself. Filter out target == anchor.front.
+- **Same-card pairing**: a card cannot anchor itself. Filter out a pick with the target's `notePath` and `front`.
 - **Failed file writes**: report the error, continue with the next file. Don't abort the whole run.
 - **Gemini / Claude / Cursor parity**: this skill should run identically across all three.
   Avoid IDE-specific syntax; the bundled script and plain file reads and writes are all it needs.

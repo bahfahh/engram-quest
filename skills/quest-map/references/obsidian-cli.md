@@ -59,6 +59,6 @@ obsidian property:set name="status" value="done" file="My Note"
 
 ## Fallback when CLI is unavailable
 
-If `obsidian search` fails (CLI not installed or Obsidian not running), find the note with your
+If `obsidian search` fails or does not respond (CLI not installed, Obsidian not running, or the call just hangs), stop waiting and find the note with your
 own file search over the vault's markdown files. It has no index and no Obsidian syntax, so use
 it only for note discovery.
