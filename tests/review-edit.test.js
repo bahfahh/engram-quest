@@ -60,6 +60,7 @@ describe("saveTagSourceCard", () => {
     let written = null;
     let modifyCount = 0;
     let hintsWritten = null;
+    const isHints = (p) => String(p).startsWith("engram-review/hints/");
     return {
       _getWritten: () => written,
       _getModifyCount: () => modifyCount,
@@ -68,9 +69,13 @@ describe("saveTagSourceCard", () => {
         getAbstractFileByPath: (p) => p ? { path: p } : null,
         read: async () => fileContent,
         modify: async (f, c) => { written = c; modifyCount++; },
+        // The only data file in this vault is the card's hints file.
         adapter: {
-          exists: async () => hintsExist,
-          read: async () => hintsContent || JSON.stringify({ note: "test.md", generated: "2026-01-01", cards: { "What is X?": { l1: "old l1", l2: "old l2", l3: "" } } }),
+          exists: async (p) => isHints(p) && hintsExist,
+          read: async (p) => {
+            if (!isHints(p)) throw new Error("ENOENT " + p);
+            return hintsContent || JSON.stringify({ note: "test.md", generated: "2026-01-01", cards: { "What is X?": { l1: "old l1", l2: "old l2", l3: "" } } });
+          },
           write: async (p, c) => { hintsWritten = { path: p, content: c }; },
         },
       },
