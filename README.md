@@ -46,7 +46,7 @@ The sidebar groups every page by what you are doing:
 - **Learn** — Lessons, Quest Map, Video Academy
 - **Achieve** — Achievements
 
-The library pages (Review Deck, Deep Dive, Memory Map, Lessons, Quest Map, Video Academy) open with their key numbers and a progress bar, then the same toolbar: search, filters, sort, and list / grid / folder views. The **«** button beside the Hub name folds the sidebar into a strip of icons and opens it again (a narrow window always shows the icons); your choice is remembered. The **?** at the bottom of the sidebar, next to Pro, opens the full guide; the **?** beside a page title reopens that page's short guide, which also appears the first time you open the page. On a phone the Hub becomes three tabs at the bottom (Memory, Learn, Achieve), and the **?** sits in the top-right corner.
+The library pages (Review Deck, Deep Dive, Memory Map, Lessons, Quest Map, Video Academy) open with their key numbers and a progress bar, then the same toolbar: search, filters, sort, and list / grid / folder views. The **«** button beside the Hub name folds the sidebar into a strip of icons and opens it again (a narrow window always shows the icons); your choice is remembered. The first time you open the Hub it shows the three steps to start (install the skills, open your AI tool, say what you want) with sentences you can copy. The **?** at the bottom of the sidebar, next to Pro, opens the guide, which starts with the same three steps and keeps each feature's details below; the **?** beside a page title reopens that page's short guide, which also appears the first time you open the page. On a phone the Hub becomes three tabs at the bottom (Memory, Learn, Achieve), and the **?** sits in the top-right corner.
 
 ---
 
@@ -66,7 +66,7 @@ The library pages (Review Deck, Deep Dive, Memory Map, Lessons, Quest Map, Video
 3. **Ask your AI** — *"Turn `Note.md` into a quest-map medium"* or *"Build a review deck from notes tagged math."*
 4. **Open the Hub** — click the EngramQuest ribbon icon, pick the page in the sidebar, and start learning.
 
-> 💬 **Using Claude Desktop?** No terminal required — paste one Setup Prompt and Claude connects to your vault automatically, loads the skills, and remembers the rules. Open the in-plugin guide (the **?** at the bottom of the Hub sidebar), expand **Getting started**, and press **Copy setup prompt** under *No terminal? Use Claude Desktop*. Claude Desktop also has built-in web search and can generate SVG diagrams alongside your content.
+> 💬 **Using Claude Desktop?** No terminal required — paste one Setup Prompt and Claude connects to your vault automatically, loads the skills, and remembers the rules. Open the in-plugin guide (the **?** at the bottom of the Hub sidebar), expand **Skills and AI tools**, and press **Copy setup prompt** under *No terminal? Use Claude Desktop*. Claude Desktop also has built-in web search and can generate SVG diagrams alongside your content.
 
 > **Not a SaaS.** Skills are the execution logic that run inside the AI tool you already have. No extra account, no subscription, and AI is fully optional.
 
@@ -267,7 +267,7 @@ Mark key answers with `==highlight==` or `**bold**`, then add a rule to your AI 
 
 | Pro feature | What it adds | Availability |
 | --- | --- | --- |
-| Memory anchors · Synapse | During review, a small map connects the card to what you have learned: mastered cards, notes, deep dives, lessons and videos, each with the reason it is related | Available; the skill prepares the links |
+| Memory anchors · Synapse | During review, a small map connects the card to what you have learned: mastered cards, notes, deep dives, lessons and videos, each with the reason it is related | Available; first tell your AI tool "build synapse" so the skill prepares the links |
 | Deep dive | Queue difficult cards, generate illustrated explanations with the skill, and read them in the Hub | Available |
 | Time-boxed review | Choose 5 / 10 / 15 minutes to review priority cards | Available |
 | More teachers and recall films | Teachers who each teach in their own way, a teacher per series, and recall films made from your notes | Available; videos are made with Claude Code |
@@ -335,7 +335,7 @@ Anki 解決「何時複習」。EngramQuest 解決「如何真正記住」 — �
 - **學習** — 教材、Quest Map、影片學院
 - **成就**
 
-收藏類的頁面（Review Deck、深入解析、Memory Map、教材、Quest Map、影片學院）先給關鍵數字和進度條，下面是一樣的工具列：搜尋、篩選、排序，以及清單／格狀／資料夾三種檢視。Hub 名稱旁的 **«** 可以把側欄收成一排圖示、再展開（視窗窄時一律是圖示），選擇會記住。側欄底部、Pro 旁邊的 **?** 打開完整說明；頁面標題旁的 **?** 重新打開這一頁的簡短引導，它在你第一次打開這一頁時也會出現。手機上，Hub 變成底部的三個分頁（記憶、學習、成就），**?** 在右上角。
+收藏類的頁面（Review Deck、深入解析、Memory Map、教材、Quest Map、影片學院）先給關鍵數字和進度條，下面是一樣的工具列：搜尋、篩選、排序，以及清單／格狀／資料夾三種檢視。Hub 名稱旁的 **«** 可以把側欄收成一排圖示、再展開（視窗窄時一律是圖示），選擇會記住。第一次打開 Hub 會出現開始的三步（安裝 skills、打開你的 AI 工具、說你要什麼）和可以直接照抄的句子。側欄底部、Pro 旁邊的 **?** 打開指南，最上面是同樣的三步，各功能的細節收在下面；頁面標題旁的 **?** 重新打開這一頁的簡短引導，它在你第一次打開這一頁時也會出現。手機上，Hub 變成底部的三個分頁（記憶、學習、成就），**?** 在右上角。
 
 ---
 
@@ -355,7 +355,7 @@ Anki 解決「何時複習」。EngramQuest 解決「如何真正記住」 — �
 3. **問你的 AI** — *「把 `Note.md` 變成 quest-map medium」* 或 *「用標 math 的筆記建一副 review deck。」*
 4. **打開 Hub** — 點 EngramQuest 的 ribbon 圖示，在側欄選頁面，開始學習。
 
-> 💬 **用 Claude Desktop？** 不需要 terminal — 貼一段 Setup Prompt，Claude 自動連上你的 vault、載入 skills 並記住規則。打開插件的說明（Hub 側欄底部的 **?**），展開「**開始使用**」，在「沒有 terminal？用 Claude Desktop」下面按 **複製設定提示**。Claude Desktop 還有內建網路搜尋，可以生成 SVG 圖解。
+> 💬 **用 Claude Desktop？** 不需要 terminal — 貼一段 Setup Prompt，Claude 自動連上你的 vault、載入 skills 並記住規則。打開插件的說明（Hub 側欄底部的 **?**），展開「**Skills 與 AI 工具**」，在「沒有 terminal？用 Claude Desktop」下面按 **複製設定提示**。Claude Desktop 還有內建網路搜尋，可以生成 SVG 圖解。
 
 > **不是 SaaS。** Skills 是在你已有的 AI 工具裡執行的邏輯，不需要額外帳號、不需要訂閱，而且 AI 完全可選。
 
@@ -556,7 +556,7 @@ EngramQuest 建立在認知科學的四根支柱上：
 
 | Pro 功能 | 提供什麼 | 狀態 |
 | --- | --- | --- |
-| 記憶錨點 · Synapse | 複習時以這張卡為中心，畫出它和你學過內容的關聯：熟卡、筆記、深入解析、教材、影片，每條線都寫著為什麼相關 | 已提供；需先由 skill 建立關聯 |
+| 記憶錨點 · Synapse | 複習時以這張卡為中心，畫出它和你學過內容的關聯：熟卡、筆記、深入解析、教材、影片，每條線都寫著為什麼相關 | 已提供；先跟你的 AI 工具說「幫我建立 Synapse」，由 skill 建立關聯 |
 | 深入解析 | 難卡加入佇列，由 skill 生成白話圖解，再回到 Hub 閱讀 | 已提供 |
 | 限時複習 | 選擇 5／10／15 分鐘，優先挑出需要複習的卡片 | 已提供 |
 | 更多老師與情境回顧片 | 教法各不相同的老師、替系列指定老師，以及把筆記做成回顧片 | 已提供；影片用 Claude Code 製作 |

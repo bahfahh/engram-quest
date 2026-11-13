@@ -437,21 +437,8 @@ const help = `
 .lh-help-lead { margin:0; font-size:15px; line-height:23px; color:var(--text2); }
 .lh-help-note { margin:0; font-size:13px; line-height:19px; color:var(--text3); }
 .lh-help-h { margin:10px 0 0; font-size:17px; line-height:22px; font-weight:600; color:var(--text); }
-.lh-help-map { display:flex; flex-wrap:wrap; align-items:flex-start; gap:12px; }
-.lh-help-grp { flex:1 1 220px; min-width:0; background:var(--card); box-shadow:var(--cshadow); border-radius:16px; padding:4px 0; overflow:hidden; }
-.lh-help-grp-h { display:flex; align-items:baseline; gap:8px; padding:10px 14px 6px; }
-.lh-help-grp-h b { font-size:13px; font-weight:600; color:var(--text); }
-.lh-help-grp-h span { font-size:12px; color:var(--text3); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.lh-hub .lh-help-tab { display:flex; align-items:center; gap:10px; width:100%; min-height:48px; padding:6px 10px 6px 14px; position:relative; color:var(--text); text-align:left; cursor:pointer; }
-.lh-hub .lh-help-tab:hover { background:var(--fill2); }
-.lh-hub .lh-help-tab:focus-visible,.lh-hub .lh-help-sec-h:focus-visible,.lh-hub .lh-guide-opt:focus-visible { outline:2px solid var(--tint); outline-offset:-2px; }
+.lh-hub .lh-help-sec-h:focus-visible,.lh-hub .lh-guide-opt:focus-visible { outline:2px solid var(--tint); outline-offset:-2px; }
 :is(.lh-help,.lh-guide) :is(.lh-link,.lh-guide-back,.lh-guide-zoom,.lh-guide-yt):focus-visible { outline:2px solid var(--tint); outline-offset:2px; border-radius:4px; }
-.lh-help-tab + .lh-help-tab::before { content:""; position:absolute; left:50px; right:0; top:0; height:.5px; background:var(--sep); }
-.lh-help-tab > .lh-i { width:16px; height:16px; color:var(--tint); }
-.lh-help-tab-tx { flex:1; min-width:0; display:flex; flex-direction:column; }
-.lh-help-tab-nm { display:flex; align-items:center; gap:6px; font-size:14px; line-height:19px; font-weight:600; }
-.lh-help-tab-sub { font-size:12px; line-height:16px; color:var(--text3); }
-.lh-help-pro { font-size:11px; line-height:16px; font-weight:600; color:var(--tint); background:var(--chipbg); padding:0 6px; border-radius:6px; }
 .lh-help-acc { background:var(--card); box-shadow:var(--cshadow); border-radius:16px; overflow:hidden; }
 .lh-help-sec + .lh-help-sec { border-top:.5px solid var(--sep); }
 .lh-hub .lh-help-sec-hd { margin:0; font:inherit; }

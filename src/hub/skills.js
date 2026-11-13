@@ -83,4 +83,15 @@ async function renderSkillsUpdateBanner(parent, plugin, stillValid) {
   });
 }
 
-module.exports = { SkillsPreviewModal: ce, SkillsInstallModal: de, isInstallerAvailable: me, getInstallPreview: le, doInstall: De, autoUpdateSkills: pt, checkSkillsUpdates, renderSkillsUpdateBanner };
+// True when any AI tool in this vault already has an EngramQuest skill folder. Existence checks only,
+// so the guide can ask on every open: it decides whether step one offers the installer.
+async function anySkillsInstalled(plugin) {
+  if (!me()) return false;
+  const adapter = plugin.app.vault.adapter;
+  for (const tool of Object.values(G.TOOL_TARGETS))
+    for (const mod of G.MODULES)
+      if (await adapter.exists(`${tool.baseDir}/engram-quest-${mod.id}`)) return true;
+  return false;
+}
+
+module.exports = { anySkillsInstalled, SkillsPreviewModal: ce, SkillsInstallModal: de, isInstallerAvailable: me, getInstallPreview: le, doInstall: De, autoUpdateSkills: pt, checkSkillsUpdates, renderSkillsUpdateBanner };

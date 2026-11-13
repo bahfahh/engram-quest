@@ -8,16 +8,18 @@ const { price: PRICE } = require("../license/config");
 //   steps  numbered list        list   bullet list          first  "first step" box
 //   code   preformatted text    say    things to tell an AI tool
 //   table  rows, the first row is the header
-//   action "pro" (opens the Pro dialog) or "desktopPrompt" (copies the Claude Desktop setup prompt)
+//   action "pro" (opens the Pro dialog), "desktopPrompt" (copies the Claude Desktop setup prompt)
+//          or "installSkills" (opens the skills installer)
 // Inline text may use <strong>, <em> and <code> only; write {configDir} for the vault config folder.
+//
+// `start` is the first screen, which is also the first-run introduction: three steps and a few
+// sentences to say to an AI tool. In a sentence, {braces} mark the example the reader swaps for their
+// own topic. `video` is the YouTube id of the one-minute overview; while it is empty nothing is drawn.
 
 module.exports = {
   zh: {
     ui: {
-      intro: "EngramQuest 把你的 Obsidian 筆記變成一個學習循環：學懂、練會、記住。所有功能都在 Hub 裡，分成三組：",
-      introAi: "不用 AI 也能開始：手寫一張卡就能複習。想讓 AI 幫忙時，安裝 EngramQuest 的 skills，再用你平常的 AI 工具（Claude Code、Codex、Gemini CLI、Cursor）從筆記做出牌組、地圖、課程和影片。",
-      guidesHint: "每個分頁第一次開啟都會跳出圖解說明。點下面任一項可以再看一次。",
-      sectionsHead: "使用說明",
+      detailsHead: "需要時再看",
       openGuide: "看圖解說明",
       firstStep: "第一步",
       copyPrompt: "複製設定提示",
@@ -25,54 +27,57 @@ module.exports = {
       copyFailed: "複製失敗",
       supportAsk: "覺得 EngramQuest 有幫助？",
     },
-    groups: [
-      {
-        id: "memory", name: "記憶", desc: "把學過的留住",
-        tabs: [
-          { tab: "review", name: "Review Deck", sub: "間隔重複閃卡" },
-          { tab: "explainer", name: "深入解析", sub: "難卡的白話圖解", pro: true },
-          { tab: "memory", name: "Memory Map", sub: "用 Canvas 看見結構" },
-          { tab: "episodic", name: "情境回顧", sub: "回到一段時間讀過的東西" },
-        ],
-      },
-      {
-        id: "learn", name: "學習", desc: "學新的、練應用",
-        tabs: [
-          { tab: "lesson", name: "教材", sub: "依你的目標排的互動課程" },
-          { tab: "quest", name: "Quest Map", sub: "把筆記變成應用任務" },
-          { tab: "video", name: "影片學院", sub: "一句話做成教學短片" },
-        ],
-      },
-      {
-        id: "achieve", name: "成就", desc: "看見累積",
-        tabs: [
-          { tab: "achievement", name: "成就系統", sub: "複習統計與徽章" },
-        ],
-      },
-    ],
+    start: {
+      introTitle: "歡迎使用 EngramQuest",
+      lead: "三步就能開始。挑一個功能用就好，其他不用也沒關係。",
+      video: "",
+      videoLabel: "一分鐘看懂 EngramQuest",
+      steps: [
+        { art: "install", title: "安裝 skills", sub: "讓你的 AI 工具學會做 EngramQuest 的內容" },
+        { art: "tool", title: "打開你的 AI 工具", sub: "Claude Code、Codex、Gemini CLI、Cursor 都可以，從這個 vault 的資料夾開啟" },
+        { art: "say", title: "說你要什麼", sub: "做好的內容會出現在這個 Hub" },
+      ],
+      install: "安裝 skills",
+      installed: "已安裝",
+      phoneNote: "這三步在電腦上做；做好的內容會隨 vault 同步到手機。",
+      sayHead: "照著說一句就好，挑一個：",
+      say: [
+        { tab: "lesson", text: "我想學 {SEO}，幫我建一套課程", makes: "教材：一套互動課程" },
+        { tab: "review", text: "把我 {英文單字} 的筆記做成 Review Deck", makes: "Review Deck：會自動排複習的閃卡" },
+        { tab: "quest", text: "把 {微積分} 的筆記做成 Quest Map", makes: "Quest Map：一關一關的應用任務" },
+        { tab: "memory", text: "幫 {作業系統概論.md} 建立 Memory Map", makes: "Memory Map：一張看得見結構的圖" },
+        { tab: "video", text: "把 {架設網站} 做成教學影片", makes: "影片學院：幾支教學短片（要用 Claude Code）" },
+      ],
+      copySay: "複製這句話",
+      manual: "不用 AI？手寫一張卡也能開始",
+      allSay: "每個功能的句子",
+      introHint: "之後可從 Hub 的「?」再看",
+      introDone: "開始",
+    },
     sections: [
       {
-        id: "start", icon: "arrow", title: "開始使用", tag: "從這裡開始",
+        id: "say", icon: "sparkle", title: "對 AI 說什麼", tag: "每個功能一句",
         body: [
-          { h: "不用 AI：一分鐘做出第一副牌組" },
-          { steps: [
-            "在任一筆記加上 tag <code>#flashcards/主題</code>。斜線後面就是牌組名稱，例如 <code>#flashcards/英文</code> 會建立「英文」牌組。",
-            "在同一篇筆記寫一張卡：一行 <code>Q: 問題</code>，下一行 <code>A: 答案</code>。",
-            "點左側功能列的 EngramQuest 圖示（打開的書）開啟 Hub，到 <strong>Review Deck</strong> 就會看到這副牌組，按「複習已就緒卡片」開始。",
+          { p: "裝好 skills 後，從這個 vault 的資料夾開啟 AI 工具，照下面說一句就好；{大括號} 裡換成你自己的主題或筆記。做好的內容會出現在 Hub 對應的分頁。" },
+          { table: [
+            ["想要", "說這句", "用到的 skill"],
+            ["教材", "我想學 {SEO}，幫我建一套課程", "lesson-academy"],
+            ["Review Deck", "把我 {英文單字} 的筆記做成 Review Deck", "review-deck"],
+            ["Quest Map", "把 {微積分} 的筆記做成 Quest Map", "quest-map"],
+            ["Memory Map", "幫 {作業系統概論.md} 建立 Memory Map", "memory-map"],
+            ["影片學院", "把 {架設網站} 做成教學影片", "animated-course（Claude Code）"],
+            ["深入解析（Pro）", "處理解析", "explainer"],
+            ["Synapse（Pro）", "幫我建立 Synapse", "synapse"],
+            ["情境回顧片（Pro）", "做 {這個月} 的情境回顧片", "episodic-review（Claude Code）"],
           ] },
-          { code: "#flashcards/英文\n\nQ: apple 是什麼意思？\nA: 蘋果" },
-          { h: "用 AI：讓你的 AI 工具來做" },
-          { steps: [
-            "到 <strong>設定 → EngramQuest → AI Skills</strong>，按「安裝 skills」，選你用的工具。",
-            "從這個 vault 的資料夾開啟 AI 工具，直接說你要什麼，例如：",
-          ] },
-          { say: [
-            "把 tag:math 的筆記做成 Review Deck",
-            "幫 作業系統概論.md 建立 memory-map",
-            "我想學 SEO，幫我建一套課程",
-            "把 微積分.md 做成 quest-map，medium 難度",
-          ] },
-          { p: "做好的內容會出現在 Hub 對應的分頁。" },
+          { p: "成就系統不需要 AI：複習了就會累積。" },
+        ],
+      },
+      {
+        id: "skills", icon: "layers", title: "Skills 與 AI 工具", tag: "安裝細節",
+        body: [
+          { p: "Skills 是放在 vault 裡、給 AI 工具讀的做法說明；插件本身不呼叫 AI。按下面的按鈕，或到 <strong>設定 → EngramQuest → AI Skills</strong>，選你用的工具安裝。" },
+          { action: "installSkills" },
           { table: [
             ["工具", "Skills 安裝位置"],
             ["Claude Code", "<code>.claude/skills</code>"],
@@ -90,6 +95,14 @@ module.exports = {
         id: "review", tab: "review", icon: "deck", title: "Review Deck", tag: "免費",
         body: [
           { p: "把筆記裡的問答變成閃卡。FSRS 演算法替每張卡排在你快忘記的時候複習；答得越穩，下次間隔拉得越長。" },
+          { h: "不用 AI：手寫第一張卡" },
+          { steps: [
+            "在任一筆記加上 tag <code>#flashcards/主題</code>。斜線後面就是牌組名稱，例如 <code>#flashcards/英文</code> 會建立「英文」牌組。",
+            "在同一篇筆記寫一張卡：一行 <code>Q: 問題</code>，下一行 <code>A: 答案</code>。",
+            "點左側功能列的 EngramQuest 圖示（打開的書）開啟 Hub，到 <strong>Review Deck</strong> 就會看到這副牌組，按「複習已就緒卡片」開始。",
+          ] },
+          { code: "#flashcards/英文\n\nQ: apple 是什麼意思？\nA: 蘋果" },
+          { h: "複習時" },
           { list: [
             "<strong>三階提示</strong>：想不起來時依序打開 L1 回想線索 → L2 當初的筆記 → L3 縮小範圍，最後才看答案。提示由 review-deck skill 產生，也可以在複習時自己編輯。",
             "<strong>評分</strong>：看完答案選「重來／困難／普通／簡單」，下次複習日立刻排好。",
@@ -97,8 +110,12 @@ module.exports = {
             "<strong>串到其他功能</strong>：有對應的 Memory Map 時一鍵打開；從影片來的卡可以「回看這段」。",
             "牌組可依全部／到期／新卡／已完成篩選，切換清單、格狀、資料夾三種檢視；牌組上的 ＋ 可以直接新增卡片。",
           ] },
-          { first: "在筆記加 <code>#flashcards/主題</code> 和一張 <code>Q:</code>／<code>A:</code> 卡，或跟 AI 說「把 [主題] 的筆記做成 Review Deck」。" },
-          { note: "免費。有 Pro 時這裡多三件事：Synapse 記憶錨點、限時複習（5／10／15 分鐘），以及把難卡加入深入解析佇列。" },
+          { h: "Synapse：把難卡接到你學過的（Pro）" },
+          { p: "複習時按卡片上的 Synapse，會看到以這張卡為中心的關聯圖：記熟的卡、來源筆記、深入解析、教材、影片、情境回顧主題，每條線都寫著為什麼相關。看答案前只出現你已經學過的，看答案後才補上還沒看過的。" },
+          { p: "關聯要先讓 AI 跑一次 engram-synapse skill 才會出現。已掌握的卡（穩定度 7 天以上）累積到 10 張後，跟你的 AI 工具說：" },
+          { say: ["幫我建立 Synapse"] },
+          { p: "建立之後平常不用管：你再用 AI 做卡片、課程、影片或解析頁時，skill 會順手更新 Synapse。還沒建立時，Review Deck 頁會提醒你。" },
+          { note: "Review Deck 免費。Synapse、限時複習（5／10／15 分鐘），以及把難卡加入深入解析佇列需要 Pro。" },
         ],
       },
       {
@@ -198,7 +215,7 @@ module.exports = {
         body: [
           { p: "一次買斷，之後的 Pro 功能更新都包含。不升級也能繼續使用所有免費功能。Pro 加的是這四件事：" },
           { list: [
-            "<strong>Synapse 記憶錨點</strong>：把難記的卡連到你學過的相關內容。複習時按 Synapse，會看到以這張卡為中心的關聯圖：記熟的卡、來源筆記、深入解析、教材、影片、情境回顧主題，每條線都寫著為什麼相關。看答案前只出現你已經學過的，看答案後才補上還沒看過的。已掌握的卡（穩定度 7 天以上）累積到 10 張後，執行 engram-synapse skill 建立關聯；Review Deck 頁會提醒你何時該執行或更新。",
+            "<strong>Synapse 記憶錨點</strong>：複習時把難記的卡連到你學過的相關內容。第一次先對 AI 說一句話建立關聯，之後做內容時會自動更新；做法寫在上面的 Review Deck。",
             "<strong>深入解析</strong>：難卡加入佇列，用 engram-explainer skill 生成白話圖解，在「深入解析」分頁閱讀。",
             "<strong>限時複習</strong>：在 Review Deck 頁的「定時」選 5／10／15 分鐘，以一張約一分鐘挑出那麼多張卡，順序是新卡 → 過期最久 → 最快到期。倒數到零會顯示「時間到」，但你可以把這輪做完，排程照常記錄。",
             "<strong>更多老師與情境回顧片</strong>：Nico 以外的影片老師、替每個系列指定老師，以及用 Claude Code 把筆記做成情境回顧片。看影片、管理影片學院、看已經做好的回顧片都免費。",
@@ -246,6 +263,8 @@ module.exports = {
       {
         id: "faq", icon: "help", title: "常見問題", tag: "FAQ",
         body: [
+          { h: "一定要每個功能都用嗎？" },
+          { p: "不用。每個功能都能單獨使用：只做複習牌、定時複習，其他完全不碰也可以。" },
           { h: "沒有安裝 skills 也能用嗎？" },
           { p: "可以。手寫卡片、複習、成就系統、觀看影片和已經做好的內容都不需要 AI。" },
           { h: "來源筆記沒有任何 tag，AI 讀得到嗎？" },
@@ -306,10 +325,7 @@ module.exports = {
 
   en: {
     ui: {
-      intro: "EngramQuest turns your Obsidian notes into a learning loop: understand them, practise them, keep them. Everything lives in the Hub, in three groups:",
-      introAi: "You can start without AI: write one card by hand and review it. When you want help, install the EngramQuest skills and use the AI tool you already have (Claude Code, Codex, Gemini CLI, Cursor) to build decks, maps, courses and videos from your notes.",
-      guidesHint: "Each tab shows a visual guide the first time you open it. Pick one below to see it again.",
-      sectionsHead: "How it works",
+      detailsHead: "More when you need it",
       openGuide: "Visual guide",
       firstStep: "First step",
       copyPrompt: "Copy setup prompt",
@@ -317,54 +333,57 @@ module.exports = {
       copyFailed: "Copy failed",
       supportAsk: "Find EngramQuest helpful?",
     },
-    groups: [
-      {
-        id: "memory", name: "Memory", desc: "Keep what you learned",
-        tabs: [
-          { tab: "review", name: "Review Deck", sub: "Spaced-repetition flashcards" },
-          { tab: "explainer", name: "Deep Dive", sub: "Plain-language help for hard cards", pro: true },
-          { tab: "memory", name: "Memory Map", sub: "See the structure on a canvas" },
-          { tab: "episodic", name: "Recall Films", sub: "Go back to what you read in a period" },
-        ],
-      },
-      {
-        id: "learn", name: "Learn", desc: "Learn and practise",
-        tabs: [
-          { tab: "lesson", name: "Lessons", sub: "Interactive courses built for your goal" },
-          { tab: "quest", name: "Quest Map", sub: "Turn notes into practice missions" },
-          { tab: "video", name: "Video Academy", sub: "One sentence into short lessons" },
-        ],
-      },
-      {
-        id: "achieve", name: "Achieve", desc: "See your progress",
-        tabs: [
-          { tab: "achievement", name: "Achievements", sub: "Review stats and badges" },
-        ],
-      },
-    ],
+    start: {
+      introTitle: "Welcome to EngramQuest",
+      lead: "Three steps and you are going. One feature is enough; you can ignore the rest.",
+      video: "",
+      videoLabel: "EngramQuest in one minute",
+      steps: [
+        { art: "install", title: "Install the skills", sub: "They teach your AI tool how to build EngramQuest content" },
+        { art: "tool", title: "Open your AI tool", sub: "Claude Code, Codex, Gemini CLI or Cursor, started from this vault's folder" },
+        { art: "say", title: "Say what you want", sub: "What it builds shows up in this Hub" },
+      ],
+      install: "Install skills",
+      installed: "Installed",
+      phoneNote: "Do these three steps on a computer; what gets built reaches your phone when the vault syncs.",
+      sayHead: "Say one sentence. Pick any:",
+      say: [
+        { tab: "lesson", text: "I want to learn {SEO}, build me a course", makes: "Lessons: an interactive course" },
+        { tab: "review", text: "Make a Review Deck from my notes on {photography}", makes: "Review Deck: flashcards that schedule themselves" },
+        { tab: "quest", text: "Turn my {calculus} notes into a Quest Map", makes: "Quest Map: practice missions, one at a time" },
+        { tab: "memory", text: "Create a Memory Map for {operating-systems.md}", makes: "Memory Map: the structure as a picture" },
+        { tab: "video", text: "Make teaching videos about {building a website}", makes: "Video Academy: a few short lessons (needs Claude Code)" },
+      ],
+      copySay: "Copy this sentence",
+      manual: "No AI? Start by writing one card by hand",
+      allSay: "A sentence for every feature",
+      introHint: "Open this again any time from the ? in the Hub",
+      introDone: "Got it",
+    },
     sections: [
       {
-        id: "start", icon: "arrow", title: "Getting started", tag: "Start here",
+        id: "say", icon: "sparkle", title: "What to say to your AI", tag: "One sentence each",
         body: [
-          { h: "Without AI: your first deck in a minute" },
-          { steps: [
-            "Add the tag <code>#flashcards/topic</code> anywhere in a note. The part after the slash is the deck name: <code>#flashcards/english</code> makes a deck called \"english\".",
-            "Write a card in the same note: <code>Q: question</code> on one line, <code>A: answer</code> on the next.",
-            "Open the Hub from the EngramQuest icon (an open book) in the left ribbon. The deck is under <strong>Review Deck</strong>; press Review Ready to start.",
+          { p: "With the skills installed, open your AI tool from this vault's folder and say one of these; swap the part in {braces} for your own topic or note. What it builds shows up in the matching Hub tab." },
+          { table: [
+            ["You want", "Say this", "Skill it uses"],
+            ["Lessons", "I want to learn {SEO}, build me a course", "lesson-academy"],
+            ["Review Deck", "Make a Review Deck from my notes on {photography}", "review-deck"],
+            ["Quest Map", "Turn my {calculus} notes into a Quest Map", "quest-map"],
+            ["Memory Map", "Create a Memory Map for {operating-systems.md}", "memory-map"],
+            ["Video Academy", "Make teaching videos about {building a website}", "animated-course (Claude Code)"],
+            ["Deep Dive (Pro)", "Process the deep dive queue", "explainer"],
+            ["Synapse (Pro)", "Build synapse", "synapse"],
+            ["Recall Films (Pro)", "Make a recall film for {this month}", "episodic-review (Claude Code)"],
           ] },
-          { code: "#flashcards/english\n\nQ: What does \"ephemeral\" mean?\nA: Lasting a very short time" },
-          { h: "With AI: let your AI tool build it" },
-          { steps: [
-            "Go to <strong>Settings → EngramQuest → AI Skills</strong>, press Install skills and pick your tool.",
-            "Open the AI tool from this vault's folder and say what you want, for example:",
-          ] },
-          { say: [
-            "Make a Review Deck from my notes tagged math",
-            "Create a memory-map for operating-systems.md",
-            "I want to learn SEO, build me a course",
-            "Turn calculus.md into a quest-map, medium",
-          ] },
-          { p: "What it builds shows up in the matching Hub tab." },
+          { p: "Achievements need no AI: they build up as you review." },
+        ],
+      },
+      {
+        id: "skills", icon: "layers", title: "Skills and AI tools", tag: "Install details",
+        body: [
+          { p: "Skills are instructions that sit in your vault for an AI tool to read; the plugin itself never calls an AI. Press the button below, or go to <strong>Settings → EngramQuest → AI Skills</strong>, and install them for the tool you use." },
+          { action: "installSkills" },
           { table: [
             ["Tool", "Where skills are installed"],
             ["Claude Code", "<code>.claude/skills</code>"],
@@ -382,6 +401,14 @@ module.exports = {
         id: "review", tab: "review", icon: "deck", title: "Review Deck", tag: "Free",
         body: [
           { p: "Questions and answers in your notes become flashcards. FSRS schedules each card for just before you would forget it; the steadier your answers, the longer the next gap." },
+          { h: "Without AI: write your first card by hand" },
+          { steps: [
+            "Add the tag <code>#flashcards/topic</code> anywhere in a note. The part after the slash is the deck name: <code>#flashcards/english</code> makes a deck called \"english\".",
+            "Write a card in the same note: <code>Q: question</code> on one line, <code>A: answer</code> on the next.",
+            "Open the Hub from the EngramQuest icon (an open book) in the left ribbon. The deck is under <strong>Review Deck</strong>; press Review Ready to start.",
+          ] },
+          { code: "#flashcards/english\n\nQ: What does \"ephemeral\" mean?\nA: Lasting a very short time" },
+          { h: "While you review" },
           { list: [
             "<strong>Three hints</strong>: when you're stuck, open L1 recall cue → L2 from your notes → L3 narrowing hint, and only then the answer. The review-deck skill writes the hints, and you can edit them while reviewing.",
             "<strong>Rating</strong>: after the answer, pick Again, Hard, Good or Easy and the next review date is set.",
@@ -389,8 +416,12 @@ module.exports = {
             "<strong>Linked features</strong>: open the matching Memory Map in one click; cards that came from a video can \"Rewatch this part\".",
             "Filter decks by All, Due, New or Done and switch between list, grid and folder views. The + on a deck adds a card.",
           ] },
-          { first: "Add <code>#flashcards/topic</code> and one <code>Q:</code>/<code>A:</code> card to a note, or tell your AI \"Make a Review Deck from my notes on [topic]\"." },
-          { note: "Free. With Pro you also get Synapse memory anchors, Time-boxed review (5, 10 or 15 minutes) and a button that queues a hard card for a Deep Dive." },
+          { h: "Synapse: tie a hard card to what you already know (Pro)" },
+          { p: "During review, the Synapse button on a card opens a small map around it: mastered cards, the source note, deep dives, lessons, videos and recall topics, with the reason written on every line. Before the answer it shows only what you have already learned; the rest appears after." },
+          { p: "The links exist only after your AI has run the engram-synapse skill once. When you have 10 mastered cards (stability of 7 days or more), tell your AI tool:" },
+          { say: ["Build synapse"] },
+          { p: "After that you can leave it alone: whenever your AI builds cards, lessons, videos or deep dives, the skill refreshes Synapse along the way. Until the links exist, the Review Deck page reminds you." },
+          { note: "Review Deck is free. Synapse, Time-boxed review (5, 10 or 15 minutes) and the button that queues a hard card for a Deep Dive need Pro." },
         ],
       },
       {
@@ -490,7 +521,7 @@ module.exports = {
         body: [
           { p: "One purchase, with future Pro feature updates included. Every free feature keeps working without it. Pro adds four things:" },
           { list: [
-            "<strong>Synapse memory anchors</strong>: link a hard card to related things you have already learned. During review, the Synapse button opens a small map around the card: mastered cards, the source note, deep dives, lessons, videos and recall topics, with the reason written on every line. Before the answer it shows only what you have already learned; the rest appears after. Once you have 10 mastered cards (stability of 7 days or more), run the engram-synapse skill to build the links. The Review Deck page tells you when to run or refresh it.",
+            "<strong>Synapse memory anchors</strong>: during review, link a hard card to related things you have already learned. Say one sentence to your AI the first time to build the links; after that they update as you build content. The Review Deck section above shows how.",
             "<strong>Deep Dive</strong>: queue a hard card, generate a plain-language, illustrated page with the engram-explainer skill, and read it in the Deep Dive tab.",
             "<strong>Time-boxed review</strong>: under Timed on the Review Deck page, pick 5, 10 or 15 minutes. At about a minute per card it picks that many cards: new first, then the most overdue, then the soonest due. When the countdown reaches zero it says Time's up, but you can finish the round and scheduling works as usual.",
             "<strong>More teachers and recall films</strong>: the video teachers besides Nico, a teacher for each series, and making recall films from your notes with Claude Code. Watching videos, managing the Video Academy and watching recall films you already have are free.",
@@ -538,6 +569,8 @@ module.exports = {
       {
         id: "faq", icon: "help", title: "FAQ", tag: "FAQ",
         body: [
+          { h: "Do I have to use every feature?" },
+          { p: "No. Each feature works on its own: build review decks and review on schedule, and never touch the rest if you like." },
           { h: "Can I use it without installing skills?" },
           { p: "Yes. Hand-written cards, reviewing, Achievements, watching videos and using anything already made need no AI." },
           { h: "My source notes have no tags. Can the AI still read them?" },
