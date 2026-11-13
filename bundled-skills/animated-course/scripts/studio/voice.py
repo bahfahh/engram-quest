@@ -51,8 +51,10 @@ import numpy as np
 import edge_tts
 import edge_tts.communicate as _c
 
-# The container's outbound HTTPS goes through a proxy with its own CA.
-_c._SSL_CTX = ssl.create_default_context(cafile="/root/.ccr/ca-bundle.crt")
+# A cloud container's outbound HTTPS goes through a proxy with its own CA; every other machine keeps the defaults.
+CA = "/root/.ccr/ca-bundle.crt"
+if os.path.exists(CA):
+    _c._SSL_CTX = ssl.create_default_context(cafile=CA)
 
 SR = 24000
 STUDIO = os.path.dirname(os.path.abspath(__file__))
@@ -62,7 +64,6 @@ USED = set()  # edge-tts cache files this run used (copied into the project's ow
 # later, so retry a lot per line, and run several rounds over the failed lines before giving up.
 RETRIES = int(os.environ.get("TTS_RETRIES", 4))
 ROUNDS = int(os.environ.get("TTS_ROUNDS", 6))
-CA = "/root/.ccr/ca-bundle.crt"
 _HTTPS = ssl.create_default_context(cafile=CA) if os.path.exists(CA) else ssl.create_default_context()
 
 
