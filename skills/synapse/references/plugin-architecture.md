@@ -175,8 +175,8 @@ Edge cases:
 - File names that legitimately contain `__` (rare but possible) cannot be perfectly
   inverted. Synapse must use the SR file ↔ Synapse file naming as the source of truth,
   and look up the actual notePath from the file's metadata if needed.
-- Use `obsidian search` or `app.vault.getAbstractFileByPath` to verify a note exists
-  before recording its path in anchors.
+- An anchor's `notePath` is the one the dump gives for that mastered card; record it as
+  given, without searching the vault for the note.
 
 ## Pool-Change Detection (informational)
 

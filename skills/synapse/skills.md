@@ -1,15 +1,17 @@
 ---
 name: engram-synapse
-description:
-  Build Synapse links for EngramQuest review cards (Pro feature) — for each card the user
-  still struggles with, pick mastered cards as memory anchors plus the lessons, videos,
-  explainer pages and recall topics they already studied that relate to it.
-  Trigger when the user invokes /engram-quest-synapse, asks to "build synapse",
-  "update synapse anchors", "refresh synapse", "update the synapse map", or wants AI-suggested
-  connections between a difficult flashcard and what they already learned. Also run it after
-  new lessons, videos or explainer pages were added, so cards pick up the new content. Always
-  run after the user has accumulated enough mastered cards (FSRS stability ≥ 7) — the skill
-  will gracefully no-op when the pool is too small.
+description: >
+  Build and refresh Synapse links for EngramQuest review cards (Pro feature) — for each card
+  the user still struggles with, pick mastered cards as memory anchors plus the lessons,
+  videos, explainer pages and recall topics they already studied that relate to it.
+  Trigger when the user invokes /engram-quest-synapse, says "build synapse", "update synapse",
+  "refresh synapse anchors", or asks in their own words to have cards connected to what they know —
+  "link my hard cards to things I already learned", "my cards show no links yet, build
+  them", "幫卡片建立關聯", "更新記憶錨點". Also trigger when another
+  EngramQuest skill (review-deck, lesson-academy, explainer, animated-course,
+  episodic-review) hands over to it after making content, so cards pick up the new material.
+  Safe to run at any time — one script call decides what needs doing, and the run ends
+  without an AI pass when nothing changed or fewer than 10 cards are mastered.
 ---
 
 # EngramQuest Synapse Skill (Pro)
@@ -108,8 +110,6 @@ bash scripts/dump_sr_pool.sh
 bash scripts/dump_sr_pool.sh --full
 ```
 
-**Do NOT iterate sr/ or synapse/ with individual Read tool calls — it will be 10× slower.**
-
 ### If `node` is not available
 
 The dumper requires Node.js (≥ 18). If the script exits with `node-not-found` or
@@ -197,12 +197,9 @@ available, running in fallback mode (full rebuild every run)."
 Mastered cards do NOT become targets. They already remember themselves; recommending
 anchors for them adds runtime cost without user value.
 
-**Do NOT scan `engram-review/ai-cards/*.md`. Do NOT run `obsidian search`.** Cards
-without an sr/ entry are intentionally skipped (see "Performance Contract" above).
-
 ## Step 2: Pool Size Gate
 
-If `masteredPool.length < 10` → write status as disabled and stop:
+If the dump's `mode` is `pool-too-small` (`stats.masteredCount` < 10) → write status as disabled and stop:
 
 ```json
 // engram-review/synapse/_status.json
@@ -458,7 +455,7 @@ Report tailored to `mode`:
 [Step 1] bash scripts/dump_sr_pool.sh
    └→ mode in JSON output
 
-mode === "pool-too-small"  → Step 5 status only (write disabled status), tell user
+mode === "pool-too-small"  → Step 2 (write disabled status), tell user
 mode === "noop"            → Step 5 status only (bump generatedAt), Step 6 ℹ
 mode === "incremental"     → Steps 3-4 over workQueue + preserve preservedFronts → Step 5 (status, --mark-seen), 6
 mode === "full"            → Steps 3-4 over targets → Step 5 (status, --mark-seen), 6
@@ -466,9 +463,15 @@ mode === "error"           → Tell user, exit
 ```
 
 The skill is invoked by:
-- User saying `/engram-quest-synapse` (auto mode-detect)
-- User saying `/engram-quest-synapse --full` (force full)
-- Another skill chaining into Synapse after bulk SR updates (incremental)
+- The user: `/engram-quest-synapse` or a request in their own words (auto mode-detect)
+- The user: `/engram-quest-synapse --full` (force full)
+- A content skill (review-deck, lesson-academy, explainer, animated-course, episodic-review)
+  that just made or changed content while Synapse was already enabled. Run auto mode-detect.
+  The user asked for content, not for Synapse, so instead of the Step 6 block hand back one
+  line from this run's own numbers (`Synapse: 5 cards paired, 3 relations added`,
+  `Synapse: already up to date`). `pool-too-small` writes the disabled status and hands
+  back nothing; without node, hand back `Synapse: not updated (Node.js not available)`
+  rather than running the fallback.
 
 The dumper alone decides which targets are queued and why; do not re-derive it. What each
 `reason` means, and what an incremental run deliberately leaves alone, is in
@@ -483,7 +486,7 @@ The dumper alone decides which targets are queued and why; do not re-derive it. 
 - **Same-card pairing**: a card cannot anchor itself. Filter out target == anchor.front.
 - **Failed file writes**: report the error, continue with the next file. Don't abort the whole run.
 - **Gemini / Claude / Cursor parity**: this skill should run identically across all three.
-  Avoid IDE-specific syntax. Use plain Obsidian CLI + bash where vault operations are needed.
+  Avoid IDE-specific syntax; the bundled script and plain file reads and writes are all it needs.
 - **Read-only invariant**: never touch source notes, ai-cards markdown, hints, sr files, or
   the lessons, videos, explainer pages and recall topics under `engram-quest/`.
   Synapse output is exclusively under `engram-review/synapse/`.

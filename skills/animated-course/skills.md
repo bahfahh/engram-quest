@@ -60,8 +60,20 @@ Unless the user specifies otherwise (`reference/02-learning-design.md`):
 | 5 | **Silent review** by a separate reviewer who sees only the stills (`templates/SILENT-REVIEW.md`); fix before rendering | `reference/06-workflow.md` |
 | 6 | Render (cloud: one session per lesson), join, sample-check one full-res frame per segment | `reference/06-workflow.md`, `scripts/farm/` |
 | 7 | Deliver to `engram-quest/videos/<series>/` (with the `cards` module on: write `cards.json` first, deliver writes the review-card deck); after the last lesson of a plugin request, mark the series `ready`; record the user's review | `reference/06-workflow.md`, `reference/10-iteration-and-records.md` |
+| 8 | After the last delivery of the run: refresh Synapse when it is already on (below) | — |
 
 Read `reference/09-pitfalls.md` first: every mistake so far, and what helped.
+
+### Step 8: refresh Synapse when it is already on
+
+Synapse (Pro) links review cards the learner still struggles with to what they have studied, delivered videos included. A learner who has it running should not have to refresh it separately. Once the run has delivered at least one film, check both:
+
+- `engram-review/synapse/_status.json` exists and holds `enabled: true`
+- the Synapse skill is available in the tool you are running in (`engram-synapse`, installed as `engram-quest-synapse` next to this skill)
+
+Both hold → run the Synapse skill in its default mode (no `--full`) without asking, and put the one line it hands back into the final report (`Synapse: 5 cards paired, 3 relations added`, `Synapse: already up to date`); if it hands back nothing, add nothing. Anything else → skip it and do not mention Synapse: starting Synapse is the learner's own step, not something to suggest here.
+
+The films are the deliverable and Synapse is a follow-up. If it fails, the films stay delivered: report them as delivered and add `Synapse: not updated (<reason>)`. Review cards made in this run have no review history yet, so Synapse does not link them until they have been reviewed once; do not report them as linked.
 
 ## The core (rules 0–11)
 

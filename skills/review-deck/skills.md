@@ -66,7 +66,7 @@ PROHIBITED — do not do any of the following:
 
 Code block examples in this document are syntax references only. Do not treat them as deliverables to create.
 
-Task is complete when AI card files and JSON hints are generated. Stop there.
+Task is complete when AI card files and JSON hints are generated. The one thing a flow does beyond these files is "After Cards Change: Refresh Synapse", which writes through the Synapse skill, under that skill's own scope.
 
 ## Trigger Mapping
 
@@ -235,7 +235,7 @@ Use when the user wants to fix or change an existing card's front text, back tex
    - If the front text changed: rename the key in `cards` to match the new front text exactly.
    - Update `l1`, `l2`, `l3` values if the user requested hint changes, or if the front change makes existing hints inaccurate.
 5. Write both the updated card file and the updated hints JSON.
-6. If the front text changed: read `engram-review/sr/{note-key}.json`, rename the key matching the old front text to the new front text, and write the file back. Skip if the file does not exist or the key is not present.
+6. If the front text changed: read `engram-review/sr/{note-key}.json`, rename the key matching the old front text to the new front text, and write the file back. Skip if the file does not exist or the key is not present. Rename the same key under `cards` in `engram-review/synapse/{note-key}.json` the same way (skip if the new front is already there), so the card keeps its links and the links the user rejected.
    CRITICAL: card front text may contain `"`, `\`, newlines, or other special characters. Always use a proper JSON library to parse and serialize — never construct the JSON string manually. Python: `json.loads` / `json.dumps(data, ensure_ascii=False, indent=2)`. Node.js: `JSON.parse` / `JSON.stringify(data, null, 2)`.
 7. Update `engram-review/scan-record.json`: update `mtime` for the affected note.
 8. Report: which card was changed, what changed (front / back / hints), and confirm all files were updated.
@@ -325,6 +325,33 @@ CRITICAL: Image cards are useless if AI does not actually look at the image. Ski
 10. Report: how many images were processed, how many became cards, how many were skipped as decorative.
 
 When the user did NOT explicitly ask for image cards but the source note contains images, follow Setup Flow instead and apply step 8.d's image-handling within it.
+
+## After Cards Change: Refresh Synapse
+
+Synapse (Pro) links cards the user still struggles with to what they have already learned. A
+user who has it running should not have to refresh it separately. So any run that created
+cards or changed a card's front, in whichever flow, takes this step after its files are
+written and before its final report. A run that only explained, deleted, or changed nothing
+skips it.
+
+Check both:
+
+- `engram-review/synapse/_status.json` exists and holds `"enabled": true`
+- the Synapse skill is available in the tool you are running in (`engram-synapse`, installed
+  as `engram-quest-synapse` next to this skill)
+
+| Result | Do |
+|---|---|
+| Both hold | Run the Synapse skill in its default mode (no `--full`) without asking, then put the one line it hands back into your report, e.g. `Synapse: 4 cards paired` or `Synapse: already up to date`; if it hands back nothing, add nothing |
+| Anything else | Skip it and do not mention Synapse: starting Synapse is the user's own step, not something to suggest here |
+
+Be accurate about what the run achieved. Cards that have never been reviewed are invisible to
+Synapse, so cards created in this session get no links yet; the run picks up what changed
+since Synapse last ran (review progress, an edited card front, new lessons, videos or pages).
+Report that, not "your new cards are linked".
+
+The cards are the deliverable and Synapse is a follow-up. If it fails, the flow still
+succeeded: report the cards as done and add `Synapse: not updated (<reason>)`.
 
 ## L1 / L2 / L3 Design
 
