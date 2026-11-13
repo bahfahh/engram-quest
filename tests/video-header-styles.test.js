@@ -71,3 +71,33 @@ describe("video title under the player", () => {
     expect(drawn(row).some((el) => el.hasClass("lh-vid-info-actions"))).toBe(false);
   });
 });
+
+// The shelf page in a narrow desktop window (ticket-053). Its title and the two page buttons shared one
+// row in which only the title could shrink, so "影片學院" became a one-character column; the continue-
+// watching card gave the same squeeze to its text, which vanished beside the thumbnail and the button.
+describe("shelf page in a narrow desktop window", () => {
+  const hubCss = String(require("../src/styles/hub"));
+  const rule = (sheet, selector) => {
+    const line = sheet.split("\n").find((l) => l.startsWith(`${selector} {`));
+    if (!line) return {};
+    return Object.fromEntries(line.slice(line.indexOf("{") + 1, line.lastIndexOf("}")).split(";")
+      .map((d) => [d.slice(0, d.indexOf(":")).trim(), d.slice(d.indexOf(":") + 1).trim()]).filter(([name]) => name));
+  };
+
+  it("lets the page buttons drop below the title, which keeps a width it never shrinks below", () => {
+    expect(rule(hubCss, "body:not(.is-phone) .lh-hd")["flex-wrap"]).toBe("wrap");
+    expect(rule(hubCss, "body:not(.is-phone) .lh-hd-main").flex).toMatch(/^1 1 \d/);
+    expect(rule(hubCss, "body:not(.is-phone) .lh-hd-main")["min-width"]).toMatch(/^min\(100%,/);
+  });
+
+  it("leaves the phone's header as it was: it has no title, so nothing there wraps", () => {
+    expect(hubCss).not.toMatch(/body\.is-phone \.lh-hd \{[^}]*flex-wrap/);
+    expect(hubCss).not.toMatch(/^\.lh-hd \{[^}]*flex-wrap/m);
+  });
+
+  it("keeps the continue-watching text a readable width and drops the button to its own row", () => {
+    expect(rule(css, ".lh-vid-continue")["flex-wrap"]).toBe("wrap");
+    expect(rule(css, ".lh-vid-continue-info")["min-width"]).toMatch(/^min\(100%,/);
+    expect(rule(css, ".lh-vid-continue > .lh-vid-btn").flex).toBe("1 1 auto");
+  });
+});

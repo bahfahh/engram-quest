@@ -181,7 +181,7 @@ class HelpModal extends I.Modal {
   // One sentence to say to an AI tool; pressing it copies it.
   renderSay(list, item, start) {
     const plain = plainSentence(item.text);
-    const row = list.createEl("button", { cls: "lh-start-row", attr: { title: start.copySay, "aria-label": `${start.copySay}: ${plain}` } });
+    const row = list.createEl("button", { cls: "lh-start-row", attr: { "aria-label": `${start.copySay}: ${plain}` } });
     tile(row, this.plugin, item.tab);
     const text = row.createSpan({ cls: "lh-start-row-tx" });
     sentence(text.createSpan({ cls: "lh-start-q" }), item.text);

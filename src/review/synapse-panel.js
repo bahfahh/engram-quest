@@ -10,6 +10,7 @@ const { t: c, interpolate: K } = require("../i18n");
 const { icon, featureIcon, isPhone } = require("../hub/ui");
 const { isLearned } = require("./synapse-graph");
 const { arrangeSynapseMap, spinePaths } = require("./synapse-layout");
+const { plainTitle } = require("./plain-title");
 
 const MAP_MIN_WIDTH = 640; // narrower than this the side columns cannot hold a readable node
 const SVG_NS = "http://www.w3.org/2000/svg";
@@ -70,7 +71,7 @@ function renderSynapseMap(parent, opts) {
     map.appendChild(activeDocument.createElementNS(SVG_NS, "svg")).setAttribute("class", "lh-syg-wires");
     const root = map.createEl("div", { cls: "lh-syg-root" });
     root.createEl("span", { cls: "lh-syg-root-cap", text: c(t, "SYNAPSE_CENTER") });
-    root.createEl("span", { cls: "lh-syg-root-tt", text: card.front || "" });
+    root.createEl("span", { cls: "lh-syg-root-tt", text: plainTitle(card.front) || c(t, "SYNAPSE_IMAGE_CARD") });
     const sides = arrangeSynapseMap(graph.branches);
     for (const side of ["left", "right"]) {
       if (!sides[side].length) continue;
@@ -108,7 +109,8 @@ function renderBranches(list, nodes, opts) {
     if (type.feature) featureIcon(el, opts.plugin, type.feature, { size: 32, fallback: type.icon });
     else icon(el.createEl("span", { cls: "lh-syg-ic" }), type.icon);
     const text = el.createEl("span", { cls: "lh-syg-tx" });
-    text.createEl("span", { cls: "lh-syg-tt", text: node.title });
+    // A card's front is Markdown; a picture-only front has no words, so the node says what kind of card it is.
+    text.createEl("span", { cls: "lh-syg-tt", text: node.type === "card" ? plainTitle(node.title) || c(t, "SYNAPSE_IMAGE_CARD") : node.title });
     const meta = text.createEl("span", { cls: "lh-syg-meta" });
     const state = stateLabel(node);
     if (state) meta.createEl("span", { cls: "lh-syg-st", text: c(t, state), attr: { "data-state": node.state } });

@@ -224,7 +224,7 @@ function renderCourseCard(strip, hub, t, course, state, refresh) {
     refresh();
   });
   card.createEl("div", { cls: "lh-cc-em", text: meta.icon });
-  const star = card.createEl("button", { cls: "lh-cc-st", text: meta.starred ? "★" : "☆", attr: { "aria-label": c(t, "FILTER_STARRED"), "aria-pressed": String(!!meta.starred), title: c(t, "FILTER_STARRED") } });
+  const star = card.createEl("button", { cls: "lh-cc-st", text: meta.starred ? "★" : "☆", attr: { "aria-label": c(t, "FILTER_STARRED"), "aria-pressed": String(!!meta.starred) } });
   star.classList.toggle("on", !!meta.starred);
   star.addEventListener("click", async (e) => {
     e.stopPropagation();
@@ -375,7 +375,7 @@ function renderLessonRow(list, hub, t, course, lesson, refresh) {
   if (typeof lesson.goal === "string" && lesson.goal.trim()) {
     mid.createEl("div", { cls: "lh-ls-goal", text: lesson.goal, attr: { title: lesson.goal } });
   }
-  if (comp.starred) ui.icon(row.createEl("span", { cls: "lh-xstar", attr: { title: c(t, "FILTER_STARRED"), "aria-label": c(t, "FILTER_STARRED") } }), "star");
+  if (comp.starred) ui.icon(row.createEl("span", { cls: "lh-xstar", attr: { "aria-label": c(t, "FILTER_STARRED") } }), "star");
   row.createEl("span", { cls: "lh-st " + (visual.tone || (lesson.file ? "td" : "")), text: visual.label });
   ui.rowActions(row, [{ name: "trash", label: c(t, "DELETE"), run: () => confirmDeleteLesson(hub, t, slug, lesson, refresh) }]);
   // A planned lesson has nothing to open yet, so it gets no "open" chevron.

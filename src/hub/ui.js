@@ -124,7 +124,7 @@ function applyHubVars(el, dark) {
 // The round button that brings a minimized Hub or review back. It lives on <body>, outside any
 // themed dialog, so it carries the theme classes itself.
 function restoreButton(plugin, label, onClick) {
-  const btn = activeDocument.body.createEl("button", { cls: "lh-theme lh-fab" + (isDark() ? " lh-dark" : ""), attr: { "aria-label": label, title: label } });
+  const btn = activeDocument.body.createEl("button", { cls: "lh-theme lh-fab" + (isDark() ? " lh-dark" : ""), attr: { "aria-label": label } });
   featureIcon(btn, plugin, "logo", { size: 30, fallback: "book" });
   btn.addEventListener("click", onClick);
   const ref = plugin.app.workspace.on("css-change", () => btn.toggleClass("lh-dark", isDark()));
@@ -238,7 +238,7 @@ function track(parent, pct, ok) {
 function segmented(parent, options, value, onChange, cls = "") {
   const seg = parent.createEl("div", { cls: "lh-seg " + cls, attr: { role: "group" } });
   const buttons = options.map(({ value: v, label, icon: name, title }) => {
-    const btn = seg.createEl("button", { cls: v === value ? "on" : "", attr: { "aria-pressed": String(v === value), ...(title ? { title, "aria-label": title } : {}) } });
+    const btn = seg.createEl("button", { cls: v === value ? "on" : "", attr: { "aria-pressed": String(v === value), ...(title ? { "aria-label": title } : {}) } });
     if (name) icon(btn, name); else btn.textContent = label;
     btn.addEventListener("click", () => {
       buttons.forEach(([b, x]) => { b.classList.toggle("on", x === v); b.setAttribute("aria-pressed", String(x === v)); });
@@ -251,7 +251,7 @@ function segmented(parent, options, value, onChange, cls = "") {
 
 // The first option is the default; any other value shows in the tint colour. A sort control always does.
 function filterSelect(parent, options, value, onChange, { sort = false, label } = {}) {
-  const sel = parent.createEl("select", { cls: "lh-fp", attr: label ? { "aria-label": label, title: label } : {} });
+  const sel = parent.createEl("select", { cls: "lh-fp", attr: label ? { "aria-label": label } : {} });
   options.forEach(([v, text]) => { sel.createEl("option", { text, attr: { value: v } }).selected = v === value; });
   const paint = () => sel.classList.toggle("is-set", sort || sel.selectedIndex > 0);
   paint();
@@ -351,7 +351,7 @@ async function saveViewMode(hub, mode) {
 function viewToggle(parent, hub, onChange) {
   const t = hub.plugin.settings;
   if (isPhone()) {
-    const btn = parent.createEl("button", { cls: "lh-pcycle", attr: { "aria-label": c(t, "VIEW_CYCLE"), title: c(t, "VIEW_CYCLE") } });
+    const btn = parent.createEl("button", { cls: "lh-pcycle", attr: { "aria-label": c(t, "VIEW_CYCLE") } });
     const paint = () => { btn.empty(); icon(btn, (VIEW_MODES.find(m => m[0] === hub.viewMode) || VIEW_MODES[0])[1]); };
     paint();
     btn.addEventListener("click", async () => {

@@ -462,7 +462,7 @@ var Q=class extends I.Modal{
         this._tickTimer();
       }
       const acts=nav.createEl("div",{cls:"lh-snav-acts"});
-      bindMemoryMap(_uiIcon(acts.createEl("button",{cls:"lh-sib",attr:{"aria-label":c(t,"MEMORY_MAP"),title:c(t,"MEMORY_MAP")}}),"map"));
+      bindMemoryMap(_uiIcon(acts.createEl("button",{cls:"lh-sib",attr:{"aria-label":c(t,"MEMORY_MAP")}}),"map"));
       _uiIconButton(acts,"reset",c(t,"RESET_HINTS"),resetHints,"lh-sib");
       _uiIconButton(acts,"more",c(t,"MORE_ACTIONS"),openMore,"lh-sib");
       const prog=this.contentEl.createEl("div",{cls:"lh-sprog"});
@@ -506,7 +506,7 @@ var Q=class extends I.Modal{
       this.browseOnly&&d.createEl("span",{text:c(t,"BROWSE_ONLY"),attr:{class:"lh-rc-badge"}});
       // Source note buttons — for AI cards show sourceNotePaths only, for hand-written show notePath
       if(notePaths.length>0){
-        let srcWrap=d.createEl("div",{attr:{style:"display:flex;align-items:center;gap:4px;margin-left:auto;flex-shrink:1;min-width:0;"}});
+        let srcWrap=d.createEl("div",{cls:"lh-rc-srcs"});
         notePaths.forEach(np=>{
           let name=np.split("/").pop().replace(/\.md$/i,"");
           let btn=srcWrap.createEl("button",{attr:{class:"lh-rc-edit-btn lh-rc-src",title:np}});
@@ -563,7 +563,7 @@ var Q=class extends I.Modal{
     const refreshSynapseContainer=()=>{
       synapseContainer.empty();
       if(!this.synapseOpen||!synapseEnabled) return;
-      this._renderSynapsePanel(synapseContainer,e,t,renderMd,refreshSynapseContainer);
+      this._renderSynapsePanel(synapseContainer,e,t,renderMd,refreshSynapseContainer,revealSynapse);
     };
     // After the answer the map opens below it, possibly out of view: bring it in.
     const revealSynapse=()=>{ if(this.synapseOpen) synapseContainer.scrollIntoView({block:"nearest"}); };
@@ -823,11 +823,13 @@ var Q=class extends I.Modal{
   // The relation map around this card. Before the answer it holds only what the user has already
   // learned; the graph builder leaves the rest, and any text spelling out the answer, for after.
   // A failure in here leaves the panel empty and the rest of the card as it was.
-  _renderSynapsePanel(parent,card,t,renderMd,refresh){
+  // `afterLoad` runs once a map that had to be read first is drawn: the scroll that brings the map into
+  // view has to wait for it, or it scrolls to the one-line "loading" panel the map starts as.
+  _renderSynapsePanel(parent,card,t,renderMd,refresh,afterLoad){
     try{
       if(!this._synapse.ready){
         renderSynapseMap(parent,{t,card,loading:true,revealed:this.answerShown});
-        this._synapse.load().then(drawable=>{ if(drawable&&parent.isConnected) refresh(); });
+        this._synapse.load().then(drawable=>{ if(drawable&&parent.isConnected){ refresh(); if(afterLoad) afterLoad(); } });
         return;
       }
       renderSynapseMap(parent,{

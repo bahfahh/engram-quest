@@ -117,7 +117,7 @@ function renderTimeboxRow(parent, plugin, app, decks, openSession, backToHub) {
   const seg = parent.createEl("div", { cls: "lh-seg" });
   [5, 10, 15].forEach((minutes) => {
     const title = `${minutes} ${minSuffix}`;
-    const btn = seg.createEl("button", { text: String(minutes), attr: { title, "aria-label": title } });
+    const btn = seg.createEl("button", { text: String(minutes), attr: { "aria-label": title } });
     btn.addEventListener("click", () => pickAndOpen(minutes));
   });
 }
