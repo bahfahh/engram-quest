@@ -156,6 +156,15 @@ describe("feature entry styles", () => {
     expect(header["justify-content"]).toBe("flex-start");
   });
 
+  it("on a phone gives each entry half the row and a finger-sized height, and lets a long label wrap", () => {
+    const entry = declarations(`body.is-phone ${S} .lh-ans-feature`);
+    expect(entry.flex).toBe("0 1 calc(50% - 5px)"); // one entry alone keeps the size it has in a pair
+    expect(parseFloat(entry["min-height"])).toBeGreaterThanOrEqual(44);
+    expect(entry.height).toBe("auto");
+    expect(entry["white-space"]).toBe("normal");
+    expect(declarations(`body.is-phone ${S} .lh-answer-features`).gap).toBe("10px");
+  });
+
   it("shows done in the finished colour, not the grey of a disabled button", () => {
     const done = declarations(`${S} .lh-ans-feature.is-done`);
     expect(done.color).toBe("var(--mstt) !important");
