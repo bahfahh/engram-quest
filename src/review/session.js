@@ -381,9 +381,14 @@ var Q=class extends I.Modal{
     // Render markdown into el (clears existing children first), then run the
     // standard embed/image-zoom post-processors. Used for question, hints,
     // answer (initial), and answer (in-place refresh after format apply).
+    // One owner per card for what the rendered markdown registers (copy buttons, embeds, other plugins'
+    // code blocks): it lives as long as the card and is unloaded when the next card is drawn or the window closes.
+    this._mdOwner&&this._mdOwner.unload();
+    const mdOwner=this._mdOwner=new I.Component();
+    mdOwner.load();
     const renderMd=(el,text)=>{
       el.empty();
-      I.MarkdownRenderer.renderMarkdown(normalizeMarkdown(text||""),el,e.notePath||"",null);
+      I.MarkdownRenderer.renderMarkdown(normalizeMarkdown(text||""),el,e.notePath||"",mdOwner);
       postProcessEmbed(el,this.app,e.notePath||"");
       attachImgZoom(el);
     };
@@ -923,6 +928,7 @@ var Q=class extends I.Modal{
     if(this._fab){this._fab.remove();this._fab=null;}
   }
   onClose(){
+    if(this._mdOwner){this._mdOwner.unload();this._mdOwner=null;}
     if(this._timerIntervalId){window.clearInterval(this._timerIntervalId);this._timerIntervalId=null;}
     this._timerEl=null;
     if(this._fab){this._fab.remove();this._fab=null;}

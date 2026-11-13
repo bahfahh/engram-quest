@@ -270,8 +270,12 @@ body.is-mobile .lh-ra { opacity:1; }
 .lh-hub .lh-ra button:hover { background:var(--raisedh); color:var(--tint); }
 .lh-hub .lh-ra .lh-i { width:16px; height:16px; stroke-width:1.8; }
 
-.lh-tbl { background:var(--card); box-shadow:var(--cshadow); border-radius:16px; overflow:hidden; }
-.lh-th,.lh-tr { display:grid; align-items:center; column-gap:12px; padding:0 14px; font-variant-numeric:tabular-nums; }
+.lh-tbl { background:var(--card); box-shadow:var(--cshadow); border-radius:16px; overflow:hidden; container:lh-tbl / inline-size; }
+.lh-th,.lh-tr { display:grid; grid-template-columns:minmax(0,1fr) 92px 60px 60px 60px 180px 64px; align-items:center; column-gap:12px; padding:0 14px; font-variant-numeric:tabular-nums; }
+/* The deck name takes what the number columns leave. When the table is too narrow for all of them, the due and
+   new counts go first (ready now is their sum), then total and mastered, so the name always has room. */
+@container lh-tbl (max-width:760px) { .lh-th,.lh-tr { grid-template-columns:minmax(112px,1fr) 80px 60px 120px 64px; } .lh-tbl .lh-tc-split { display:none; } }
+@container lh-tbl (max-width:500px) { .lh-th,.lh-tr { grid-template-columns:minmax(0,1fr) 80px 64px; } .lh-tbl .lh-tc-extra { display:none; } }
 .lh-th { height:38px; font-size:12px; font-weight:500; color:var(--text3); border-bottom:.5px solid var(--sep); }
 .lh-th .td,.lh-th .tn,.lh-th .tm,.lh-th .tl { font-weight:600; }
 .lh-tr { min-height:58px; position:relative; font-size:14px; color:var(--text); cursor:pointer; }

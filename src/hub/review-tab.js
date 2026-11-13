@@ -68,30 +68,29 @@ function renderGrid(parent, hub, decks, refresh) {
   });
 }
 
-const TABLE_COLUMNS = "grid-template-columns:minmax(0,1fr) 92px 60px 60px 60px 180px 64px";
 
 function renderTable(parent, hub, decks, refresh) {
   const t = hub.plugin.settings;
   const table = parent.createEl("div", { cls: "lh-tbl" });
-  const head = table.createEl("div", { cls: "lh-th", attr: { style: TABLE_COLUMNS } });
+  const head = table.createEl("div", { cls: "lh-th" });
   head.createEl("span", { text: c(t, "DECK_COLUMN") });
   head.createEl("span", { cls: "lh-r", text: c(t, "READY_NOW") });
-  head.createEl("span", { cls: "lh-r td", text: c(t, "FILTER_DUE") });
-  head.createEl("span", { cls: "lh-r tn", text: c(t, "FILTER_NEW") });
-  head.createEl("span", { cls: "lh-r", text: c(t, "TOTAL") });
-  head.createEl("span", { cls: "tm", text: c(t, "MASTERED_COLUMN") });
+  head.createEl("span", { cls: "lh-r td lh-tc-split", text: c(t, "FILTER_DUE") });
+  head.createEl("span", { cls: "lh-r tn lh-tc-split", text: c(t, "FILTER_NEW") });
+  head.createEl("span", { cls: "lh-r lh-tc-extra", text: c(t, "TOTAL") });
+  head.createEl("span", { cls: "tm lh-tc-extra", text: c(t, "MASTERED_COLUMN") });
   head.createEl("span");
   decks.forEach((deck) => {
     const s = deckStats(deck), { name, path } = deckName(deck);
-    const row = table.createEl("div", { cls: "lh-tr", attr: { style: TABLE_COLUMNS, title: s.ready === 0 ? idleHint(deck, t) : deck.name } });
+    const row = table.createEl("div", { cls: "lh-tr", attr: { title: s.ready === 0 ? idleHint(deck, t) : deck.name } });
     const cell = row.createEl("div", { attr: { style: "min-width:0" } });
     cell.createEl("div", { cls: "lh-nm", text: name });
     cell.createEl("div", { cls: "lh-pth", text: s.ready > 0 ? path : interpolate(c(t, "ALL_SCHEDULED"), { total: deck.total }) });
     row.createEl("span", { cls: "lh-r lh-strong" + (s.ready ? "" : " dim"), text: String(s.ready) });
-    row.createEl("span", { cls: "lh-r" + (deck.due ? "" : " dim"), text: String(deck.due) });
-    row.createEl("span", { cls: "lh-r" + (deck.unseen ? "" : " dim"), text: String(deck.unseen) });
-    row.createEl("span", { cls: "lh-r", text: String(deck.total) });
-    const mini = row.createEl("div", { cls: "lh-mini" });
+    row.createEl("span", { cls: "lh-r lh-tc-split" + (deck.due ? "" : " dim"), text: String(deck.due) });
+    row.createEl("span", { cls: "lh-r lh-tc-split" + (deck.unseen ? "" : " dim"), text: String(deck.unseen) });
+    row.createEl("span", { cls: "lh-r lh-tc-extra", text: String(deck.total) });
+    const mini = row.createEl("div", { cls: "lh-mini lh-tc-extra" });
     ui.track(mini, s.masteryPct, true);
     mini.createEl("span", { text: `${s.masteryPct}%`, attr: { style: "min-width:30px;text-align:right" } });
     deckActions(row, hub, deck, refresh);

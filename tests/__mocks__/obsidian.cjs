@@ -40,6 +40,12 @@ class MockEl {
   set textContent(v) {}
 }
 
+class Component {
+  constructor() { this.loaded = false; this.unloads = 0; }
+  load() { this.loaded = true; }
+  unload() { this.loaded = false; this.unloads += 1; }
+}
+
 class Modal {
   constructor(app) {
     this.app = app;
@@ -76,6 +82,7 @@ const activeDocument = typeof document !== "undefined" ? document : {
 };
 
 module.exports = {
+  Component,
   Modal,
   Plugin,
   PluginSettingTab,
