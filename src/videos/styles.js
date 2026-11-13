@@ -5,9 +5,14 @@
 
 module.exports = `
 .lh-vid { flex:1; display:flex; flex-direction:column; gap:12px; min-height:0; overflow:hidden; }
-.lh-vid-head-row { display:flex; align-items:center; gap:10px; flex:none; min-height:32px; padding-right:92px; }
-.lh-vid-head-title { font-size:17px; line-height:24px; font-weight:600; color:var(--text); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-.lh-vid-head-row .lh-vid-spacer { flex:1; }
+/* Player page header: back, series name, page actions. The right padding is the room the Hub's
+   minimise / close buttons take on the first line. When the window is too narrow for one line the
+   row wraps: the actions move down first, then the name, which never shrinks below a readable width.
+   Below the first line nothing is beside the window buttons, so the actions may use the full width
+   there, and wrap among themselves when even that is too narrow. */
+.lh-vid-head-row { display:flex; flex-wrap:wrap; align-items:center; gap:8px 10px; flex:none; min-height:32px; padding-right:92px; }
+.lh-vid-head-title { flex:1 1 0; min-width:min(100%,8em); font-size:17px; line-height:24px; font-weight:600; color:var(--text); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.lh-vid-head-actions { display:flex; flex-wrap:wrap; gap:8px 10px; flex:none; max-width:calc(100% + 92px); }
 .lh-vid-body { display:flex; flex-direction:column; gap:12px; }
 .lh-vid-spacer { flex:1; }
 
@@ -162,6 +167,11 @@ body:not(.is-phone) .lh-vid > .lh-scroll { container:lh-vid / size; }
 .lh-vid-icon-btn svg { width:16px; height:16px; }
 .lh-vid-info-titles { flex:1; min-width:0; }
 .lh-vid-info-title { font-size:17px; line-height:24px; font-weight:600; color:var(--text); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+/* Desktop: the title may take two lines, and in a row too narrow for title and buttons the buttons drop below it. */
+body:not(.is-phone) .lh-vid-info-row { flex-wrap:wrap; }
+body:not(.is-phone) .lh-vid-info-titles { flex:1 1 9em; }
+.lh-vid-info-actions { display:flex; align-items:center; gap:12px; flex:none; }
+body:not(.is-phone) .lh-vid-info-title { white-space:normal; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow-wrap:anywhere; }
 .lh-vid-info-meta { display:flex; align-items:center; flex-wrap:wrap; gap:4px 10px; font-size:13px; line-height:18px; color:var(--text3); }
 .lh-vid-sources { display:flex; flex-wrap:wrap; gap:4px 10px; font-size:13px; line-height:18px; color:var(--text3); }
 .lh-vid-source { color:var(--tint); cursor:pointer; text-decoration:none; }

@@ -88,8 +88,7 @@ async function renderVideoTab(el, hub) {
     const head = root.createDiv({ cls: "lh-vid-head-row" });
     head.createEl("button", { cls: "lh-vid-back", text: c(t, "VIDEO_BACK") }).addEventListener("click", toShelf);
     head.createSpan({ cls: "lh-vid-head-title", text: open.meta.title });
-    head.createDiv({ cls: "lh-vid-spacer" });
-    actions(head);
+    actions(head.createDiv({ cls: "lh-vid-head-actions" }));
   } else if (!open) {
     const { right } = ui.pageHeader(root, hub, { titleKey: "TAB_VIDEO", guide: "video" });
     actions(right());
@@ -328,10 +327,12 @@ function renderTopic(body, hub, t, topic, refresh) {
   const infoMeta = titles.createDiv({ cls: "lh-vid-info-meta" });
   if (video.duration) infoMeta.createSpan({ text: fmtTime(video.duration) });
   if (video.cast) teacherTag(infoMeta, t, teacherOfVideo(video.cast.teacher), video.cast.variant);
+  // On a desktop the buttons are one group, so in a narrow window they drop below the title together.
+  const tools = phone ? titleRow : titleRow.createDiv({ cls: "lh-vid-info-actions" });
   // Desktop only: open the OS file manager at this video's mp4 (or its folder if the file isn't on this device).
   if (I.Platform.isDesktopApp && typeof hub.app.showInFolder === "function") {
     const label = c(t, "VIDEO_SHOW_IN_FOLDER");
-    const reveal = titleRow.createEl("button", { cls: "lh-vid-btn lh-vid-icon-btn", attr: { "aria-label": label, title: label } });
+    const reveal = tools.createEl("button", { cls: "lh-vid-btn lh-vid-icon-btn", attr: { "aria-label": label, title: label } });
     I.setIcon(reveal, "folder-open");
     reveal.addEventListener("click", async () => {
       const dir = I.normalizePath(`${data.VIDEOS_DIR}/${slug}`);
@@ -341,7 +342,7 @@ function renderTopic(body, hub, t, topic, refresh) {
     });
   }
   const done = data.videoProgress(meta, video.id).completed;
-  const doneBtn = titleRow.createEl("button", { cls: phone ? "lh-pbtn" + (done ? " alt" : "") : "lh-vid-btn" + (done ? " is-done" : " lh-vid-btn-primary"), text: c(t, done ? "VIDEO_MARKED_DONE" : "VIDEO_MARK_DONE") });
+  const doneBtn = tools.createEl("button", { cls: phone ? "lh-pbtn" + (done ? " alt" : "") : "lh-vid-btn" + (done ? " is-done" : " lh-vid-btn-primary"), text: c(t, done ? "VIDEO_MARKED_DONE" : "VIDEO_MARK_DONE") });
   doneBtn.addEventListener("click", () => { save({ completed: !done }); leave({ slug, videoId: video.id, autoplay: false }); });
 
   if (meta.sources.length) {
