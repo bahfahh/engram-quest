@@ -182,12 +182,12 @@ body:not(.is-phone) .lh-hub.lh-session .lh-answer-header { flex-wrap:wrap; row-g
    wrapped nor scrolled and ran out of the card, and the copy button it adds sat unstyled in the text. The
    block scrolls sideways when its lines are wider than the card, and the button is Obsidian's own, placed
    in the corner and shown on hover (always on a phone, which has no hover). */
-.lh-hub.lh-session :is(.lh-rc-question,.lh-hint-text,.lh-answer-text,.lh-syg-back) pre { position:relative; max-width:100%; margin:8px 0; padding:10px 12px; border-radius:10px; background:var(--fill); font-size:13px; line-height:1.55; overflow-x:auto; }
+.lh-hub.lh-session :is(.lh-rc-question,.lh-hint-text,.lh-answer-text,.lh-syg-back) pre { position:relative; max-width:100%; margin:8px 0; padding:10px 12px; padding-inline-end:40px; border-radius:10px; background:var(--fill); font-size:13px; line-height:1.55; overflow-x:auto; }
 .lh-hub.lh-session :is(.lh-rc-question,.lh-hint-text,.lh-answer-text,.lh-syg-back) pre code { padding:0; border:0; background:none; }
 .lh-hub.lh-session :is(.lh-rc-question,.lh-hint-text,.lh-answer-text,.lh-syg-back) pre > button.copy-code-button { position:absolute; top:4px; inset-inline-end:4px; display:grid; place-items:center; width:30px; height:30px; margin:0; padding:0 !important; border:0 !important; border-radius:8px !important; background:var(--card) !important; box-shadow:0 0 0 1px var(--sep) !important; color:var(--text2) !important; cursor:pointer; }
 .lh-hub.lh-session :is(.lh-rc-question,.lh-hint-text,.lh-answer-text,.lh-syg-back) pre > button.copy-code-button:hover { background:var(--raisedh) !important; color:var(--tint) !important; }
 .lh-hub.lh-session :is(.lh-rc-question,.lh-hint-text,.lh-answer-text,.lh-syg-back) pre > button.copy-code-button .svg-icon { width:16px; height:16px; }
-body:not(.is-phone) .lh-hub.lh-session :is(.lh-rc-question,.lh-hint-text,.lh-answer-text,.lh-syg-back) pre:not(:hover):not(:focus-within) > button.copy-code-button { display:none; }
+body:not(.is-phone):not(.is-tablet) .lh-hub.lh-session :is(.lh-rc-question,.lh-hint-text,.lh-answer-text,.lh-syg-back) pre:not(:hover):not(:focus-within) > button.copy-code-button { display:none; }
 .lh-hub.lh-session .lh-pill-row { gap:10px; }
 .lh-hub.lh-session .lh-pill-btn { display:inline-flex; align-items:center; justify-content:center; gap:10px; border:0 !important; background:var(--tone) !important; color:var(--tint) !important; box-shadow:var(--tonering) !important; border-radius:12px; font-size:15px; font-weight:600; min-height:46px; transform:none; filter:none; opacity:1; cursor:pointer; }
 .lh-hub.lh-session .lh-pill-btn:hover { background:var(--toneh) !important; }

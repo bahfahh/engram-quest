@@ -77,7 +77,7 @@ class ExplainerViewerModal extends I.Modal {
         const active = !!this.page["_" + flag];
         btn.empty();
         ui.icon(btn, active ? onGlyph : offGlyph);
-        btn.title = active ? offTip : onTip;
+        btn.setAttribute("aria-label", active ? offTip : onTip);
         btn.setAttribute("aria-pressed", String(active));
         btn.classList.toggle("is-on", active);
       };
@@ -96,7 +96,6 @@ class ExplainerViewerModal extends I.Modal {
 
     const delBtn = headerBtn(" is-icon is-danger");
     delBtn.setAttribute("aria-label", c(t, "DELETE"));
-    delBtn.title = c(t, "DELETE");
     ui.icon(delBtn, "trash");
     delBtn.addEventListener("click", () => this._confirmDelete());
 

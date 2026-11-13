@@ -19,12 +19,23 @@ describe("tooltips", () => {
   it("no element is given both an aria-label and a title in the same attribute list", () => {
     const both = [];
     for (const file of sources("src")) {
-      readFileSync(file, "utf8").split("\n").forEach((line, i) => {
-        // attr: { ... } / attr:{ ... } objects written on one line
-        for (const [list] of line.matchAll(/attr\s*:\s*\{[^}]*\}/g)) {
-          if (/["']aria-label["']\s*:/.test(list) && /[{,]\s*title\s*[:,}]/.test(list)) both.push(`${file}:${i + 1}`);
-        }
-      });
+      const text = readFileSync(file, "utf8");
+      // attr: { ... } objects, on one line or several, with ${...} inside their values
+      for (const m of text.matchAll(/attr\s*:\s*\{(?:[^{}]|\$\{[^}]*\})*\}/g)) {
+        if (/["']aria-label["']\s*:/.test(m[0]) && /[{,]\s*title\s*[:,}]/.test(m[0])) both.push(`${file}:${text.slice(0, m.index).split("\n").length}`);
+      }
+    }
+    expect(both).toEqual([]);
+  });
+
+  it("no element gets an aria-label and a title one statement at a time (x.setAttribute(...) and x.title = ...)", () => {
+    const both = [];
+    for (const file of sources("src")) {
+      const text = readFileSync(file, "utf8");
+      const named = new Set([...text.matchAll(/(\w+)\.setAttribute\(\s*["']aria-label["']/g)].map((m) => m[1]));
+      for (const m of text.matchAll(/(\w+)\.(?:title\s*=(?!=)|setAttribute\(\s*["']title["'])/g)) {
+        if (named.has(m[1])) both.push(`${file}:${text.slice(0, m.index).split("\n").length} (${m[1]})`);
+      }
     }
     expect(both).toEqual([]);
   });

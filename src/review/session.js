@@ -476,7 +476,7 @@ var Q=class extends I.Modal{
       // Review Deck is where we are; the other two leave the session (progress is already saved) and open the Hub there.
       let s=r.createEl("div",{attr:{class:"lh-review-tabs",role:"group",["aria-label"]:c(t,"HUB_NAV")}});
       [{label:c(t,"TAB_REVIEW"),key:"review",fb:"deck"},{label:c(t,"TAB_MEMORY"),key:"memory",fb:"map"},{label:c(t,"TAB_QUEST"),key:"quest",fb:"flag"}].forEach(p=>{
-        let g=s.createEl("button",{attr:{class:"lh-review-tab"+(p.key==="review"?" active":""),...(p.key==="review"?{"aria-current":"page"}:{})}});
+        let g=s.createEl("button",{attr:{class:"lh-review-tab"+(p.key==="review"?" active":""),"aria-label":p.label,...(p.key==="review"?{"aria-current":"page"}:{})}});
         _featureIcon(g,this.plugin,p.key,{size:24,fallback:p.fb});
         g.createEl("span",{text:p.label});
         if(p.key!=="review") g.addEventListener("click",()=>this._openHubTab(p.key));

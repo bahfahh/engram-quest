@@ -64,7 +64,7 @@ describe("code blocks in the card's text (ticket-057)", () => {
     expect(declarations(`${SURFACES} pre > button.copy-code-button:hover`)["background"]).toMatch(/!important$/);
   });
 
-  it("shows the button on hover on a desktop, and always on a phone, which has no hover", () => {
-    expect(css).toContain(`body:not(.is-phone) ${SURFACES} pre:not(:hover):not(:focus-within) > button.copy-code-button { display:none; }`);
+  it("shows the button on hover on a desktop, and always on a phone or tablet, which have no hover", () => {
+    expect(css).toContain(`body:not(.is-phone):not(.is-tablet) ${SURFACES} pre:not(:hover):not(:focus-within) > button.copy-code-button { display:none; }`);
   });
 });

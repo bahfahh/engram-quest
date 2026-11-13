@@ -35,6 +35,20 @@ describe("plainTitle", () => {
     expect(plainTitle("輸出是什麼？\n```js\nconsole.log(1 < 2)\n```")).toBe("輸出是什麼？ console.log(1 < 2)");
   });
 
+  it("keeps angle brackets that are text, not HTML (generics, includes, comparisons, inline code)", () => {
+    expect(plainTitle("Dictionary<string, int>?")).toBe("Dictionary<string, int>?");
+    expect(plainTitle("#include <iostream> 的作用")).toBe("#include <iostream> 的作用");
+    expect(plainTitle("a<b matter? if c>d")).toBe("a<b matter? if c>d");
+    expect(plainTitle("`<div>` 是什麼？")).toBe("`<div>` 是什麼？");
+    expect(plainTitle("`<br>`")).toBe("`<br>`");
+    expect(plainTitle("<span class=\"x\">換行</span>的 `<br>`")).toBe("換行 的 `<br>`");
+  });
+
+  it("does not call a front an image when nothing in it was one", () => {
+    expect(plainTitle("<br>")).toBe("<br>");
+    expect(plainTitle("<img src=a.png>")).toBe("");
+  });
+
   it("copes with nothing at all", () => {
     expect(plainTitle(undefined)).toBe("");
     expect(plainTitle(null)).toBe("");
