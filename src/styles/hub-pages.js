@@ -44,9 +44,26 @@ const session = `
 .lh-hub.lh-session .lh-rc-edit-btn:hover { background:var(--raisedh) !important; }
 .lh-hub.lh-session .lh-rc-edit-btn:disabled { background:var(--fill2) !important; color:var(--text3) !important; box-shadow:none; cursor:default; }
 .lh-hub.lh-session .lh-rc-edit-btn .lh-i { width:16px; height:16px; }
+.lh-hub.lh-session .lh-rc-edit-btn:focus-visible { outline:2px solid var(--focus); outline-offset:2px; }
 .lh-hub.lh-session .lh-rc-edit-btn.is-danger { color:var(--dang) !important; }
 .lh-hub.lh-session .lh-fmt-btn { opacity:1; }
 .lh-hub.lh-session .lh-rc-edit-btn.is-done { color:var(--mstt) !important; }
+/* Answer header. Synapse and the Deep Dive queue lead into a feature: tinted, and a size above the
+   formatting tools, which stay raised at the far end. Pressed (the map is open) fills with the
+   accent; a card already in the queue is drawn in the finished colour: a state to read, so the button
+   is aria-disabled rather than disabled (it keeps keyboard focus and its colours are contrast-checked).
+   Grey still only means unavailable. */
+.lh-hub.lh-session .lh-answer-features { display:flex; align-items:center; gap:8px; margin-left:4px; }
+.lh-hub.lh-session .lh-ans-feature { height:36px; padding:0 14px; gap:8px; background:var(--tone) !important; color:var(--tint) !important; box-shadow:var(--tonering); font-size:14px; font-weight:600; }
+.lh-hub.lh-session .lh-ans-feature:hover { background:var(--toneh) !important; }
+.lh-hub.lh-session .lh-ans-feature .lh-i { width:18px; height:18px; stroke-width:2; }
+.lh-hub.lh-session .lh-ans-feature-ic { display:grid; place-items:center; }
+.lh-hub.lh-session .lh-ans-feature .lh-fi.is-fallback .lh-i { color:currentColor; }
+.lh-hub.lh-session .lh-ans-feature[aria-pressed="true"] { background:var(--btn) !important; color:var(--onbtn) !important; box-shadow:inset 0 .5px 0 rgba(255,255,255,.22),0 1px 2px rgba(0,0,0,.16),0 3px 10px rgba(91,72,184,.2); }
+.lh-hub.lh-session .lh-ans-feature[aria-pressed="true"]:hover { background:var(--btnh) !important; }
+.lh-hub.lh-session .lh-ans-feature[aria-pressed="true"] .lh-fi img { filter:brightness(0) invert(1); }
+.lh-hub.lh-session .lh-ans-feature.is-done { cursor:default; background:color-mix(in srgb,var(--mst) 16%,var(--raised)) !important; color:var(--mstt) !important; opacity:1; box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--mstt) var(--ringk),transparent); }
+body:not(.is-phone) .lh-hub.lh-session .lh-answer-header { flex-wrap:wrap; row-gap:8px; justify-content:flex-start; }
 .lh-rc-src span { max-width:150px; overflow:hidden; text-overflow:ellipsis; }
 :is(.lh-hub,.lh-theme) .lh-rc-src .lh-i:last-child { width:14px; height:14px; }
 .lh-hub.lh-session .lh-rc-question { color:var(--text) !important; font-size:24px; line-height:1.45; font-weight:650; letter-spacing:-.01em; }
@@ -101,9 +118,16 @@ const session = `
 .lh-syg-cue { flex:none; display:grid; place-items:center; width:22px; height:22px; color:var(--tint); }
 .lh-syg-cue .lh-i { width:16px; height:16px; transition:transform .15s; }
 .lh-syg-cue.is-open .lh-i { transform:rotate(90deg); }
-.lh-syg-back { margin-top:6px; padding:10px 12px; border-radius:12px; background:var(--card); box-shadow:inset 0 0 0 1px var(--sep); color:var(--text); font-size:14px; line-height:1.6; }
+.lh-syg-back { margin-top:6px; padding:10px 12px; border-radius:12px; background:var(--card); box-shadow:inset 0 0 0 1px var(--sep); color:var(--text); font-size:14px; line-height:1.6; overflow-x:auto; overflow-wrap:anywhere; }
 .lh-syg-back p:first-child { margin-top:0; }
 .lh-syg-back p:last-child { margin-bottom:0; }
+/* The answer is the user's own Markdown in a node about 250px wide. Text and code wrap, media is
+   capped at the node's width, and what still cannot fit (a wide table) scrolls inside the answer. */
+.lh-syg-back pre { margin:8px 0; font-size:13px; white-space:pre-wrap; }
+.lh-syg-back :is(img,video,iframe,svg) { max-width:100%; }
+.lh-syg-back :is(img,video,svg) { height:auto; }
+.lh-syg-back table { overflow-wrap:normal; }
+.lh-syg-back :is(th,td) { min-width:4em; }
 .lh-syg-br .lh-syg-br .lh-syg-node { gap:8px; padding:5px 8px; }
 .lh-syg-br .lh-syg-br .lh-fi { --fi:24px !important; }
 .lh-syg-br .lh-syg-br .lh-syg-ic { width:24px; height:24px; border-radius:7px; }

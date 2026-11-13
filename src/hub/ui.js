@@ -66,7 +66,9 @@ function icon(parent, name) {
 function rawIcon(parent, svg) { parent.appendChild(I.sanitizeHTMLToDom(svg)); return parent; }
 
 function iconButton(parent, name, label, onClick, cls = "lh-ib") {
-  const btn = icon(parent.createEl("button", { cls, attr: { "aria-label": label, title: label } }), name);
+  // The label is the accessible name and, in Obsidian, the tooltip. A `title` beside it would add the
+  // browser's own tooltip on top.
+  const btn = icon(parent.createEl("button", { cls, attr: { "aria-label": label } }), name);
   btn.addEventListener("click", onClick);
   return btn;
 }

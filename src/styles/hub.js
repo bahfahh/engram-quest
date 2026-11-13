@@ -59,7 +59,8 @@ const tokens = `
 
 // The icon rail. Narrow windows always use it; `.is-rail` is the user folding the sidebar
 // (src/hub/sidebar.js). One rule set draws both, so the two can never drift apart; only a narrow
-// window also tightens the page area.
+// window also tightens the page area. The shell reads the same width to know when names are hidden.
+const { RAIL_MAX_WIDTH } = require("../hub/sidebar");
 const rail = (scope, hub) => `
   ${scope} .lh-side { width:68px; padding:12px 10px; align-items:center; }
   ${scope} .lh-brand { width:44px; justify-content:center; padding:0; margin-bottom:4px; }
@@ -132,13 +133,13 @@ const shell = `
 .lh-hub .lh-side-fold::after { content:""; position:absolute; inset:-6px; }
 .lh-hub .lh-side-fold .lh-i { width:15px; height:15px; stroke-width:2.2; }
 
-@media (max-width:1039px) {${rail("body:not(.is-phone)", "body:not(.is-phone) .lh-hub")}
+@media (max-width:${RAIL_MAX_WIDTH}px) {${rail("body:not(.is-phone)", "body:not(.is-phone) .lh-hub")}
   body:not(.is-phone) .lh-main { left:68px; padding:60px 20px 0 20px; gap:10px; }
   body:not(.is-phone) .lh-hub .lh-side-fold { display:none; }
 }
 ${rail(".lh-shell.is-rail", ".lh-hub .lh-shell.is-rail")}
   .lh-shell.is-rail .lh-main { left:68px; }
-@media (min-width:1040px) {
+@media (min-width:${RAIL_MAX_WIDTH + 1}px) {
   .lh-shell.is-rail .lh-brand { flex-direction:column; height:auto; gap:8px; margin-bottom:8px; }
   .lh-hub .lh-shell.is-rail .lh-side-fold { margin:0; }
   .lh-hub .lh-shell.is-rail .lh-side-fold .lh-i { transform:rotate(180deg); }
