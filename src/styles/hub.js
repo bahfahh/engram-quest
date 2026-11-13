@@ -376,4 +376,4 @@ const motion = `
 @media (prefers-reduced-motion:reduce) { .lh-hub *,.lh-hub *::before,.lh-hub *::after { animation-duration:.01ms !important; transition-duration:.01ms !important; } }
 `;
 
-module.exports = tokens + shell + components + phone + fab + require("./hub-pages") + motion;
+module.exports = tokens + shell + components + phone + fab + require("./hub-pages") + require("./help-start") + motion;

@@ -28,6 +28,7 @@ const CONTENT = {
         { id: "manual", label: "手動建立", sub: "自己寫卡，或貼上 AI 的回答" },
         { id: "ai", label: "用 AI 建立", sub: "安裝 skills，讓 AI 工具幫你做" },
         { id: "advanced", label: "進階技巧", sub: "SVG 題目、客製規則、先挑再做" },
+        { id: "synapse", label: "Synapse（Pro）", sub: "複習時看見這張卡和你學過的關聯" },
       ],
       pages: {
         manual: {
@@ -59,6 +60,15 @@ const CONTENT = {
           ],
           first: "挑一個技巧試試。AI 做的卡都存在 <code>engram-review/</code>，不會動你的來源筆記。",
         },
+        synapse: {
+          title: "Synapse：把難卡接到你學過的",
+          body: [
+            { h: "複習時按卡片上的 <strong>Synapse</strong>，會看到以這張卡為中心的關聯圖：記熟的卡、來源筆記、深入解析、教材、影片、情境回顧主題，每條線都寫著<strong>為什麼相關</strong>。看答案前只出現你已經學過的，看答案後才補上還沒看過的。" },
+            { h: "關聯要<strong>先讓 AI 跑一次</strong> <code>engram-synapse</code> skill 才會出現。已掌握的卡（穩定度 7 天以上）累積到 10 張後，跟你的 AI 工具說「<strong>幫我建立 Synapse</strong>」。" },
+            { h: "之後多了新的教材、影片或解析，再說一次「更新 Synapse」；Review Deck 頁會提醒你何時該執行或更新。這是 <strong>Pro</strong> 功能。" },
+          ],
+          first: "先複習到有 10 張已掌握的卡，再跟 AI 說「幫我建立 Synapse」。",
+        },
       },
     },
     en: {
@@ -72,6 +82,7 @@ const CONTENT = {
         { id: "manual", label: "Create manually", sub: "Write cards, or paste an AI answer" },
         { id: "ai", label: "Build with AI", sub: "Install skills and let your AI tool do it" },
         { id: "advanced", label: "Tips", sub: "SVG questions, custom rules, pick then build" },
+        { id: "synapse", label: "Synapse (Pro)", sub: "See how a card ties to what you already know" },
       ],
       pages: {
         manual: {
@@ -102,6 +113,15 @@ const CONTENT = {
             { h: "<strong>Pick, then build</strong>: have the AI list your recent notes first, then choose which ones become a Review Deck." },
           ],
           first: "Try one tip. AI-made cards stay in <code>engram-review/</code> and never touch your source notes.",
+        },
+        synapse: {
+          title: "Synapse: tie a hard card to what you already know",
+          body: [
+            { h: "During review, the <strong>Synapse</strong> button on a card opens a small map around it: mastered cards, the source note, deep dives, lessons, videos and recall topics, with <strong>the reason</strong> written on every line. Before the answer it shows only what you have already learned; the rest appears after." },
+            { h: "The links exist only after <strong>your AI has run</strong> the <code>engram-synapse</code> skill once. When you have 10 mastered cards (stability of 7 days or more), tell your AI tool \"<strong>Build synapse</strong>\"." },
+            { h: "After you add lessons, videos or deep dives, say \"update synapse\" to pick them up; the Review Deck page tells you when to run or refresh it. This is a <strong>Pro</strong> feature." },
+          ],
+          first: "Review until 10 cards are mastered, then tell your AI \"Build synapse\".",
         },
       },
     },
@@ -638,4 +658,4 @@ function attachInfoButton(headerEl, app, plugin, tab) {
   return btn;
 }
 
-module.exports = { FeatureGuideModal, attachInfoButton, hasFeatureGuide: hasGuide, openLightbox };
+module.exports = { FeatureGuideModal, attachInfoButton, hasFeatureGuide: hasGuide, openLightbox, videoEmbed };
