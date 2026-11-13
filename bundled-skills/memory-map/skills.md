@@ -51,7 +51,7 @@ Choose the right reference before writing:
    IMPORTANT: When vault search is needed, use Obsidian CLI (`obsidian search`). For full syntax, query operators, and fallback rules, see `references/obsidian-cli.md`.
    a. Step 0 already found a graph index → use it directly. Skip this step.
    b. No index: `obsidian search query="<key concepts from source note>" format=json`
-   c. Obsidian CLI not available: `bash scripts/search_vault.sh "<key concepts>" 30`
+   c. Obsidian CLI not available or not responding: `bash scripts/search_vault.sh "<key concepts>" 30`
    d. Source note is self-contained and no associations are needed → skip this step.
 3. Choose the best reference flow.
 4. Read `.memory-map/config.json` — this is a **config file only**, not an output folder. Extract the `memoryMapFolder` value, then follow `references/create.md` → Output section for the exact save location. Never save canvas files inside `.memory-map/`.

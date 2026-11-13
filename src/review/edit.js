@@ -3,6 +3,7 @@
 const { loadSrData, saveSrData, srFileName, loadHints, hintsPath, parseCommentCardBlock, cardFencePattern, CARD_FENCE, isFencedQaOpener } = require("./helpers");
 
 const { moveSynapseCardEntry } = require("./synapse");
+const { moveExplainerCardLinks } = require("../explainer/data");
 
 const isCardFence = (line) => cardFencePattern.test(line);
 
@@ -320,7 +321,7 @@ function syncRawCardFields(card, newData) {
 /**
  * Save edits for a tag/source-based card (card.notePath is set).
  * Updates the card in the markdown note and its hints; when the front changes, the data stored
- * under the old front (schedule, hints, memory anchors) moves to the new one.
+ * under the old front (schedule, hints, memory anchors, Deep Dive page and request) moves to the new one.
  * @param {object} app - Obsidian app
  * @param {object} card - original card object
  * @param {{front,back,hint_l1,hint_l2,hint_l3}} newData
@@ -379,6 +380,12 @@ async function saveTagSourceCard(app, card, newData) {
       await moveSynapseCardEntry(app.vault.adapter, card.notePath, card.front, newData.front);
     } catch (e) {
       console.warn("review-edit: synapse update failed", e);
+    }
+    // 5. So are its Deep Dive page and any queued request for it
+    try {
+      await moveExplainerCardLinks(app.vault.adapter, card.notePath, card.front, newData.front);
+    } catch (e) {
+      console.warn("review-edit: explainer update failed", e);
     }
   }
 

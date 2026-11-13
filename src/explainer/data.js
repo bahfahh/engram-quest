@@ -146,6 +146,41 @@ async function addToQueue(adapter, { source, q, a, deck }) {
 }
 
 /**
+ * A page and a queued request name their card by note + front: a page's meta `sourceCard`
+ * ({ note, front }) and a queue entry's `source` + `q`. When the user edits the card's front in the
+ * review screen both follow it, or the page stops being found for the card, a pending request keeps
+ * asking about the old wording, and marking the card again queues a second request. Only that one
+ * field of each file is changed; a file that is missing or unreadable is left alone. Returns true
+ * when anything was rewritten.
+ */
+async function moveExplainerCardLinks(adapter, notePath, oldFront, newFront) {
+  if (!notePath || !oldFront || oldFront === newFront) return false;
+  let moved = false;
+
+  const queue = await readJson(adapter, QUEUE_PATH);
+  if (queue && Array.isArray(queue.entries)) {
+    let changed = false;
+    queue.entries = queue.entries.map((e) => {
+      if (!e || e.source !== notePath || e.q !== oldFront) return e;
+      changed = true;
+      return { ...e, q: newFront };
+    });
+    if (changed) { await writeQueue(adapter, queue); moved = true; }
+  }
+
+  let listing = null;
+  try { listing = await adapter.list(META_DIR); } catch { listing = null; }
+  for (const file of (listing && Array.isArray(listing.files) ? listing.files : []).filter((f) => f.endsWith(".json"))) {
+    const page = await readJson(adapter, file);
+    const card = page && page.sourceCard;
+    if (!card || card.note !== notePath || card.front !== oldFront) continue;
+    await adapter.write(file, JSON.stringify({ ...page, sourceCard: { ...card, front: newFront } }, null, 2));
+    moved = true;
+  }
+  return moved;
+}
+
+/**
  * Ask the skill to rewrite an existing page, keeping its id. `card` is the spec's own card when it
  * could be read; otherwise the skill falls back to the page's meta and source note.
  */
@@ -238,6 +273,7 @@ module.exports = {
   writeQueue,
   addToQueue,
   queueRegenerate,
+  moveExplainerCardLinks,
   isQueued,
   trashPath,
   deleteExplainer,

@@ -133,7 +133,7 @@ available, running in fallback mode (full rebuild every run)."
 | `mode` | When | What the skill should do next |
 |---|---|---|
 | `full` | First run, no `_status.json`, mastered pool size changed by ≥ `max(10, last × 0.2)`, or `--full` | Run the full LLM prompt over `targets[]` (Step 2 onward) |
-| `incremental` | `_status.json` exists, pool change below that threshold, and `workQueue[]` is non-empty | Run the LLM prompt only over `workQueue[]`. **Do NOT touch `synapse/*.json` files for fronts in `preservedFronts[]`.** |
+| `incremental` | `_status.json` exists, pool change below that threshold, and `workQueue[]` is non-empty | Run the LLM prompt only over `workQueue[]`. **Do NOT touch `synapse/*.json` entries for fronts in `preservedFronts[]`.** An entry is matched by its file (the note) plus its front, so a front that is preserved in one note can still be a `workQueue` target in another. |
 | `noop` | `_status.json` exists and `workQueue[]` would be empty | Skip the LLM. Just bump `_status.json.generatedAt` to now and report "nothing to update" |
 | `pool-too-small` | Mastered pool < 10 cards | Write `_status.json` with `enabled: false, reason: "pool-too-small"` and tell the user to keep reviewing |
 | `error` | sr/ folder missing | Tell the user no SR data exists yet |
@@ -175,6 +175,10 @@ available, running in fallback mode (full rebuild every run)."
 }
 ```
 
+- A card is one note plus one front. Two notes can hold a card with the same front text, and
+  each appears in `mastered[]` or `targets` on its own, with its own `notePath`. Read a
+  `workQueue` entry together with its `notePath`: the same front can also be listed in
+  `preservedFronts` for the other note, whose entry stays as it is.
 - `catalog` — titles only; `group` is the course or series a lesson or video belongs to.
   `new: true` appears in incremental mode on entries added since the last run. It is `[]`
   when the vault has no such content; then only anchors are paired.
@@ -483,7 +487,7 @@ The dumper alone decides which targets are queued and why; do not re-derive it. 
 
 - **Never pad weak links.** If AI cannot find ≥7-score anchors or relations, return `[]`.
   The plugin's ⚡ button will simply be dimmed for that card. Better dim than misleading.
-- **Same-card pairing**: a card cannot anchor itself. Filter out target == anchor.front.
+- **Same-card pairing**: a card cannot anchor itself. Filter out a pick with the target's `notePath` and `front`.
 - **Failed file writes**: report the error, continue with the next file. Don't abort the whole run.
 - **Gemini / Claude / Cursor parity**: this skill should run identically across all three.
   Avoid IDE-specific syntax; the bundled script and plain file reads and writes are all it needs.

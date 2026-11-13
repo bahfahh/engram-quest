@@ -32,7 +32,10 @@ function createInstaller(embeddedOverride) {
       id: "synapse",
       title: "Synapse (Pro)",
       summary: "Pre-compute memory anchors that link difficult cards to mastered ones. Pro feature.",
-      pro: true
+      pro: true,
+      // The content skills run Synapse after their own work whenever it is installed, so a copy left
+      // behind after the licence ended would keep refreshing a feature the plugin no longer shows.
+      removedWithLicence: true
     },
     {
       id: "explainer",
@@ -136,7 +139,6 @@ function createInstaller(embeddedOverride) {
       { source: "synapse/skills.md", target: "SKILL.md" },
       { source: "synapse/references/scoring-guide.md", target: "references/scoring-guide.md" },
       { source: "synapse/references/plugin-architecture.md", target: "references/plugin-architecture.md" },
-      { source: "synapse/references/obsidian-cli.md", target: "references/obsidian-cli.md" },
       { source: "synapse/scripts/dump_sr_pool.sh", target: "scripts/dump_sr_pool.sh" },
       { source: "synapse/scripts/dump_sr_pool.js", target: "scripts/dump_sr_pool.js" }
     ],
@@ -200,11 +202,17 @@ function createInstaller(embeddedOverride) {
     return buildSkillEntries(toolTarget, adapter, bundledSkillsRoot, modules, isPro);
   }
 
-  /** Paths of the Pro video content that must not stay on disk once a licence has ended (ADR-30). */
+  /**
+   * Paths that must not stay on disk once a licence has ended: the Pro video content (ADR-30) and the
+   * skills marked `removedWithLicence`. Only installed copies are listed; the user's own data stays.
+   */
   function getProPaths(toolId) {
     const toolTarget = TOOL_TARGETS[toolId];
-    if (!toolTarget || toolId !== "claude") return [];
-    const paths = [];
+    if (!toolTarget) return [];
+    const paths = MODULES
+      .filter(m => m.removedWithLicence && (toolId === "claude" || !m.claudeOnly))
+      .map(m => joinPath(toolTarget.baseDir, `engram-quest-${m.id}`));
+    if (toolId !== "claude") return paths;
     for (const [id, video] of Object.entries(VIDEO_MODULES)) {
       const root = joinPath(toolTarget.baseDir, `engram-quest-${id}`);
       if (MODULES.find(m => m.id === id).pro) paths.push(root);
