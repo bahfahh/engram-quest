@@ -157,6 +157,26 @@ gives the owner the same page again. Insights have no failing card and are rewri
 - The card is pure lookup, with nothing to confuse it with and no case where it stops applying: say the
   flashcard was already the right tool.
 
+## Refresh Synapse when it is already on
+
+Synapse links review cards the owner still struggles with to what they have studied, these
+pages included, and an owner who has it running should not have to refresh it separately. So
+when this run wrote at least one new page (a rewrite keeps its id and adds nothing for
+Synapse to link), check both, after the pages, their meta and the queue are saved:
+
+- `engram-review/synapse/_status.json` exists and holds `"enabled": true`
+- the Synapse skill is available in the tool you are running in (`engram-synapse`, installed
+  as `engram-quest-synapse` next to this skill)
+
+Both hold → run the Synapse skill in its default mode (no `--full`) without asking, and put
+the one line it hands back into your report, such as `Synapse: 4 cards paired, 2 relations
+added` or `Synapse: already up to date`; if it hands back nothing, add nothing. Anything
+else → skip it and do not mention Synapse: starting Synapse is the owner's own step, not
+something to suggest here.
+
+The pages are the deliverable and Synapse is a follow-up. If it fails, the pages are still
+done: report them as written and add `Synapse: not updated (<reason>)`.
+
 ## Before finishing
 
 - Can you name the confusion resolved or the insight gained, and is it supported by the material?

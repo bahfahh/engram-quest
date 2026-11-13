@@ -219,7 +219,26 @@ Critical rules:
   written when the outline is, whether its lessons are generated now or left planned.
   Generating a planned lesson fills in its `file`; its goal stays as it was.
 
-## Step 6: Tell the user
+## Step 6: Refresh Synapse when it is already on
+
+Synapse (Pro) links review cards the user still struggles with to what they have studied,
+lessons included. A user who has it running should not have to refresh it separately. So
+when this run wrote at least one lesson file (an outline of planned lessons adds nothing
+for Synapse to link), check both:
+
+- `engram-review/synapse/_status.json` exists and holds `"enabled": true`
+- the Synapse skill is available in the tool you are running in (`engram-synapse`, installed
+  as `engram-quest-synapse` next to this skill)
+
+Both hold → run the Synapse skill in its default mode (no `--full`) without asking, and
+carry the one line it hands back into Step 7, e.g. `Synapse: 6 cards paired, 3 relations
+added` or `Synapse: already up to date`; if it hands back nothing, add nothing. Anything
+else → skip it and do not mention Synapse: starting Synapse is the user's own step, not something to suggest here.
+
+The lessons are the deliverable and Synapse is a follow-up. If it fails, the course is still
+done: report it as created and add `Synapse: not updated (<reason>)`.
+
+## Step 7: Tell the user
 
 After generating, summarize:
 

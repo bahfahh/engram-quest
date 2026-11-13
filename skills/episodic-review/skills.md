@@ -43,8 +43,20 @@ Read the reference named in each row before doing that step. Steps are goals; de
 | 6 | **Choose how each part is shown** from the shape of the content. | `reference/03-presentation.md` |
 | 7 | **Build** the film from `templates/film/`; check stills and reading time before the full render. | `reference/04-production.md` §2-4 |
 | 8 | **Deliver** the film, write chapters with topic ids, mark the plugin request done, report what was not taken. | `reference/04-production.md` §5, `reference/05-plugin-contract.md` |
+| 9 | **Refresh Synapse when it is already on**, after the pack is built and any film is delivered. | below |
 
 Read `reference/06-pitfalls.md` once before step 5. Every item there happened.
+
+### Step 9: refresh Synapse when it is already on
+
+Synapse (Pro) links review cards the person still struggles with to what they have studied, recall topics included. Someone who has it running should not have to refresh it separately. At the end of a run that built a pack, check both:
+
+- `engram-review/synapse/_status.json` exists and holds `enabled: true`
+- the Synapse skill is available in the tool you are running in (`engram-synapse`, installed as `engram-quest-synapse` next to this skill)
+
+Both hold → run the Synapse skill in its default mode (no `--full`) without asking, and put the one line it hands back into the final report (`Synapse: 5 cards paired, 3 relations added`, `Synapse: already up to date`); if it hands back nothing, add nothing. Anything else → skip it and do not mention Synapse: starting Synapse is the person's own step, not something to suggest here.
+
+The pack and the films are the deliverable and Synapse is a follow-up. If it fails, the review is still done: report it as delivered and add `Synapse: not updated (<reason>)`. The retrieval cards made in this run have no review history yet, so Synapse does not link them until they have been reviewed once; do not report them as linked.
 
 ## Things that are fixed
 
