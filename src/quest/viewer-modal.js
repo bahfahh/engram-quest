@@ -21,9 +21,12 @@ const {
   retriggerShake,
 } = require("./helpers");
 const { openQuestChapterModal, renderQuestChallenge } = require("./modal");
+const { baseSize, computeMapLayout, labelMaxWidth, scrollStart } = require("./map-layout");
 const { watchTheme, icon: hubIcon } = require("../hub/ui");
 
 const DIFFICULTY_TONE = { easy: "--mstt", medium: "--lrnt", hard: "--newt" };
+// The side panel's column beside the map on a wide screen.
+const SIDE_WIDTH = 280;
 
 const W = I.moment;
 function locale(settings) {
@@ -175,10 +178,23 @@ class QuestViewerModal extends I.Modal {
     watchTheme(this, { vars: true, onChange: () => { if (this.state) this.render(); } });
     this.contentEl.style.cssText = "padding:0;display:flex;flex-direction:column;min-height:0;flex:1;background:var(--background-primary);color:var(--text-normal);";
     await this.reload();
+    if (this._closed) return;
     this.render();
+    // The map is sized in pixels from the width it has, so a window that changes size draws it again.
+    if (typeof window.addEventListener === "function") {
+      this._onResize = () => {
+        window.clearTimeout(this._resizeTimer);
+        // Only a change of width matters; a phone's keyboard or toolbar changes the height alone.
+        this._resizeTimer = window.setTimeout(() => { if (!this._closed && this.state && window.innerWidth !== this._renderedWidth) this.render(); }, 150);
+      };
+      window.addEventListener("resize", this._onResize);
+    }
   }
 
   onClose() {
+    this._closed = true;
+    if (this._onResize) window.removeEventListener("resize", this._onResize);
+    if (this._resizeTimer) window.clearTimeout(this._resizeTimer);
     this.contentEl.empty();
     if (this.changed && this.onDone) this.onDone();
   }
@@ -256,6 +272,7 @@ class QuestViewerModal extends I.Modal {
     const completedCount = progress.completedCount || 0;
     const pct = progress.progressPct || 0;
     const isMobile = window.innerWidth < 600;
+    this._renderedWidth = window.innerWidth;
 
     this.contentEl.empty();
 
@@ -317,17 +334,28 @@ class QuestViewerModal extends I.Modal {
     };
 
     const renderMap = (parent) => {
+      // The nodes are real pixels on a map drawn in percentages, so the map's own width decides how
+      // big they can be (src/quest/map-layout.js). On a phone the map may be wider than the screen.
+      const pad = isMobile ? 12 : 18;
+      const windowWidth = Math.round(window.innerWidth * 0.96);
+      const contentWidth = this.contentEl.clientWidth || (isMobile ? windowWidth : Math.min(windowWidth, 1040));
+      const layout = computeMapLayout({
+        positions,
+        bosses: nodes.map((node) => Boolean(node.boss || node.type === "boss")),
+        activeIndex: progress.activeIndex,
+        available: contentWidth - (isMobile ? 0 : SIDE_WIDTH) - pad * 2,
+      });
+      const o = layout.overhang;
       const mapWrap = parent.createEl("div", {
-        attr: { style: `min-width:0;overflow:${isMobile ? "hidden" : "auto"};padding:${isMobile ? "12px" : "18px"};background:var(--background-primary);` },
+        attr: { style: `flex:none;min-width:0;overflow:auto;padding:${pad + o.top}px ${pad + o.right}px ${pad + o.bottom}px ${pad + o.left}px;background:var(--background-primary);` },
       });
       const stageStyles = [
         "position:relative",
+        `width:${layout.stageWidth}px`,
         "border-radius:16px",
-        "overflow:hidden",
         "border:1px solid var(--background-modifier-border)",
         "box-shadow:0 10px 30px rgba(15,23,42,.08)",
       ];
-      if (!isMobile) stageStyles.push("min-width:760px");
       const stage = mapWrap.createEl("div", { attr: { style: stageStyles.join(";") } });
       // <img> makes node x/y% reference actual image coordinates (not CSS cover-cropped space)
       stage.createEl("img", { attr: { src: bgUrl, style: "width:100%;display:block;border-radius:14px;" } });
@@ -336,7 +364,12 @@ class QuestViewerModal extends I.Modal {
         const done = Boolean(progress.state.nodes[nodes[index]?.id]?.completed);
         addConnector(stage, pos, next, done);
       });
-      nodes.forEach((node, index) => this.renderNode(stage, node, index, positions[index], progress, isDark, mapAssets));
+      nodes.forEach((node, index) => this.renderNode(stage, node, index, positions[index], progress, isDark, mapAssets, layout.sizes[index]));
+      // A map wider than the window opens on its nodes, not on the empty art at one side.
+      const viewWidth = contentWidth - (isMobile ? 0 : SIDE_WIDTH);
+      if (layout.stageWidth + (pad + o.left) + (pad + o.right) > viewWidth) {
+        mapWrap.scrollLeft = scrollStart({ positions, stageWidth: layout.stageWidth, leftPad: pad + o.left, viewWidth, activeIndex: progress.activeIndex });
+      }
     };
 
     // Mobile: side panel first (immediate access to node list + start button), map below
@@ -350,7 +383,7 @@ class QuestViewerModal extends I.Modal {
     }
   }
 
-  renderNode(stage, node, index, pos, progress, isDark, mapAssets = {}) {
+  renderNode(stage, node, index, pos, progress, isDark, mapAssets = {}, nodeSize) {
     const completed = Boolean(progress.state.nodes[node.id]?.completed);
     const active = index === progress.activeIndex && !completed;
     const locked = index > progress.activeIndex && !completed;
@@ -362,7 +395,9 @@ class QuestViewerModal extends I.Modal {
         ? "0 0 0 3px rgba(245,158,11,.5),0 0 16px 6px rgba(239,68,68,.4)"
         : "";
 
-    const size = boss ? 110 : 94;
+    const size = nodeSize || baseSize(boss);
+    // Everything on a disc scales with it: crown, lock, number.
+    const k = size / baseSize(boss);
     const assetFilter = locked
       ? "grayscale(70%) brightness(.7) saturate(.55)"
       : completed
@@ -410,9 +445,9 @@ class QuestViewerModal extends I.Modal {
           style: [
             "position:absolute",
             "left:50%",
-            "top:-36px",
-            "width:48px",
-            "height:48px",
+            `top:-${Math.round(36 * k)}px`,
+            `width:${Math.round(48 * k)}px`,
+            `height:${Math.round(48 * k)}px`,
             "object-fit:contain",
             "transform:translateX(-50%)",
             "z-index:5",
@@ -445,10 +480,10 @@ class QuestViewerModal extends I.Modal {
           alt: "",
           style: [
             "position:absolute",
-            "right:5px",
-            "top:8px",
-            "width:42px",
-            "height:42px",
+            `right:${Math.round(5 * k)}px`,
+            `top:${Math.round(8 * k)}px`,
+            `width:${Math.round(42 * k)}px`,
+            `height:${Math.round(42 * k)}px`,
             "object-fit:contain",
             "filter:drop-shadow(0 8px 10px rgba(0,0,0,.32))",
             "pointer-events:none",
@@ -464,8 +499,8 @@ class QuestViewerModal extends I.Modal {
             "position:absolute",
             "left:50%",
             "top:50%",
-            "width:52px",
-            "height:52px",
+            `width:${Math.round(52 * k)}px`,
+            `height:${Math.round(52 * k)}px`,
             "object-fit:contain",
             "transform:translate(-50%,-50%)",
             "filter:drop-shadow(0 4px 8px rgba(255,210,80,.45))",
@@ -483,7 +518,7 @@ class QuestViewerModal extends I.Modal {
             "left:50%",
             "top:50%",
             "transform:translate(-50%,-50%)",
-            "font-size:24px",
+            `font-size:${Math.round(24 * k)}px`,
             "line-height:1",
             "filter:drop-shadow(0 3px 6px rgba(0,0,0,.35))",
             "pointer-events:none",
@@ -499,7 +534,7 @@ class QuestViewerModal extends I.Modal {
             "left:50%",
             "top:50%",
             "transform:translate(-50%,-50%)",
-            "font-size:30px",
+            `font-size:${Math.round(30 * k)}px`,
             "line-height:1",
             "font-weight:950",
             "color:#fff",
@@ -515,12 +550,12 @@ class QuestViewerModal extends I.Modal {
       text: node.title || node.id,
       attr: {
         style: [
-          "max-width:110px",
+          `max-width:${labelMaxWidth(size)}px`,
           "border-radius:999px",
           "padding:3px 9px",
           "background:rgba(10,10,20,.82)",
           "color:#fff",
-          "font-size:10px",
+          `font-size:${size < 60 ? 9 : 10}px`,
           "font-weight:800",
           "line-height:1.4",
           "text-align:center",

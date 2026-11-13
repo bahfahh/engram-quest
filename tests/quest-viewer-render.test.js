@@ -116,6 +116,63 @@ describe("quest map window", () => {
     expect(sideRows(root)).toHaveLength(quest.nodes.length);
   });
 
+  // Where the map's nodes really are, in pixels, as the window drew them.
+  const css = (el, prop) => (el.attrs.style.match(new RegExp(`(?:^|;)${prop}:([^;]+)`)) || [])[1];
+  const px = (value) => parseFloat(value);
+  function mapGeometry(root) {
+    const buttons = nodeButtons(root);
+    const parentOf = (child) => drawn(root).find((el) => (el.children || []).includes(child));
+    const stage = parentOf(buttons[0]);
+    const wrap = parentOf(stage);
+    const stageWidth = px(css(stage, "width"));
+    const stageHeight = stageWidth * 941 / 1672;
+    const [top, right, bottom, left] = css(wrap, "padding").split(" ").map(px);
+    const discs = buttons.map((button) => {
+      const disc = button.children[0];
+      const size = px(css(disc, "width"));
+      return { size, cx: px(css(button, "left")) / 100 * stageWidth, cy: px(css(button, "top")) / 100 * stageHeight - 12.5, title: button.children.at(-1) };
+    });
+    return { stage, wrap, stageWidth, stageHeight, pad: { top, right, bottom, left }, discs };
+  }
+
+  it("keeps the nodes apart and inside the map on a phone (ticket-039)", async () => {
+    for (const width of [320, 360, 390, 430]) {
+      const { root } = await openViewer({ width });
+      const { discs, stageWidth, stageHeight, pad } = mapGeometry(root);
+      discs.forEach((disc, i) => {
+        expect(disc.size, `${width}px, node ${i}`).toBeGreaterThanOrEqual(44);
+        discs.slice(i + 1).forEach((other, k) => {
+          expect(Math.hypot(disc.cx - other.cx, disc.cy - other.cy), `${width}px, ${i} and ${i + 1 + k}`).toBeGreaterThanOrEqual((disc.size + other.size) / 2);
+        });
+        // The disc and its title sit inside the map or in the room the window keeps around it.
+        const title = px(css(disc.title, "max-width"));
+        expect(disc.cx - Math.max(disc.size, title) / 2, `${width}px, node ${i}`).toBeGreaterThanOrEqual(-pad.left);
+        expect(disc.cx + Math.max(disc.size, title) / 2).toBeLessThanOrEqual(stageWidth + pad.right);
+        expect(disc.cy - disc.size / 2).toBeGreaterThanOrEqual(-pad.top);
+        expect(disc.cy + disc.size / 2 + 5 + 20).toBeLessThanOrEqual(stageHeight + pad.bottom);
+      });
+    }
+  });
+
+  it("draws the map to fit the desktop window instead of forcing it wider than the window (ticket-039)", async () => {
+    const { root } = await openViewer({ width: 1280 });
+    const { stage, wrap, stageWidth, pad, discs } = mapGeometry(root);
+    expect(css(stage, "min-width")).toBeUndefined();
+    // The window is 1040 wide with a 280 side panel; the map and its padding have to fit beside it.
+    expect(stageWidth + pad.left + pad.right).toBeLessThanOrEqual(1040 - 280);
+    expect(css(wrap, "overflow")).toBe("auto"); // a short window scrolls the map instead of cutting it
+    expect(discs.every((disc) => disc.size <= 110 && disc.size >= 44)).toBe(true);
+    // The boss, at the top of the map, is not cut by its edge.
+    const boss = discs.at(-1);
+    expect(boss.cy - boss.size / 2).toBeGreaterThanOrEqual(-pad.top);
+  });
+
+  it("lets the phone's column scroll instead of squeezing the map (ticket-039)", async () => {
+    const { root } = await openViewer({ width: 390 });
+    const { wrap } = mapGeometry(root);
+    expect(css(wrap, "flex")).toBe("none");
+  });
+
   it("marks finished nodes and moves the crown to the next one", async () => {
     const { app, quest, root } = await openViewer({ completed: NODE_IDS.slice(0, 2) });
     const crown = assetUrl(app, "assets/quest-map/generated/crown-current-node.webp");
