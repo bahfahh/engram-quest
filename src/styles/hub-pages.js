@@ -101,9 +101,15 @@ const session = `
 .lh-syg-cue { flex:none; display:grid; place-items:center; width:22px; height:22px; color:var(--tint); }
 .lh-syg-cue .lh-i { width:16px; height:16px; transition:transform .15s; }
 .lh-syg-cue.is-open .lh-i { transform:rotate(90deg); }
-.lh-syg-back { margin-top:6px; padding:10px 12px; border-radius:12px; background:var(--card); box-shadow:inset 0 0 0 1px var(--sep); color:var(--text); font-size:14px; line-height:1.6; }
+.lh-syg-back { margin-top:6px; padding:10px 12px; border-radius:12px; background:var(--card); box-shadow:inset 0 0 0 1px var(--sep); color:var(--text); font-size:14px; line-height:1.6; overflow-x:auto; overflow-wrap:anywhere; }
 .lh-syg-back p:first-child { margin-top:0; }
 .lh-syg-back p:last-child { margin-bottom:0; }
+/* The answer is the user's own Markdown in a node about 250px wide. Text and code wrap, media is
+   capped at the node's width, and what still cannot fit (a wide table) scrolls inside the answer. */
+.lh-syg-back pre { margin:8px 0; font-size:13px; white-space:pre-wrap; }
+.lh-syg-back :is(img,video,iframe,svg) { max-width:100%; height:auto; }
+.lh-syg-back table { overflow-wrap:normal; }
+.lh-syg-back :is(th,td) { min-width:4em; }
 .lh-syg-br .lh-syg-br .lh-syg-node { gap:8px; padding:5px 8px; }
 .lh-syg-br .lh-syg-br .lh-fi { --fi:24px !important; }
 .lh-syg-br .lh-syg-br .lh-syg-ic { width:24px; height:24px; border-radius:7px; }
