@@ -65,7 +65,7 @@ const CONTENT = {
           body: [
             { h: "複習時按卡片上的 <strong>Synapse</strong>，會看到以這張卡為中心的關聯圖：記熟的卡、來源筆記、深入解析、教材、影片、情境回顧主題，每條線都寫著<strong>為什麼相關</strong>。看答案前只出現你已經學過的，看答案後才補上還沒看過的。" },
             { h: "關聯要<strong>先讓 AI 跑一次</strong> <code>engram-synapse</code> skill 才會出現。已掌握的卡（穩定度 7 天以上）累積到 10 張後，跟你的 AI 工具說「<strong>幫我建立 Synapse</strong>」。" },
-            { h: "之後多了新的教材、影片或解析，再說一次「更新 Synapse」；Review Deck 頁會提醒你何時該執行或更新。這是 <strong>Pro</strong> 功能。" },
+            { h: "建立之後<strong>平常不用管</strong>：你再用 AI 做卡片、課程、影片或解析頁時，skill 會順手更新 Synapse。這是 <strong>Pro</strong> 功能。" },
           ],
           first: "先複習到有 10 張已掌握的卡，再跟 AI 說「幫我建立 Synapse」。",
         },
@@ -119,7 +119,7 @@ const CONTENT = {
           body: [
             { h: "During review, the <strong>Synapse</strong> button on a card opens a small map around it: mastered cards, the source note, deep dives, lessons, videos and recall topics, with <strong>the reason</strong> written on every line. Before the answer it shows only what you have already learned; the rest appears after." },
             { h: "The links exist only after <strong>your AI has run</strong> the <code>engram-synapse</code> skill once. When you have 10 mastered cards (stability of 7 days or more), tell your AI tool \"<strong>Build synapse</strong>\"." },
-            { h: "After you add lessons, videos or deep dives, say \"update synapse\" to pick them up; the Review Deck page tells you when to run or refresh it. This is a <strong>Pro</strong> feature." },
+            { h: "After that you can <strong>leave it alone</strong>: whenever your AI builds cards, lessons, videos or deep dives, the skill refreshes Synapse along the way. This is a <strong>Pro</strong> feature." },
           ],
           first: "Review until 10 cards are mastered, then tell your AI \"Build synapse\".",
         },

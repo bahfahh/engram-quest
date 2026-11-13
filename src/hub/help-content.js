@@ -114,7 +114,7 @@ module.exports = {
           { p: "複習時按卡片上的 Synapse，會看到以這張卡為中心的關聯圖：記熟的卡、來源筆記、深入解析、教材、影片、情境回顧主題，每條線都寫著為什麼相關。看答案前只出現你已經學過的，看答案後才補上還沒看過的。" },
           { p: "關聯要先讓 AI 跑一次 engram-synapse skill 才會出現。已掌握的卡（穩定度 7 天以上）累積到 10 張後，跟你的 AI 工具說：" },
           { say: ["幫我建立 Synapse"] },
-          { p: "之後多了新的教材、影片或解析，再說一次「更新 Synapse」。Review Deck 頁會提醒你何時該執行或更新。" },
+          { p: "建立之後平常不用管：你再用 AI 做卡片、課程、影片或解析頁時，skill 會順手更新 Synapse。還沒建立時，Review Deck 頁會提醒你。" },
           { note: "Review Deck 免費。Synapse、限時複習（5／10／15 分鐘），以及把難卡加入深入解析佇列需要 Pro。" },
         ],
       },
@@ -215,7 +215,7 @@ module.exports = {
         body: [
           { p: "一次買斷，之後的 Pro 功能更新都包含。不升級也能繼續使用所有免費功能。Pro 加的是這四件事：" },
           { list: [
-            "<strong>Synapse 記憶錨點</strong>：複習時把難記的卡連到你學過的相關內容。先讓 AI 跑一次 engram-synapse skill 才有關聯，做法寫在上面的 Review Deck。",
+            "<strong>Synapse 記憶錨點</strong>：複習時把難記的卡連到你學過的相關內容。第一次先對 AI 說一句話建立關聯，之後做內容時會自動更新；做法寫在上面的 Review Deck。",
             "<strong>深入解析</strong>：難卡加入佇列，用 engram-explainer skill 生成白話圖解，在「深入解析」分頁閱讀。",
             "<strong>限時複習</strong>：在 Review Deck 頁的「定時」選 5／10／15 分鐘，以一張約一分鐘挑出那麼多張卡，順序是新卡 → 過期最久 → 最快到期。倒數到零會顯示「時間到」，但你可以把這輪做完，排程照常記錄。",
             "<strong>更多老師與情境回顧片</strong>：Nico 以外的影片老師、替每個系列指定老師，以及用 Claude Code 把筆記做成情境回顧片。看影片、管理影片學院、看已經做好的回顧片都免費。",
@@ -420,7 +420,7 @@ module.exports = {
           { p: "During review, the Synapse button on a card opens a small map around it: mastered cards, the source note, deep dives, lessons, videos and recall topics, with the reason written on every line. Before the answer it shows only what you have already learned; the rest appears after." },
           { p: "The links exist only after your AI has run the engram-synapse skill once. When you have 10 mastered cards (stability of 7 days or more), tell your AI tool:" },
           { say: ["Build synapse"] },
-          { p: "After you add lessons, videos or deep dives, say \"update synapse\" to pick them up. The Review Deck page tells you when to run or refresh it." },
+          { p: "After that you can leave it alone: whenever your AI builds cards, lessons, videos or deep dives, the skill refreshes Synapse along the way. Until the links exist, the Review Deck page reminds you." },
           { note: "Review Deck is free. Synapse, Time-boxed review (5, 10 or 15 minutes) and the button that queues a hard card for a Deep Dive need Pro." },
         ],
       },
@@ -521,7 +521,7 @@ module.exports = {
         body: [
           { p: "One purchase, with future Pro feature updates included. Every free feature keeps working without it. Pro adds four things:" },
           { list: [
-            "<strong>Synapse memory anchors</strong>: during review, link a hard card to related things you have already learned. The links exist once your AI has run the engram-synapse skill; the Review Deck section above shows how.",
+            "<strong>Synapse memory anchors</strong>: during review, link a hard card to related things you have already learned. Say one sentence to your AI the first time to build the links; after that they update as you build content. The Review Deck section above shows how.",
             "<strong>Deep Dive</strong>: queue a hard card, generate a plain-language, illustrated page with the engram-explainer skill, and read it in the Deep Dive tab.",
             "<strong>Time-boxed review</strong>: under Timed on the Review Deck page, pick 5, 10 or 15 minutes. At about a minute per card it picks that many cards: new first, then the most overdue, then the soonest due. When the countdown reaches zero it says Time's up, but you can finish the round and scheduling works as usual.",
             "<strong>More teachers and recall films</strong>: the video teachers besides Nico, a teacher for each series, and making recall films from your notes with Claude Code. Watching videos, managing the Video Academy and watching recall films you already have are free.",
