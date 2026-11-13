@@ -399,6 +399,25 @@ async function saveSrData(adapter, notePath, srData) {
   await adapter.write(srPath, JSON.stringify(srData, null, 2));
 }
 
+// One rated card, counted into the achievement stats kept in data.json (`_stats`): the total, the
+// per-day log and the day streak. Returns the stats object it was given, updated.
+function recordReviewDay(stats, now = new Date()) {
+  const st = stats || {};
+  const today = getLocalDateStr(now);
+  const dayBefore = new Date(now);
+  dayBefore.setDate(dayBefore.getDate() - 1);
+  const yesterday = getLocalDateStr(dayBefore);
+  st.totalCardsReviewed = (st.totalCardsReviewed || 0) + 1;
+  st.dailyReviewLog = st.dailyReviewLog || {};
+  st.dailyReviewLog[today] = (st.dailyReviewLog[today] || 0) + 1;
+  if (st.lastReviewDate === yesterday) st.currentStreak = (st.currentStreak || 1) + 1;
+  else if (st.lastReviewDate !== today) st.currentStreak = 1;
+  // Taken on every card, not only when a streak grows: the first day of a streak counts too.
+  st.longestStreak = Math.max(st.longestStreak || 0, st.currentStreak || 0);
+  st.lastReviewDate = today;
+  return st;
+}
+
 // SR record written after a rating. FSRS state alone cannot answer "how many Again since
 // date X" (the explainer skill's rewrite loop needs that), so keep a short per-review log.
 const SR_LOG_MAX = 20;
@@ -546,6 +565,7 @@ module.exports = {
   hintsPath,
   loadHints,
   buildSrRecord,
+  recordReviewDay,
   loadSrData,
   saveSrData,
   mergeSrIntoCards,

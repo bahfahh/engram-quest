@@ -21,8 +21,6 @@ var pe = class extends I.PluginSettingTab {
     _coffee.createEl("span", { text: "Buy me a coffee" });
 
     new I.Setting(e).setName(c(t, "LANGUAGE")).setDesc(c(t, "LANGUAGE_DESC")).addDropdown(r => r.addOption("en", c(t, "LANGUAGE_ENGLISH")).addOption("zh-tw", c(t, "LANGUAGE_ZH_TW")).addOption("system", c(t, "LANGUAGE_SYSTEM")).setValue(t.language || "en").onChange(async s => { this.plugin.settings.language = s; await this.plugin.saveData(this.plugin.settings); this.display(); })),
-    new I.Setting(e).setName(c(t, "SETTINGS_APPEARANCE")).setHeading(),
-    new I.Setting(e).setName(c(t, "SETTINGS_THEME_NAME")).setDesc(c(t, "SETTINGS_THEME_DESC")).addDropdown(r => r.addOption("bright", `☀️ ${c(t, "SETTINGS_THEME_BRIGHT")}`).addOption("dark", `🌙 ${c(t, "SETTINGS_THEME_DARK")}`).addOption("minimal", `✨ ${c(t, "SETTINGS_THEME_MINIMAL")}`).setValue(t.lhTheme).onChange(async s => { this.plugin.settings.lhTheme = s; await this.plugin.saveData(this.plugin.settings); })),
     new I.Setting(e).setName(c(t, "SETTINGS_REVIEW_DECK")).setHeading(),
     new I.Setting(e).setName(c(t, "SETTINGS_FLASHCARD_TAGS_NAME")).setDesc(c(t, "SETTINGS_FLASHCARD_TAGS_DESC")).addTextArea(r => { r.setPlaceholder("Flashcards").setValue(t.flashcardTags).onChange(async s => { this.plugin.settings.flashcardTags = s.trim(); await this.plugin.saveData(this.plugin.settings); }); r.inputEl.style.cssText = "width:200px;height:72px;font-family:monospace;font-size:13px"; }),
     new I.Setting(e).setName(c(t, "SETTINGS_SR_SCAN_NAME")).setDesc(c(t, "SETTINGS_SR_SCAN_DESC")).addToggle(r => r.setValue(t.enableSRScan).onChange(async s => { this.plugin.settings.enableSRScan = s; await this.plugin.saveData(this.plugin.settings); })),
