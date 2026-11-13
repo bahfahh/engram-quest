@@ -350,7 +350,9 @@ async function saveTagSourceCard(app, card, newData) {
     if (loaded && loaded.path !== target && !card.notePath.startsWith("engram-review/ai-cards/")) hints.note = card.notePath;
     const oldHint = hints.cards[card.front] || {};
     delete hints.cards[card.front];
+    // Keep every field the skill wrote (e.g. `source`); the editor only owns the hint text.
     hints.cards[newData.front] = {
+      ...oldHint,
       l1: newData.hint_l1 !== undefined ? newData.hint_l1 : (oldHint.l1 || ""),
       l2: newData.hint_l2 !== undefined ? newData.hint_l2 : (oldHint.l2 || ""),
       l3: newData.hint_l3 !== undefined ? newData.hint_l3 : (oldHint.l3 || ""),

@@ -187,3 +187,39 @@ describe("editing a card's front in the review screen", () => {
     expect(app.notes.text).toBe("New front :: The answer\n");
   });
 });
+
+describe("editing a card keeps what the skill wrote in its hints", () => {
+  // The skill records which notes a card came from (`source`; null = no source note) next to the hint
+  // text. The card header's source buttons read it, and the editor only owns the hint text.
+  const notePath = "engram-review/ai-cards/flashcards__cache-manual.md";
+  const hints = "engram-review/hints/flashcards__cache-manual.json";
+
+  for (const source of [["Study/Cache.md", "Projects/Design.md"], null]) {
+    for (const edit of [
+      { name: "the front changes", data: { front: "New front", back: "The answer", hint_l1: "New hint" } },
+      { name: "only the answer changes", data: { front: "Old front", back: "A better answer" } },
+    ]) {
+      it(`keeps source ${JSON.stringify(source)} when ${edit.name}`, async () => {
+        const adapter = makeAdapter({
+          [hints]: JSON.stringify({ note: notePath, cards: { "Old front": { l1: "Old hint", l2: "", l3: "kw", source } } }),
+        });
+        const app = makeApp(adapter, "Old front :: The answer\n");
+        await saveTagSourceCard(app, { front: "Old front", back: "The answer", notePath }, edit.data);
+        const saved = JSON.parse(adapter.files[hints]).cards[edit.data.front];
+        expect(saved.source).toEqual(source);
+        expect(saved.l1).toBe(edit.data.hint_l1 ?? "Old hint");
+        expect(saved.l3).toBe("kw");
+      });
+    }
+  }
+
+  it("keeps every other field when the review screen saves all three hints", async () => {
+    // The edit form always sends the three hint strings, including cleared ones.
+    const adapter = makeAdapter({
+      [hints]: JSON.stringify({ note: notePath, cards: { "Old front": { l1: "a", l2: "b", l3: "c", source: null, emoji: "🧠" } } }),
+    });
+    const app = makeApp(adapter, "Old front :: The answer\n");
+    await saveTagSourceCard(app, { front: "Old front", back: "The answer", notePath }, { front: "New front", back: "The answer", hint_l1: "x", hint_l2: "", hint_l3: "z" });
+    expect(JSON.parse(adapter.files[hints]).cards).toEqual({ "New front": { l1: "x", l2: "", l3: "z", source: null, emoji: "🧠" } });
+  });
+});
