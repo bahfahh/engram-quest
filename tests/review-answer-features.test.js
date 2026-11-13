@@ -74,7 +74,7 @@ describe("feature entries in the answer header", () => {
     const { buttons: [queue] } = draw({ queue: notQueued });
     await settle();
     expect(queue.textContent).toBe(c(t, "EXPLAINER_MARK_BTN"));
-    expect(queue.disabled).toBe(false);
+    expect(queue.attrs["aria-disabled"]).toBeUndefined();
     expect(queue.hasClass("is-done")).toBe(false);
   });
 
@@ -83,7 +83,21 @@ describe("feature entries in the answer header", () => {
     await settle();
     expect(queue.textContent).toBe(c(t, "EXPLAINER_QUEUED_BTN"));
     expect(queue.hasClass("is-done")).toBe(true);
-    expect(queue.disabled).toBe(true);
+    // Finished, not unavailable: the button keeps focus and is never the grey of `disabled`.
+    expect(queue.attrs["aria-disabled"]).toBe("true");
+    expect(queue.disabled).toBe(false);
+  });
+
+  it("adds a card once, however often the button is pressed", async () => {
+    let calls = 0, finish;
+    const { buttons: [queue] } = draw({ queue: { isQueued: async () => false, add: () => { calls++; return new Promise((resolve) => { finish = resolve; }); } } });
+    await settle();
+    const first = queue.click(), second = queue.click();
+    finish(true);
+    await Promise.all([first, second]);
+    await queue.click();
+    expect(calls).toBe(1);
+    expect(queue.hasClass("is-done")).toBe(true);
   });
 
   it("turns to done once the card is added, and stays as it was when adding failed", async () => {
@@ -130,6 +144,16 @@ describe("feature entry styles", () => {
     const pressed = declarations(`${S} .lh-ans-feature[aria-pressed="true"]`);
     expect(pressed.background).toBe("var(--btn) !important");
     expect(pressed.color).toBe("var(--onbtn) !important");
+  });
+
+  it("shows where the keyboard is on every button of the card's header", () => {
+    expect(declarations(`${S} .lh-rc-edit-btn:focus-visible`).outline).toBe("2px solid var(--focus)");
+  });
+
+  it("keeps the feature group beside the label when the tools wrap below (desktop)", () => {
+    const header = declarations(`body:not(.is-phone) ${S} .lh-answer-header`);
+    expect(header["flex-wrap"]).toBe("wrap");
+    expect(header["justify-content"]).toBe("flex-start");
   });
 
   it("shows done in the finished colour, not the grey of a disabled button", () => {

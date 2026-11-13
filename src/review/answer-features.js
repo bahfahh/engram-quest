@@ -9,7 +9,7 @@ const { icon, featureIcon } = require("../hub/ui");
 
 /**
  * synapse = { open, toggle() -> open } | null   the card has links to show
- * queue   = { isQueued() -> Promise<boolean>, add() -> Promise<boolean> } | null   `add` resolves true once the card is in the queue
+ * queue   = { isQueued() -> Promise<boolean>, add() -> Promise<boolean> } | null   `add` resolves true once the card is in the queue and never rejects
  * Returns the group, or null when the card has neither.
  */
 function renderAnswerFeatures(header, { t, plugin, synapse, queue }) {
@@ -27,15 +27,22 @@ function renderAnswerFeatures(header, { t, plugin, synapse, queue }) {
     const btn = group.createEl("button", { cls: "lh-rc-edit-btn lh-ans-feature lh-queue-btn" });
     const mark = icon(btn.createEl("span", { cls: "lh-ans-feature-ic" }), "plus");
     const label = btn.createEl("span", { text: c(t, "EXPLAINER_MARK_BTN") });
-    // In the queue is a finished state, drawn in the finished colour; nothing more to press.
+    // In the queue is a finished state, drawn in the finished colour. Nothing more to press, but the
+    // button stays focusable (aria-disabled), so a keyboard user is not thrown back to the page.
+    let settled = false, adding = false;
     const markQueued = () => {
+      settled = true;
       mark.empty();
       icon(mark, "check");
       label.textContent = c(t, "EXPLAINER_QUEUED_BTN");
       btn.classList.add("is-done");
-      btn.disabled = true;
+      btn.setAttribute("aria-disabled", "true");
     };
-    btn.addEventListener("click", async () => { if (await queue.add()) markQueued(); });
+    btn.addEventListener("click", async () => {
+      if (settled || adding) return;
+      adding = true;
+      try { if (await queue.add()) markQueued(); } finally { adding = false; }
+    });
     queue.isQueued().then((queued) => { if (queued) markQueued(); }).catch(() => {});
   }
   return group;

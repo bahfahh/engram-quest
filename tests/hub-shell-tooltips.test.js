@@ -45,7 +45,7 @@ const within = (el, cls) => { for (let at = el; at; at = at.parent) if (at.hasCl
 const nativeTip = (el) => { for (let at = el; at; at = at.parent) if (at.attrs.title) return at.attrs.title; return null; };
 
 let media;
-function drawHub(settings = {}) {
+function drawHub(settings = {}, { win } = {}) {
   const hub = {
     app: {},
     plugin: { settings: { language: "zh-tw", ...settings }, saveData: async () => {} },
@@ -60,6 +60,7 @@ function drawHub(settings = {}) {
     _minimize() {},
     close() {},
   };
+  if (win) hub.contentEl.win = win;
   renderShell(hub);
   const all = drawn(hub.contentEl);
   const side = all.filter((el) => within(el, "lh-side"));
@@ -139,6 +140,13 @@ describe("desktop Hub frame tooltips", () => {
     media.matches = true;
     media.listeners.forEach((fn) => fn());
     const nav = drawn(hub.contentEl).filter((el) => el.hasClass("lh-nv"));
+    expect(nav.every((item) => item.attrs["aria-label"])).toBe(true);
+  });
+
+  it("asks the window the Hub is in, which is not always the active one", () => {
+    const own = { matches: true, addEventListener() {}, removeEventListener() {} };
+    const { nav } = drawHub({}, { win: { matchMedia: () => own } });
+    expect(media.query).toBe("");
     expect(nav.every((item) => item.attrs["aria-label"])).toBe(true);
   });
 
