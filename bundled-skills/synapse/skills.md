@@ -133,7 +133,7 @@ available, running in fallback mode (full rebuild every run)."
 | `mode` | When | What the skill should do next |
 |---|---|---|
 | `full` | First run, no `_status.json`, mastered pool size changed by ≥ `max(10, last × 0.2)`, or `--full` | Run the full LLM prompt over `targets[]` (Step 2 onward) |
-| `incremental` | `_status.json` exists, pool change below that threshold, and `workQueue[]` is non-empty | Run the LLM prompt only over `workQueue[]`. **Do NOT touch `synapse/*.json` files for fronts in `preservedFronts[]`.** |
+| `incremental` | `_status.json` exists, pool change below that threshold, and `workQueue[]` is non-empty | Run the LLM prompt only over `workQueue[]`. **Do NOT touch `synapse/*.json` entries for fronts in `preservedFronts[]`.** An entry is matched by its file (the note) plus its front, so a front that is preserved in one note can still be a `workQueue` target in another. |
 | `noop` | `_status.json` exists and `workQueue[]` would be empty | Skip the LLM. Just bump `_status.json.generatedAt` to now and report "nothing to update" |
 | `pool-too-small` | Mastered pool < 10 cards | Write `_status.json` with `enabled: false, reason: "pool-too-small"` and tell the user to keep reviewing |
 | `error` | sr/ folder missing | Tell the user no SR data exists yet |

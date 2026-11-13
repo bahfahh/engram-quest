@@ -2,6 +2,7 @@
 // Regression focus: auto-update must work for claude/codex/gemini installs, which
 // carry no "engram-quest-installer:" marker (the old guard only ever matched Cursor).
 import { describe, it, expect } from "vitest";
+import { createRequire } from "node:module";
 import { autoUpdateSkills, checkSkillsUpdates, getInstallPreview, doInstall } from "../src/hub/skills.js";
 import createInstaller from "../src/skills/installer.js";
 
@@ -193,12 +194,15 @@ describe("a failed video asset download", () => {
     const preview = await getInstallPreview(plugin, "claude");
     expect(preview.items.some((i) => i.pack)).toBe(true);
 
-    const failure = await doInstall(plugin, preview).then(() => null, (e) => e);
+    const obsidian = createRequire(import.meta.url)("obsidian");
+    const had = obsidian.requestUrl;
+    obsidian.requestUrl = async () => { throw new Error("Request failed, status 404"); };
+    const failure = await doInstall(plugin, preview).then(() => null, (e) => e).finally(() => { obsidian.requestUrl = had; });
 
     // The modal shows this message and stays open; it has to say what went wrong, not only that something did.
     expect(failure).toBeInstanceOf(Error);
     expect(failure.message).toMatch(/^Couldn.t download the video assets./);
-    expect(failure.message).toMatch(/(.+)$/);
+    expect(failure.message.endsWith(" (Request failed, status 404)")).toBe(true);
     for (const entry of preview.items.filter((i) => !i.pack && i.action !== "remove")) expect(plugin.writes[entry.path]).toBe(entry.content);
     for (const entry of preview.items.filter((i) => i.pack)) expect(plugin.writes[entry.path]).toBeUndefined();
   });
