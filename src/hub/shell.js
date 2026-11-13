@@ -78,7 +78,7 @@ function renderDesktop(hub, root) {
   // its accessible name and its one tooltip, opening away from the rail.
   const named = [];
   const nameInRail = (btn, name) => { btn.setAttribute("data-tooltip-position", "right"); named.push([btn, name]); };
-  const narrow = activeWindow.matchMedia(`(max-width:${RAIL_MAX_WIDTH}px)`);
+  const narrow = (hub.contentEl.win || activeWindow).matchMedia(`(max-width:${RAIL_MAX_WIDTH}px)`);
   const paintSide = () => {
     const collapsed = isCollapsed(hub.plugin.settings, watching());
     shell.classList.toggle("is-rail", collapsed);
@@ -87,8 +87,9 @@ function renderDesktop(hub, root) {
     const rail = collapsed || narrow.matches;
     named.forEach(([btn, name]) => { if (rail) btn.setAttribute("aria-label", name); else btn.removeAttribute("aria-label"); });
   };
-  const onNarrow = () => { if (shell.isConnected) paintSide(); else narrow.removeEventListener("change", onNarrow); };
-  narrow.addEventListener("change", onNarrow);
+  // One width watcher per Hub: drawing the frame again replaces it (renderShell), closing the Hub removes it.
+  narrow.addEventListener("change", paintSide);
+  hub._stopRailWatch = () => narrow.removeEventListener("change", paintSide);
   fold.setAttribute("data-tooltip-position", "right");
   hub.setWatching = (on) => { hub._watchingTab = watchingTab(hub._watchingTab, hub.activeTab, !!on); paintSide(); };
 
@@ -249,6 +250,7 @@ function renderPhoneSub(hub, shell, page, cats) {
 
 function renderShell(hub) {
   const root = hub.contentEl;
+  if (hub._stopRailWatch) { hub._stopRailWatch(); hub._stopRailWatch = null; }
   root.empty();
   const t = hub.plugin.settings;
   const cats = categories(t);

@@ -29,9 +29,12 @@ describe("an opened card's answer stays inside its node", () => {
 
   it("never draws an image or other media wider than the answer", () => {
     expect(declarations(".lh-syg-back :is(img,video,iframe,svg)")["max-width"]).toBe("100%");
+    // An embedded frame has no shape of its own: it keeps the height it was given.
+    expect(declarations(".lh-syg-back :is(img,video,iframe,svg)").height).toBeUndefined();
+    expect(declarations(".lh-syg-back :is(img,video,svg)").height).toBe("auto");
   });
 
   it("keeps a table's columns wide enough to read", () => {
-    expect(declarations(".lh-syg-back :is(th,td)")["min-width"]).toBeTruthy();
+    expect(declarations(".lh-syg-back :is(th,td)")["min-width"]).toBe("4em");
   });
 });

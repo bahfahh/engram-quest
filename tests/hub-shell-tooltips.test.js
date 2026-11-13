@@ -129,11 +129,24 @@ describe("desktop Hub frame tooltips", () => {
     expect(nav.some((item) => "aria-label" in item.attrs)).toBe(false);
   });
 
-  it("stops watching the window width once the Hub is gone", () => {
+  it("watches the window width once per Hub, however often the frame is drawn again", () => {
     const { hub } = drawHub();
     expect(media.listeners).toHaveLength(1);
-    hub.contentEl.children.forEach((el) => { el.isConnected = false; });
+    renderShell(hub);
+    renderShell(hub);
+    expect(media.listeners).toHaveLength(1);
+    // The watcher that is left belongs to the frame now on screen.
+    media.matches = true;
     media.listeners.forEach((fn) => fn());
+    const nav = drawn(hub.contentEl).filter((el) => el.hasClass("lh-nv"));
+    expect(nav.every((item) => item.attrs["aria-label"])).toBe(true);
+  });
+
+  it("stops watching the window width when the Hub closes", () => {
+    const { HubModal } = require("../src/hub/modal.js");
+    const { hub } = drawHub();
+    expect(media.listeners).toHaveLength(1);
+    HubModal.prototype.onClose.call(hub);
     expect(media.listeners).toHaveLength(0);
   });
 

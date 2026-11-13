@@ -6,6 +6,7 @@
 // were; how it looks is checked in a browser at several widths.
 import { describe, expect, it } from "vitest";
 import { createRequire } from "node:module";
+import { drawn, drawPlayer, vault } from "./helpers/player-page.js";
 
 const require = createRequire(import.meta.url);
 const css = String(require("../src/videos/styles"));
@@ -52,5 +53,21 @@ describe("video title under the player", () => {
   it("leaves the phone's title row as it was", () => {
     expect(declarations("body.is-phone .lh-vid-info-row")).toEqual({ "flex-direction": "column", "align-items": "stretch" });
     expect(declarations("body.is-phone .lh-vid-info-title")).toEqual({ "font-size": "22px", "line-height": "29px", "white-space": "normal" });
+  });
+
+  // The rules above only work on the elements the page really draws.
+  const titleRow = async (phone) => drawn(await drawPlayer(vault(), { phone })).find((el) => el.hasClass("lh-vid-info-row"));
+  const kinds = (el) => el.children.map((child) => `${child.tag}.${[...child.cls][0]}`);
+
+  it("draws the desktop's buttons as one group after the titles", async () => {
+    const row = await titleRow(false);
+    expect(kinds(row)).toEqual(["div.lh-vid-info-titles", "div.lh-vid-info-actions"]);
+    expect(kinds(row.children[1])).toEqual(["button.lh-vid-btn", "button.lh-vid-btn"]);
+  });
+
+  it("draws the phone's row without the group: titles, then the full-width button", async () => {
+    const row = await titleRow(true);
+    expect(kinds(row)).toEqual(["div.lh-vid-info-titles", "button.lh-pbtn"]);
+    expect(drawn(row).some((el) => el.hasClass("lh-vid-info-actions"))).toBe(false);
   });
 });

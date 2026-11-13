@@ -107,7 +107,8 @@ const session = `
 /* The answer is the user's own Markdown in a node about 250px wide. Text and code wrap, media is
    capped at the node's width, and what still cannot fit (a wide table) scrolls inside the answer. */
 .lh-syg-back pre { margin:8px 0; font-size:13px; white-space:pre-wrap; }
-.lh-syg-back :is(img,video,iframe,svg) { max-width:100%; height:auto; }
+.lh-syg-back :is(img,video,iframe,svg) { max-width:100%; }
+.lh-syg-back :is(img,video,svg) { height:auto; }
 .lh-syg-back table { overflow-wrap:normal; }
 .lh-syg-back :is(th,td) { min-width:4em; }
 .lh-syg-br .lh-syg-br .lh-syg-node { gap:8px; padding:5px 8px; }
