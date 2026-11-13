@@ -88,8 +88,7 @@ async function renderVideoTab(el, hub) {
     const head = root.createDiv({ cls: "lh-vid-head-row" });
     head.createEl("button", { cls: "lh-vid-back", text: c(t, "VIDEO_BACK") }).addEventListener("click", toShelf);
     head.createSpan({ cls: "lh-vid-head-title", text: open.meta.title });
-    head.createDiv({ cls: "lh-vid-spacer" });
-    actions(head);
+    actions(head.createDiv({ cls: "lh-vid-head-actions" }));
   } else if (!open) {
     const { right } = ui.pageHeader(root, hub, { titleKey: "TAB_VIDEO", guide: "video" });
     actions(right());
@@ -328,10 +327,12 @@ function renderTopic(body, hub, t, topic, refresh) {
   const infoMeta = titles.createDiv({ cls: "lh-vid-info-meta" });
   if (video.duration) infoMeta.createSpan({ text: fmtTime(video.duration) });
   if (video.cast) teacherTag(infoMeta, t, teacherOfVideo(video.cast.teacher), video.cast.variant);
+  // On a desktop the buttons are one group, so in a narrow window they drop below the title together.
+  const tools = phone ? titleRow : titleRow.createDiv({ cls: "lh-vid-info-actions" });
   // Desktop only: open the OS file manager at this video's mp4 (or its folder if the file isn't on this device).
   if (I.Platform.isDesktopApp && typeof hub.app.showInFolder === "function") {
     const label = c(t, "VIDEO_SHOW_IN_FOLDER");
-    const reveal = titleRow.createEl("button", { cls: "lh-vid-btn lh-vid-icon-btn", attr: { "aria-label": label, title: label } });
+    const reveal = tools.createEl("button", { cls: "lh-vid-btn lh-vid-icon-btn", attr: { "aria-label": label, title: label } });
     I.setIcon(reveal, "folder-open");
     reveal.addEventListener("click", async () => {
       const dir = I.normalizePath(`${data.VIDEOS_DIR}/${slug}`);
@@ -341,7 +342,7 @@ function renderTopic(body, hub, t, topic, refresh) {
     });
   }
   const done = data.videoProgress(meta, video.id).completed;
-  const doneBtn = titleRow.createEl("button", { cls: phone ? "lh-pbtn" + (done ? " alt" : "") : "lh-vid-btn" + (done ? " is-done" : " lh-vid-btn-primary"), text: c(t, done ? "VIDEO_MARKED_DONE" : "VIDEO_MARK_DONE") });
+  const doneBtn = tools.createEl("button", { cls: phone ? "lh-pbtn" + (done ? " alt" : "") : "lh-vid-btn" + (done ? " is-done" : " lh-vid-btn-primary"), text: c(t, done ? "VIDEO_MARKED_DONE" : "VIDEO_MARK_DONE") });
   doneBtn.addEventListener("click", () => { save({ completed: !done }); leave({ slug, videoId: video.id, autoplay: false }); });
 
   if (meta.sources.length) {
@@ -417,16 +418,37 @@ function renderTopic(body, hub, t, topic, refresh) {
   if (video.credits) main.createDiv({ cls: "lh-vid-credits lh-vid-below", text: `${c(t, "VIDEO_CREDITS")}：${video.credits}` });
 }
 
+// The browser fetches a <track> same-origin only (the <video> itself may come from elsewhere). In
+// Obsidian the Hub page is app://obsidian.md and a vault resource URL is app://<id>/…, so a subtitle
+// file attached by that URL is blocked. Its text is read through the adapter and handed over as a
+// Blob URL, which belongs to the page, and released once the browser has read the cues.
+async function attachSubtitles(vid, hub, t, path) {
+  const adapter = hub.app.vault.adapter;
+  const [text, on] = await Promise.all([
+    adapter.read(path),
+    data.readSettings(adapter, !!hub.plugin.settings.licenseValid).then((s) => s.subtitles, (e) => {
+      console.warn("EngramQuest: video settings unreadable, subtitles left on", e);
+      return true;
+    }),
+  ]);
+  if (!vid.isConnected) return;
+  const url = URL.createObjectURL(new Blob([text], { type: "text/vtt" }));
+  const track = vid.createEl("track", { attr: { kind: "subtitles", src: url, srclang: "und", label: c(t, "VIDEO_SET_SUBS") } });
+  const release = () => URL.revokeObjectURL(url);
+  track.addEventListener("load", release);
+  track.addEventListener("error", release);
+  // Subtitles start on unless Video settings turn them off; a hidden track is still loaded, so the
+  // player's own menu can switch it.
+  track.track.mode = on ? "showing" : "hidden";
+}
+
 function mountPlayer(stage, hub, t, slug, meta, video, autoplay, save, playable, setPlayer, leave) {
   const src = `${data.VIDEOS_DIR}/${slug}/${video.file}`;
   const vid = stage.createEl("video", { cls: "lh-vid-player", attr: { controls: "", preload: "metadata", playsinline: "" } });
   vid.src = fileUrl(hub, slug, video.file);
   if (video.subtitles) {
-    const track = vid.createEl("track", { attr: { kind: "subtitles", src: fileUrl(hub, slug, video.subtitles), srclang: "und", label: c(t, "VIDEO_SET_SUBS"), default: "" } });
-    // Subtitles start on unless Video settings turn them off; the player's own menu can still switch them.
-    data.readSettings(hub.app.vault.adapter, !!hub.plugin.settings.licenseValid)
-      .then((s) => { if (!s.subtitles && track.track) track.track.mode = "hidden"; })
-      .catch((e) => console.warn("EngramQuest: video settings unreadable, subtitles left on", e));
+    attachSubtitles(vid, hub, t, I.normalizePath(`${data.VIDEOS_DIR}/${slug}/${video.subtitles}`))
+      .catch((e) => console.warn("EngramQuest: subtitles not loaded", e));
   }
   setPlayer(vid);
   // A synced vault can carry meta.json without the unsynced mp4, and a file can exist yet fail to

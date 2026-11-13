@@ -6,6 +6,7 @@ const { anySrPattern: ge, getReviewStatus: $, loadSrData, saveSrData, buildSrRec
 const { loadSynapseStatus, loadSynapseBatch, attachSynapseToCards, isSynapseEnabled } = require("./synapse");
 const { SynapseMapSession } = require("./synapse-session");
 const { renderSynapseMap } = require("./synapse-panel");
+const { renderAnswerFeatures } = require("./answer-features");
 const { ACHIEVEMENTS, RARITY_DARK, RARITY_LIGHT } = require("../hub/achievement");
 const { assetUrl } = require("../assets");
 const { wrapSelection, selectionLines } = require("./format");
@@ -592,15 +593,19 @@ var Q=class extends I.Modal{
         selectedAnswerText=text.trim();
         return selectedAnswerText;
       };
-      // Answer-header button row — always present so post-reveal Synapse toggle has a home.
+      // Desktop: the feature entries (Synapse, Deep Dive queue) follow the label as their own group;
+      // the formatting tools keep the far end. A phone reaches both from its "more" menu.
+      if(!phone) renderAnswerFeatures(answerHeader,{t,plugin:this.plugin,
+        synapse:synapseHasLinks?{open:this.synapseOpen,toggle:()=>{ this.synapseOpen=!this.synapseOpen; refreshSynapseContainer(); revealSynapse(); return this.synapseOpen; }}:null,
+        queue:t.licenseValid&&!this.browseOnly?{
+          isQueued:()=>readQueue(this.app.vault.adapter).then(_q=>isQueued(_q,e.notePath,e.front)),
+          add:async()=>{
+            try{const _r=await addToQueue(this.app.vault.adapter,{source:e.notePath,q:e.front,a:e.back,deck:this.deckName||null});new I.Notice(_r.added?c(t,"EXPLAINER_MARKED"):c(t,"EXPLAINER_ALREADY"));return true;}
+            catch(err){console.error("EngramQuest: explainer queue failed",err);return false;}
+          },
+        }:null});
+      // Formatting tools.
       let fmtBtns=answerHeader.createEl("div",{attr:{class:"lh-answer-fmt-btns"}});
-      // Post-reveal Synapse access: ⚡ toggle next to Highlight/Blockquote.
-      if(!phone&&synapseHasLinks){
-        const syHeaderBtn=fmtBtns.createEl("button",{attr:{class:"lh-rc-edit-btn lh-fmt-btn",title:c(t,"SYNAPSE_HINT")}});
-        _featureIcon(syHeaderBtn,this.plugin,"synapse",{size:18});
-        syHeaderBtn.createEl("span",{text:c(t,"SYNAPSE")});
-        syHeaderBtn.addEventListener("click",()=>{ this.synapseOpen=!this.synapseOpen; refreshSynapseContainer(); revealSynapse(); });
-      }
       if(e.notePath){
         // In-place answer refresh — full _renderCardContent rebuilds .lh-review-card and
         // resets scrollTop, which the user perceives as a flash + jump-to-top when they
@@ -645,14 +650,6 @@ var Q=class extends I.Modal{
         let bqBtn=fmtBtns.createEl("button",{text:c(t,"FORMAT_BLOCKQUOTE"),attr:{class:"lh-rc-edit-btn lh-fmt-btn"}});
         bqBtn.addEventListener("mousedown",(ev)=>{captureAnswerSelection();ev.preventDefault();});
         bqBtn.addEventListener("click",applyBlockquoteToBack);
-      }
-      if(t.licenseValid&&!phone&&!this.browseOnly){
-        const qBtn=fmtBtns.createEl("button",{attr:{class:"lh-rc-edit-btn lh-fmt-btn lh-queue-btn"}});
-        _uiIcon(qBtn,"plus");
-        const qLabel=qBtn.createEl("span",{text:c(t,"EXPLAINER_MARK_BTN")});
-        const markQueued=()=>{ qLabel.textContent=c(t,"EXPLAINER_ALREADY"); qBtn.disabled=true; };
-        qBtn.addEventListener("click",async()=>{try{const _r=await addToQueue(this.app.vault.adapter,{source:e.notePath,q:e.front,a:e.back,deck:this.deckName||null});new I.Notice(_r.added?c(t,"EXPLAINER_MARKED"):c(t,"EXPLAINER_ALREADY"));markQueued();}catch(err){console.error("EngramQuest: explainer queue failed",err);}});
-        readQueue(this.app.vault.adapter).then(_q=>{if(isQueued(_q,e.notePath,e.front))markQueued();}).catch(()=>{});
       }
       answerEl=p.createEl("div",{attr:{class:"lh-answer-text"+(String(e.back||"").length<=90?" is-short":"")}});
       renderMd(answerEl,e.back);
