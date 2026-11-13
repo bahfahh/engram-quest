@@ -1,6 +1,7 @@
 "use strict";
 
 const { buildQuestRenderState } = require("./state");
+const { normalizeDifficulty } = require("./helpers");
 
 const QUESTS_DIR = "engram-quest/quests";
 
@@ -18,10 +19,6 @@ function safeArray(value) {
 
 function isFiniteNumber(value) {
   return Number.isFinite(Number(value));
-}
-
-function normalizeDifficulty(value) {
-  return ["easy", "medium", "hard"].includes(value) ? value : "medium";
 }
 
 function normalizeQuestNode(slug, node, index) {

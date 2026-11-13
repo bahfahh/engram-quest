@@ -6,6 +6,15 @@ const questDifficultyPresets = {
   hard: { showHint: false, maxRetries: 3, labelKey: "DIFF_HARD", color: "#ef4444" }
 };
 
+const QUEST_DIFFICULTIES = ["easy", "medium", "hard"];
+
+// A quest's difficulty picks its map picture and node positions. Anything that is not one of the
+// three (a typo, another language, a trailing comment) reads as medium; the note itself is not touched.
+function normalizeDifficulty(value) {
+  let word = String(value ?? "").trim().replace(/^["']+/, "").toLowerCase().match(/^[a-z]+/);
+  return word && QUEST_DIFFICULTIES.includes(word[0]) ? word[0] : "medium";
+}
+
 function splitInlineList(text) {
   let match = text.match(/\[([^\]]*)\]/);
   return match ? match[1].split(",").map((item) => item.trim()).filter(Boolean) : [];
@@ -94,7 +103,7 @@ function parseQuestMap(markdown) {
       else if (trimmed.startsWith("title:")) quest.title = stripWrappingQuotes(trimmed.slice(6));
       else if (trimmed.startsWith("description:")) quest.description = stripWrappingQuotes(trimmed.slice(12));
       else if (trimmed.startsWith("style:")) quest.style = trimmed.slice(6).trim();
-      else if (trimmed.startsWith("difficulty:")) quest.difficulty = trimmed.slice(11).trim();
+      else if (trimmed.startsWith("difficulty:")) quest.difficulty = normalizeDifficulty(trimmed.slice(11));
       else if (trimmed === "nodes:") inNodes = true;
       continue;
     }
@@ -236,6 +245,18 @@ function parseQuestMap(markdown) {
     };
   });
   return attachQuestMeta(quest);
+}
+
+// The quest a note holds, or null when it holds none. Notes with a quest-map block count when the
+// block has at least one node; the older notes named *-quest.md may carry the same YAML without the
+// fence. A note that only has such a name, or an empty block, is not a quest and stays out of the Hub.
+function readLegacyQuest(fileName, text) {
+  let body = String(text ?? "");
+  let fenced = body.match(/```quest-map\s*\n?([\s\S]*?)```/i);
+  let source = fenced ? fenced[1] : String(fileName ?? "").endsWith("-quest.md") ? body : null;
+  if (source == null) return null;
+  let quest = parseQuestMap(source);
+  return quest.nodes.length ? quest : null;
 }
 
 function resolveImageOcclusionRect(challenge, naturalWidth, naturalHeight) {
@@ -403,6 +424,8 @@ module.exports = {
   questDifficultyPresets,
   splitInlineList,
   parseQuestMap,
+  normalizeDifficulty,
+  readLegacyQuest,
   resolveImageOcclusionRect,
   retriggerShake,
   normalizeAnswer,
