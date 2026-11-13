@@ -76,7 +76,7 @@ Task is complete when AI card files and JSON hints are generated. The one thing 
 | Build image-based cards from a note's diagrams | Image Card Flow |
 | "Generate image questions from X" / "make cards from these diagrams" | Image Card Flow |
 | Update hints for a topic | Update Flow |
-| Add cards to a topic | Edit note content + update hints |
+| Add cards to a topic | Append the new cards to that topic's `engram-review/ai-cards/{note-key}.md` + update hints (the source note stays untouched) |
 | Make a review-deck from a note | Setup Flow (step 4: a note the user names is read directly, no discovery) |
 | Show how to put a deck in a note | Deck Blocks in a Note |
 | Fix / correct a card | Edit Flow |
@@ -237,6 +237,7 @@ Use when the user wants to fix or change an existing card's front text, back tex
    - Update `l1`, `l2`, `l3` values if the user requested hint changes, or if the front change makes existing hints inaccurate.
 5. Write both the updated card file and the updated hints JSON.
 6. If the front text changed: read `engram-review/sr/{note-key}.json`, rename the key matching the old front text to the new front text, and write the file back. Skip if the file does not exist or the key is not present. Rename the same key under `cards` in `engram-review/synapse/{note-key}.json` the same way (skip if the new front is already there), so the card keeps its links and the links the user rejected.
+   Deep Dive pages find their card by file path plus front text, so move those links too or the card loses its page: in each `engram-quest/explainer/meta/*.json` whose `sourceCard` has this card's file as `note` and the old front as `front`, set `sourceCard.front` to the new front; in `engram-quest/explainer/queue.json`, set `q` to the new front on every entry whose `source` is this card's file and `q` is the old front. Change nothing else in those files, and leave the page content as it is (it is rewritten only when the user asks to regenerate it). Skip whatever does not exist.
    CRITICAL: card front text may contain `"`, `\`, newlines, or other special characters. Always use a proper JSON library to parse and serialize — never construct the JSON string manually. Python: `json.loads` / `json.dumps(data, ensure_ascii=False, indent=2)`. Node.js: `JSON.parse` / `JSON.stringify(data, null, 2)`.
 7. Update `engram-review/scan-record.json`: update `mtime` for the affected note.
 8. Report: which card was changed, what changed (front / back / hints), and confirm all files were updated.
