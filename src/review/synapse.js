@@ -1,7 +1,9 @@
 // Synapse runtime data layer.
 // Loads the links the synapse skill wrote under engram-review/synapse/ (mastered-card anchors and
 // relations to other content), plus the content the relation graph resolves them against.
-// Pure functions + thin adapter wrappers; runtime has zero AI dependency and writes nothing.
+// Pure functions + thin adapter wrappers; runtime has zero AI dependency. The files belong to the
+// skill: the plugin only reads them, except to follow the user's own change (moveSynapseCardEntry
+// here, note renames in rename-follow.js).
 
 "use strict";
 
@@ -33,9 +35,12 @@ async function loadSynapseStatus(adapter) {
   }
 }
 
+// A note's links are in one file, named like its schedule file.
+const synapsePath = (notePath) => `${SYNAPSE_DIR}/${srFileName(notePath)}.json`;
+
 async function loadSynapseForNote(adapter, notePath) {
   if (!notePath) return null;
-  const path = `${SYNAPSE_DIR}/${srFileName(notePath)}.json`;
+  const path = synapsePath(notePath);
   try {
     if (!(await adapter.exists(path))) return null;
     return JSON.parse(await adapter.read(path));
@@ -53,6 +58,28 @@ async function loadSynapseBatch(adapter, notePaths) {
     result.set(p, await loadSynapseForNote(adapter, p));
   }));
   return result;
+}
+
+/**
+ * A card's entry is stored under its front text. When the user edits the front in the review
+ * screen the entry follows it, so the links are still there in the next session. The file is read,
+ * that one key is renamed and everything else is written back as it was. Nothing is written when
+ * there is no file, the file cannot be read, or it has no entry for the card. Nothing is written
+ * either when the new front already has an entry: the file is the skill's and that entry may hold
+ * links the user rejected, so both are left for the skill's next run to sort out.
+ */
+async function moveSynapseCardEntry(adapter, notePath, oldFront, newFront) {
+  if (!notePath || oldFront === newFront) return false;
+  const doc = await loadSynapseForNote(adapter, notePath);
+  const cards = doc && doc.cards;
+  if (!cards || typeof cards !== "object" || Array.isArray(cards)) return false;
+  const has = (front) => Object.prototype.hasOwnProperty.call(cards, front);
+  if (!has(oldFront) || has(newFront)) return false;
+  // Rebuilt rather than assigned: a front is any text the user typed ("__proto__" included), and
+  // this way the entry also stays where it was in the file.
+  doc.cards = Object.fromEntries(Object.entries(cards).map(([front, entry]) => [front === oldFront ? newFront : front, entry]));
+  await adapter.write(synapsePath(notePath), JSON.stringify(doc, null, 2));
+  return true;
 }
 
 // Puts each card's entry on the card: synapseAnchors (mastered cards), synapseRelations (other
@@ -198,6 +225,7 @@ module.exports = {
   loadSynapseForNote,
   loadSynapseBatch,
   attachSynapseToCards,
+  moveSynapseCardEntry,
   loadSynapseSources,
   countMasteredFromSr,
   shouldShowRefreshBanner,

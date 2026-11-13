@@ -2,6 +2,8 @@
 
 const { loadSrData, saveSrData, srFileName, loadHints, hintsPath, parseCommentCardBlock, cardFencePattern, CARD_FENCE, isFencedQaOpener } = require("./helpers");
 
+const { moveSynapseCardEntry } = require("./synapse");
+
 const isCardFence = (line) => cardFencePattern.test(line);
 
 function escapeRegExp(s) {
@@ -317,7 +319,8 @@ function syncRawCardFields(card, newData) {
 
 /**
  * Save edits for a tag/source-based card (card.notePath is set).
- * Updates the `front :: back` line in the markdown note and the hints JSON.
+ * Updates the card in the markdown note and its hints; when the front changes, the data stored
+ * under the old front (schedule, hints, memory anchors) moves to the new one.
  * @param {object} app - Obsidian app
  * @param {object} card - original card object
  * @param {{front,back,hint_l1,hint_l2,hint_l3}} newData
@@ -368,6 +371,12 @@ async function saveTagSourceCard(app, card, newData) {
       }
     } catch (e) {
       console.warn("review-edit: sr update failed", e);
+    }
+    // 4. The card's memory anchors are stored under its front too
+    try {
+      await moveSynapseCardEntry(app.vault.adapter, card.notePath, card.front, newData.front);
+    } catch (e) {
+      console.warn("review-edit: synapse update failed", e);
     }
   }
 
