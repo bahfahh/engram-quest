@@ -6,6 +6,9 @@
 
 const DEFAULTS = { pages: false, watching: true };
 
+// A window this wide or narrower always draws the sidebar as the icon rail (src/styles/hub.js).
+const RAIL_MAX_WIDTH = 1039;
+
 function isCollapsed(settings, watching) {
   const key = watching ? "watching" : "pages";
   const saved = settings && settings._sidebar;
@@ -26,4 +29,4 @@ function watchingTab(current, activeTab, on) {
   return current === activeTab ? null : current;
 }
 
-module.exports = { isCollapsed, setCollapsed, watchingTab };
+module.exports = { RAIL_MAX_WIDTH, isCollapsed, setCollapsed, watchingTab };

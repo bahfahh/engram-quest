@@ -8,7 +8,7 @@ const { ProUpgradeModal } = require("../license/upgrade");
 const { HelpModal } = require("./help");
 const { attachInfoButton, hasFeatureGuide } = require("./feature-guide");
 const { STAR, PLAY, rawIcon, iconButton, featureIcon, isPhone, metrics, segBar, clearCapsuleActions } = require("./ui");
-const { isCollapsed, setCollapsed, watchingTab } = require("./sidebar");
+const { RAIL_MAX_WIDTH, isCollapsed, setCollapsed, watchingTab } = require("./sidebar");
 const { renderPhoneContinue } = require("../videos/render");
 const { TABS, categories } = require("./categories");
 
@@ -28,7 +28,7 @@ function proEntry(parent, hub, cls) {
   const t = hub.plugin.settings;
   const active = !!t.licenseValid;
   const label = c(t, active ? "PRO_ACTIVE_ACTION" : "PRO_LEARN");
-  const btn = parent.createEl("button", { cls: cls + (active ? " active" : ""), attr: { "aria-label": label, title: label } });
+  const btn = parent.createEl("button", { cls: cls + (active ? " active" : "") });
   rawIcon(btn.createEl("span", { cls: "lh-pti " + (active ? "active" : "free") }), STAR);
   return { btn, label };
 }
@@ -58,7 +58,7 @@ function renderDesktop(hub, root) {
   hub.setHero = (on) => shell.classList.toggle("no-hero", !on);
 
   const side = shell.createEl("nav", { cls: "lh-side", attr: { "aria-label": c(t, "HUB_NAV") } });
-  const brand = side.createEl("div", { cls: "lh-brand", attr: { title: c(t, "HUB_TITLE") } });
+  const brand = side.createEl("div", { cls: "lh-brand" });
   featureIcon(brand, hub.plugin, "logo", { size: 32 });
   brand.createEl("span", { cls: "lh-brand-full", text: c(t, "HUB_TITLE") });
 
@@ -72,16 +72,25 @@ function renderDesktop(hub, root) {
     Promise.resolve(hub.plugin.saveData(s)).catch((e) => console.warn("EngramQuest: sidebar state not saved", e));
   }, "lh-side-fold");
   const watching = () => !!hub._watchingTab && hub._watchingTab === hub.activeTab;
+  // Obsidian shows an element's aria-label as its tooltip. An item whose name is on screen beside
+  // its icon gets none: the tooltip would only cover the next item. In the icon rail (folded by
+  // the user, or a narrow window) the name is not on screen, so the item carries it as aria-label:
+  // its accessible name and its one tooltip, opening away from the rail.
+  const named = [];
+  const nameInRail = (btn, name) => { btn.setAttribute("data-tooltip-position", "right"); named.push([btn, name]); };
+  const narrow = activeWindow.matchMedia(`(max-width:${RAIL_MAX_WIDTH}px)`);
   const paintSide = () => {
     const collapsed = isCollapsed(hub.plugin.settings, watching());
-    const label = c(t, collapsed ? "HUB_SIDE_EXPAND" : "HUB_SIDE_COLLAPSE");
     shell.classList.toggle("is-rail", collapsed);
     fold.setAttribute("aria-expanded", String(!collapsed));
-    fold.setAttribute("aria-label", label);
-    fold.setAttribute("title", label);
+    fold.setAttribute("aria-label", c(t, collapsed ? "HUB_SIDE_EXPAND" : "HUB_SIDE_COLLAPSE"));
+    const rail = collapsed || narrow.matches;
+    named.forEach(([btn, name]) => { if (rail) btn.setAttribute("aria-label", name); else btn.removeAttribute("aria-label"); });
   };
+  const onNarrow = () => { if (shell.isConnected) paintSide(); else narrow.removeEventListener("change", onNarrow); };
+  narrow.addEventListener("change", onNarrow);
+  fold.setAttribute("data-tooltip-position", "right");
   hub.setWatching = (on) => { hub._watchingTab = watchingTab(hub._watchingTab, hub.activeTab, !!on); paintSide(); };
-  paintSide();
 
   const main = shell.createEl("div", { cls: "lh-main" });
   const buttons = new Map();
@@ -95,7 +104,8 @@ function renderDesktop(hub, root) {
     side.createEl("div", { cls: "lh-grp", text: cat.label });
     cat.tabs.forEach((id) => {
       const meta = TABS[id], label = c(t, meta.key), full = `${cat.label}：${label}`;
-      const btn = side.createEl("button", { cls: "lh-nv" + (id === hub.activeTab ? " on" : ""), attr: { "data-tab": id, "aria-label": full, title: full } });
+      const btn = side.createEl("button", { cls: "lh-nv" + (id === hub.activeTab ? " on" : ""), attr: { "data-tab": id } });
+      nameInRail(btn, full);
       tabIcon(btn, hub, id, 32);
       btn.createEl("span", { cls: "lh-nv-label", text: label });
       if (id === "review") {
@@ -111,7 +121,9 @@ function renderDesktop(hub, root) {
   const { btn: pro, label: proLabel } = proEntry(foot, hub, "lh-pro");
   pro.createEl("span", { cls: "lh-pro-label", text: proLabel });
   pro.addEventListener("click", () => openPro(hub));
-  iconButton(foot, "help", c(t, "HELP_OPEN"), () => new HelpModal(hub.app, hub.plugin).open());
+  nameInRail(pro, proLabel);
+  iconButton(foot, "help", c(t, "HELP_OPEN"), () => new HelpModal(hub.app, hub.plugin).open()).setAttribute("data-tooltip-position", "right");
+  paintSide();
 
   const capsule = shell.createEl("div", { cls: "lh-capsule" });
   hub.capsuleEl = capsule;
