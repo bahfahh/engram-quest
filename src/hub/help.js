@@ -50,12 +50,13 @@ function sentence(parent, text) {
 
 class HelpModal extends I.Modal {
   // opts.intro: draw only the first screen, as the first-run introduction. opts.onDone runs on close.
+  // opts.skillsInstalled: what the caller already found in the vault, so step one is right at once.
   constructor(app, plugin, opts = {}) {
     super(app);
     this.plugin = plugin;
     this.intro = !!opts.intro;
     this.onDone = opts.onDone;
-    this.skillsInstalled = null; // unknown until the vault has been checked
+    this.skillsInstalled = typeof opts.skillsInstalled === "boolean" ? opts.skillsInstalled : null; // null: not checked yet
   }
 
   onOpen() {
@@ -64,7 +65,7 @@ class HelpModal extends I.Modal {
     watchTheme(this, { vars: true });
     registerSelectionCopy(this);
     this.render();
-    this.checkSkills();
+    if (this.skillsInstalled === null) this.checkSkills();
   }
 
   onClose() {
@@ -185,7 +186,7 @@ class HelpModal extends I.Modal {
     const text = row.createSpan({ cls: "lh-start-row-tx" });
     sentence(text.createSpan({ cls: "lh-start-q" }), item.text);
     text.createSpan({ cls: "lh-start-makes", text: item.makes });
-    const state = row.createSpan({ cls: "lh-start-copy" });
+    const state = row.createSpan({ cls: "lh-start-copy", attr: { "aria-live": "polite" } });
     icon(state, "copy");
     row.addEventListener("click", async () => {
       let ok = true;
@@ -276,7 +277,7 @@ class HelpModal extends I.Modal {
   }
 
   installButton(panel) {
-    if (!isInstallerAvailable()) return;
+    if (isPhone() || !isInstallerAvailable()) return;
     panel.createDiv({ cls: "lh-help-acts" })
       .createEl("button", { cls: "lh-btn alt", text: this.copy.start.install })
       .addEventListener("click", () => this.openInstaller());

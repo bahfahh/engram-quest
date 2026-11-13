@@ -106,6 +106,15 @@ describe("the three-step first screen", () => {
     expect(plainSentence("把 {微積分} 的筆記做成 Quest Map")).toBe("把 微積分 的筆記做成 Quest Map");
   });
 
+  it("opens the Review Deck section from the introduction too, by turning into the full guide", () => {
+    const { modal, root } = drawGuide({ intro: true });
+    expect(root.byClass("lh-help-sec")).toEqual([]);
+    root.byClass("lh-start-more")[0].children[0].events.click();
+    expect(modal.intro).toBe(false);
+    expect(modal.contentEl.all().find(el => el.attr.id === "lh-help-review").hidden).toBe(false);
+    expect(modal.contentEl.byClass("lh-start-step")).toHaveLength(3);
+  });
+
   it("keeps the written-by-hand path one press away, inside the Review Deck section", () => {
     const { modal, root } = drawGuide();
     const review = CONTENT.en.sections.find(section => section.id === "review");
@@ -274,6 +283,30 @@ describe("opening the Hub for the first time", () => {
     runTimers();
     expect(opened).toHaveLength(1);
     expect(plugin.settings).toEqual({ ...before, _introSeen: true });
+  });
+
+  it("does not ask an earlier user on a phone, and leaves the question for the computer", async () => {
+    const before = { _guideSeen: { review: true } };
+    const plugin = fakePlugin(before);
+    const hub = openHub(plugin);
+    const body = activeDocument.body, real = body.classList;
+    body.classList = { contains: name => name === "is-phone" };
+    try { await hub._maybeShowIntro(); } finally { body.classList = real; }
+    runTimers();
+    expect(opened).toEqual([]);
+    expect(plugin.settings._introSeen).toBeUndefined();
+    expect(plugin.saves).toEqual([]);
+    expect(hub._introPending).toBe(false);
+  });
+
+  it("lets the tabs' guides through again when the introduction fails to open", async () => {
+    const plugin = fakePlugin();
+    const hub = openHub(plugin);
+    obsidian.Modal.prototype.open = function () { throw new Error("boom"); };
+    await hub._maybeShowIntro();
+    runTimers();
+    expect(plugin.settings._introSeen).toBeUndefined();
+    expect(hub._introPending).toBe(false);
   });
 
   it("waits for the next time when the Hub is closed before it could appear", async () => {

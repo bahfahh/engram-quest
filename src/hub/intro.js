@@ -7,6 +7,7 @@
 const { HelpModal } = require("./help");
 const { FeatureGuideModal, hasFeatureGuide } = require("./feature-guide");
 const { anySkillsInstalled } = require("./skills");
+const { isPhone } = require("./ui");
 
 const POP_DELAY_MS = 220; // lets the Hub paint before a dialog covers it
 
@@ -27,12 +28,18 @@ function save(plugin) {
   return Promise.resolve(plugin.saveData(plugin.settings)).catch(err => console.warn("EngramQuest: guide state not saved", err));
 }
 
-// Opens `make()` shortly after the Hub has painted, unless the Hub was closed or minimized meanwhile.
+// Opens `make()` shortly after the Hub has painted. `otherwise` runs when nothing was opened: the Hub
+// was closed or minimized meanwhile, or the dialog failed.
 function popOver(hub, make, otherwise) {
   hub._guideTimer = window.setTimeout(() => {
     hub._guideTimer = null;
-    if (hub._minimized || !hub._hubOpen) { if (otherwise) otherwise(); return; }
-    make().open();
+    try {
+      if (hub._minimized || !hub._hubOpen) { if (otherwise) otherwise(); return; }
+      make();
+    } catch (err) {
+      if (otherwise) otherwise();
+      console.warn("EngramQuest: guide popup failed", err);
+    }
   }, POP_DELAY_MS);
 }
 
@@ -44,16 +51,19 @@ async function maybeShowIntro(hub) {
   const plugin = hub.plugin, settings = plugin.settings;
   const done = () => { hub._introPending = false; };
   try {
-    const installed = await anySkillsInstalled(plugin).catch(() => false);
+    const installed = await anySkillsInstalled(plugin).catch((err) => { console.warn("EngramQuest: could not check installed skills", err); return false; });
+    // The skills live where the AI tool runs. A phone that has none says nothing about an earlier
+    // user, so the question waits, undecided, for the next time the Hub opens on a computer.
+    if (isPhone() && isReturningUser(settings)) { done(); return; }
     if (!shouldShowIntro(settings, installed)) {
       if (!settings._introSeen) { settings._introSeen = true; await save(plugin); }
       done();
       return;
     }
     popOver(hub, () => {
+      new HelpModal(hub.app, plugin, { intro: true, onDone: done, skillsInstalled: installed }).open();
       settings._introSeen = true;
       save(plugin);
-      return new HelpModal(hub.app, plugin, { intro: true, onDone: done });
     }, done);
   } catch (err) {
     done();
@@ -70,7 +80,7 @@ function maybeShowTabGuide(hub, tab) {
     if (seen[tab]) return;
     seen[tab] = true;
     save(hub.plugin);
-    popOver(hub, () => new FeatureGuideModal(hub.app, hub.plugin, tab));
+    popOver(hub, () => new FeatureGuideModal(hub.app, hub.plugin, tab).open());
   } catch (err) {
     console.warn("EngramQuest: feature guide popup failed", err);
   }
