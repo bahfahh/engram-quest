@@ -26,6 +26,18 @@ const session = `
 .lh-hub.lh-session .lh-review-nav { background:transparent !important; border:0 !important; display:flex; align-items:center; gap:8px; padding:14px 14px 10px 18px; -webkit-backdrop-filter:none; backdrop-filter:none; box-shadow:none; }
 .lh-hub.lh-session .lh-review-logo { display:flex; align-items:center; gap:9px; flex:none; color:var(--text) !important; font-size:16px; font-weight:700; text-transform:none; letter-spacing:-.01em; padding-right:14px; margin-right:2px; border-right:.5px solid var(--sep); white-space:nowrap; }
 .lh-hub.lh-session .lh-review-tabs { display:flex; gap:4px; flex:1; min-width:0; overflow:hidden; }
+/* The strip shows what the window has room for: names on every tab, then only on the open one, so the tabs
+   never run under the Back button. A hidden name stays in the page (clipped, not removed) as the button's name. */
+.lh-hub.lh-session .lh-review-nav { container:lh-nav / inline-size; }
+.lh-hub.lh-session .lh-review-tabs { container:lh-tabs / inline-size; }
+@container lh-nav (max-width:700px) {
+  .lh-hub.lh-session .lh-review-logo { padding-right:0; border-right:0; }
+  .lh-hub.lh-session .lh-review-logo span:not(.lh-fi) { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap; }
+}
+@container lh-tabs (max-width:440px) {
+  .lh-hub.lh-session .lh-review-tab:not(.active) { padding:0 8px; }
+  .lh-hub.lh-session .lh-review-tab:not(.active) span:not(.lh-fi) { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap; }
+}
 .lh-hub.lh-session .lh-review-tab { display:inline-flex; align-items:center; gap:8px; height:36px; padding:0 14px 0 10px; border:0 !important; background:transparent !important; color:var(--text) !important; font-size:14px; font-weight:500; border-radius:10px; box-shadow:none; cursor:pointer; opacity:1 !important; white-space:nowrap; transform:none; }
 .lh-hub.lh-session .lh-review-tab:hover { background:var(--fill2) !important; }
 .lh-hub.lh-session .lh-review-tab.active { background:var(--tabon) !important; color:var(--text) !important; font-weight:650; cursor:default; box-shadow:none !important; }
@@ -35,11 +47,17 @@ const session = `
 .lh-review-cap { display:flex; flex:none; padding:2px; margin-left:4px; border-radius:12px; background:var(--raised); box-shadow:var(--rshadow); }
 .lh-hub .lh-review-cap .lh-ib { width:32px; height:30px; border-radius:9px; }
 .lh-hub.lh-session .lh-review-card { background:var(--card) !important; color:var(--text) !important; border-radius:18px; box-shadow:var(--cshadow); }
-.lh-hub.lh-session .lh-rc-top { display:flex; align-items:center; gap:8px; padding-bottom:12px; margin-bottom:16px; border-bottom:.5px solid var(--sep); }
+/* Card header: deck name, source notes, card actions. The notes may be several and long: they take what is
+   left of the row and wrap among themselves (a lone note shortens its name); the actions keep their size and,
+   when even that is not enough, drop to a row of their own instead of sitting on top of the notes. */
+.lh-hub.lh-session .lh-rc-top { display:flex; flex-wrap:wrap; align-items:center; gap:8px; padding-bottom:12px; margin-bottom:16px; border-bottom:.5px solid var(--sep); }
+.lh-rc-srcs { display:flex; flex-wrap:wrap; align-items:center; justify-content:flex-end; gap:6px 4px; flex:1 1 0; min-width:min(100%,9em); }
+.lh-hub.lh-session .lh-rc-top .lh-rc-src { flex:0 1 auto; min-width:0; max-width:100%; overflow:hidden; }
+.lh-hub.lh-session .lh-rc-src .lh-i { flex:none; }
 .lh-rc-deck { display:flex; align-items:center; gap:10px; min-width:0; flex:0 1 auto; font-size:16px; font-weight:650; color:var(--text); }
 .lh-rc-deck span { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 :is(.lh-hub,.lh-theme) .lh-rc-deck .lh-i { width:22px; height:22px; stroke-width:1.5; color:var(--text2); }
-.lh-rc-acts { display:flex; align-items:center; gap:6px; flex:none; }
+.lh-rc-acts { display:flex; align-items:center; gap:6px; flex:none; margin-left:auto; }
 .lh-hub.lh-session .lh-rc-edit-btn { display:inline-flex; align-items:center; gap:6px; height:32px; padding:0 12px; background:var(--raised) !important; border:0 !important; color:var(--tint) !important; border-radius:10px; font-size:13px; font-weight:500; box-shadow:var(--rshadow); white-space:nowrap; cursor:pointer; }
 .lh-hub.lh-session .lh-rc-edit-btn:hover { background:var(--raisedh) !important; }
 .lh-hub.lh-session .lh-rc-edit-btn:disabled { background:var(--fill2) !important; color:var(--text3) !important; box-shadow:none; cursor:default; }
@@ -64,7 +82,7 @@ const session = `
 .lh-hub.lh-session .lh-ans-feature[aria-pressed="true"] .lh-fi img { filter:brightness(0) invert(1); }
 .lh-hub.lh-session .lh-ans-feature.is-done { cursor:default; background:color-mix(in srgb,var(--mst) 16%,var(--raised)) !important; color:var(--mstt) !important; opacity:1; box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--mstt) var(--ringk),transparent); }
 body:not(.is-phone) .lh-hub.lh-session .lh-answer-header { flex-wrap:wrap; row-gap:8px; justify-content:flex-start; }
-.lh-rc-src span { max-width:150px; overflow:hidden; text-overflow:ellipsis; }
+.lh-rc-src span { min-width:3em; max-width:150px; overflow:hidden; text-overflow:ellipsis; }
 :is(.lh-hub,.lh-theme) .lh-rc-src .lh-i:last-child { width:14px; height:14px; }
 .lh-hub.lh-session .lh-rc-question { color:var(--text) !important; font-size:24px; line-height:1.45; font-weight:650; letter-spacing:-.01em; }
 .lh-hub.lh-session .lh-rc-badge { background:var(--fill) !important; color:var(--text2) !important; border-radius:9px; font-weight:600; }
@@ -121,9 +139,12 @@ body:not(.is-phone) .lh-hub.lh-session .lh-answer-header { flex-wrap:wrap; row-g
 .lh-syg-back { margin-top:6px; padding:10px 12px; border-radius:12px; background:var(--card); box-shadow:inset 0 0 0 1px var(--sep); color:var(--text); font-size:14px; line-height:1.6; overflow-x:auto; overflow-wrap:anywhere; }
 .lh-syg-back p:first-child { margin-top:0; }
 .lh-syg-back p:last-child { margin-bottom:0; }
-/* The answer is the user's own Markdown in a node about 250px wide. Text and code wrap, media is
-   capped at the node's width, and what still cannot fit (a wide table) scrolls inside the answer. */
-.lh-syg-back pre { margin:8px 0; font-size:13px; white-space:pre-wrap; }
+/* The answer is the user's own Markdown in a node about 250px wide. Text wraps, media is capped at the
+   node's width, and what still cannot fit scrolls sideways inside the node: a wide table, and code, which
+   keeps its line breaks so a box-drawing diagram stays a diagram. Obsidian wraps code that names a
+   language on the <code> element, so that one is set back to follow its block. */
+.lh-syg-back pre { white-space:pre; }
+.lh-syg-back pre code { white-space:inherit; }
 .lh-syg-back :is(img,video,iframe,svg) { max-width:100%; }
 .lh-syg-back :is(img,video,svg) { height:auto; }
 .lh-syg-back table { overflow-wrap:normal; }
@@ -156,6 +177,17 @@ body:not(.is-phone) .lh-hub.lh-session .lh-answer-header { flex-wrap:wrap; row-g
 .lh-hub.lh-session .lh-answer-text { color:var(--text) !important; font-size:16.5px; line-height:1.65; }
 .lh-hub.lh-session .lh-answer-text mark { background:var(--fill); color:var(--text); }
 .lh-hub.lh-session .lh-answer-text blockquote,.lh-hub.lh-session .lh-hint-text blockquote { border-left:3px solid var(--line); background:transparent; }
+/* Code blocks in the card's question, hints, answer and in a Synapse node. The markdown is drawn without
+   Obsidian's reading-view class, so its block styling does not apply: a block that names no language neither
+   wrapped nor scrolled and ran out of the card, and the copy button it adds sat unstyled in the text. The
+   block scrolls sideways when its lines are wider than the card, and the button is Obsidian's own, placed
+   in the corner and shown on hover (always on a phone, which has no hover). */
+.lh-hub.lh-session :is(.lh-rc-question,.lh-hint-text,.lh-answer-text,.lh-syg-back) pre { position:relative; max-width:100%; margin:8px 0; padding:10px 12px; padding-inline-end:40px; border-radius:10px; background:var(--fill); font-size:13px; line-height:1.55; overflow-x:auto; }
+.lh-hub.lh-session :is(.lh-rc-question,.lh-hint-text,.lh-answer-text,.lh-syg-back) pre code { padding:0; border:0; background:none; }
+.lh-hub.lh-session :is(.lh-rc-question,.lh-hint-text,.lh-answer-text,.lh-syg-back) pre > button.copy-code-button { position:absolute; top:4px; inset-inline-end:4px; display:grid; place-items:center; width:30px; height:30px; margin:0; padding:0 !important; border:0 !important; border-radius:8px !important; background:var(--card) !important; box-shadow:0 0 0 1px var(--sep) !important; color:var(--text2) !important; cursor:pointer; }
+.lh-hub.lh-session :is(.lh-rc-question,.lh-hint-text,.lh-answer-text,.lh-syg-back) pre > button.copy-code-button:hover { background:var(--raisedh) !important; color:var(--tint) !important; }
+.lh-hub.lh-session :is(.lh-rc-question,.lh-hint-text,.lh-answer-text,.lh-syg-back) pre > button.copy-code-button .svg-icon { width:16px; height:16px; }
+body:not(.is-phone):not(.is-tablet) .lh-hub.lh-session :is(.lh-rc-question,.lh-hint-text,.lh-answer-text,.lh-syg-back) pre:not(:hover):not(:focus-within) > button.copy-code-button { display:none; }
 .lh-hub.lh-session .lh-pill-row { gap:10px; }
 .lh-hub.lh-session .lh-pill-btn { display:inline-flex; align-items:center; justify-content:center; gap:10px; border:0 !important; background:var(--tone) !important; color:var(--tint) !important; box-shadow:var(--tonering) !important; border-radius:12px; font-size:15px; font-weight:600; min-height:46px; transform:none; filter:none; opacity:1; cursor:pointer; }
 .lh-hub.lh-session .lh-pill-btn:hover { background:var(--toneh) !important; }

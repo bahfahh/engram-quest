@@ -38,8 +38,12 @@ body.is-phone .lh-vid-back { height:auto; padding:0 !important; background:none 
 .lh-vid-empty-title { font-size:19px; line-height:26px; font-weight:600; color:var(--text); }
 .lh-vid-empty-body { font-size:15px; line-height:23px; color:var(--text2); max-width:390px; }
 
-.lh-vid-continue { display:flex; align-items:center; gap:14px; padding:10px; border-radius:16px; background:var(--card); box-shadow:var(--cshadow); flex:none; }
-.lh-vid-continue-info { flex:1; display:flex; flex-direction:column; gap:2px; min-width:0; }
+/* Continue-watching card. The text keeps a readable width (series + lesson name) and the resume button
+   drops to its own full-width row when the card is too narrow for thumbnail, text and button side by side. */
+.lh-vid-continue { display:flex; flex-wrap:wrap; align-items:center; gap:10px 14px; padding:10px; border-radius:16px; background:var(--card); box-shadow:var(--cshadow); flex:none; }
+.lh-vid-continue > .lh-vid-thumb { flex:none; }
+.lh-vid-continue-info { flex:1000 1 9em; display:flex; flex-direction:column; gap:2px; min-width:min(100%,9em); }
+.lh-vid-continue > .lh-vid-btn { flex:1 1 auto; }
 .lh-vid-kicker { font-size:12px; line-height:16px; color:var(--tint); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .lh-vid-continue-title { font-size:17px; line-height:24px; font-weight:600; color:var(--text); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 

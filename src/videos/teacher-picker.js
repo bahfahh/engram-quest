@@ -98,7 +98,7 @@ function openTeacherPicker(hub, t, { selected, variants = {}, pickVariants = tru
           const [a, b, d] = option.swatch;
           const swatch = row.createEl("button", {
             cls: "lh-vid-swatch" + (variant && option.id === variant.id ? " is-on" : ""),
-            attr: { "aria-label": localText(option.name, locale), title: localText(option.name, locale), style: `background:linear-gradient(135deg,${a} 0 50%,${b} 50% 75%,${d} 75%)` },
+            attr: { "aria-label": localText(option.name, locale), style: `background:linear-gradient(135deg,${a} 0 50%,${b} 50% 75%,${d} 75%)` },
           });
           swatch.addEventListener("click", () => { variant = option; draw(); drawPhoto(); });
         }

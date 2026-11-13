@@ -154,6 +154,11 @@ const components = `
 .lh-sub { margin:2px 0 0; font-size:14px; line-height:21px; color:var(--text2); }
 .lh-count { font-size:14px; color:var(--text3); font-variant-numeric:tabular-nums; white-space:nowrap; }
 .lh-hd-right { display:flex; align-items:center; gap:8px; flex:none; flex-wrap:wrap; justify-content:flex-end; }
+/* When the window is too narrow for the title and the page buttons side by side, the buttons drop to their own
+   row instead of squeezing the title into a one-character column. The phone has no title, so it keeps one row. */
+body:not(.is-phone) .lh-hd { flex-wrap:wrap; row-gap:8px; }
+body:not(.is-phone) .lh-hd-main { flex:1 1 9em; min-width:min(100%,9em); }
+body:not(.is-phone) .lh-hd-right { max-width:100%; margin-left:auto; }
 .lh-hub .lh-feature-info { width:28px !important; height:28px !important; padding:0; border:0 !important; border-radius:50% !important; background:transparent !important; box-shadow:none; color:var(--tint) !important; display:grid !important; place-items:center; cursor:pointer; flex:none; }
 .lh-hub .lh-feature-info svg { width:19px; height:19px; stroke-width:1.7; }
 .lh-hub .lh-feature-info:hover { background:var(--fill) !important; color:var(--tint) !important; }

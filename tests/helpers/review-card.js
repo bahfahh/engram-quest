@@ -51,7 +51,7 @@ export class FakeEl {
   querySelectorAll() { return []; }
   querySelector() { return null; }
   contains() { return false; }
-  scrollIntoView() {}
+  scrollIntoView(options) { this.scrolls = [...(this.scrolls || []), options]; }
   get textContent() { return this.text + this.children.map((child) => child.textContent).join(""); }
   set textContent(value) { this.text = value; this.children = []; }
 }
@@ -66,6 +66,7 @@ const settle = () => new Promise((resolve) => setTimeout(resolve, 5));
  *   card       the card body, whose children are in reading order
  *   menu()     presses the phone's "more" button and returns the titles the menu offers
  *   panels     how many times the Synapse map was drawn into its container
+ *   loaded     the `afterLoad` callback given to each of those draws
  *   done()     puts back what was patched; call it when the test is finished with the card
  */
 export async function drawCard({ phone = false, answerShown = true, pro = true, synapse = true, hasLinks = true, browseOnly = false, queued = false, hints = 0, synapseOpen = false } = {}) {
@@ -89,6 +90,7 @@ export async function drawCard({ phone = false, answerShown = true, pro = true, 
 
   const session = Object.create(ReviewSessionModal.prototype);
   const panels = [];
+  const loaded = [];
   Object.assign(session, {
     app: {
       vault: { adapter, getAbstractFileByPath: () => null, getFiles: () => [], getMarkdownFiles: () => [] },
@@ -108,7 +110,8 @@ export async function drawCard({ phone = false, answerShown = true, pro = true, 
     _synapseStatus: { enabled: synapse },
     // The real one answers no without a licence or while Synapse is off.
     _synapse: { ready: true, hasLinks: () => pro && synapse && hasLinks },
-    _renderSynapsePanel(parent) { panels.push(parent); parent.createEl("div", { cls: "test-synapse-map" }); },
+    // `afterLoad` is what the card hands the real panel to run once a map that had to be read is drawn.
+    _renderSynapsePanel(parent, _card, _t, _renderMd, _refresh, afterLoad) { panels.push(parent); loaded.push(afterLoad); parent.createEl("div", { cls: "test-synapse-map" }); },
   });
 
   const classes = obsidian.activeDocument.body.classList;
@@ -127,6 +130,7 @@ export async function drawCard({ phone = false, answerShown = true, pro = true, 
     root,
     get card() { return find(root, "lh-review-card"); },
     panels,
+    loaded,
     done,
     async menu() {
       await drawn(root).filter((el) => el.hasClass("lh-sib")).pop().click();

@@ -72,7 +72,7 @@ function addDelete(parent, hub, q) {
 
 function addStars(parent, q) {
   const count = starCount(q);
-  const wrap = parent.createEl("span", { cls: "lh-stars", attr: { "aria-label": `${count}/3`, title: `${count}/3` } });
+  const wrap = parent.createEl("span", { cls: "lh-stars", attr: { "aria-label": `${count}/3` } });
   wrap.appendText("★".repeat(count));
   if (count < 3) wrap.createEl("i", { text: "☆".repeat(3 - count) });
 }

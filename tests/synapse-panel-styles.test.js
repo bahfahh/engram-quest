@@ -23,8 +23,14 @@ describe("an opened card's answer stays inside its node", () => {
     expect(back["overflow-x"]).toBe("auto");
   });
 
-  it("wraps a code block that names no language", () => {
-    expect(declarations(".lh-syg-back pre")["white-space"]).toBe("pre-wrap");
+  // Code keeps its line breaks and scrolls sideways inside the node (ticket-055): a box-drawing diagram
+  // that wrapped lost its structure. Obsidian wraps code that names a language on the <code> element
+  // (`code[class*=language-]`, one class shorter than the rule below), so that one follows its block.
+  it("keeps the line breaks of code, whether or not it names a language, and scrolls it sideways", () => {
+    expect(declarations(".lh-syg-back pre")["white-space"]).toBe("pre");
+    expect(declarations(".lh-syg-back pre code")["white-space"]).toBe("inherit");
+    // The scrolling comes from the rule every code block in the review card shares (review-card-styles.test.js).
+    expect(declarations(".lh-hub.lh-session :is(.lh-rc-question,.lh-hint-text,.lh-answer-text,.lh-syg-back) pre")["overflow-x"]).toBe("auto");
   });
 
   it("never draws an image or other media wider than the answer", () => {

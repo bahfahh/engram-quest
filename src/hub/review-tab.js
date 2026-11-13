@@ -42,7 +42,7 @@ function renderGrid(parent, hub, decks, refresh) {
   const grid = parent.createEl("div", { cls: "lh-deck-cards" });
   decks.forEach((deck) => {
     const s = deckStats(deck), { name, path } = deckName(deck);
-    const card = grid.createEl("div", { cls: "lh-dc" + (s.ready === 0 ? " is-idle" : ""), attr: { title: s.ready === 0 ? idleHint(deck, t) : deck.name, role: "button", tabindex: "0", "aria-label": `${name}: ${s.ready} ${c(t, "READY_NOW")}` } });
+    const card = grid.createEl("div", { cls: "lh-dc" + (s.ready === 0 ? " is-idle" : ""), attr: { role: "button", tabindex: "0", "aria-label": `${deck.name}: ${s.ready} ${c(t, "READY_NOW")}${s.ready === 0 ? `. ${idleHint(deck, t)}` : ""}` } });
     deckActions(card, hub, deck, refresh);
     const top = card.createEl("div", { cls: "lh-dc-top" });
     ui.icon(top.createEl("span", { cls: "lh-dc-ic" }), "layers");

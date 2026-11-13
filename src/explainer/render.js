@@ -341,7 +341,7 @@ function renderDeckPages(content, hub, t, deck, refresh) {
     const main = row.createEl("div", { cls: "lh-trow-main" });
     const title = main.createEl("div", { cls: "lh-xpt" });
     title.createEl("span", { cls: "lh-nm", text: page.title || page.id });
-    if (page._starred) ui.icon(title.createEl("span", { cls: "lh-xstar", attr: { title: c(t, "FILTER_STARRED"), "aria-label": c(t, "FILTER_STARRED") } }), "star");
+    if (page._starred) ui.icon(title.createEl("span", { cls: "lh-xstar", attr: { "aria-label": c(t, "FILTER_STARRED") } }), "star");
     if (Number(page.rewriteCount) > 0) title.createEl("span", { cls: "lh-xbadge", text: K(c(t, "EXPLAINER_REWRITTEN"), { count: page.rewriteCount }) });
     const sub = [page.sourceCard && page.sourceCard.front, page.created].filter(Boolean).join(" · ");
     main.createEl("div", { cls: "lh-pth", text: sub, attr: { title: sub } });
