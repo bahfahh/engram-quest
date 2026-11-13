@@ -2,7 +2,7 @@
 const I = require("obsidian");
 const { computeFsrs: P } = require("../fsrs");
 const { t: c, tAlt: C, getLocale: _getLocale } = require("../i18n");
-const { anySrPattern: ge, getReviewStatus: $, loadSrData, saveSrData, buildSrRecord } = require("./helpers");
+const { anySrPattern: ge, getReviewStatus: $, loadSrData, saveSrData, buildSrRecord, recordReviewDay } = require("./helpers");
 const { loadSynapseStatus, loadSynapseBatch, attachSynapseToCards, isSynapseEnabled } = require("./synapse");
 const { SynapseMapSession } = require("./synapse-session");
 const { renderSynapseMap } = require("./synapse-panel");
@@ -708,18 +708,7 @@ var Q=class extends I.Modal{
             } catch(y){ console.error("review-deck write failed",y); }
             // Stats tracking for achievement system
             try {
-              const _d=new Date();const _p=n=>String(n).padStart(2,'0');
-              const _today=_d.getFullYear()+'-'+_p(_d.getMonth()+1)+'-'+_p(_d.getDate());
-              const _dy=new Date(_d);_dy.setDate(_dy.getDate()-1);
-              const _yest=_dy.getFullYear()+'-'+_p(_dy.getMonth()+1)+'-'+_p(_dy.getDate());
-              let _st=this.plugin.settings._stats||{};
-              _st.totalCardsReviewed=(_st.totalCardsReviewed||0)+1;
-              _st.dailyReviewLog=_st.dailyReviewLog||{};
-              _st.dailyReviewLog[_today]=(_st.dailyReviewLog[_today]||0)+1;
-              if(_st.lastReviewDate===_today){/* same day */}
-              else if(_st.lastReviewDate===_yest){_st.currentStreak=(_st.currentStreak||1)+1;_st.longestStreak=Math.max(_st.longestStreak||0,_st.currentStreak);}
-              else{_st.currentStreak=1;}
-              _st.lastReviewDate=_today;
+              let _st=recordReviewDay(this.plugin.settings._stats);
               
               if(E.q === 1) {
                 _st.totalAgainCount = (_st.totalAgainCount || 0) + 1;
