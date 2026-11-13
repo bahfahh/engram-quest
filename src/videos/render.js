@@ -417,16 +417,37 @@ function renderTopic(body, hub, t, topic, refresh) {
   if (video.credits) main.createDiv({ cls: "lh-vid-credits lh-vid-below", text: `${c(t, "VIDEO_CREDITS")}：${video.credits}` });
 }
 
+// The browser fetches a <track> same-origin only (the <video> itself may come from elsewhere). In
+// Obsidian the Hub page is app://obsidian.md and a vault resource URL is app://<id>/…, so a subtitle
+// file attached by that URL is blocked. Its text is read through the adapter and handed over as a
+// Blob URL, which belongs to the page, and released once the browser has read the cues.
+async function attachSubtitles(vid, hub, t, path) {
+  const adapter = hub.app.vault.adapter;
+  const [text, on] = await Promise.all([
+    adapter.read(path),
+    data.readSettings(adapter, !!hub.plugin.settings.licenseValid).then((s) => s.subtitles, (e) => {
+      console.warn("EngramQuest: video settings unreadable, subtitles left on", e);
+      return true;
+    }),
+  ]);
+  if (!vid.isConnected) return;
+  const url = URL.createObjectURL(new Blob([text], { type: "text/vtt" }));
+  const track = vid.createEl("track", { attr: { kind: "subtitles", src: url, srclang: "und", label: c(t, "VIDEO_SET_SUBS") } });
+  const release = () => URL.revokeObjectURL(url);
+  track.addEventListener("load", release);
+  track.addEventListener("error", release);
+  // Subtitles start on unless Video settings turn them off; a hidden track is still loaded, so the
+  // player's own menu can switch it.
+  track.track.mode = on ? "showing" : "hidden";
+}
+
 function mountPlayer(stage, hub, t, slug, meta, video, autoplay, save, playable, setPlayer, leave) {
   const src = `${data.VIDEOS_DIR}/${slug}/${video.file}`;
   const vid = stage.createEl("video", { cls: "lh-vid-player", attr: { controls: "", preload: "metadata", playsinline: "" } });
   vid.src = fileUrl(hub, slug, video.file);
   if (video.subtitles) {
-    const track = vid.createEl("track", { attr: { kind: "subtitles", src: fileUrl(hub, slug, video.subtitles), srclang: "und", label: c(t, "VIDEO_SET_SUBS"), default: "" } });
-    // Subtitles start on unless Video settings turn them off; the player's own menu can still switch them.
-    data.readSettings(hub.app.vault.adapter, !!hub.plugin.settings.licenseValid)
-      .then((s) => { if (!s.subtitles && track.track) track.track.mode = "hidden"; })
-      .catch((e) => console.warn("EngramQuest: video settings unreadable, subtitles left on", e));
+    attachSubtitles(vid, hub, t, I.normalizePath(`${data.VIDEOS_DIR}/${slug}/${video.subtitles}`))
+      .catch((e) => console.warn("EngramQuest: subtitles not loaded", e));
   }
   setPlayer(vid);
   // A synced vault can carry meta.json without the unsynced mp4, and a file can exist yet fail to
