@@ -244,6 +244,14 @@ body.is-phone .lh-hub.lh-session .lh-answer-block { background:var(--card) !impo
 body.is-phone .lh-hub.lh-session .lh-answer-header { margin:0 0 4px; padding:0; min-height:18px; }
 body.is-phone .lh-hub.lh-session .lh-answer-label { font-size:13px; line-height:18px; }
 body.is-phone .lh-hub.lh-session .lh-answer-text { font-size:16px; line-height:25px; }
+/* Phone: the two feature entries are a row under the answer card. Each takes half the row, so one
+   alone keeps the size it has in a pair; a long label wraps inside its button instead of being cut. */
+body.is-phone .lh-hub.lh-session .lh-answer-features { margin:0; gap:10px; align-items:stretch; flex:none; }
+body.is-phone .lh-hub.lh-session .lh-ans-feature { flex:0 1 calc(50% - 5px); min-width:0; margin:0; height:auto; min-height:46px; padding:6px 12px; justify-content:center; border-radius:12px; font-size:15px; line-height:19px; white-space:normal; text-align:left; }
+body.is-phone .lh-hub.lh-session .lh-ans-feature:not(.is-done):not([aria-pressed="true"]):active { background:var(--toneh) !important; }
+/* When the map opens it is scrolled into view: keep it clear of the glass bar at the bottom, and
+   keep the row that opened it in sight above a map taller than the screen. */
+body.is-phone .lh-hub.lh-session .lh-synapse-container { scroll-margin:66px 0 calc(env(safe-area-inset-bottom,0px) + 150px); }
 body.is-phone .lh-hub.lh-session .lh-answer-text.is-short { font-size:21px; line-height:31px; font-weight:600; letter-spacing:-.01em; }
 .lh-hub .lh-open-note { align-self:flex-start; min-height:30px; }
 .lh-sbar { position:absolute; left:12px; right:12px; bottom:calc(env(safe-area-inset-bottom,0px) + 30px); z-index:3; border-radius:22px; padding:10px; display:flex; flex-direction:column; gap:8px; box-sizing:border-box; }

@@ -440,8 +440,6 @@ var Q=class extends I.Modal{
       const rewatch=rewatchTarget(this.app,e);
       let rewatchFound=false;
       if(rewatch) this.app.vault.adapter.exists(rewatch.path).then(found=>{rewatchFound=found;}).catch(()=>{});
-      let queued=false;
-      if(t.licenseValid) readQueue(this.app.vault.adapter).then(_q=>{queued=isQueued(_q,e.notePath,e.front);}).catch(()=>{});
       const openMore=(ev)=>{
         const menu=new I.Menu();
         const add=(title,iconName,run,disabled)=>menu.addItem(item=>{item.setTitle(title).setIcon(iconName).setDisabled(!!disabled).onClick(run);});
@@ -449,10 +447,9 @@ var Q=class extends I.Modal{
         add(c(t,"COPY_CARD"),"copy",()=>copyCard().then(()=>new I.Notice(c(t,"COPY_CARD_DONE"))));
         add(c(t,"EDIT_CARD"),"pencil",editCard);
         add(c(t,"DELETE"),"trash-2",deleteCard);
-        if(synapseEnabled) add(c(t,"SYNAPSE"),"zap",()=>toggleSynapse(),!synapseHasLinks);
-        if(t.licenseValid&&this.answerShown&&!this.browseOnly) add(queued?c(t,"EXPLAINER_ALREADY"):c(t,"EXPLAINER_MARK_BTN"),"bookmark-plus",async()=>{
-          try{const _r=await addToQueue(this.app.vault.adapter,{source:e.notePath,q:e.front,a:e.back,deck:this.deckName||null});new I.Notice(_r.added?c(t,"EXPLAINER_MARKED"):c(t,"EXPLAINER_ALREADY"));queued=true;}catch(err){console.error("EngramQuest: explainer queue failed",err);}
-        },queued);
+        // Once the answer is shown, Synapse and the Deep Dive queue are buttons under the answer card;
+        // the menu does not repeat them.
+        if(synapseEnabled&&!this.answerShown) add(c(t,"SYNAPSE"),"zap",()=>toggleSynapse(),!synapseHasLinks);
         if(rewatchFound&&this.answerShown) add(c(t,"CARD_REWATCH"),"play",()=>openRewatch(this.app,rewatch));
         add(c(t,"HUB_MINIMIZE"),"chevrons-down",()=>this._minimize());
         menu.showAtMouseEvent(ev);
@@ -593,17 +590,23 @@ var Q=class extends I.Modal{
         selectedAnswerText=text.trim();
         return selectedAnswerText;
       };
-      // Desktop: the feature entries (Synapse, Deep Dive queue) follow the label as their own group;
-      // the formatting tools keep the far end. A phone reaches both from its "more" menu.
-      if(!phone) renderAnswerFeatures(answerHeader,{t,plugin:this.plugin,
-        synapse:synapseHasLinks?{open:this.synapseOpen,toggle:()=>{ this.synapseOpen=!this.synapseOpen; refreshSynapseContainer(); revealSynapse(); return this.synapseOpen; }}:null,
+      // The feature entries (Synapse, Deep Dive queue). Desktop: their own group after the label, the
+      // formatting tools keep the far end. Phone: a row under the answer card, drawn further down.
+      const features={t,plugin:this.plugin,
+        // A phone keeps hints and map apart, as its menu entry always did (toggleSynapse); on a desktop
+        // the hints stay above the answer while the map opens below it.
+        synapse:synapseHasLinks?{open:this.synapseOpen,toggle:()=>{
+          if(phone) toggleSynapse(); else { this.synapseOpen=!this.synapseOpen; refreshSynapseContainer(); revealSynapse(); }
+          return this.synapseOpen;
+        }}:null,
         queue:t.licenseValid&&!this.browseOnly?{
           isQueued:()=>readQueue(this.app.vault.adapter).then(_q=>isQueued(_q,e.notePath,e.front)),
           add:async()=>{
             try{const _r=await addToQueue(this.app.vault.adapter,{source:e.notePath,q:e.front,a:e.back,deck:this.deckName||null});new I.Notice(_r.added?c(t,"EXPLAINER_MARKED"):c(t,"EXPLAINER_ALREADY"));return true;}
             catch(err){console.error("EngramQuest: explainer queue failed",err);return false;}
           },
-        }:null});
+        }:null};
+      if(!phone) renderAnswerFeatures(answerHeader,features);
       // Formatting tools.
       let fmtBtns=answerHeader.createEl("div",{attr:{class:"lh-answer-fmt-btns"}});
       if(e.notePath){
@@ -655,12 +658,17 @@ var Q=class extends I.Modal{
       renderMd(answerEl,e.back);
       answerEl.addEventListener("mouseup",captureAnswerSelection);
       answerEl.addEventListener("keyup",captureAnswerSelection);
+      // Once the answer shows, the relation map sits below it: the answer stays the first thing in view.
+      // On a phone the feature row comes first and the map opens right under it, above the note link.
+      if(phone){
+        renderAnswerFeatures(i,features);
+        i.appendChild(synapseContainer);
+      }
       if(phone&&notePaths.length>0){
         i.createEl("button",{cls:"lh-link lh-open-note",text:c(t,"OPEN_IN_NOTE")}).addEventListener("click",()=>openNote(notePaths[0]));
       }
       this.browseOnly&&i.createEl("div",{text:c(t,"BROWSE_NOTE"),attr:{class:"lh-browse-note"}});
-      // Once the answer shows, the relation map sits below it: the answer stays the first thing in view.
-      i.appendChild(synapseContainer);
+      if(!phone) i.appendChild(synapseContainer);
     }
 
     // Footer buttons
