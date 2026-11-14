@@ -30,6 +30,7 @@ Lessons, not bans: what went wrong, why, what helped.
 - **Numbers not recomputed.** In one round the silent review caught a number error in every lesson (a doubled cost computed wrong, a sample rule contradicting its own examples, counts and percentages that don't divide). Numbers must be true: recompute each from its formula, consistent across frames.
 - **A wrong intuition on screen not marked wrong** — muted viewers keep it as advice. A definition under a wrong intuition does the same.
 - The ending introducing a rule the body never taught.
+- **A takeaway the body never computed**: a script whose takeaway was "count pairs" did its only calculation on something else, and a listener left believing the pair count alone gives the percentage (253 ÷ 365 = 69 %). The takeaway has to be the thing the body actually ran.
 - Unverified facts presented as certain: keeping the material's "estimated / third-party" hedges and looking up unfamiliar terms keeps it true.
 
 ## Picture
@@ -38,6 +39,7 @@ Lessons, not bans: what went wrong, why, what helped.
 - Handover frames that differ between pages → a one-frame flash (they must be identical). Take the handover image from the **last frame the outgoing page actually plays** (segment start − 1/30 s), not the start second: experiment 15 lesson 5's classroom cut back to the wide shot at the handover second, that wide frame was captured, and the film jumped from a board close-up to a wide shot (joincheck diff 73).
 - **A handover still picked by name prefix** (experiment 18): `ls stills | grep -F "t-110.6" | head -1` took an older `t-110.633.jpg` left from an earlier round, so `img/h3.jpg` held a superseded recap card, and the film flashed it — with the wording the review had just removed — for 0.6 s at the start of the tail. `joincheck` printed 130 right after the join and nobody read it. What helped: exact file names (`grep -Fx "t-<time>.jpg"`), older stills deleted first, and reading the `joincheck` lines — a value above ≈ 40 near a seam is a hard cut, now flagged `<-- JUMP`; six frames around it show what jumped. A second, one-frame flash at the same seam came from frame times: `from` rounded to 4 decimals (110.6333) sat just before the page's own `tH3` (110.63333…), so the part's first frame still showed the previous overlay; `render.cjs` now renders whole frames (`round(from × fps) / fps`), the same times the pages compute.
 - GPU compositing on DOM pages → ghosting during camera moves (software DOM rendering avoids it).
+- **An empty first frame**: delivery holds the first frame (3 s by default), so a page whose elements animate in from t = 0 opened on almost four seconds of blank screen. The opening picture is already there at t = 0.
 
 - Lemo-Opuscar's most common failures, all seen in our films too: subject too small or too far; a colour laid on the same colour (red on red); subtitles or captions covering the subject; a gag or a reveal too fast to understand; blank frames in transitions; an effect (spotlight, zoom) that doesn't follow its subject after the camera moves — one world → screen function keeps them together.
 
@@ -52,6 +54,8 @@ Lessons, not bans: what went wrong, why, what helped.
 - Running `readcheck.cjs` on a WebGL page with real drawing (experiment 13: a 58 s classroom check ran 40 min and was killed). Fixed: readcheck now no-ops WebGL draws itself; `--draw` is rarely needed.
 - **Stopping mid-way to wait for the user's approval** (a run stopped after stage 1 to show stills and ask "is this direction OK?"): the user defines only what to learn and the goal; everything else is the producer's. Firm (a product decision): past the syllabus checkpoint, run end to end; pre-delivery reviews are internal — decide and record.
 - Skipping stage 1 review or the silent review (it caught the number errors above).
+- **A guess beat before the viewer has the means**: "Double the room — what's the chance now?" came before saying how many pairs that makes, so the listener could only guess blindly and the answer arrived as a bare fact. Giving the means first made it a prediction (`03-adapter-pattern.md` §1.4).
+- **Two full renders of one project at the same time**: both wrote `final.mp4` and the file came out unreadable (invalid NAL units). One render per project at a time; decoding the result once (`ffmpeg -v error -i final.mp4 -f null -`) catches it before delivery.
 - **three.js parts in the cloud are very slow and can hit the 2 h background limit** (experiment 12: lesson 1's four GPU parts ran together; 5 of 8 parts finished in 2 h; the host rendered the last 3 locally in ~25 min). What helped: shorter GPU parts, GPU and DOM parts interleaved, or GPU parts on the host; if farm.sh makes no poster, grab it from the joined film at the READY second.
 - One cloud session per part (115 child sessions in one project; "opening 96 is absurd"). One per lesson, archived when done, worked.
 - Briefs pointing at outdated files named like the current ones.

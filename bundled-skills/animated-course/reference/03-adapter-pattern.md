@@ -29,11 +29,22 @@ When one lesson's middle was made several different ways, more than one worked: 
 
 `05-presentation-methods.md` catalogues the approved stages, shapes and devices with their status. **It is a set of starting points, not a menu.** When nothing fits a layer, design one (borrow from §3) and mark it trial; a new design usually replaces one layer, not the whole film. Force-fitting is still the worst outcome.
 
-### 1.1 Diagnose each segment first (three questions, written down)
+### 1.1 Diagnose each segment first (four questions, written down)
 
 1. **What question does the segment answer?** How does it run / where does it split / what is inside / how much, to scale / how long / which one / what does chance do / many things at once / why does this rule exist / how do I do it on the real screen.
 2. **Where does listening alone get stuck?** The process is invisible; the quantity has no felt size; it is layered or nested; it is chance; a wrong intuition is already there; two things blur; the reason for a rule is not felt; the evidence behind a claim is invisible. The lesson's self-check questions help find these.
 3. **What should the viewer do with it?** Follow it; predict or bet; compare; sort; take it apart; watch it fail; operate it for real.
+
+4. **What can the viewer do afterwards, and what has to be in the segment for that to be true?** One sentence of outcome, then the few must-haves that make it true. They follow from the question (1), not from the subject:
+
+   | The segment answers | Afterwards the viewer can | Must-haves |
+   |---|---|---|
+   | why it happens, how it runs | explain the chain in their own words and say what changes when one condition changes | every link of the chain visible, none skipped; at least once the viewer predicts the effect of one changed condition |
+   | what it is, which one it is | tell examples from near misses | at least two examples and one close non-example; one borderline case the viewer judges |
+   | how to do it | do it once in a new situation | one full run with the judgement at each step said aloud; a second run in a changed situation; the common mistake |
+   | why believe it | state the claim, its strongest evidence and its strongest objection | what the claim does and does not say; what each piece of evidence supports; the strongest objection shown |
+
+   Must-haves say what is achieved, never how it is shown; the layers below still choose that. They are the checklist the listener review of the script and the silent review read against (`06-workflow.md`), which gives "the change" in the understanding card something to be checked by. A short passage serving another segment's point needs only a short version (one example, one picture, one sentence). The rows are examples (adapted from the question types of Heptabase Explainer Studio, MIT); a segment that fits none still gets its own outcome sentence and must-haves, and sorting every segment into a fixed list of types would be a forced fit.
 
 Written per segment in `UNDERSTANDING.md` before choosing; a choice without a diagnosis is how forced fits happen.
 
@@ -69,7 +80,7 @@ A middle can meet the rhythm baseline and still feel like non-stop talk; experim
 1. **A reason to hear the next sentence.** The viewer always knows what they are waiting to find out. Its shape follows the question the segment answers (§1.1):
    - cause ("why did this happen?"): the question stays visible and is answered piece by piece;
    - choice: the options stay side by side until one is judged;
-   - prediction: the viewer's guess becomes an object on screen (bet, in the order of `05-presentation-methods.md` §3b; nothing on screen gives the answer away first); when a piece the viewer saw earlier decides the outcome, let them complete it (planted piece);
+   - prediction: the viewer's guess becomes an object on screen (bet, in the order of `05-presentation-methods.md` §3b; nothing on screen gives the answer away first). Two kinds ask different things of what came before: a bet exposes an intuition and needs only the question, while a prediction the viewer is meant to work out needs its means in their hands before the pause (the rule, the number, the picture it runs on) — without them the pause is a blind guess and the answer arrives as a bare fact; when a piece the viewer saw earlier decides the outcome, let them complete it (planted piece);
    - wrong intuition: the belief is stated first, then broken; a Pro teacher may name the common mistake just before the viewer would make it (anticipation, `07-voice-and-language.md` §1b-3 point 6);
    - a conclusion the viewer could derive from what is on screen: let them watch it being derived against their intuition (visible reasoning, `05` §3b);
    - a segment that grows out of the previous answer's limit: open it from that limit (question ladder, `05` §3d);
@@ -83,7 +94,8 @@ A middle can meet the rhythm baseline and still feel like non-stop talk; experim
    - Speak the numbers the viewer must hold; others stay on screen or go.
    - Check each column alone: narration that retells the picture can be cut; a picture column with nothing the words point at is a signpost (`01-principles.md` §1).
 3. **A cut back to the teacher or student brings something new**: a clue written on the board, a model turned in the room, the student's wrong guess, the teacher's judgement. Form from content: a board for an argument that grows, a model for something spatial, the student's hand for a mistake. The cut lands on the turn in the talk, where the next question starts, not on a clock. A cutback where only mouths move has no content: give it content or stay on the stage. Approved example (experiment 20 test 22, every teacher): a segment's bet moved whole onto the blackboard and back, with hard cuts (`05` §3b, Bet on the blackboard).
-4. **Measure a reference to understand it, not to copy it.** Measure it (cuts, numbers, guide phrases, shot types), explain why each works there, then turn it into the criterion it serves. Its numbers are not targets: another subject and length change them. Only the rhythm baseline (`04-skeleton.md` §2) is series-wide.
+4. **Each sentence stands on the one before.** In a segment that reasons, the place a listener asks "where did that come from?" is a missing link, or two links in one beat (`04-skeleton.md` §2, One link, one beat). A listener review of the script finds these before any picture exists (`06-workflow.md` §1).
+5. **Measure a reference to understand it, not to copy it.** Measure it (cuts, numbers, guide phrases, shot types), explain why each works there, then turn it into the criterion it serves. Its numbers are not targets: another subject and length change them. Only the rhythm baseline (`04-skeleton.md` §2) is series-wide.
 
 Per segment, `UNDERSTANDING.md` §3 notes what carries the viewer (or "nothing needed" and why), and what each cutback shows.
 
@@ -142,7 +154,7 @@ Animation can also give viewers **impossible experiences**: impossible senses (s
 Each lesson's `UNDERSTANDING.md` (`templates/UNDERSTANDING.md`), written first so the choices follow from it:
 1. **The change**: what the viewer can do after watching (see, tell apart, reason out, feel, use, want to explore), in concrete sentences.
 2. **Obstacles**: invisible process, no scale, blurred concepts, a wrong intuition? The lesson's self-check questions help find them.
-3. **Per segment, the diagnosis and the layers** (§1): the three answers, then stage (once), shape, device. For a layer that needs a **new** design, **three genuinely different ideas**, each borrowed from a different field — not one explanation in three skins — surfaced the better option.
+3. **Per segment, the diagnosis and the layers** (§1): the four answers (the last one, outcome and must-haves, is what the reviews check), then stage (once), shape, device. For a layer that needs a **new** design, **three genuinely different ideas**, each borrowed from a different field — not one explanation in three skins — surfaced the better option.
 4. **The moment understanding happens**: which picture, event or contrast makes the viewer suddenly get it; apply the signpost test.
 5. **Cost**: does it need a big metaphor learned first? Could it be fun but teach the wrong mechanism? Render cost, length.
 6. Then the craft (layer 4: camera, morphs, sound), and an interest curve in `CARD.md`.

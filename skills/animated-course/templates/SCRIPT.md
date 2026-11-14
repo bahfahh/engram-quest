@@ -12,4 +12,6 @@ For head and tail lines, "On screen" also names what the blackboard holds and th
 
 Voice structure (`reference/07-voice-and-language.md` §1b-4): sentences of one idea share a `group`; pauses in layers; focus pauses rare, on key lines. Bets: approved order in `reference/05-presentation-methods.md` §3b.
 
+Segments that reason: one link per beat — what we have, the picture's one change, the conclusion sentence, the rest — and at a seam, what stands and why go on (`reference/04-skeleton.md` §2). Before `script.json` is voiced, the lines go through the listener review (`LISTENER-REVIEW.md`).
+
 Voice-pass notes: likely misreadings (abbreviations, money amounts, polyphonic characters).

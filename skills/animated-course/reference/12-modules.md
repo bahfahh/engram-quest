@@ -38,7 +38,7 @@ node scripts/studio/lib/cast/resolve.cjs [--off cards] [--on cards] > projects/<
 - **Where**: `06-workflow.md` step 6, `scripts/deliver.py`.
 
 ### 3.1 Rejected: `transfer` — Somewhere else
-A 10–15 s beat before the mindmap that showed the lesson's mechanism once in a far, everyday context (for example, cooking a meal). It was redundant, its meaning unclear, and the analogy odd. Why it failed: (1) placed after everything was understood, it helps no one understand; (2) the analogy was structurally wrong (in a kitchen steps run at the same time, so the waterfall premise does not hold); (3) a default-on module forced a far context into every lesson — a force-fit. It stays out in any analogy form.
+A 10–15 s beat before the mindmap that showed the lesson's mechanism once in a far, everyday context (for example, cooking a meal). It was redundant, its meaning unclear, and the analogy odd. Why it failed: (1) placed after everything was understood, it helps no one understand; (2) the analogy was structurally wrong (in a kitchen steps run at the same time, so the waterfall premise does not hold); (3) a default-on module forced a far context into every lesson — a force-fit. It stays out in any analogy form. The rejection covers a far-context analogy as a default beat. A changed case inside a segment — the same picture with one thing changed, right after the rule is established, where the diagnosis calls for it — is a different thing and stays available (`05-presentation-methods.md` §3 One picture carried through, §3b Rewind replay and Recall with a new case).
 
 ## 4. Adding a module
 
