@@ -12,6 +12,23 @@ describe("Lesson Academy render UX", () => {
     expect(src).toContain('if (showSide) renderSidebar(layout.createEl("div", { cls: "lh-lside" }), hub, t, scopedCourses, stats, refresh);');
   });
 
+  it("on a narrow desktop window the summary column steps aside so the courses keep the width (ticket-071)", () => {
+    const css = styles();
+
+    expect(css).toContain(".lh-lwrap { container:lh-lwrap / inline-size; }");
+    expect(css).toMatch(/@container lh-lwrap \(max-width:\d+px\) \{ body:not\(\.is-phone\) \.lh-lside \{ display:none; \} \}/);
+    // A phone keeps stacking the summary under the courses.
+    expect(css).toContain("body.is-phone .lh-lwrap { flex:none; flex-direction:column; }");
+  });
+
+  it("says courses, not decks, when no course matches the filters (ticket-071)", async () => {
+    const { DICT } = await import("../src/i18n/index.js");
+    expect(source()).toContain('c(t, "EMPTY_FILTERED_COURSES")');
+    expect(source()).not.toContain("EMPTY_FILTERED_DECKS");
+    for (const lang of Object.values(DICT)) expect(lang.EMPTY_FILTERED_COURSES).toBeTruthy();
+    expect(DICT["zh-tw"].EMPTY_FILTERED_DECKS).not.toMatch(/decks/i);
+  });
+
   it("lets course and lesson titles wrap to two lines before truncating", () => {
     const css = styles();
 

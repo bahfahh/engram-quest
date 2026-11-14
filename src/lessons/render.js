@@ -271,7 +271,7 @@ function renderCourseCards(main, hub, t, courses, scopedCourses, state, refresh)
     state.slug = visibleCourses[0].slug;
   }
   if (visibleCourses.length === 0) {
-    strip.createEl("div", { cls: "lh-pth lh-cempty", text: state.courseScope === "archived" ? c(t, "LESSON_ARCHIVE_EMPTY") : c(t, "EMPTY_FILTERED_DECKS") });
+    strip.createEl("div", { cls: "lh-pth lh-cempty", text: state.courseScope === "archived" ? c(t, "LESSON_ARCHIVE_EMPTY") : c(t, "EMPTY_FILTERED_COURSES") });
   }
   visibleCourses.forEach(course => renderCourseCard(strip, hub, t, course, state, refresh));
   // Every refresh rebuilds the strip, so bring the selected card back into view.
