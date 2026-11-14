@@ -127,8 +127,8 @@ class LessonViewerModal extends I.Modal {
     // A lesson is a long-form portrait document — give the modal nearly the whole viewport and
     // keep the chrome (title + footer) tight so the iframe gets the rest.
     hubUi().themedModal(this);
-    modalEl.style.cssText = "width:min(96vw,900px);max-height:96vh;padding:0;border-radius:18px;overflow:hidden;display:flex;flex-direction:column;";
-    contentEl.style.cssText = "padding:12px;display:flex;flex-direction:column;gap:8px;overflow-y:auto;flex:1;min-height:0;";
+    modalEl.classList.add("lh-doc-frame-lesson");
+    contentEl.classList.add("lh-doc-body", "lh-doc-body-gap8");
 
     // Title row (padding-right clears Obsidian's absolute-positioned modal close X).
     const titleRow = contentEl.createEl("div", {
@@ -256,8 +256,8 @@ class CanvasLessonModal extends I.Modal {
     const t = this.plugin.settings;
     const { contentEl, modalEl } = this;
     hubUi().themedModal(this);
-    modalEl.style.cssText = "width:min(94vw,440px);padding:0;border-radius:18px;overflow:hidden;";
-    contentEl.style.cssText = "padding:20px;display:flex;flex-direction:column;gap:14px;";
+    modalEl.classList.add("lh-frame-440");
+    contentEl.classList.add("lh-stack-20");
 
     const titleRow = contentEl.createEl("div", {
       attr: { style: "display:flex;align-items:center;gap:10px;padding-right:28px;" },

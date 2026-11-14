@@ -173,10 +173,10 @@ class QuestViewerModal extends I.Modal {
   async onOpen() {
     this.modalEl.addClass("qm-modal");
     this.modalEl.addClass("lh-hub");
-    this.modalEl.style.cssText = "width:min(96vw,1040px);max-width:none;height:min(92vh,760px);max-height:none;padding:0;border-radius:18px;overflow:hidden;display:flex;flex-direction:column;";
+    this.modalEl.addClass("qm-viewer-frame");
     // The map art is picked per theme, so a theme switch redraws it.
     watchTheme(this, { vars: true, onChange: () => { if (this.state) this.render(); } });
-    this.contentEl.style.cssText = "padding:0;display:flex;flex-direction:column;min-height:0;flex:1;background:var(--background-primary);color:var(--text-normal);";
+    this.contentEl.addClass("qm-viewer-body");
     await this.reload();
     if (this._closed) return;
     this.render();

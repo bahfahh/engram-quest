@@ -330,7 +330,7 @@
       lnk.textContent = "";
       if (st && st.note) { var info = L.notes[st.note] || {}; lnk.appendChild(document.createTextNode(info.exists ? T("這一步接到你的筆記：", "This step connects to your note: ") : T("你的筆記還沒寫到這件事：", "Your notes don't cover this yet: "))); lnk.appendChild(noteBtn(st.note)); }
       var tgt = st && ((st.bad && st.bad.length ? st.bad : st.lit) || []), id = tgt && tgt[tgt.length - 1], p = id && lay.parts[id], row = lay.rows && lay.rows.filter(function (r) { return r.msg.id === id; })[0];
-      if (p) { dot.style.opacity = 1; dot.style.transform = "translate(" + p.cx + "px," + (p.onLine ? p.cy + (row ? row.to : 0) : p.cy - 23) + "px)"; } else dot.style.opacity = 0;
+      if (p) { dot.classList.add("on"); dot.style.transform = "translate(" + p.cx + "px," + (p.onLine ? p.cy + (row ? row.to : 0) : p.cy - 23) + "px)"; } else dot.classList.remove("on");
       dot.classList.toggle("is-bad", !!(st && st.bad && st.bad.length));
     }
     next.addEventListener("click", function () { idx = (idx + 1) % (m.scenarios[cur].steps.length + 1); apply(); });
@@ -415,13 +415,13 @@
       Array.prototype.forEach.call(mapEl.querySelectorAll(".nd"), function (e) { e.classList.toggle("sel", e.getAttribute("data-n") === id); });
       Array.prototype.forEach.call(mapEl.querySelectorAll("[data-e]"), function (e) { e.classList.toggle("on", e.getAttribute("data-e") === id); });
       mapEl.classList.toggle("pick", !!n);
-      if (!n) { rel.textContent = T("這張卡本身", "This card"); ttl.textContent = m.center.label; why.textContent = S.hook || ""; qt.textContent = ""; live.textContent = ""; open.style.display = "none"; return; }
+      if (!n) { rel.textContent = T("這張卡本身", "This card"); ttl.textContent = m.center.label; why.textContent = S.hook || ""; qt.textContent = ""; live.textContent = ""; open.classList.add("gone"); return; }
       var info = L.notes[n.note] || {};
       rel.textContent = n.kind; ttl.textContent = n.note; why.textContent = n.why;
       qt.textContent = n.quote ? T("你的筆記寫著：「" + n.quote + "」", "Your note says: \u201c" + n.quote + "\u201d") : "";
       var days = Math.round(info.minStability);
       live.textContent = !info.exists ? T("這篇筆記還沒寫。", "This note isn't written yet.") : info.cards ? T("這篇的卡片最短穩定 " + days + " 天" + (info.again30 ? "，近 30 天按過 " + info.again30 + " 次 Again。" : "。"), "Its weakest card holds for " + days + " days" + (info.again30 ? ", with " + info.again30 + " Again in the last 30 days." : ".")) : "";
-      open.style.display = ""; open.textContent = info.exists ? T("打開這篇筆記", "Open this note") : T("建立這篇筆記", "Create this note"); open.setAttribute("data-note", n.note);
+      open.classList.remove("gone"); open.textContent = info.exists ? T("打開這篇筆記", "Open this note") : T("建立這篇筆記", "Create this note"); open.setAttribute("data-note", n.note);
     }
     btns.push(core); core.addEventListener("click", function () { pick("__core"); });
     m.nodes.forEach(function (n) {

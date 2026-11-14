@@ -16,12 +16,16 @@ const MIGRATED_FILES = [
   "src/hub/review-tab.js",
   "src/hub/settings.js",
   "src/hub/skills.js",
+  "src/lessons/viewer-modal.js",
+  "src/explainer/viewer-modal.js",
+  "src/harness/map.js",
+  "src/quest/viewer-modal.js",
 ];
 
 function classesUsedIn(file) {
   const source = fs.readFileSync(file, "utf8");
   const names = new Set();
-  for (const call of source.matchAll(/classList\.(?:add|remove)\(([^)]*)\)/g)) {
+  for (const call of source.matchAll(/(?:classList\.(?:add|remove)|addClass|removeClass)\(([^)]*)\)/g)) {
     for (const lit of call[1].matchAll(/"([a-z0-9_-]+)"/gi)) names.add(lit[1]);
   }
   return [...names];
