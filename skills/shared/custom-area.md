@@ -19,6 +19,7 @@ engram-quest/custom/
 
 - Preferences are Markdown the user reads and edits in Obsidian: one item per line, each with its date and why it was added.
 - `assets/index.json` lists each asset: `id`, `kind` (look, music, image, template), `skill` it is for, `description`, `source` and `licence`, `created`, and the list's `schema` version. Skip fields you don't understand, and keep them when you rewrite the file, so an older or newer list still works.
+- An `<id>` or `<name>` is lowercase letters, digits and hyphens (`cold-math`), so the plugin can list the item.
 - Any part may be missing. A missing file means nothing was set there, not an error.
 
 ## Before you start
@@ -61,4 +62,4 @@ API keys, tokens and passwords belong in environment variables only. A preferenc
 
 ## The custom area is not study material
 
-Nothing under `engram-quest/` (the custom area included) is a study note. When you search the user's notes to make cards, questions, maps, lessons or films, leave out every result under `engram-quest/`, so a preference file is never taught back as content.
+Nothing under the vault's top-level `engram-quest/` folder (the custom area included) is a study note. When you search the user's notes to make cards, questions, maps, lessons or films, leave out every result whose path starts with `engram-quest/`, so a preference file is never taught back as content. A folder of the same name deeper in the vault is the user's own and still counts.

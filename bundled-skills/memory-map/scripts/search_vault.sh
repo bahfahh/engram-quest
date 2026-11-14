@@ -22,13 +22,14 @@ VAULT_ROOT="$(cd "$(dirname "$0")/../../../.." && pwd)"
 
 # Dot-folders (.obsidian, .git, and the AI tools' own .claude / .agents / .gemini / .cursor, where these
 # skills are installed) hold no notes; searching them would return the skill files themselves.
-# engram-review/ and engram-quest/ hold plugin data and the user's custom area (preferences, assets): not notes either.
+# The vault's top-level engram-quest/ holds plugin data and the user's custom area (preferences, assets): not notes
+# either. It is filtered by path, so a note folder of the same name deeper in the vault is still searched.
 grep -ri --include="*.md" \
   --exclude-dir=".*" \
   --exclude-dir="node_modules" \
   --exclude-dir="engram-review" \
-  --exclude-dir="engram-quest" \
   -E "$PATTERN" \
   -B 2 -A 2 \
   "$VAULT_ROOT" \
+  | grep -v -F -- "$VAULT_ROOT/engram-quest/" \
   | head -n $((LIMIT * 6))

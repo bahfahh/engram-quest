@@ -37,17 +37,18 @@ if (!project.startsWith(path.join(STUDIO, 'projects'))) { console.error('project
 
 const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.mjs': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.json': 'application/json; charset=utf-8',
   '.woff2': 'font/woff2', '.woff': 'font/woff', '.ttf': 'font/ttf', '.png': 'image/png', '.jpg': 'image/jpeg', '.svg': 'image/svg+xml', '.wav': 'audio/wav' };
-// /engram-quest/… is the user's custom area, served read-only from the vault (lib/served-path.cjs).
+// /engram-quest/custom/… is the user's custom area, served read-only from the vault (lib/served-path.cjs).
+// Only this machine can reach the server.
 const { servedPath } = require('./lib/served-path.cjs');
 const srv = http.createServer((req, rsp) => {
-  const { root, p } = servedPath(STUDIO, decodeURIComponent(req.url.split('?')[0]));
+  const { root, p } = servedPath(STUDIO, decodeURIComponent(req.url.split('?')[0]), project);
   if (!p.startsWith(root) || !fs.existsSync(p) || fs.statSync(p).isDirectory()) { rsp.writeHead(404); return rsp.end(); }
   rsp.writeHead(200, { 'Content-Type': MIME[path.extname(p)] || 'application/octet-stream' });
   fs.createReadStream(p).pipe(rsp);
 });
 
 (async () => {
-  await new Promise(r => srv.listen(0, r));
+  await new Promise(r => srv.listen(0, '127.0.0.1', r));
   const gpu = ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'];
   // WebGL needs a context even when nothing is drawn: use SwiftShader (cheap here because draws are no-ops)
   const browser = await chromium.launch({ args: gpu });

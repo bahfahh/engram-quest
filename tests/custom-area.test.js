@@ -4,7 +4,7 @@
 import { describe, it, expect, afterEach } from "vitest";
 import Module, { createRequire } from "node:module";
 import { execFileSync } from "node:child_process";
-import { mkdtempSync, mkdirSync, writeFileSync, copyFileSync, readFileSync, rmSync } from "node:fs";
+import { mkdtempSync, mkdirSync, writeFileSync, copyFileSync, readFileSync, rmSync, existsSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -132,10 +132,14 @@ describe("note search leaves engram-quest/ out", () => {
       put("Study/note.md", "mitochondria make energy\n");
       put("engram-quest/custom/preferences/all.md", "mitochondria diagrams please\n");
       put("engram-quest/lessons/bio/lesson.md", "mitochondria lesson\n");
+      // Only the vault's top-level folder is plugin data; a note folder of the same name is the user's.
+      put("Projects/engram-quest/plan.md", "mitochondria for the plugin pitch\n");
 
       const out = execFileSync("bash", [path.join(scripts, "search_vault.sh"), "mitochondria"], { encoding: "utf8" });
       expect(out).toContain("note.md");
-      expect(out).not.toContain("engram-quest");
+      expect(out).toContain("Projects/engram-quest/plan.md");
+      expect(out).not.toContain("custom/preferences");
+      expect(out).not.toContain("lessons/bio");
     });
   }
 });
@@ -161,13 +165,107 @@ describe.skipIf(!python)("the video skills' check script finds a key put into th
       expect(scan(skill).code).toBe(0);
 
       const fake = "FAKE0FAKE1FAKE2FAKE3FAKE4";
-      put("engram-quest/custom/preferences/all.md", `- GEMINI_API_KEY=${fake}\n`);
+      put("engram-quest/custom/preferences/all.md", [
+        `- GEMINI_API_KEY=${fake}`,
+        "- 2026-11-14 the token limit is fine: tokens-per-minute-limit-is-high",
+        `- AZURE_SPEECH_KEY: 0123456789abcdef0123456789abcdef`,
+        `- "api_key": "${fake}"`,
+      ].join("\n") + "\n");
       const { code, out } = scan(skill);
       expect(code).toBe(1);
-      expect(out).toMatch(/preferences[\\/]all\.md:1/);
+      for (const line of [1, 3, 4]) expect(out).toMatch(new RegExp(`preferences[\\\\/]all\\.md:${line}\\b`));
+      expect(out).not.toMatch(/all\.md:2\b/);
       expect(out).not.toContain(fake);
+      expect(out).not.toContain("0123456789abcdef");
     });
   }
+
+  it("says it scanned nothing when no vault was found", () => {
+    dir = mkdtempSync(path.join(tmpdir(), "eq-keys-"));
+    const { code, out } = (() => {
+      try { return { code: 0, out: execFileSync(python, [fileURLToPath(new URL("../skills/animated-course/scripts/doctor.py", import.meta.url)), "--keys"], { encoding: "utf8", cwd: dir, env: { ...process.env, VAULT: "" } }) }; }
+      catch (e) { return { code: e.status, out: String(e.stdout) }; }
+    })();
+    expect(code).toBe(2);
+    expect(out).toContain("nothing scanned");
+  });
+});
+
+// The video skill's studio: a custom skin is served from the custom area (never copied), and nothing else of the vault.
+describe("the video studio serves the custom area and nothing else", () => {
+  const studioLib = fileURLToPath(new URL("../skills/animated-course/scripts/studio/lib/", import.meta.url));
+  const { servedPath } = require(path.join(studioLib, "served-path.cjs"));
+  let dir;
+  afterEach(() => { if (dir) rmSync(dir, { recursive: true, force: true }); dir = null; });
+
+  function setup() {
+    dir = mkdtempSync(path.join(tmpdir(), "eq-studio-"));
+    const vault = path.join(dir, "vault"), studio = path.join(dir, "studio"), project = path.join(studio, "projects", "l01");
+    const put = (rel, text) => { mkdirSync(path.dirname(path.join(dir, rel)), { recursive: true }); writeFileSync(path.join(dir, rel), text); };
+    put("vault/engram-quest/custom/cast/skins/owl/skin.js", "export const meta = {};");
+    put("vault/engram-quest/cast/skins/old/skin.js", "export const meta = {};");
+    put("vault/engram-quest/videos/settings.json", "{}");
+    put("vault/engram-quest2/x.js", "x");
+    put("studio/lib/cast/stage.js", "x");
+    put("studio/projects/l01/cast.json", JSON.stringify({ vault }));
+    return { vault, studio, project };
+  }
+  const served = (studio, project, url) => { const { root, p } = servedPath(studio, url, project); return p.startsWith(root) && existsSync(p) ? p : null; };
+
+  it("finds the vault through the project's cast.json when the studio is outside it", () => {
+    const { vault, studio, project } = setup();
+    expect(served(studio, project, "/engram-quest/custom/cast/skins/owl/skin.js")).toBe(path.join(vault, "engram-quest/custom/cast/skins/owl/skin.js"));
+    expect(served(studio, project, "/engram-quest/custom/cast/skins/old/skin.js")).toBe(path.join(vault, "engram-quest/cast/skins/old/skin.js"));
+    expect(served(studio, project, "/lib/cast/stage.js")).toBe(path.join(studio, "lib/cast/stage.js"));
+  });
+
+  it("refuses the rest of the vault and every way out of the custom area", () => {
+    const { studio, project } = setup();
+    for (const url of [
+      "/engram-quest/videos/settings.json", "/engram-quest/custom/../videos/settings.json", "/engram-quest/custom/../../engram-quest2/x.js",
+      "/engram-quest/custom/cast/skins/../../../videos/settings.json", "/engram-quest/custom/cast/skins/../../../../engram-quest2/x.js",
+    ]) expect(served(studio, project, url), url).toBeNull();
+  });
+});
+
+describe("the video skill picks custom teachers like Pro teachers", () => {
+  const resolver = fileURLToPath(new URL("../skills/animated-course/scripts/studio/lib/cast/resolve.cjs", import.meta.url));
+  const registry = JSON.parse(readFileSync(new URL("../skills/animated-course/scripts/studio/lib/cast/teachers.json", import.meta.url), "utf8"));
+  const nico = registry.teachers.find((t) => t.default);
+  let dir;
+  afterEach(() => { if (dir) rmSync(dir, { recursive: true, force: true }); dir = null; });
+
+  function resolve(settings, teachers) {
+    dir = mkdtempSync(path.join(tmpdir(), "eq-resolve-"));
+    const put = (rel, text) => { mkdirSync(path.dirname(path.join(dir, rel)), { recursive: true }); writeFileSync(path.join(dir, rel), text); };
+    put("engram-quest/videos/settings.json", JSON.stringify(settings));
+    put("engram-quest/custom/cast/skins/owl/skin.js", "export const meta = {};");
+    put("engram-quest/cast/skins/oldskin/skin.js", "export const meta = {};");
+    for (const [rel, t] of Object.entries(teachers)) put(rel, JSON.stringify({ name: { en: "Kay" }, beats: nico.beats, voice: nico.voice, ...t }));
+    const out = JSON.parse(execFileSync("node", [resolver, "--vault", dir], { encoding: "utf8" }));
+    return { teacher: out.teacher.id, skin: out.skin.id, file: out.skin.file };
+  }
+
+  it("uses the custom teacher and its custom skin with Pro, loaded from the custom area", () => {
+    expect(resolve({ pro: true, cast: { teacher: "custom:kay" } }, { "engram-quest/custom/cast/teachers/kay.json": { skin: "custom:owl" } }))
+      .toEqual({ teacher: "custom:kay", skin: "custom:owl", file: "/engram-quest/custom/cast/skins/owl/skin.js" });
+  });
+
+  it("falls back to the default teacher without Pro, or when the skin is missing", () => {
+    expect(resolve({ cast: { teacher: "custom:kay" } }, { "engram-quest/custom/cast/teachers/kay.json": { skin: "custom:owl" } }).teacher).toBe(nico.id);
+    expect(resolve({ pro: true, cast: { teacher: "custom:kay" } }, { "engram-quest/custom/cast/teachers/kay.json": { skin: "custom:gone" } }).teacher).toBe(nico.id);
+  });
+
+  it("still reads a teacher and skin from the older folders", () => {
+    expect(resolve({ pro: true, cast: { teacher: "custom:old" } }, { "engram-quest/cast/custom/old.json": { skin: "oldskin" } }))
+      .toEqual({ teacher: "custom:old", skin: "custom:oldskin", file: "/engram-quest/custom/cast/skins/oldskin/skin.js" });
+  });
+
+  it("keeps an official teacher and a custom one of the same name apart", () => {
+    const same = { [`engram-quest/custom/cast/teachers/${nico.id}.json`]: { skin: "custom:owl" } };
+    expect(resolve({ pro: true, cast: { teacher: `custom:${nico.id}` } }, same).skin).toBe("custom:owl");
+    expect(resolve({ pro: true, cast: { teacher: nico.id } }, same).skin).toBe(nico.skin);
+  });
 });
 
 describe("custom teachers", () => {

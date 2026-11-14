@@ -15,7 +15,7 @@ const textMap = (v) => (typeof v === "string" && v ? { en: v } : isMap(v) ? v : 
 
 /** A custom skin (`custom:<id>`) may carry a portrait.jpg; official skins have none of their own here. */
 async function portraitOf(adapter, skin) {
-  if (typeof skin !== "string" || !skin.startsWith("custom:")) return null;
+  if (typeof skin !== "string" || !skin.startsWith("custom:") || !ID.test(skin.slice(7))) return null;
   const file = `${CUSTOM_DIR}/cast/skins/${skin.slice(7)}/portrait.jpg`;
   return (await adapter.exists(file)) && adapter.getResourcePath ? adapter.getResourcePath(file) : null;
 }

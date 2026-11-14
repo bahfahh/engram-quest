@@ -6,7 +6,8 @@
 Exit code 0: everything required is present. 1: something required is missing.
 Optional items only limit extras (speech recognition checks).
 It also warns about anything shaped like an API key or token in the user's custom area, engram-quest/custom/
-(keys belong in environment variables only). --keys runs only that scan: exit code 1 when it finds one."""
+(keys belong in environment variables only). --keys runs only that scan: exit code 1 when it finds one, 2 when
+no vault was found to scan."""
 import importlib.util, os, re, shutil, subprocess, sys
 
 args = sys.argv[1:]
@@ -19,7 +20,9 @@ KEYS_ONLY = '--keys' in args
 # (engram-quest/custom/) for strings shaped like keys and names the file and line, never the value.
 KEY_SHAPES = [
     re.compile(r"\b(?:sk-[A-Za-z0-9_-]{20,}|AIza[0-9A-Za-z_-]{35}|AKIA[0-9A-Z]{16}|gh[pousr]_[A-Za-z0-9]{30,}|github_pat_[A-Za-z0-9_]{30,}|xox[abprs]-[A-Za-z0-9-]{10,})"),
-    re.compile(r"(?i)(?:api[_-]?key|secret|token|password|passwd|subscription[_-]?key)[\"']?\s*[:=]\s*[\"']?[A-Za-z0-9_\-./+=]{16,}"),
+    # a value given to anything named like a key (AZURE_SPEECH_KEY=, "api_key": , token: ...); a real key has a digit
+    re.compile(r"(?i)(?<![a-z])(?:key|secret|token|password|passwd|credential)s?[\"']?\s*[:=]\s*[\"']?(?=[A-Za-z0-9_\-./+=]*\d)[A-Za-z0-9_\-./+=]{16,}"),
+    re.compile(r"(?i)\bbearer\s+[A-Za-z0-9_\-.=]{20,}"),
 ]
 
 
@@ -51,9 +54,14 @@ def key_findings(vault):
 
 vault = find_vault()
 keys = key_findings(vault) if vault else []
+if hasattr(sys.stdout, 'reconfigure'): sys.stdout.reconfigure(errors='replace')  # a file name the console cannot show
 for where in keys:
     print(f"WARNING  something shaped like a key in {where}  ->  delete it from the file and set it as an environment variable")
-if KEYS_ONLY: sys.exit(1 if keys else 0)
+if KEYS_ONLY:
+    if not vault:
+        print("no vault found (no engram-quest/ above this folder): nothing scanned; pass --vault <vault root>")
+        sys.exit(2)
+    sys.exit(1 if keys else 0)
 
 
 def tool(name, fix):

@@ -90,7 +90,7 @@ const installed = s => !(s.file && s.file.startsWith('/lib/')) || fs.existsSync(
 if (teacher.custom && !skins.find(s => s.id === teacher.skin) && !customSkin(String(teacher.skin || ''))) { notes.push(`${teacher.id}: skin ${teacher.skin} not found in engram-quest/custom/cast/skins/ → default`); teacher = def; }
 if (teacher !== def && !teacher.custom && !installed(skinOf(teacher))) { notes.push(`${teacher.id}: skin file ${skinOf(teacher).file} is not installed → default`); teacher = def; }
 let skin = skinOf(teacher);
-if (skin.custom) notes.push(`custom skin ${skin.id} from ${skin.dir}: render.cjs loads it from the custom area (pass $VAULT when the studio is outside the vault)`);
+if (skin.custom) notes.push(`custom skin ${skin.id} from ${skin.dir}: render.cjs loads it from the custom area (it finds the vault through this cast.json; a cloud render needs $VAULT)`);
 if (!installed(skin)) notes.push(`WARNING: skin file ${skin.file} missing in the studio`);
 if (skin.kind === '2d') notes.push(`skin ${skin.id} is 2D: it cannot go into the 3D classroom (makeCast); place it on a flat scene with /lib/cast/stage.js, and keep the classroom opening with the clay cast or open on the real-UI floor`);
 if (skin.status && skin.status !== 'approved') notes.push(`skin ${skin.id} status: ${skin.status} (the look may still change; the pose interface will not)`);
