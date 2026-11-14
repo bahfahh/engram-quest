@@ -244,6 +244,25 @@ EngramQuest is built on four pillars of cognitive science:
 
 ---
 
+## 🧩 Custom: your preferences and assets
+
+Your AI learns how you like things made. Those wishes, and anything worth reusing, go into one folder that belongs to you: `engram-quest/custom/`.
+
+```
+engram-quest/custom/
+  preferences/   all.md for every skill, <skill>.md for one (e.g. "blackboard style, lots of diagrams")
+  assets/        index.json plus looks/, music/, images/, templates/ you want to reuse
+  cast/          your own video teachers and their looks (Pro)
+```
+
+- **Updates never touch it.** Installing, auto-updating or a lapsed licence never changes a file there; the skill folders are overwritten on update, so this is the place for your own things.
+- **Every skill reads it first**, in a fixed order: what you ask in the conversation, then the series' own settings, then what you picked in the plugin, then your preferences, then the skill's defaults.
+- **Yours sit next to the official ones.** A custom item is called `custom:<name>`, so it never replaces an official one; your AI saves a preference only with your agreement and tells you the line it added.
+- **Preferences and assets are free**; custom teachers are Pro, like the other teachers. Settings → EngramQuest → Custom area → Open folder.
+- **Never put API keys, tokens or passwords there.** Your vault may be synced to git or a cloud drive; keys belong in environment variables. The video skills' check script warns if it finds one.
+
+---
+
 ## ❓ FAQ
 
 **Q: Do I have to use AI?**
@@ -530,6 +549,25 @@ EngramQuest 建立在認知科學的四根支柱上：
 | 提取練習 | L1 在任何提示前強制主動回想 |
 | 脈絡錨定 | L2 把每張卡錨定到 vault 既有的知識 |
 | 精緻化編碼 | Memory Map 為抽象概念建立視覺結構 |
+
+---
+
+## 🧩 自訂：你的偏好與素材
+
+你的 AI 會漸漸知道你喜歡怎麼做。這些偏好，和值得重用的素材，都放在一個屬於你的資料夾：`engram-quest/custom/`。
+
+```
+engram-quest/custom/
+  preferences/   all.md 給所有 skill，<skill>.md 給單一 skill（例：「黑板風格、圖多」）
+  assets/        index.json，以及想重用的 looks/、music/、images/、templates/
+  cast/          你自己的影片老師與造型（Pro）
+```
+
+- **更新永遠不碰它。** 安裝、自動更新、授權失效都不會改動裡面的檔案；skill 資料夾每次更新都會被覆蓋，所以自己的東西放這裡。
+- **每個 skill 開工先讀**，順序固定：對話裡你的要求 → 系列自己的設定 → 插件介面上你選的值 → 你的偏好 → skill 的預設。
+- **和官方並存。** 自訂項目一律叫 `custom:<名字>`，不會取代官方項目；AI 只在你同意後才記偏好，並告訴你加了哪一行。
+- **偏好與素材免費**；自訂老師和其他老師一樣是 Pro。設定 → EngramQuest → 自訂區 → 打開資料夾。
+- **API key、token、密碼不要放進去。** vault 可能同步到 git 或雲端；金鑰只放環境變數。影片 skill 的檢查腳本發現像金鑰的字串會提醒你。
 
 ---
 
