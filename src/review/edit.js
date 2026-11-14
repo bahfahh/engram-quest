@@ -4,6 +4,7 @@ const { loadSrData, saveSrData, srFileName, loadHints, hintsPath, parseCommentCa
 
 const { moveSynapseCardEntry } = require("./synapse");
 const { moveExplainerCardLinks } = require("../explainer/data");
+const { trashVaultPath } = require("../vault-trash");
 
 const isCardFence = (line) => cardFencePattern.test(line);
 
@@ -548,9 +549,8 @@ async function deleteDeckCards(app, deck) {
     const isAiCard = p.startsWith('engram-review/ai-cards/');
 
     if (isAiCard) {
-      // Trash the whole AI card file
-      const f = app.vault.getAbstractFileByPath(p);
-      if (f) await app.fileManager.trashFile(f);
+      // Trash the whole AI card file (the vault index may not know it yet: trashVaultPath covers both)
+      if (!(await trashVaultPath(app, p))) console.warn("deleteDeckCards: could not trash", p);
     } else {
       // Remove only the matching :: lines from user source note
       const file = app.vault.getAbstractFileByPath(p);
@@ -567,8 +567,8 @@ async function deleteDeckCards(app, deck) {
 
     // Clean SR
     try {
-      const srFile = app.vault.getAbstractFileByPath(`engram-review/sr/${srFileName(p)}.json`);
-      if (srFile) await app.fileManager.trashFile(srFile);
+      const srPath = `engram-review/sr/${srFileName(p)}.json`;
+      if (!(await trashVaultPath(app, srPath))) console.warn("deleteDeckCards: could not trash", srPath);
     } catch (e) { console.warn('deleteDeckCards: sr cleanup failed', e); }
 
     // Clean hints: a hints file can also serve another note (a note and its AI cards share one; an old
@@ -582,8 +582,7 @@ async function deleteDeckCards(app, deck) {
         if (Object.keys(hints.cards).length) {
           await app.vault.adapter.write(loaded.path, JSON.stringify(hints, null, 2));
         } else {
-          const hintFile = app.vault.getAbstractFileByPath(loaded.path);
-          if (hintFile) await app.fileManager.trashFile(hintFile);
+          if (!(await trashVaultPath(app, loaded.path))) console.warn("deleteDeckCards: could not trash", loaded.path);
         }
       }
     } catch (e) { console.warn('deleteDeckCards: hints cleanup failed', e); }

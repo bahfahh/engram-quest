@@ -68,13 +68,31 @@ async function listJson(adapter, dir) {
 
 // Rewrites one JSON file when it mentions a moved path (to `target` when the file itself moves);
 // unreadable files are left alone.
+/**
+ * Put `data` at `to` and drop `from`. When the two names differ only in letter case they are one
+ * file on Windows and macOS, so writing the new name and then removing the old one would delete it:
+ * go through a temporary name instead, which also gives the file its new case.
+ */
+async function replaceFile(adapter, from, to, data) {
+  if (from === to) return adapter.write(to, data);
+  if (from.toLowerCase() !== to.toLowerCase()) {
+    await adapter.write(to, data);
+    await adapter.remove(from);
+    return;
+  }
+  const temp = `${to}.moving`;
+  await adapter.write(temp, data);
+  await adapter.remove(from);
+  await adapter.write(to, data);
+  await adapter.remove(temp);
+}
+
 async function rewrite(adapter, path, moves, target = path) {
   const data = await readJson(adapter, path);
   if (data === undefined) return;
   const r = replacePaths(data, moves);
   if (!r.changed && target === path) return;
-  await adapter.write(target, JSON.stringify(r.value, null, 2));
-  if (target !== path) await adapter.remove(path);
+  await replaceFile(adapter, path, target, JSON.stringify(r.value, null, 2));
 }
 
 /** Apply a set of note moves (old path → new path) to every file that cites notes by path. */
@@ -102,8 +120,7 @@ async function moveFile(adapter, from, to, edit) {
   let data = await adapter.read(from);
   if (edit) data = edit(data);
   if (from === to && !edit) return true;
-  await adapter.write(to, data);
-  if (from !== to) await adapter.remove(from);
+  await replaceFile(adapter, from, to, data);
   return true;
 }
 
@@ -159,4 +176,4 @@ function queueNoteRename(adapter, from, to) {
   }, BATCH_MS);
 }
 
-module.exports = { followNoteRenames, followCardFilesRename, queueNoteRename, replacePaths };
+module.exports = { followNoteRenames, followCardFilesRename, queueNoteRename, replacePaths, replaceFile };

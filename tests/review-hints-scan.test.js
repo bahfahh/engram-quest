@@ -52,3 +52,25 @@ describe("scanReviewDecks hints lookup", () => {
     expect(decks[0].cards[0].hint_l1).toBe("hint");
   });
 });
+
+describe("listHintFiles / loadHints on real disks", () => {
+  it("finds a hints file whose name differs only in letter case (Windows and macOS read it)", async () => {
+    const disk = { "engram-review/hints/study__azure notes.json": JSON.stringify({ note: "Study/Azure Notes.md", cards: {} }) };
+    const adapter = {
+      list: async () => ({ files: Object.keys(disk), folders: [] }),
+      exists: async () => true,
+      read: async (p) => { const hit = Object.keys(disk).find((k) => k.toLowerCase() === p.toLowerCase()); if (!hit) throw new Error("ENOENT"); return disk[hit]; },
+    };
+    const known = await reviewHelpers.listHintFiles(adapter);
+    const found = await reviewHelpers.loadHints(adapter, "Study/Azure Notes.md", known);
+    expect(found && found.data.note).toBe("Study/Azure Notes.md");
+  });
+
+  it("treats a missing hints folder as no hints files instead of probing every note", async () => {
+    const adapter = { list: async () => { throw new Error("ENOENT"); }, exists: async () => false, read: vi.fn(async () => { throw new Error("ENOENT"); }) };
+    const known = await reviewHelpers.listHintFiles(adapter);
+    expect(known && known.size).toBe(0);
+    expect(await reviewHelpers.loadHints(adapter, "A/one.md", known)).toBe(null);
+    expect(adapter.read).not.toHaveBeenCalled();
+  });
+});

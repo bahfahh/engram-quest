@@ -136,7 +136,7 @@ class LessonViewerModal extends I.Modal {
     });
     titleRow.createEl("div", {
       text: lessonTitle(this.lesson),
-      attr: { style: "flex:1;min-width:0;font-size:15px;font-weight:700;color:var(--text-normal);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;", title: this.lesson.title },
+      attr: { style: "flex:1;min-width:0;font-size:15px;font-weight:700;color:var(--text-normal);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;", title: lessonTitle(this.lesson) },
     });
     titleRow.createEl("span", {
       text: this.meta.title,

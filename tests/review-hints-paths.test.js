@@ -146,3 +146,33 @@ describe("followCardFilesRename", () => {
     expect(JSON.parse(adapter.files["engram-review/hints/筆記.json"]).note).toBe("B/筆記.md");
   });
 });
+
+describe("deleteDeckCards with files Obsidian has not indexed", () => {
+  it("still trashes the AI card file, its schedule and an emptied hints file", async () => {
+    const files = {
+      "engram-review/ai-cards/A__筆記.md": "Mine :: x\n",
+      "engram-review/sr/engram-review__ai-cards__A__筆記.json": "{\"Mine\":{}}",
+      "engram-review/hints/A__筆記.json": hints("A/筆記.md", { Mine: { l1: "a" } }),
+    };
+    const trashedLocal = [];
+    const adapter = {
+      files,
+      async exists(p) { return p in files; },
+      async read(p) { if (!(p in files)) throw new Error("ENOENT " + p); return files[p]; },
+      async write(p, c) { files[p] = c; },
+      async remove(p) { delete files[p]; },
+      async trashLocal(p) { trashedLocal.push(p); delete files[p]; },
+    };
+    const app = {
+      vault: { getAbstractFileByPath: () => null, read: async () => "", modify: async () => {}, adapter },
+      fileManager: { trashFile: async () => { throw new Error("not indexed"); } },
+    };
+    await deleteDeckCards(app, { cards: [{ front: "Mine", back: "x", notePath: "engram-review/ai-cards/A__筆記.md" }] });
+    expect(Object.keys(files)).toEqual([]);
+    expect(trashedLocal.sort()).toEqual([
+      "engram-review/ai-cards/A__筆記.md",
+      "engram-review/hints/A__筆記.json",
+      "engram-review/sr/engram-review__ai-cards__A__筆記.json",
+    ]);
+  });
+});

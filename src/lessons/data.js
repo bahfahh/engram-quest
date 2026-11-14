@@ -27,13 +27,13 @@ async function readJson(adapter, path) {
  * as the skill wrote them, and entries that aren't objects. Display fallbacks for a missing title
  * live in lessonTitle(); a `type` other than "canvas" is simply shown as HTML by the readers.
  */
+const isLessonEntry = (entry) => !!entry && typeof entry === "object" && !Array.isArray(entry);
+
 function normalizeMeta(meta) {
   if (!meta || typeof meta !== "object") return null;
-  // Entries that aren't objects can't be shown, but they aren't the plugin's to delete: remember
-  // where they were so saveCourse() puts them back.
-  const skipped = [];
+  // Entries that aren't lesson objects can't be shown, but they aren't the plugin's to delete:
+  // saveCourse() puts them back from the file on disk.
   const entries = Array.isArray(meta.lessons) ? meta.lessons : [];
-  entries.forEach((entry, index) => { if (!entry || typeof entry !== "object") skipped.push({ index, entry }); });
   const normalized = {
     ...meta,
     title: String(meta.title || ""),
@@ -45,7 +45,7 @@ function normalizeMeta(meta) {
     starred: !!meta.starred,
     archived: !!meta.archived,
     createdAt: meta.createdAt || null,
-    lessons: entries.filter((l) => l && typeof l === "object").map((l, i) => ({
+    lessons: entries.filter(isLessonEntry).map((l, i) => ({
       ...l,
       // An entry without an id would have no place in the completion map; it gets one derived
       // from its file (or position) instead of being dropped.
@@ -57,7 +57,6 @@ function normalizeMeta(meta) {
     })),
     completion: meta.completion && typeof meta.completion === "object" ? meta.completion : {},
   };
-  Object.defineProperty(normalized, "_skippedLessons", { value: skipped, enumerable: false });
   return normalized;
 }
 
@@ -131,15 +130,23 @@ async function loadCourse(adapter, slug) {
   return normalizeMeta(await readJson(adapter, `${LESSONS_DIR}/${slug}/meta.json`));
 }
 
+/**
+ * Write a course's meta.json. Entries in `lessons` that aren't lessons (strings, arrays, null…) are
+ * taken from the file on disk and put back at their index, so they survive whatever copy of the meta
+ * the caller holds; a `lessons` value that isn't a list is kept as is unless the caller has lessons.
+ */
 async function saveCourse(adapter, slug, meta) {
-  let out = meta;
-  if (meta._skippedLessons && meta._skippedLessons.length && Array.isArray(meta.lessons)) {
-    const lessons = [...meta.lessons];
-    for (const { index, entry } of meta._skippedLessons) lessons.splice(Math.min(index, lessons.length), 0, entry);
-    out = { ...meta, lessons };
+  const path = `${LESSONS_DIR}/${slug}/meta.json`;
+  const disk = await readJson(adapter, path);
+  const onDisk = disk && typeof disk === "object" ? disk.lessons : undefined;
+  let lessons = (Array.isArray(meta.lessons) ? meta.lessons : []).filter(isLessonEntry);
+  if (Array.isArray(onDisk)) {
+    onDisk.forEach((entry, index) => { if (!isLessonEntry(entry)) lessons.splice(Math.min(index, lessons.length), 0, entry); });
+  } else if (onDisk !== undefined && !lessons.length) {
+    lessons = onDisk;
   }
   await adapter.mkdir(`${LESSONS_DIR}/${slug}`).catch(() => {});
-  await adapter.write(`${LESSONS_DIR}/${slug}/meta.json`, JSON.stringify(out, null, 2));
+  await adapter.write(path, JSON.stringify({ ...meta, lessons }, null, 2));
 }
 
 /**
@@ -306,11 +313,15 @@ async function trashPath(adapter, path) {
  * left behind on purpose — it's invisible once the lesson entry is gone and skipping the cleanup
  * keeps this a single read-modify-write. Returns the updated meta, or null if no course.
  */
-async function deleteLesson(adapter, slug, lessonId) {
+async function deleteLesson(app, slug, lessonId) {
+  const adapter = app.vault.adapter;
   const meta = await loadCourse(adapter, slug);
   if (!meta) return null;
   const lesson = meta.lessons.find((l) => l.id === lessonId);
-  if (lesson && lesson.file) await trashPath(adapter, `${LESSONS_DIR}/${slug}/${lesson.file}`);
+  if (lesson && lesson.file) {
+    const path = `${LESSONS_DIR}/${slug}/${lesson.file}`;
+    if (!(await trashVaultPath(app, path))) throw new Error(`could not move ${path} to the trash`);
+  }
   meta.lessons = meta.lessons.filter((l) => l.id !== lessonId);
   await saveCourse(adapter, slug, meta);
   return meta;

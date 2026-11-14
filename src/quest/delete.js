@@ -2,6 +2,7 @@
 
 const { trashVaultPath } = require("../vault-trash");
 const { questStatePath } = require("./state");
+const { questPackageStateKey } = require("./data");
 
 // The plugin-owned progress file of a quest (engram-quest/state/…). It is written through the
 // adapter, so the vault index may not know it yet — trashVaultPath covers both cases.
@@ -15,7 +16,7 @@ async function trashQuestProgress(app, stateKey) {
 async function deleteQuestPackage(app, item) {
   const dir = `engram-quest/quests/${item.slug}`;
   if (!(await trashVaultPath(app, dir))) throw new Error(`could not move ${dir} to the trash`);
-  await trashQuestProgress(app, item.stateKey || dir);
+  await trashQuestProgress(app, item.stateKey || questPackageStateKey(item.slug));
 }
 
 module.exports = { deleteQuestPackage, trashQuestProgress };

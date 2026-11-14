@@ -121,7 +121,8 @@ describe("scanReviewDecks", () => {
         getMarkdownFiles: () => [file],
         read: vi.fn(async () => "#flashcards/dotnet\n\nQ1 :: A1\nQ2 :: A2\nQ3 :: A3\n"),
         adapter: {
-          exists: vi.fn(async (path) => path === "engram-review/hints/dotnet-mastery.json"),
+          exists: vi.fn(async (path) => path === "engram-review/hints" || path === "engram-review/hints/dotnet-mastery.json"),
+          list: vi.fn(async () => ({ files: ["engram-review/hints/dotnet-mastery.json"], folders: [] })),
           read: vi.fn(async () => JSON.stringify(hintPayload)),
         },
       },

@@ -478,10 +478,11 @@ function confirmDeleteLesson(hub, t, slug, lesson, refresh) {
     body: c(t, "LESSON_DELETE_BODY"),
     onConfirm: async () => {
       try {
-        await deleteLesson(hub.app.vault.adapter, slug, lesson.id);
+        await deleteLesson(hub.app, slug, lesson.id);
         new I.Notice(c(t, "LESSON_DELETED"));
       } catch (e) {
         console.error("EngramQuest: lesson delete failed", e);
+        new I.Notice(c(t, "DELETE_FAILED"));
       }
       refresh();
     },

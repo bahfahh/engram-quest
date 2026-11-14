@@ -364,19 +364,24 @@ function hintsPath(notePath) {
   const key = notePath.startsWith(`${AI_CARDS_DIR}/`) ? baseNoteName(notePath) : srFileName(notePath);
   return `${HINTS_DIR}/${key}.json`;
 }
-/** The hints files that exist, as a Set of paths — one directory listing a scan shares across its notes, so a
- *  note with no hints file costs no read. null when the folder cannot be listed (callers then probe by reading). */
+// Names are compared the way Windows and macOS disks do (case and Unicode form ignored); the read itself
+// still decides, so a case-sensitive disk is not fooled.
+const nameKey = (path) => String(path).normalize("NFC").toLowerCase();
+/** The hints files that exist, as a Set of name keys — one directory listing a scan shares across its notes, so a
+ *  note with no hints file costs no read. Empty when the folder does not exist; null when it cannot be listed
+ *  (callers then probe by reading). */
 async function listHintFiles(adapter) {
   try {
+    if (adapter.exists && !(await adapter.exists(HINTS_DIR))) return new Set();
     const listed = await adapter.list(HINTS_DIR);
-    return new Set((listed.files || []).map((f) => `${HINTS_DIR}/${String(f).split("/").pop()}`));
+    return new Set((listed.files || []).map((f) => nameKey(`${HINTS_DIR}/${String(f).split("/").pop()}`)));
   } catch { return null; }
 }
 /** { path, data } of the hints in use for a file, or null. Hints written before full-path names are read as a fallback.
  *  `known` (from listHintFiles) skips names that are not on disk. */
 async function loadHints(adapter, notePath, known = null) {
   for (const path of [...new Set([hintsPath(notePath), `${HINTS_DIR}/${baseNoteName(notePath)}.json`])]) {
-    if (known && !known.has(path)) continue;
+    if (known && !known.has(nameKey(path))) continue;
     let raw;
     try { raw = await adapter.read(path); } catch { continue; }
     // A file that exists but doesn't parse is corrupt, not missing: don't fall back to a file

@@ -10,6 +10,7 @@ import {
   courseProgress,
   listCourses,
   loadCourse,
+  saveCourse,
   markLesson,
   createCourse,
   addPlannedLesson,
@@ -27,6 +28,16 @@ import {
 
 // In-memory vault adapter mimicking the Obsidian adapter surface the data layer uses.
 // list() returns immediate subfolders (derived from file paths) the way the real adapter does.
+// `indexed` = folder paths Obsidian's vault index knows; the adapter sees everything on disk.
+function appFor(adapter, indexed = []) {
+  const viaFileManager = [];
+  return {
+    viaFileManager,
+    vault: { adapter, getAbstractFileByPath: (p) => (indexed.includes(p) ? { path: p } : null) },
+    fileManager: { trashFile: async (f) => { viaFileManager.push(f.path); await adapter.trashLocal(f.path); } },
+  };
+}
+
 function makeAdapter(initial = {}) {
   const files = { ...initial };
   return {
@@ -265,7 +276,7 @@ describe("markLesson", () => {
       lessons: [{ id: "lsn-1", title: "One", file: "lsn-1-a.html" }, "stray", { id: "lsn-2", title: "Two", file: null }],
       completion: {},
     }));
-    await deleteLesson(adapter, "c", "lsn-1");
+    await deleteLesson(appFor(adapter), "c", "lsn-1");
     let onDisk = JSON.parse(adapter.files[`${LESSONS_DIR}/c/meta.json`]);
     expect(onDisk.lessons.map((l) => (typeof l === "object" ? l.id : l)).sort()).toEqual(["lsn-2", "stray"]);
     await addPlannedLesson(adapter, "c", "Three");
@@ -375,7 +386,7 @@ describe("deleteLesson / deleteCourse", () => {
       [`${LESSONS_DIR}/c/lsn-1-a.html`]: "<html>1</html>",
       [`${LESSONS_DIR}/c/lsn-2-b.html`]: "<html>2</html>",
     });
-    const updated = await deleteLesson(adapter, "c", "lsn-1");
+    const updated = await deleteLesson(appFor(adapter), "c", "lsn-1");
     expect(updated.lessons.map((l) => l.id)).toEqual(["lsn-2"]);
     expect(adapter.files[`${LESSONS_DIR}/c/lsn-1-a.html`]).toBeUndefined();
     expect(adapter.files[`${LESSONS_DIR}/c/lsn-2-b.html`]).toBe("<html>2</html>");
@@ -386,19 +397,10 @@ describe("deleteLesson / deleteCourse", () => {
       lessons: [{ id: "lsn-p", title: "planned", file: null }],
       completion: {},
     })));
-    const updated = await deleteLesson(adapter, "c", "lsn-p");
+    const updated = await deleteLesson(appFor(adapter), "c", "lsn-p");
     expect(updated.lessons).toEqual([]);
   });
 
-  // `indexed` = folder paths Obsidian's vault index knows; the adapter sees everything on disk.
-  function appFor(adapter, indexed = []) {
-    const viaFileManager = [];
-    return {
-      viaFileManager,
-      vault: { adapter, getAbstractFileByPath: (p) => (indexed.includes(p) ? { path: p } : null) },
-      fileManager: { trashFile: async (f) => { viaFileManager.push(f.path); await adapter.trashLocal(f.path); } },
-    };
-  }
 
   it("deleteCourse moves the whole course folder to the trash, unlisted files included", async () => {
     const adapter = makeAdapter({
@@ -517,7 +519,7 @@ describe("skill-owned plan fields (mission / goal)", () => {
     "toggleCourseStar": (a) => toggleCourseStar(a, "c"),
     "toggleCourseArchive": (a) => toggleCourseArchive(a, "c"),
     "importLesson": (a) => importLesson(a, "c", "<html><title>Imported</title></html>", "imported"),
-    "deleteLesson": (a) => deleteLesson(a, "c", "lsn-3"),
+    "deleteLesson": (a) => deleteLesson(appFor(a), "c", "lsn-3"),
     "reorderLessons": (a) => reorderLessons(a, "c", ["lsn-3", "lsn-2", "lsn-1"]),
   };
   for (const [name, write] of Object.entries(writes)) {
@@ -578,5 +580,45 @@ describe("helpers", () => {
     expect(extractHtmlTitle("<title>Hi</title>")).toBe("Hi");
     expect(extractHtmlTitle("<TITLE lang='x'>Multi\n line</TITLE>")).toBe("Multi line");
     expect(extractHtmlTitle("<html></html>")).toBe(null);
+  });
+});
+
+describe("saveCourse keeps lesson entries it cannot show, however the meta reached it", () => {
+  const path = "engram-quest/lessons/c/meta.json";
+  const disk = () => ({ title: "C", lessons: ["stray", { id: "a", file: "a.html" }, ["p", "q"], null] });
+  const expectOddEntriesKept = (lessons) => {
+    expect(lessons).toHaveLength(4);
+    expect(lessons[0]).toBe("stray");
+    expect(lessons[1]).toMatchObject({ id: "a", file: "a.html" });
+    expect(lessons[2]).toEqual(["p", "q"]);
+    expect(lessons[3]).toBe(null);
+  };
+
+  it("a spread copy of the meta still writes the odd entries back", async () => {
+    const a = makeAdapter({ [path]: JSON.stringify(disk()) });
+    const meta = await loadCourse(a, "c");
+    await saveCourse(a, "c", { ...meta, starred: true });
+    expectOddEntriesKept(JSON.parse(a.files[path]).lessons);
+  });
+
+  it("normalizing twice, or a JSON round trip, loses nothing", async () => {
+    const a = makeAdapter({ [path]: JSON.stringify(disk()) });
+    const meta = JSON.parse(JSON.stringify(normalizeMeta(normalizeMeta(await loadCourse(a, "c")))));
+    await saveCourse(a, "c", meta);
+    expectOddEntriesKept(JSON.parse(a.files[path]).lessons);
+  });
+
+  it("an array entry is kept as it is, not turned into a lesson", async () => {
+    const a = makeAdapter({ [path]: JSON.stringify(disk()) });
+    const meta = await loadCourse(a, "c");
+    expect(meta.lessons.map((l) => l.id)).toEqual(["a"]);
+  });
+
+  it("a lessons value that is not a list is left alone by an unrelated save", async () => {
+    const odd = { title: "C", lessons: { a: { file: "a.html" } } };
+    const a = makeAdapter({ [path]: JSON.stringify(odd) });
+    const meta = await loadCourse(a, "c");
+    await saveCourse(a, "c", { ...meta, starred: true });
+    expect(JSON.parse(a.files[path]).lessons).toEqual(odd.lessons);
   });
 });
