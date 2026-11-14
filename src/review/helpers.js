@@ -364,9 +364,19 @@ function hintsPath(notePath) {
   const key = notePath.startsWith(`${AI_CARDS_DIR}/`) ? baseNoteName(notePath) : srFileName(notePath);
   return `${HINTS_DIR}/${key}.json`;
 }
-/** { path, data } of the hints in use for a file, or null. Hints written before full-path names are read as a fallback. */
-async function loadHints(adapter, notePath) {
+/** The hints files that exist, as a Set of paths — one directory listing a scan shares across its notes, so a
+ *  note with no hints file costs no read. null when the folder cannot be listed (callers then probe by reading). */
+async function listHintFiles(adapter) {
+  try {
+    const listed = await adapter.list(HINTS_DIR);
+    return new Set((listed.files || []).map((f) => `${HINTS_DIR}/${String(f).split("/").pop()}`));
+  } catch { return null; }
+}
+/** { path, data } of the hints in use for a file, or null. Hints written before full-path names are read as a fallback.
+ *  `known` (from listHintFiles) skips names that are not on disk. */
+async function loadHints(adapter, notePath, known = null) {
   for (const path of [...new Set([hintsPath(notePath), `${HINTS_DIR}/${baseNoteName(notePath)}.json`])]) {
+    if (known && !known.has(path)) continue;
     let raw;
     try { raw = await adapter.read(path); } catch { continue; }
     // A file that exists but doesn't parse is corrupt, not missing: don't fall back to a file
@@ -564,6 +574,7 @@ module.exports = {
   AI_CARDS_DIR,
   hintsPath,
   loadHints,
+  listHintFiles,
   buildSrRecord,
   recordReviewDay,
   loadSrData,

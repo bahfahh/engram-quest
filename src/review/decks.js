@@ -1,6 +1,6 @@
 "use strict";
 
-const { anySrPattern, parseSrComment, saveSrData, mapLimit, loadHints } = require("./helpers");
+const { anySrPattern, parseSrComment, saveSrData, mapLimit, loadHints, listHintFiles } = require("./helpers");
 
 async function migrateReviewDeckFolder(adapter) {
   if (await adapter.exists("engram-review/hints")) return;
@@ -91,6 +91,8 @@ async function scanReviewDecks(app, settings, reviewHelpers) {
   // cachedRead serves from Obsidian's in-memory cache when available instead of hitting disk
   // (big win on mobile); fall back to read() for adapters/mocks that lack it.
   const readNote = (f) => (app.vault.cachedRead ? app.vault.cachedRead(f) : app.vault.read(f));
+  // One listing of the hints folder instead of probing two names per deck note.
+  const hintFiles = await listHintFiles(app.vault.adapter);
 
   // Per-file scan. Returns { deckName, cards } or null. Runs with bounded concurrency below
   // so the 3-5 FS round-trips per deck note overlap instead of serializing on mobile.
@@ -159,7 +161,7 @@ async function scanReviewDecks(app, settings, reviewHelpers) {
     } catch {}
 
     try {
-      const loaded = await loadHints(app.vault.adapter, file.path);
+      const loaded = await loadHints(app.vault.adapter, file.path, hintFiles);
       if (!loaded) return { deckName, cards };
       const hintsPayload = loaded.data;
       reviewHelpers.mergeReviewHints(cards, hintsPayload);
