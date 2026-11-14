@@ -180,6 +180,12 @@ describe("the one-minute overview video", () => {
     slot.children[0].events.click();
     expect(slot.querySelectorAll("iframe").map(frame => frame.attr.src)).toEqual(["https://www.youtube-nocookie.com/embed/abc123"]);
   });
+
+  it("is ready to play right away in the first-run introduction, which shows only once", () => {
+    const { root } = drawGuide({ intro: true, video: "abc123" });
+    const slot = root.byClass("lh-start-video")[0];
+    expect(slot.querySelectorAll("iframe").map(frame => frame.attr.src)).toEqual(["https://www.youtube-nocookie.com/embed/abc123"]);
+  });
 });
 
 describe("when the introduction shows by itself", () => {

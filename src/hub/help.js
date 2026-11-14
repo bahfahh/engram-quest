@@ -135,16 +135,19 @@ class HelpModal extends I.Modal {
     this.jump(more, start.allSay, "say");
   }
 
-  // The one-minute overview, drawn only once a video id is set in help-content.js. It loads on request.
+  // The overview video, drawn only once a video id is set in help-content.js. The first-run introduction
+  // (shown once, on first install) puts the player right there; the guide opened later loads it on request.
   renderVideo(body, start) {
     if (!start.video) return;
     const slot = body.createDiv({ cls: "lh-start-video" });
+    const locale = this.copy === CONTENT.zh ? "zh-tw" : "en";
+    if (this.intro) { videoEmbed(slot, start.video, "", locale); return; }
     const btn = slot.createEl("button", { cls: "lh-btn alt" });
     icon(btn, "play");
     btn.createSpan({ text: start.videoLabel });
     btn.addEventListener("click", () => {
       slot.empty();
-      videoEmbed(slot, start.video, "", this.copy === CONTENT.zh ? "zh-tw" : "en");
+      videoEmbed(slot, start.video, "", locale);
     });
   }
 
