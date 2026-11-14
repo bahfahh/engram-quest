@@ -36,16 +36,10 @@ function markNodeCompleted(nodeId, result = {}) {
 function setSolved(buttons, onSolved, feedbackEl) {
   buttons.forEach((button) => {
     button.disabled = true;
-    button.style.background = "#22c55e";
-    button.style.color = "white";
-    button.style.borderColor = "#22c55e";
-    button.style.boxShadow = "0 2px 0 #16a34a";
+    button.classList.add("qm-solid-ok", "qm-raised-ok");
   });
   if (feedbackEl) {
-    feedbackEl.style.display = "flex";
-    feedbackEl.style.background = "rgba(34,197,94,0.12)";
-    feedbackEl.style.borderColor = "#22c55e";
-    feedbackEl.style.color = "#15803d";
+    feedbackEl.classList.add("qm-feedback-ok");
   }
   window.setTimeout(() => onSolved(true, { scorePct: 100 }), 600);
 }
@@ -167,17 +161,11 @@ function renderQuestChallenge(container, challenge, difficulty, onSolved, settin
           window.clearInterval(cdInterval);
           // Transition to quiz phase
           phaseTag.textContent = zh ? "🎯 作答階段" : "🎯 Quiz Phase";
-          phaseTag.style.background = "rgba(34,197,94,0.08)";
-          phaseTag.style.color = "#22c55e";
-          phaseTag.style.borderColor = "#22c55e";
+          phaseTag.classList.add("qm-tint-ok", "qm-text-ok");
           box.empty();
-          box.style.textAlign = "center";
-          box.style.display = "flex";
-          box.style.alignItems = "center";
-          box.style.justifyContent = "center";
-          box.style.minHeight = "60px";
+          box.classList.add("qm-center-flex", "qm-min-h-60");
           box.createEl("div", { text: ispalace ? "🧠" : "❓", attr: { style: "font-size:36px;opacity:0.3" } });
-          cdBar.style.display = "none";
+          cdBar.classList.add("qm-hide");
           cdLabel.textContent = zh ? "從記憶回答以下問題" : "Answer from memory";
           memoryPhaseShown = true;
           onDone();
@@ -375,14 +363,12 @@ function renderQuestChallenge(container, challenge, difficulty, onSolved, settin
       if (timerSec <= 0) {
         window.clearInterval(interval);
         timerSec = 0;
-        timerFill.style.width = "0%";
+        timerFill.classList.add("qm-w-0");
         timerLabel.textContent = "0s"; // eslint-disable-line obsidianmd/ui/sentence-case
         if (!expired && buttons.every(b => !b.disabled)) {
           expired = true;
           buttons.forEach(b => b.disabled = true);
-          buttons[challenge.answer].style.background = "#22c55e";
-          buttons[challenge.answer].style.color = "white";
-          buttons[challenge.answer].style.borderColor = "#22c55e";
+          buttons[challenge.answer].classList.add("qm-solid-ok");
           handleWrong(wrapper);
           window.setTimeout(() => onSolved(false, { scorePct: 0 }), 1200);
         }
@@ -494,18 +480,18 @@ function renderQuestChallenge(container, challenge, difficulty, onSolved, settin
     confirmBtn.addEventListener("click", () => {
       if (confirmed || selectedIdx < 0) return;
       confirmed = true;
-      confirmBtn.style.display = "none";
+      confirmBtn.classList.add("qm-hide");
       slider.disabled = true;
       let win = selectedIdx === challenge.answer;
       optEls.forEach((el, i) => {
-        el.style.cursor = "default";
-        if (i === challenge.answer) { el.style.borderColor = "#22c55e"; el.style.background = "rgba(34,197,94,0.08)"; }
-        else if (i === selectedIdx && !win) { el.style.borderColor = "#ef4444"; el.style.background = "rgba(239,68,68,0.08)"; }
+        el.classList.add("qm-no-cursor");
+        if (i === challenge.answer) { el.classList.add("qm-tint-ok"); }
+        else if (i === selectedIdx && !win) { el.classList.add("qm-tint-bad"); }
       });
       let delta = win ? betAmount : -betAmount;
       totalCoins = Math.max(0, totalCoins + delta);
       coinsLabel.textContent = "◈ " + totalCoins;
-      resultEl.style.display = "block";
+      resultEl.classList.add("qm-show-block");
       resultEl.textContent = (win ? "✓ +" : "✗ ") + delta + " ◈ — " + (zh ? "餘額 " : "Balance ") + totalCoins;
       resultEl.style.color = win ? "#22c55e" : "#ef4444";
       window.setTimeout(() => onSolved(win), 1200);
@@ -529,9 +515,9 @@ function renderQuestChallenge(container, challenge, difficulty, onSolved, settin
       eventChips.push(chip);
       chip.addEventListener("click", () => {
         if (checked || chip.disabled) return;
-        eventChips.forEach(c => { c.style.borderColor = "var(--background-modifier-border)"; });
+        eventChips.forEach(c => { c.classList.remove("qm-chip-selected"); });
         selectedEvent = origIdx;
-        chip.style.borderColor = "var(--interactive-accent)";
+        chip.classList.add("qm-chip-selected");
       });
     });
     let track = wrapper.createEl("div", { attr: { style: "display:flex;flex-direction:column;gap:6px;margin-bottom:14px;padding-left:12px;border-left:2px solid var(--background-modifier-border)" } });
@@ -546,30 +532,28 @@ function renderQuestChallenge(container, challenge, difficulty, onSolved, settin
         if (checked || selectedEvent === null) return;
         if (placed[slotIdx] !== null) {
           let oldChip = eventChips.find(c => c._origIdx === placed[slotIdx]);
-          if (oldChip) { oldChip.disabled = false; oldChip.style.opacity = "1"; }
+          if (oldChip) { oldChip.disabled = false; oldChip.classList.remove("qm-dim"); }
         }
         placed[slotIdx] = selectedEvent;
         drop.textContent = challenge.events[selectedEvent];
-        drop.style.borderStyle = "solid";
-        drop.style.color = "var(--text-normal)";
-        drop.style.fontWeight = "600";
+        drop.classList.add("qm-drop-filled");
         let usedChip = eventChips.find(c => c._origIdx === selectedEvent);
-        if (usedChip) { usedChip.disabled = true; usedChip.style.opacity = "0.3"; }
+        if (usedChip) { usedChip.disabled = true; usedChip.classList.add("qm-dim"); }
         selectedEvent = null;
-        eventChips.forEach(c => { c.style.borderColor = "var(--background-modifier-border)"; });
+        eventChips.forEach(c => { c.classList.remove("qm-chip-selected"); });
       });
     });
     let checkBtn = wrapper.createEl("button", { text: zh ? "確認" : "Check", attr: { style: "width:100%;padding:10px;border-radius:8px;background:var(--interactive-accent);color:white;border:none;cursor:pointer;font-size:13px;font-weight:700" } });
     checkBtn.addEventListener("click", () => {
       if (checked) return;
       checked = true;
-      checkBtn.style.display = "none";
+      checkBtn.classList.add("qm-hide");
       let correctCount = 0;
       challenge.slots.forEach((_, i) => {
         let isCorrect = placed[i] === correctAnswer[i];
         if (isCorrect) correctCount++;
         slotEls[i].style.borderColor = isCorrect ? "#22c55e" : "#ef4444";
-        slotEls[i].style.borderStyle = "solid";
+        slotEls[i].classList.add("qm-border-solid");
         slotEls[i].style.background = isCorrect ? "rgba(34,197,94,0.08)" : "rgba(239,68,68,0.08)";
         if (!isCorrect && correctAnswer[i] != null) {
           slotEls[i].textContent += " → " + challenge.events[correctAnswer[i]];
@@ -612,17 +596,15 @@ function renderQuestChallenge(container, challenge, difficulty, onSolved, settin
         if (origIdx === expected) {
           activated++;
           node.disabled = true;
-          node.style.borderColor = "#22c55e";
-          node.style.background = "rgba(34,197,94,0.06)";
+          node.classList.add("qm-tint-ok-soft");
           numEl.textContent = String(activated);
-          numEl.style.background = "rgba(34,197,94,0.2)";
-          numEl.style.color = "#22c55e";
+          numEl.classList.add("qm-num-ok");
           if (activated === correctOrder.length) { endChain(true); }
         } else {
           mistakes++;
           deps.retriggerShake(node);
-          node.style.borderColor = "#ef4444";
-          window.setTimeout(() => { node.style.borderColor = "var(--background-modifier-border)"; }, 400);
+          node.classList.add("qm-border-bad");
+          window.setTimeout(() => { node.classList.remove("qm-border-bad"); }, 400);
           if (mistakes >= 3) { endChain(false); }
         }
       });
@@ -639,16 +621,15 @@ function renderQuestChallenge(container, challenge, difficulty, onSolved, settin
       if (done) return;
       done = true;
       window.clearInterval(interval);
-      nodeEls.forEach(n => { n.disabled = true; n.style.cursor = "default"; });
+      nodeEls.forEach(n => { n.disabled = true; n.classList.add("qm-no-cursor"); });
       if (success) {
         window.setTimeout(() => onSolved(true), 800);
       } else {
         correctOrder.forEach((origIdx, step) => {
           let el = nodeEls.find(n => n._origIdx === origIdx);
-          if (el && !el.style.borderColor.includes("22c55e")) {
+          if (el && !el.classList.contains("qm-tint-ok-soft")) {
             el._numEl.textContent = String(step + 1);
-            el.style.borderColor = "#f59e0b";
-            el.style.background = "rgba(245,158,11,0.06)";
+            el.classList.add("qm-tint-warn");
           }
         });
         handleWrong(wrapper);
@@ -682,10 +663,7 @@ function renderQuestChallenge(container, challenge, difficulty, onSolved, settin
         window.clearInterval(cdInterval);
         phase = "recall";
         palaceBox.empty();
-        palaceBox.style.textAlign = "center";
-        palaceBox.style.display = "flex";
-        palaceBox.style.alignItems = "center";
-        palaceBox.style.justifyContent = "center";
+        palaceBox.classList.add("qm-center-flex");
         palaceBox.createEl("div", { text: "🧠", attr: { style: "font-size:48px;opacity:0.3" } });
         cdLabel.textContent = zh ? "從記憶回答：" : "Answer from memory:";
         showRecall();
@@ -703,19 +681,15 @@ function renderQuestChallenge(container, challenge, difficulty, onSolved, settin
         cards.push(card);
         card.addEventListener("click", () => {
           if (card.disabled) return;
-          cards.forEach(c => { c.disabled = true; c.style.cursor = "default"; });
+          cards.forEach(c => { c.disabled = true; c.classList.add("qm-no-cursor"); });
           let correct = item.trim().toLowerCase() === answerStr.trim().toLowerCase();
           if (correct) {
-            card.style.borderColor = "#22c55e";
-            card.style.background = "rgba(34,197,94,0.08)";
-            card.style.color = "#22c55e";
+            card.classList.add("qm-tint-ok", "qm-text-ok");
             window.setTimeout(() => onSolved(true), 800);
           } else {
-            card.style.borderColor = "#ef4444";
-            card.style.background = "rgba(239,68,68,0.08)";
-            card.style.color = "#ef4444";
+            card.classList.add("qm-tint-bad", "qm-text-bad");
             let correctCard = cards.find(c => c.textContent.trim().toLowerCase() === answerStr.trim().toLowerCase());
-            if (correctCard) { correctCard.style.borderColor = "#22c55e"; correctCard.style.background = "rgba(34,197,94,0.08)"; correctCard.style.color = "#22c55e"; }
+            if (correctCard) { correctCard.classList.add("qm-tint-ok", "qm-text-ok"); }
             handleWrong(wrapper);
             window.setTimeout(() => onSolved(false), 2000);
           }
@@ -762,9 +736,7 @@ function renderQuestChallenge(container, challenge, difficulty, onSolved, settin
         if (button.disabled) return;
         if (index === correctOrder[step]) {
           button.disabled = true;
-          button.style.background = "#22c55e";
-          button.style.color = "white";
-          button.style.borderColor = "#22c55e";
+          button.classList.add("qm-solid-ok");
           seqRow.createEl("span", { text: (step + 1) + ". " + item, attr: { style: "padding:2px 8px;border-radius:10px;background:rgba(34,197,94,0.15);color:#22c55e;font-size:11px;font-weight:600" } });
           step++;
           if (step === correctOrder.length) { window.setTimeout(() => onSolved(true), 500); }
@@ -808,12 +780,8 @@ function renderQuestChallenge(container, challenge, difficulty, onSolved, settin
           matchedLeft.disabled = true;
           button.disabled = true;
           matchedLeft.classList.remove("qm-selected");
-          matchedLeft.style.background = "#22c55e";
-          matchedLeft.style.color = "white";
-          matchedLeft.style.borderColor = "#22c55e";
-          button.style.background = "#22c55e";
-          button.style.color = "white";
-          button.style.borderColor = "#22c55e";
+          matchedLeft.classList.add("qm-solid-ok");
+          button.classList.add("qm-solid-ok");
           selected = null;
           solved += 1;
           if (solved === challenge.pairs.length) {
@@ -1079,9 +1047,7 @@ function renderQuestChallenge(container, challenge, difficulty, onSolved, settin
     }
 
     function revealAnswer() {
-      occluder.style.background = "rgba(34,197,94,0.82)";
-      occluder.style.borderColor = "#22c55e";
-      occluder.style.color = "#052e16";
+      occluder.classList.add("qm-occluder-ok");
       occluder.textContent = expected.join(" / ");
       getFeedback().textContent = (zh ? "正確答案：" : "Correct answer: ") + expected.join(" / ");
       if (revealButton) revealButton.disabled = true;
@@ -1104,7 +1070,8 @@ function renderQuestChallenge(container, challenge, difficulty, onSolved, settin
     function syncOccluder() {
       let rect = resolveImageOcclusionRect(challenge, img.naturalWidth, img.naturalHeight);
       if (!rect) {
-        occluder.style.display = "none";
+        occluder.classList.remove("qm-show-flex");
+        occluder.classList.add("qm-hide");
         setGeometryWarning(
           zh
             ? "這張 image-occlusion 缺少有效的遮罩座標。請提供 region_x / region_y / region_width / region_height，或使用相容的 region_*_pct。"
@@ -1113,7 +1080,8 @@ function renderQuestChallenge(container, challenge, difficulty, onSolved, settin
         return;
       }
 
-      occluder.style.display = "flex";
+      occluder.classList.remove("qm-hide");
+      occluder.classList.add("qm-show-flex");
       occluder.style.left = rect.leftPct + "%";
       occluder.style.top = rect.topPct + "%";
       occluder.style.width = rect.widthPct + "%";
@@ -1148,8 +1116,8 @@ function renderQuestChallenge(container, challenge, difficulty, onSolved, settin
       let val = input.value.trim();
       if (!val) return;
       if (deps.matchesExpectedAnswer(val, expected)) {
-        input.style.borderColor = "#22c55e";
-        submitBtn.style.background = "#22c55e";
+        input.classList.add("qm-border-ok");
+        submitBtn.classList.add("qm-bg-ok");
         revealAnswer();
         getFeedback().textContent = zh ? "答對了" : "Correct";
         input.disabled = true;
@@ -1282,8 +1250,9 @@ function openQuestChapterModal(app, nodes, activeIndex, styleName, difficulty, s
   function showComplete() {
     let zh = isZh(deps, settings);
     modal.contentEl.empty();
-    modal.modalEl.style.cssText = "width:min(92vw,480px);max-width:none;max-height:90vh;overflow:hidden;display:flex;flex-direction:column";
-    modal.contentEl.style.cssText = "padding:0;flex:1;display:flex;flex-direction:column;overflow:hidden;min-height:0";
+    modal.modalEl.classList.remove("qm-modal-frame-lg");
+    modal.modalEl.classList.add("qm-modal-frame", "qm-modal-frame-sm");
+    modal.contentEl.classList.add("qm-modal-body");
     let wrap = modal.contentEl.createEl("div", { attr: { style: "flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 32px;text-align:center;gap:16px;" } });
     wrap.createEl("div", { attr: { style: "font-size:64px;line-height:1;" } }).textContent = "🏆";
     wrap.createEl("div", { attr: { style: "font-size:22px;font-weight:800;color:var(--text-normal);" } }).textContent = deps.t ? deps.t(settings, "QUEST_COMPLETE") : (zh ? "Quest 通關！🏆" : "Quest Complete! 🏆");
@@ -1302,8 +1271,9 @@ function openQuestChapterModal(app, nodes, activeIndex, styleName, difficulty, s
     let zh = isZh(deps, settings);
     runCleanups();
     modal.contentEl.empty();
-    modal.modalEl.style.cssText = "width:min(92vw,820px);max-width:none;max-height:90vh;overflow:hidden;display:flex;flex-direction:column";
-    modal.contentEl.style.cssText = "padding:0;flex:1;display:flex;flex-direction:column;overflow:hidden;min-height:0";
+    modal.modalEl.classList.remove("qm-modal-frame-sm");
+    modal.modalEl.classList.add("qm-modal-frame", "qm-modal-frame-lg");
+    modal.contentEl.classList.add("qm-modal-body");
 
     modal.contentEl.createEl("div", { attr: { style: "height:6px;background:var(--background-modifier-border);flex-shrink:0" } })
       .createEl("div", { attr: { style: `height:100%;border-radius:0 4px 4px 0;width:${((currentIndex + 1) / nodes.length) * 100}%;background:linear-gradient(90deg,${theme.g1},${theme.g2});transition:width .5s` } });
@@ -1382,8 +1352,7 @@ function openQuestChapterModal(app, nodes, activeIndex, styleName, difficulty, s
     let next = footer.createEl("button", { text: currentIndex === nodes.length - 1 ? (zh ? "完成" : "Done") : (zh ? "下一章" : "Next"), attr: { style: `border-radius:9999px;padding:8px 16px;font-size:14px;font-weight:700;color:white;border:none;cursor:pointer;background:linear-gradient(135deg,${theme.g1},${theme.g2})` } });
     if (isHtmlNode) {
       next.disabled = true;
-      next.style.opacity = "0.35";
-      next.style.cursor = "not-allowed";
+      next.classList.add("qm-locked");
       next.textContent = zh ? "完成互動後前進" : "Complete to continue";
     }
     prev.addEventListener("click", () => {

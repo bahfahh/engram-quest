@@ -6,8 +6,8 @@ const { normalizeMarkdown } = require("../ui/markdown");
 
 function openReviewCardModal(app, card, onDone, settings, deps) {
   let modal = new obsidian.Modal(app);
-  modal.modalEl.style.cssText = "width:min(92vw,600px);max-width:none;max-height:90vh;overflow:hidden;display:flex;flex-direction:column";
-  modal.contentEl.style.cssText = "padding:0;flex:1;display:flex;flex-direction:column;overflow:hidden;min-height:0";
+  modal.modalEl.classList.add("qm-modal-frame", "qm-modal-frame-md");
+  modal.contentEl.classList.add("qm-modal-body");
 
   let hintLevel = 0;
   let answerShown = false;

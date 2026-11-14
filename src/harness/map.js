@@ -75,8 +75,8 @@ function openHarnessChapter(app, chapterIndex) {
   function renderChapter() {
     let chapter = chapters[activeIndex], colors = themeColors[chapter.themeColor];
     modal.contentEl.empty();
-    modal.modalEl.style.cssText = "width:min(92vw,820px);max-width:none;max-height:90vh;overflow:hidden;display:flex;flex-direction:column";
-    modal.contentEl.style.cssText = "padding:0;flex:1;display:flex;flex-direction:column;overflow:hidden;min-height:0";
+    modal.modalEl.classList.add("qm-modal-frame", "qm-modal-frame-lg");
+    modal.contentEl.classList.add("qm-modal-body");
     modal.contentEl.createEl("div", { attr: { style: "height:6px;background:var(--background-modifier-border);flex-shrink:0" } }).createEl("div", { attr: { style: `height:100%;border-radius:0 4px 4px 0;width:${(activeIndex + 1) / chapters.length * 100}%;background:linear-gradient(90deg,${colors.g1},${colors.g2});transition:width .5s` } });
     let content = modal.contentEl.createEl("div", { attr: { style: "padding:28px 32px;overflow-y:auto;flex:1;min-height:0" } });
     let header = content.createEl("div", { attr: { style: "display:flex;align-items:flex-start;gap:16px;margin-bottom:16px" } });
