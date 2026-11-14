@@ -12,6 +12,10 @@ const MIGRATED_FILES = [
   "src/review/session.js",
   "src/review/create.js",
   "src/review/modal.js",
+  "src/hub/modal.js",
+  "src/hub/review-tab.js",
+  "src/hub/settings.js",
+  "src/hub/skills.js",
 ];
 
 function classesUsedIn(file) {

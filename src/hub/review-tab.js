@@ -171,7 +171,7 @@ function renderToolbar(parent, hub, refresh) {
   if (ui.isPhone()) {
     ui.searchBox(parent, search);
     const row = parent.createEl("div", { cls: "lh-tb", attr: { style: "flex-wrap:nowrap" } });
-    ui.segmented(row, filters, hub.filterStatus, onFilter).style.flex = "1";
+    ui.segmented(row, filters, hub.filterStatus, onFilter).classList.add("lh-flex-1");
     ui.viewToggle(row, hub, refresh);
     return;
   }
