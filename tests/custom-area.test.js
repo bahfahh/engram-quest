@@ -298,12 +298,16 @@ describe("custom teachers", () => {
 // Stands in for an Obsidian element: keeps what was drawn and lets a test press a button.
 class El {
   constructor(tag = "div", opts = {}) { this.tag = tag; this.text = opts.text || ""; this.cls = String(opts.cls || ""); this.attr = opts.attr || {}; this.children = []; this.on = {}; this.isConnected = true; }
-  createEl(tag, opts) { const el = new El(tag, opts); this.children.push(el); return el; }
+  createEl(tag, opts) { const el = new El(tag, opts); el.parent = this; this.children.push(el); return el; }
+  remove() { if (this.parent) this.parent.children = this.parent.children.filter((c) => c !== this); }
   createDiv(opts) { return this.createEl("div", opts); }
   createSpan(opts) { return this.createEl("span", opts); }
   appendChild(child) { this.children.push(child); return child; }
   empty() { this.children = []; }
   addClass(...names) { this.cls += " " + names.join(" "); }
+  removeClass() {}
+  toggleClass() {}
+  focus() {}
   setText(text) { this.text = text; }
   addEventListener(type, fn) { this.on[type] = fn; }
   all() { return this.children.flatMap((c) => [c, ...c.all()]); }
@@ -402,6 +406,23 @@ describe("video settings with a saved custom teacher", () => {
     expect((await notes("custom:gone")).some((n) => n.includes('"gone" was not found'))).toBe(true);
     expect((await notes("custom:Bad_Name", { "engram-quest/custom/cast/teachers/Bad_Name.json": json({ name: { en: "B" } }) })).some((n) => n.includes("was not found"))).toBe(true);
     expect((await notes("custom:gone", {}, "zh-tw")).some((n) => n.includes("找不到你的老師「gone」"))).toBe(true);
+  });
+
+  it("says so in the New series form too, for a series that names a missing teacher", async () => {
+    let modal;
+    obsidian.Modal = class { constructor() { this.contentEl = new El(); this.modalEl = new El(); modal = this; } open() {} close() {} };
+    const { openNewVideoModal } = require("../src/videos/new-modal.js");
+    const adapter = vaultAdapter({ "engram-quest/custom/cast/teachers/kay.json": json({ name: { en: "Kay" } }) });
+    const draw = async (teacher) => {
+      const edit = { slug: "maths", meta: { title: "Maths", request: { text: "Maths", detail: "", source: "general", refs: [] }, cast: { teacher } } };
+      openNewVideoModal({ app: { vault: { adapter } }, plugin: { settings: {} } }, { language: "en", licenseValid: true }, () => {}, edit);
+      await new Promise((resolve) => setTimeout(resolve, 20));
+      return modal.contentEl.all().map((el) => el.text);
+    };
+    expect((await draw("custom:gone")).some((text) => text.includes('"gone" was not found'))).toBe(true);
+    const found = await draw("custom:kay");
+    expect(found).toContain("Kay");
+    expect(found.some((text) => text.includes("not found"))).toBe(false);
   });
 
   it("says nothing of the kind when the teacher is there", async () => {
