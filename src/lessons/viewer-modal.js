@@ -6,7 +6,7 @@
 
 const I = require("obsidian");
 const { t: c, interpolate: K, getLocale: _getLocale } = require("../i18n");
-const { LESSONS_DIR, markLesson, lessonCompletion } = require("./data");
+const { LESSONS_DIR, markLesson, lessonCompletion, lessonTitle } = require("./data");
 
 // Hub UI helpers, loaded lazily: hub/ui pulls in the feature guide, which pulls in this file's callers.
 function hubUi() { return require("../hub/ui"); }
@@ -57,7 +57,7 @@ function buildCompletionFooter(parentEl, t, meta, lesson, mark) {
     attr: { style: "display:flex;align-items:center;gap:8px;padding:0 2px;" },
   });
   footer.createEl("span", {
-    text: meta.title + " · " + lesson.title,
+    text: meta.title + " · " + lessonTitle(lesson),
     attr: { style: "flex:1;min-width:0;font-size:11px;color:var(--text-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" },
   });
 
@@ -135,7 +135,7 @@ class LessonViewerModal extends I.Modal {
       attr: { style: "display:flex;align-items:center;gap:8px;padding-right:36px;" },
     });
     titleRow.createEl("div", {
-      text: this.lesson.title,
+      text: lessonTitle(this.lesson),
       attr: { style: "flex:1;min-width:0;font-size:15px;font-weight:700;color:var(--text-normal);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;", title: this.lesson.title },
     });
     titleRow.createEl("span", {
@@ -265,7 +265,7 @@ class CanvasLessonModal extends I.Modal {
     titleRow.createEl("span", { text: "🗺️", attr: { style: "font-size:24px;flex-shrink:0;" } });
     const col = titleRow.createEl("div", { attr: { style: "flex:1;min-width:0;" } });
     col.createEl("div", {
-      text: this.lesson.title,
+      text: lessonTitle(this.lesson),
       attr: { style: "font-size:15px;font-weight:700;color:var(--text-normal);line-height:1.35;word-break:break-word;" },
     });
     col.createEl("div", { text: this.meta.title, attr: { style: "font-size:11px;color:var(--text-muted);" } });

@@ -163,7 +163,7 @@ describe("SynapseMapSession: opening a node", () => {
     await session.open(nodeOf(session, card, "lesson|cicd/lsn-1"));
     const [kind, lesson] = opened[0];
     expect(kind).toBe("lesson");
-    expect(lesson).toMatchObject({ slug: "cicd", lesson: { id: "lsn-1", file: "lsn-1.html", type: "html" } });
+    expect(lesson).toMatchObject({ slug: "cicd", lesson: { id: "lsn-1", file: "lsn-1.html" } });
     expect(lesson.meta.title).toBe("CI/CD");
 
     adapter.files["engram-quest/lessons/cicd/meta.json"] = json({

@@ -5,7 +5,7 @@
 const I = require("obsidian");
 const { t: c, interpolate: K } = require("../i18n");
 const {
-  listCourses, lessonCompletion, lessonStatus, courseProgress,
+  listCourses, lessonTitle, lessonCompletion, lessonStatus, courseProgress,
   toggleCourseStar, toggleCourseArchive, importLesson, deleteLesson, deleteCourse,
   createCourse, addPlannedLesson,
   recentLessons, overallStats,
@@ -369,7 +369,7 @@ function renderLessonRow(list, hub, t, course, lesson, refresh) {
   ui.icon(row.createEl("span", { cls: `lh-lic ${visual.tone}` }), visual.icon);
   const mid = row.createEl("div", { cls: "lh-grow" });
   const title = mid.createEl("div", { cls: "lh-xpt" });
-  title.createEl("span", { cls: "lh-ls-t", text: lesson.title, attr: { title: lesson.title } });
+  title.createEl("span", { cls: "lh-ls-t", text: lessonTitle(lesson), attr: { title: lessonTitle(lesson) } });
   if (lesson.type === "canvas") title.createEl("span", { cls: "lh-xbadge", text: c(t, "LESSON_TYPE_CANVAS") });
   if (lesson.source === "import") title.createEl("span", { cls: "lh-xbadge", text: c(t, "LESSON_SOURCE_IMPORT") });
   if (typeof lesson.goal === "string" && lesson.goal.trim()) {
@@ -456,7 +456,7 @@ function pickAndImportHtml(hub, t, slug, refresh) {
         const name = file.name.replace(/\.html?$/i, "");
         const lesson = await importLesson(hub.app.vault.adapter, slug, String(reader.result || ""), name);
         if (lesson) {
-          new I.Notice(K(c(t, "LESSON_IMPORTED"), { title: lesson.title }));
+          new I.Notice(K(c(t, "LESSON_IMPORTED"), { title: lessonTitle(lesson) }));
           refresh();
         } else {
           new I.Notice(c(t, "LESSON_IMPORT_FAILED"));
@@ -474,7 +474,7 @@ function pickAndImportHtml(hub, t, slug, refresh) {
 
 function confirmDeleteLesson(hub, t, slug, lesson, refresh) {
   ui.confirmDialog(hub.app, t, {
-    title: K(c(t, "DELETE_CONFIRM_TITLE"), { name: lesson.title }),
+    title: K(c(t, "DELETE_CONFIRM_TITLE"), { name: lessonTitle(lesson) }),
     body: c(t, "LESSON_DELETE_BODY"),
     onConfirm: async () => {
       try {
@@ -530,7 +530,7 @@ function renderSidebar(side, hub, t, courses, stats, refresh) {
   items.forEach((item) => {
     const course = courses.find((cs) => cs.slug === item.slug);
     const row = recent.createEl("div", { cls: "lh-rec" });
-    row.createEl("b", { text: item.lesson.title, attr: { title: item.lesson.title } });
+    row.createEl("b", { text: lessonTitle(item.lesson), attr: { title: lessonTitle(item.lesson) } });
     row.createEl("span", { text: item.courseTitle });
     if (course) row.addEventListener("click", () => openLesson(hub, item.slug, course.meta, item.lesson, refresh));
   });

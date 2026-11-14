@@ -9,6 +9,7 @@
 
 const { MASTERED_STABILITY_THRESHOLD } = require("./synapse");
 const { leaksAnswer } = require("./answer-leak");
+const { lessonTitle } = require("../lessons/data");
 
 const MAX_NODES = 12; // the centre card included
 const LESSONS_DIR = "engram-quest/lessons";
@@ -46,7 +47,7 @@ function buildContentIndex(raw = {}) {
       if (!lesson.file) continue;
       const ref = `${slug}/${lesson.id}`;
       index.lessons.set(ref, {
-        ref, title: lesson.title || lesson.id, sub: meta.title || "",
+        ref, title: lessonTitle(lesson) || lesson.id, sub: meta.title || "",
         state: progressState(meta.completion && meta.completion[lesson.id]),
         slug, lessonId: lesson.id,
       });

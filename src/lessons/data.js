@@ -22,12 +22,19 @@ async function readJson(adapter, path) {
 
 /**
  * Fill in any missing meta fields so renderers never need null checks. meta.json is shared with the
- * lesson-academy skill, and every plugin write goes through here, so fields the plugin doesn't know
- * (at course and lesson level) are carried through unchanged.
+ * lesson-academy skill, and every plugin write goes through here, so what the plugin doesn't own is
+ * carried through unchanged: unknown fields (course and lesson level), a lesson's `type` and `title`
+ * as the skill wrote them, and entries that aren't objects. Display fallbacks for a missing title
+ * live in lessonTitle(); a `type` other than "canvas" is simply shown as HTML by the readers.
  */
 function normalizeMeta(meta) {
   if (!meta || typeof meta !== "object") return null;
-  return {
+  // Entries that aren't objects can't be shown, but they aren't the plugin's to delete: remember
+  // where they were so saveCourse() puts them back.
+  const skipped = [];
+  const entries = Array.isArray(meta.lessons) ? meta.lessons : [];
+  entries.forEach((entry, index) => { if (!entry || typeof entry !== "object") skipped.push({ index, entry }); });
+  const normalized = {
     ...meta,
     title: String(meta.title || ""),
     topic: String(meta.topic || ""),
@@ -38,24 +45,25 @@ function normalizeMeta(meta) {
     starred: !!meta.starred,
     archived: !!meta.archived,
     createdAt: meta.createdAt || null,
-    lessons: Array.isArray(meta.lessons)
-      ? meta.lessons.filter((l) => l && typeof l === "object").map((l, i) => ({
-          ...l,
-          // An entry without an id would have no place in the completion map; it gets one derived
-          // from its file (or position) instead of being dropped.
-          id: String(l.id || (l.file ? `file-${l.file}` : `entry-${i + 1}`)),
-          title: String(l.title || l.file || ""),
-          // No file = a planned outline entry (user- or AI-authored) whose HTML the lesson-academy
-          // skill hasn't generated yet. It still renders in the list as "pending".
-          file: l.file ? String(l.file) : null,
-          // "canvas" lessons open in a native Obsidian Canvas tab instead of the iframe viewer.
-          // Anything else collapses to "html" so a bogus value can't break the click branch.
-          type: l.type === "canvas" ? "canvas" : "html",
-          source: l.source === "import" ? "import" : "skill",
-        }))
-      : [],
+    lessons: entries.filter((l) => l && typeof l === "object").map((l, i) => ({
+      ...l,
+      // An entry without an id would have no place in the completion map; it gets one derived
+      // from its file (or position) instead of being dropped.
+      id: String(l.id || (l.file ? `file-${l.file}` : `entry-${i + 1}`)),
+      // No file = a planned outline entry (user- or AI-authored) whose HTML the lesson-academy
+      // skill hasn't generated yet. It still renders in the list as "pending".
+      file: l.file ? String(l.file) : null,
+      source: l.source === "import" ? "import" : "skill",
+    })),
     completion: meta.completion && typeof meta.completion === "object" ? meta.completion : {},
   };
+  Object.defineProperty(normalized, "_skippedLessons", { value: skipped, enumerable: false });
+  return normalized;
+}
+
+/** What to show as a lesson's title: its own, else its file name. */
+function lessonTitle(lesson) {
+  return String((lesson && (lesson.title || lesson.file)) || "");
 }
 
 /** Completion state for one lesson — always a full object, never undefined. */
@@ -124,8 +132,14 @@ async function loadCourse(adapter, slug) {
 }
 
 async function saveCourse(adapter, slug, meta) {
+  let out = meta;
+  if (meta._skippedLessons && meta._skippedLessons.length && Array.isArray(meta.lessons)) {
+    const lessons = [...meta.lessons];
+    for (const { index, entry } of meta._skippedLessons) lessons.splice(Math.min(index, lessons.length), 0, entry);
+    out = { ...meta, lessons };
+  }
   await adapter.mkdir(`${LESSONS_DIR}/${slug}`).catch(() => {});
-  await adapter.write(`${LESSONS_DIR}/${slug}/meta.json`, JSON.stringify(meta, null, 2));
+  await adapter.write(`${LESSONS_DIR}/${slug}/meta.json`, JSON.stringify(out, null, 2));
 }
 
 /**
@@ -384,6 +398,7 @@ function overallStats(courses) {
 module.exports = {
   LESSONS_DIR,
   normalizeMeta,
+  lessonTitle,
   lessonCompletion,
   lessonStatus,
   courseProgress,

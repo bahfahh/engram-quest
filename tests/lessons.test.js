@@ -4,6 +4,7 @@ import { describe, it, expect, vi } from "vitest";
 import {
   LESSONS_DIR,
   normalizeMeta,
+  lessonTitle,
   lessonCompletion,
   lessonStatus,
   courseProgress,
@@ -112,16 +113,23 @@ describe("normalizeMeta", () => {
     expect(normalizeMeta("not an object")).toBe(null);
   });
 
-  it("keeps type:canvas, defaults everything else to html", () => {
+  it("keeps a lesson's type and title exactly as the skill wrote them", () => {
     const meta = normalizeMeta({
       lessons: [
         { id: "a", title: "map", file: "a.canvas", type: "canvas" },
         { id: "b", title: "html", file: "b.html" },
-        { id: "c", title: "bogus", file: "c.html", type: "excalidraw" },
-        { id: "d", title: "planned map", file: null, type: "canvas" },
+        { id: "c", title: "newer type", file: "c.html", type: "excalidraw" },
+        { id: "d", title: "", file: "d.html" },
       ],
     });
-    expect(meta.lessons.map((l) => l.type)).toEqual(["canvas", "html", "html", "canvas"]);
+    expect(meta.lessons.map((l) => l.type)).toEqual(["canvas", undefined, "excalidraw", undefined]);
+    expect(meta.lessons[3].title).toBe("");
+  });
+
+  it("lessonTitle falls back to the file name for display only", () => {
+    expect(lessonTitle({ title: "Intro", file: "a.html" })).toBe("Intro");
+    expect(lessonTitle({ title: "", file: "lsn-2-b.html" })).toBe("lsn-2-b.html");
+    expect(lessonTitle({ id: "x" })).toBe("");
   });
 });
 
@@ -225,7 +233,45 @@ describe("markLesson", () => {
     await markLesson(adapter, "c", "lsn-m", { starred: true });
     const onDisk = JSON.parse(adapter.files[`${LESSONS_DIR}/c/meta.json`]);
     expect(onDisk.lessons.find((l) => l.id === "lsn-m").type).toBe("canvas");
-    expect(onDisk.lessons.find((l) => l.id === "lsn-1").type).toBe("html");
+    expect(onDisk.lessons.find((l) => l.id === "lsn-1").type).toBeUndefined(); // not written: the skill left it out
+  });
+
+  it("writes back the type, title and odd entries the skill wrote, whatever it is the plugin edits", async () => {
+    const skillWrote = {
+      title: "Course",
+      lessons: [
+        { id: "lsn-1", title: "", file: "lsn-1-a.html", type: "excalidraw", source: "skill" },
+        "a stray string",
+        null,
+        { id: "lsn-2", title: "Two", file: "lsn-2-b.html", goal: "g" },
+        7,
+      ],
+      completion: {},
+    };
+    const adapter = makeAdapter(seedCourse("c", skillWrote));
+    await markLesson(adapter, "c", "lsn-1", { starred: true });
+    const onDisk = JSON.parse(adapter.files[`${LESSONS_DIR}/c/meta.json`]);
+    expect(onDisk.lessons[0]).toMatchObject({ id: "lsn-1", title: "", type: "excalidraw" });
+    expect(onDisk.lessons.slice(1, 3)).toEqual(["a stray string", null]);
+    expect(onDisk.lessons[3]).toMatchObject({ id: "lsn-2", title: "Two", goal: "g" });
+    expect(onDisk.lessons[3].type).toBeUndefined();
+    expect(onDisk.lessons[4]).toBe(7);
+    expect(onDisk.completion["lsn-1"].starred).toBe(true);
+  });
+
+  it("keeps the odd entries when a lesson is deleted or added", async () => {
+    const adapter = makeAdapter(seedCourse("c", {
+      title: "Course",
+      lessons: [{ id: "lsn-1", title: "One", file: "lsn-1-a.html" }, "stray", { id: "lsn-2", title: "Two", file: null }],
+      completion: {},
+    }));
+    await deleteLesson(adapter, "c", "lsn-1");
+    let onDisk = JSON.parse(adapter.files[`${LESSONS_DIR}/c/meta.json`]);
+    expect(onDisk.lessons.map((l) => (typeof l === "object" ? l.id : l)).sort()).toEqual(["lsn-2", "stray"]);
+    await addPlannedLesson(adapter, "c", "Three");
+    onDisk = JSON.parse(adapter.files[`${LESSONS_DIR}/c/meta.json`]);
+    expect(onDisk.lessons).toContain("stray");
+    expect(onDisk.lessons).toHaveLength(3);
   });
 });
 
