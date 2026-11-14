@@ -21,7 +21,7 @@
   function wrap(t, max, size) {
     if (width(t, size) <= max) return [t];
     var lines = [""], tokens = [];
-    (t.match(/[A-Za-z0-9_.\-\/+#]+|\s+|./g) || [t]).forEach(function (tk) {
+    (t.match(/[A-Za-z0-9_.\-/+#]+|\s+|./g) || [t]).forEach(function (tk) {
       // A single word wider than the box has to break, or it would overrun the box.
       var cur = "";
       if (width(tk, size) <= max) { tokens.push(tk); return; }

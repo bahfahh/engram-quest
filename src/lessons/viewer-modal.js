@@ -47,7 +47,7 @@ const MOBILE_GRID_FIX = `
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", fix);
   else fix();
 })();
-<\/script>`;
+</script>`;
 
 // Shared modal footer: "course · lesson" label + star/done toggles that flip in place.
 // `mark` persists the completion patch (both modals route it through their serialized _mark).
