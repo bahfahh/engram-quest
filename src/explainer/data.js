@@ -209,29 +209,8 @@ function isQueued(queue, source, q) {
   );
 }
 
-/**
- * Move a single file to trash. Prefers the OS trash (trashSystem), falls back to the vault-local
- * .trash (trashLocal), then to a permanent remove — mirroring Obsidian's own trashFile order.
- * Returns true when the file is gone (including already-absent), false when every method failed.
- */
-async function trashPath(adapter, path) {
-  try {
-    if (adapter.exists && !(await adapter.exists(path))) return true;
-  } catch { /* can't check existence — try to trash anyway */ }
-  try {
-    if (typeof adapter.trashSystem === "function") {
-      const ok = await adapter.trashSystem(path);
-      if (ok) return true;
-    }
-  } catch (e) { console.warn("EngramQuest: explainer trashSystem failed", e); }
-  try {
-    if (typeof adapter.trashLocal === "function") { await adapter.trashLocal(path); return true; }
-  } catch (e) { console.warn("EngramQuest: explainer trashLocal failed", e); }
-  try {
-    if (typeof adapter.remove === "function") { await adapter.remove(path); return true; }
-  } catch (e) { console.warn("EngramQuest: explainer remove failed", e); }
-  return false;
-}
+// Trash only: when neither trash works the file stays and the caller reports that the delete failed.
+const { trashAdapterPath: trashPath } = require("../vault-trash");
 
 /**
  * Delete an explainer: trash its metadata (meta/{id}.json) and its page ({id}.html and/or

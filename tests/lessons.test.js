@@ -288,7 +288,7 @@ describe("markLesson", () => {
 
 describe("deleteLesson with a file name from meta.json that leaves the course folder", () => {
   it("refuses, and moves nothing to the trash", async () => {
-    for (const file of ["../other/meta.json", "a/../../x.html", "..\\up.html", "/abs.html", "C:/x.html"]) {
+    for (const file of ["../other/meta.json", "a/../../x.html", "..\\up.html", "/abs.html", "C:/x.html", ".", "./", "sub/.", "sub//x.html"]) {
       const adapter = makeAdapter(seedCourse("c", { title: "Course", lessons: [{ id: "lsn-1", title: "One", file }], completion: {} }));
       const before = { ...adapter.files };
       await expect(deleteLesson(appFor(adapter), "c", "lsn-1")).rejects.toThrow("outside the course folder");

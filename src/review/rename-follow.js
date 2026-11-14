@@ -66,16 +66,18 @@ async function listJson(adapter, dir) {
   return (await adapter.list(dir)).files.filter((p) => p.endsWith(".json"));
 }
 
-// Rewrites one JSON file when it mentions a moved path (to `target` when the file itself moves);
-// unreadable files are left alone.
 /** Two paths that differ only in letter case or Unicode form are one file on Windows and macOS. */
 const sameFile = (a, b) => nameKey(a) === nameKey(b);
 
+const MOVING = ".moving";
+// Folders whose files can be renamed through a temporary name (every caller of replaceFile).
+const MOVING_DIRS = ["engram-review/sr", "engram-quest/state", HINTS_DIR, AI_CARDS_DIR, SYNAPSE_DIR];
+
 /**
  * Put `data` at `to` and drop `from`. When both names are one file on this disk (`sameFile`),
- * writing the new name and then removing the old one would delete it: the file is renamed through a
- * temporary name instead, which also gives it the new spelling. Every step that fails leaves the data
- * under `from` (a failed second rename is undone), so a failure never leaves it only in the temporary file.
+ * writing the new name and then removing the old one would delete it: the file is renamed through
+ * `<to>.moving` instead, which also gives it the new spelling. A failed second rename is undone; if the
+ * app closes in between or the undo fails too, recoverMovingFiles puts the file back at the next start.
  */
 async function replaceFile(adapter, from, to, data) {
   if (from === to) return adapter.write(to, data);
@@ -84,25 +86,31 @@ async function replaceFile(adapter, from, to, data) {
     await adapter.remove(from);
     return;
   }
-  const temp = `${to}.moving`;
-  if (typeof adapter.rename === "function") {
-    await adapter.rename(from, temp);
-    try { await adapter.rename(temp, to); } catch (e) {
-      await adapter.rename(temp, from).catch(() => {});
-      throw e;
-    }
-    await adapter.write(to, data);
-    return;
-  }
-  await adapter.write(temp, data);
-  await adapter.remove(from);
-  try { await adapter.write(to, data); } catch (e) {
-    await adapter.write(from, data).then(() => adapter.remove(temp)).catch(() => {});
+  const temp = to + MOVING;
+  await adapter.rename(from, temp);
+  try { await adapter.rename(temp, to); } catch (e) {
+    await adapter.rename(temp, from).catch((u) => console.warn(`EngramQuest: the data is in ${temp} and goes back to ${to} at the next start`, u));
     throw e;
   }
-  await adapter.remove(temp);
+  await adapter.write(to, data);
 }
 
+/** Move every `<name>.moving` left by an interrupted replaceFile back to `<name>`, unless that name is taken. */
+async function recoverMovingFiles(adapter) {
+  for (const dir of MOVING_DIRS) {
+    try {
+      if (!(await adapter.exists(dir))) continue;
+      for (const temp of (await adapter.list(dir)).files.filter((p) => p.endsWith(MOVING))) {
+        const to = temp.slice(0, -MOVING.length);
+        if (await adapter.exists(to)) console.warn(`EngramQuest: ${temp} was left by an interrupted rename and ${to} exists too; both are kept`);
+        else await adapter.rename(temp, to);
+      }
+    } catch (e) { console.warn(`EngramQuest: could not restore interrupted renames in ${dir}`, e); }
+  }
+}
+
+// Rewrites one JSON file when it mentions a moved path (to `target` when the file itself moves);
+// unreadable files are left alone.
 async function rewrite(adapter, path, moves, target = path) {
   const data = await readJson(adapter, path);
   if (data === undefined) return;
@@ -159,14 +167,19 @@ async function followCardFilesRename(adapter, oldPath, newPath) {
     } catch { return raw; }
   };
   const name = (p) => p.split("/").pop().replace(/\.md$/i, "");
+  // Each move stands alone: one that fails is logged and the others still run.
+  const move = (from, to, edit) => moveFile(adapter, from, to, edit).catch((e) => {
+    console.warn(`EngramQuest: could not move ${from} to ${to} after a rename`, e);
+    return false;
+  });
   const keys = new Map([[srFileName(oldPath), srFileName(newPath)], [name(oldPath), name(newPath)]]);
   for (const [from, to] of keys) {
-    await moveFile(adapter, `${HINTS_DIR}/${from}.json`, `${HINTS_DIR}/${to}.json`, fixHints);
+    await move(`${HINTS_DIR}/${from}.json`, `${HINTS_DIR}/${to}.json`, fixHints);
     const card = `${AI_CARDS_DIR}/${from}.md`;
     const cardTo = `${AI_CARDS_DIR}/${to}.md`;
-    if (card !== cardTo && (await moveFile(adapter, card, cardTo))) {
+    if (card !== cardTo && (await move(card, cardTo))) {
       for (const dir of ["engram-review/sr", SYNAPSE_DIR]) {
-        await moveFile(adapter, `${dir}/${srFileName(card)}.json`, `${dir}/${srFileName(cardTo)}.json`);
+        await move(`${dir}/${srFileName(card)}.json`, `${dir}/${srFileName(cardTo)}.json`);
       }
     }
   }
@@ -192,4 +205,4 @@ function queueNoteRename(adapter, from, to) {
   }, BATCH_MS);
 }
 
-module.exports = { followNoteRenames, followCardFilesRename, queueNoteRename, replacePaths, replaceFile };
+module.exports = { followNoteRenames, followCardFilesRename, queueNoteRename, replacePaths, replaceFile, recoverMovingFiles };

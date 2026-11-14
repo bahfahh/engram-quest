@@ -6,7 +6,7 @@
 // inserting/reordering is plain array surgery. Pure of Obsidian UI: every function takes a vault
 // adapter so the logic is unit-testable (deleteCourse takes the app: it follows Obsidian's trash setting).
 
-const { trashVaultPath } = require("../vault-trash");
+const { trashVaultPath, trashAdapterPath: trashPath } = require("../vault-trash");
 
 const LESSONS_DIR = "engram-quest/lessons";
 
@@ -287,29 +287,6 @@ async function importLesson(adapter, slug, htmlContent, suggestedTitle) {
 }
 
 /**
- * Move a single file to trash: OS trash → vault-local .trash → permanent remove (same ladder as
- * the explainer data layer). True when the file is gone, false when every method failed.
- */
-async function trashPath(adapter, path) {
-  try {
-    if (adapter.exists && !(await adapter.exists(path))) return true;
-  } catch { /* can't check — try to trash anyway */ }
-  try {
-    if (typeof adapter.trashSystem === "function") {
-      const ok = await adapter.trashSystem(path);
-      if (ok) return true;
-    }
-  } catch (e) { console.warn("EngramQuest: lesson trashSystem failed", e); }
-  try {
-    if (typeof adapter.trashLocal === "function") { await adapter.trashLocal(path); return true; }
-  } catch (e) { console.warn("EngramQuest: lesson trashLocal failed", e); }
-  try {
-    if (typeof adapter.remove === "function") { await adapter.remove(path); return true; }
-  } catch (e) { console.warn("EngramQuest: lesson remove failed", e); }
-  return false;
-}
-
-/**
  * Delete one lesson: trash its HTML and drop it from the lessons array. The completion key is
  * left behind on purpose — it's invisible once the lesson entry is gone and skipping the cleanup
  * keeps this a single read-modify-write. Returns the updated meta, or null if no course.
@@ -321,7 +298,8 @@ async function deleteLesson(app, slug, lessonId) {
   const lesson = meta.lessons.find((l) => l.id === lessonId);
   if (lesson && lesson.file) {
     // The file name comes from AI-written meta.json: never let it point outside the course folder.
-    if (String(lesson.file).split(/[\\/]/).some((part) => part === "..") || /^[\\/]|^[a-z]:/i.test(lesson.file) || String(slug).includes("..")) {
+    const outside = (p) => String(p).split(/[\\/]/).some((part) => part === "" || part === "." || part === "..") || /^[a-z]:/i.test(p);
+    if (outside(lesson.file) || outside(slug)) {
       throw new Error(`lesson file ${lesson.file} is outside the course folder`);
     }
     const path = `${LESSONS_DIR}/${slug}/${lesson.file}`;

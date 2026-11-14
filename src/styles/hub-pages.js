@@ -398,8 +398,8 @@ const lessons = `
 .lh-lside { width:254px; flex:none; display:flex; flex-direction:column; gap:12px; overflow-y:auto; padding:2px 2px 12px; scrollbar-width:none; box-sizing:border-box; }
 .lh-lside::-webkit-scrollbar { display:none; }
 /* A narrow desktop window has no room for the 254px summary column beside the courses: the courses come first, the summary steps aside (a phone stacks them instead, below). */
-.lh-lwrap { container:lh-lwrap / inline-size; }
-@container lh-lwrap (max-width:620px) { body:not(.is-phone) .lh-lside { display:none; } }
+.lh-lwrap { container:lh-lwrap / inline-size; position:relative; }
+@container lh-lwrap (max-width:620px) { body:not(.is-phone) .lh-lside { position:absolute; z-index:3; top:0; right:0; bottom:0; max-width:100%; padding:12px; border-radius:14px; background:var(--base); box-shadow:var(--rshadow); } }
 .lh-pnl { background:var(--card); box-shadow:var(--cshadow); border-radius:16px; padding:16px 18px; }
 .lh-pnl-fill { flex:1 0 auto; }
 .lh-pnl-t { font-size:16px; line-height:22px; font-weight:700; color:var(--text); margin-bottom:10px; }

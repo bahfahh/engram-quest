@@ -30,8 +30,9 @@ function makeAdapter(initial = {}) {
     },
     async write(p, content) { files[p] = content; },
     async mkdir() {},
-    // remove() only — exercises the trash fallback chain's last step.
     async remove(p) { delete files[p]; },
+    // Obsidian's .trash only: the system trash is missing here.
+    async trashLocal(p) { delete files[p]; },
     async list(dir) {
       const prefix = dir.replace(/\/$/, "") + "/";
       return {
@@ -180,7 +181,7 @@ describe("explainer deleteExplainer", () => {
       metaFile("stuck-1", { title: "x" }),
       [`${EXPLAINER_DIR}/stuck-1.html`, "<html></html>"],
     ]));
-    adapter.remove = async () => { throw new Error("locked"); };
+    adapter.trashLocal = async () => { throw new Error("locked"); };
     await expect(deleteExplainer(adapter, "stuck-1")).rejects.toThrow(/stuck-1/);
     expect(adapter.files[`${EXPLAINER_DIR}/stuck-1.html`]).toBeDefined();
   });

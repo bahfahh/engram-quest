@@ -40,6 +40,7 @@ function makeAdapter(initial = {}) {
     async write(p, content) { files[p] = content; },
     async mkdir() {},
     async remove(p) { delete files[p]; },
+    async trashLocal(p) { delete files[p]; },
     async list(dir) {
       const prefix = dir.replace(/\/$/, "") + "/";
       const folders = new Set();
@@ -227,8 +228,8 @@ describe("createRequest / deleteTopic", () => {
   it("deleteTopic keeps the folder when a file can't be trashed", async () => {
     const stuck = `${VIDEOS_DIR}/t/vid-1.mp4`;
     const a = makeAdapter({ [metaPath("t")]: "{}", [stuck]: "bin" });
-    const remove = a.remove;
-    a.remove = async (p) => { if (p === stuck) throw new Error("locked"); return remove(p); };
+    const trash = a.trashLocal;
+    a.trashLocal = async (p) => { if (p === stuck) throw new Error("locked"); return trash(p); };
     a.rmdir = async () => { throw new Error("rmdir must not run"); };
     expect(await deleteTopic(a, "t")).toBe(false);
     expect(a.files[stuck]).toBe("bin");

@@ -29,4 +29,22 @@ async function trashVaultPath(app, path) {
   return false;
 }
 
-module.exports = { trashVaultPath };
+/**
+ * Move one path to the trash through the adapter alone, system trash first, then Obsidian's .trash.
+ * For callers without the app. True when the path is gone (an absent path counts), false when neither
+ * trash worked; nothing is ever deleted permanently.
+ */
+async function trashAdapterPath(adapter, path) {
+  try {
+    if (adapter.exists && !(await adapter.exists(path))) return true;
+  } catch { /* can't check: try to trash anyway */ }
+  try {
+    if (typeof adapter.trashSystem === "function" && (await adapter.trashSystem(path))) return true;
+  } catch (e) { console.warn("EngramQuest: system trash failed for", path, e); }
+  try {
+    if (typeof adapter.trashLocal === "function") { await adapter.trashLocal(path); return true; }
+  } catch (e) { console.warn("EngramQuest: Obsidian trash failed for", path, e); }
+  return false;
+}
+
+module.exports = { trashVaultPath, trashAdapterPath };

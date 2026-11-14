@@ -1,7 +1,7 @@
 // trashVaultPath follows the user's Obsidian "Deleted files" setting for files the vault has not indexed,
 // and never deletes permanently.
 import { describe, it, expect } from "vitest";
-import { trashVaultPath } from "../src/vault-trash.js";
+import { trashVaultPath, trashAdapterPath } from "../src/vault-trash.js";
 
 function appWith(trashOption, { systemWorks = true } = {}) {
   const files = { "engram-quest/x.json": "{}" };
@@ -43,5 +43,26 @@ describe("trashVaultPath and the Deleted files setting", () => {
     expect(await trashVaultPath(app, "engram-quest/x.json")).toBe(true);
     expect(app.used).toEqual(["system", "local"]);
     expect(app.files).toEqual({});
+  });
+});
+
+describe("trashAdapterPath (callers without the app)", () => {
+  it("never deletes permanently: with no trash that works, the file stays and the call says so", async () => {
+    const files = { "engram-quest/videos/t/a.mp4": "bin" };
+    const adapter = {
+      exists: async (p) => p in files,
+      remove: async (p) => { delete files[p]; },
+      trashSystem: async () => false,
+      trashLocal: async () => { throw new Error("locked"); },
+    };
+    expect(await trashAdapterPath(adapter, "engram-quest/videos/t/a.mp4")).toBe(false);
+    expect(files).toEqual({ "engram-quest/videos/t/a.mp4": "bin" });
+  });
+
+  it("uses the system trash first, then the Obsidian trash folder", async () => {
+    const used = [];
+    const adapter = { exists: async () => true, trashSystem: async () => { used.push("system"); return false; }, trashLocal: async () => { used.push("local"); } };
+    expect(await trashAdapterPath(adapter, "x.json")).toBe(true);
+    expect(used).toEqual(["system", "local"]);
   });
 });

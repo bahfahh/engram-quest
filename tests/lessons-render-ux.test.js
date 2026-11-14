@@ -12,11 +12,13 @@ describe("Lesson Academy render UX", () => {
     expect(src).toContain('if (showSide) renderSidebar(layout.createEl("div", { cls: "lh-lside" }), hub, t, scopedCourses, stats, refresh);');
   });
 
-  it("on a narrow desktop window the summary column steps aside so the courses keep the width (ticket-071)", () => {
+  it("on a narrow desktop window the summary opens over the courses instead of squeezing them (tickets 071, 072)", () => {
     const css = styles();
 
-    expect(css).toContain(".lh-lwrap { container:lh-lwrap / inline-size; }");
-    expect(css).toMatch(/@container lh-lwrap \(max-width:\d+px\) \{ body:not\(\.is-phone\) \.lh-lside \{ display:none; \} \}/);
+    expect(css).toContain(".lh-lwrap { container:lh-lwrap / inline-size; position:relative; }");
+    // Floating, not hidden: the "show progress" button in the capsule must still show something.
+    expect(css).toMatch(/@container lh-lwrap \(max-width:\d+px\) \{ body:not\(\.is-phone\) \.lh-lside \{ position:absolute;[^}]*background:var\(--base\)/);
+    expect(css).not.toMatch(/@container lh-lwrap[^}]*display:none/);
     // A phone keeps stacking the summary under the courses.
     expect(css).toContain("body.is-phone .lh-lwrap { flex:none; flex-direction:column; }");
   });

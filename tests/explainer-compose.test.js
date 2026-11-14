@@ -65,7 +65,7 @@ function makeApp(files = {}, notes = {}) {
         read: async (p) => { if (!(p in files)) throw new Error("ENOENT " + p); return files[p]; },
         write: async (p, v) => { files[p] = v; },
         mkdir: async () => {},
-        remove: async (p) => { trashed.push(p); delete files[p]; },
+        trashLocal: async (p) => { trashed.push(p); delete files[p]; },
       },
     },
   };

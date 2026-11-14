@@ -2,18 +2,27 @@
 // old and new file names of its schedule, hints and AI cards are one file, so "write the new name,
 // then remove the old one" deleted the data it had just written (ticket-068).
 import { describe, it, expect } from "vitest";
-import { followCardFilesRename, followNoteRenames, replaceFile } from "../src/review/rename-follow.js";
+import { followCardFilesRename, followNoteRenames, replaceFile, recoverMovingFiles } from "../src/review/rename-follow.js";
 
-// A disk that ignores case, like NTFS: one entry per lower-cased path, shown under the last name written.
-function caseInsensitiveAdapter(initial = {}) {
+// A disk that ignores case (and Unicode form), like NTFS: one entry per folded path, shown under the
+// last name written. A rename takes the new spelling, and refuses a destination that is another file.
+function caseInsensitiveAdapter(initial = {}, key = (p) => p.toLowerCase()) {
   const store = new Map();
-  for (const [p, c] of Object.entries(initial)) store.set(p.toLowerCase(), { name: p, data: c });
+  for (const [p, c] of Object.entries(initial)) store.set(key(p), { name: p, data: c });
   return {
     get files() { return Object.fromEntries([...store.values()].map((e) => [e.name, e.data])); },
-    async exists(p) { return store.has(p.toLowerCase()); },
-    async read(p) { const e = store.get(p.toLowerCase()); if (!e) throw new Error("ENOENT " + p); return e.data; },
-    async write(p, c) { const e = store.get(p.toLowerCase()); store.set(p.toLowerCase(), { name: e ? e.name : p, data: c }); },
-    async remove(p) { store.delete(p.toLowerCase()); },
+    async exists(p) { return store.has(key(p)) || [...store.keys()].some((k) => k.startsWith(key(p) + "/")); },
+    async read(p) { const e = store.get(key(p)); if (!e) throw new Error("ENOENT " + p); return e.data; },
+    async write(p, c) { const e = store.get(key(p)); store.set(key(p), { name: e ? e.name : p, data: c }); },
+    async remove(p) { store.delete(key(p)); },
+    async rename(from, to) {
+      const e = store.get(key(from));
+      if (!e) throw new Error("ENOENT " + from);
+      if (key(from) !== key(to) && store.has(key(to))) throw new Error("EEXIST " + to);
+      store.delete(key(from));
+      store.set(key(to), { name: to, data: e.data });
+    },
+    async list(dir) { return { files: [...store.values()].map((e) => e.name).filter((n) => n.startsWith(dir + "/")), folders: [] }; },
   };
 }
 
@@ -46,23 +55,22 @@ describe("case-only renames on a case-insensitive disk", () => {
   });
 });
 
-// Obsidian's adapter can rename; a case-insensitive rename keeps one entry and takes the new spelling.
+// Records every rename; `failAt` makes chosen renames throw, as a locked file would.
 function renamingAdapter(initial = {}, failAt = null) {
   const a = caseInsensitiveAdapter(initial);
+  const rename = a.rename;
   const calls = [];
   a.rename = async (from, to) => {
     calls.push(`${from} -> ${to}`);
     if (failAt && failAt(from, to)) throw new Error("rename failed");
-    const data = await a.read(from);
-    await a.remove(from);
-    await a.write(to, data);
+    return rename(from, to);
   };
   a.calls = calls;
   return a;
 }
 
 describe("replaceFile when a step fails", () => {
-  it("renames through a temporary name when the adapter can rename", async () => {
+  it("renames through a temporary name", async () => {
     const adapter = renamingAdapter({ "sr/Foo.json": "1" });
     await replaceFile(adapter, "sr/Foo.json", "sr/foo.json", "1");
     expect(adapter.files).toEqual({ "sr/foo.json": "1" });
@@ -75,39 +83,62 @@ describe("replaceFile when a step fails", () => {
     expect(adapter.files).toEqual({ "sr/Foo.json": "1" });
   });
 
-  it("without rename, a failed final write leaves the data under the old name and no temporary file", async () => {
-    const adapter = caseInsensitiveAdapter({ "sr/Foo.json": "1" });
-    const write = adapter.write;
-    let writes = 0;
-    adapter.write = async (p, c) => { writes += 1; if (writes === 2) throw new Error("disk full"); return write(p, c); };
-    await expect(replaceFile(adapter, "sr/Foo.json", "sr/foo.json", "1")).rejects.toThrow("disk full");
-    expect(Object.values(adapter.files)).toEqual(["1"]);
-    expect(Object.keys(adapter.files).some((p) => p.endsWith(".moving"))).toBe(false);
+  it("when the undo fails too, the data waits in the temporary file and the next start puts it back", async () => {
+    const adapter = renamingAdapter({ "engram-review/sr/Foo.json": "1" }, (from) => from.endsWith(".moving"));
+    await expect(replaceFile(adapter, "engram-review/sr/Foo.json", "engram-review/sr/foo.json", "1")).rejects.toThrow("rename failed");
+    expect(adapter.files).toEqual({ "engram-review/sr/foo.json.moving": "1" });
+    // After a restart the file is no longer locked.
+    const restarted = caseInsensitiveAdapter(adapter.files);
+    await recoverMovingFiles(restarted);
+    expect(restarted.files).toEqual({ "engram-review/sr/foo.json": "1" });
+  });
+
+  it("the start-up sweep keeps both files when the name is taken again", async () => {
+    const files = { "engram-review/hints/A__foo.json.moving": "old", "engram-review/hints/A__foo.json": "new" };
+    const adapter = caseInsensitiveAdapter(files);
+    await recoverMovingFiles(adapter);
+    expect(adapter.files).toEqual(files);
   });
 
   it("treats names that differ only in Unicode form as one file", async () => {
     const nfd = "sr/Café.json";
     const nfc = "sr/café.json";
-    const key = (p) => p.normalize("NFC").toLowerCase();
-    const store = new Map([[key(nfd), { name: nfd, data: "1" }]]);
-    const adapter = {
-      get files() { return Object.fromEntries([...store.values()].map((e) => [e.name, e.data])); },
-      async exists(p) { return store.has(key(p)); },
-      async read(p) { return store.get(key(p)).data; },
-      async write(p, c) { const e = store.get(key(p)); store.set(key(p), { name: e ? e.name : p, data: c }); },
-      async remove(p) { store.delete(key(p)); },
-    };
+    const adapter = caseInsensitiveAdapter({ [nfd]: "1" }, (p) => p.normalize("NFC").toLowerCase());
     await replaceFile(adapter, nfd, nfc, "1");
     expect(adapter.files).toEqual({ [nfc]: "1" });
+  });
+});
+
+describe("one failed move does not stop the others", () => {
+  it("an AI card that cannot move still lets both of the note's hints files follow", async () => {
+    const adapter = caseInsensitiveAdapter({
+      "engram-review/hints/A__Foo.json": JSON.stringify({ note: "A/Foo.md", cards: {} }),
+      "engram-review/ai-cards/A__Foo.md": "Q :: A\n",
+      "engram-review/hints/Foo.json": JSON.stringify({ note: "A/Foo.md", cards: {} }),
+    });
+    const write = adapter.write;
+    adapter.write = async (p, c) => { if (p.includes("ai-cards")) throw new Error("locked"); return write(p, c); };
+    await followCardFilesRename(adapter, "A/Foo.md", "A/Bar.md");
+    expect(Object.keys(adapter.files).sort()).toEqual([
+      "engram-review/ai-cards/A__Foo.md",
+      "engram-review/hints/A__Bar.json",
+      "engram-review/hints/Bar.json",
+    ]);
   });
 });
 
 describe("Synapse anchors on a case-only rename", () => {
   it("the note's own anchors file takes the new name", async () => {
     const adapter = caseInsensitiveAdapter({ "engram-review/synapse/A__Foo.json": JSON.stringify({ note: "A/Foo.md" }) });
-    adapter.list = async () => ({ files: Object.keys(adapter.files).filter((p) => p.startsWith("engram-review/synapse/")), folders: [] });
     await followNoteRenames(adapter, new Map([["A/Foo.md", "A/foo.md"]]));
     expect(Object.keys(adapter.files)).toEqual(["engram-review/synapse/A__foo.json"]);
     expect(JSON.parse(adapter.files["engram-review/synapse/A__foo.json"]).note).toBe("A/foo.md");
+  });
+});
+
+describe("start-up recovery", () => {
+  it("the plugin sweeps interrupted renames once the vault is ready", async () => {
+    const { readFileSync } = await import("node:fs");
+    expect(readFileSync("src/main.js", "utf8")).toContain("onLayoutReady(()=>renameFollow.recoverMovingFiles(this.app.vault.adapter))");
   });
 });
