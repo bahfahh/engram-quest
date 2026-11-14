@@ -247,7 +247,7 @@ var Q=class extends I.Modal{
     if(!this._timerEl||!this._timerEl.isConnected) return;
     if(remaining<=0){
       this._timerEl.textContent=`⏱ ${c(t,"TIMEBOX_TIMES_UP")}`;
-      this._timerEl.style.color="var(--newt)";
+      this._timerEl.classList.add("lh-timer-up");
     } else {
       const mm=Math.floor(remaining/60),ss=remaining%60;
       this._timerEl.textContent=`⏱ ${mm}:${ss.toString().padStart(2,"0")}`;
@@ -706,9 +706,9 @@ var Q=class extends I.Modal{
             // Task 4: prevent double-submit
             if(this._rating_locked) return;
             this._rating_locked=true;
-            x.style.opacity="0.6"; x.style.pointerEvents="none";
+            x.classList.add("lh-op-60","lh-no-pointer");
             // disable all rating buttons immediately
-            g.querySelectorAll(".lh-rating-btn").forEach(b=>{ b.style.opacity="0.5"; b.style.pointerEvents="none"; });
+            g.querySelectorAll(".lh-rating-btn").forEach(b=>{ b.classList.add("lh-op-50","lh-no-pointer"); });
 
             let w=P(E.q,p,t);
             if(e.notePath) try {
@@ -877,9 +877,9 @@ var Q=class extends I.Modal{
       "deck-token": isZh?"同 deck":"Deck match",
       "file-node": isZh?"關聯節點":"Linked node"
     };
-    modal.modalEl.style.cssText="width:min(92vw,620px);padding:0;border-radius:18px;overflow:hidden;background:var(--base);box-shadow:var(--float);";
+    modal.modalEl.classList.add("lh-frame-map");
     const wrap=modal.contentEl;
-    wrap.style.cssText="padding:24px;display:flex;flex-direction:column;gap:14px;";
+    wrap.classList.add("lh-stack-14");
     wrap.createEl("div",{text:isZh?"選擇 Memory Map":"Select Memory Map",attr:{style:"font-size:18px;font-weight:700;color:var(--text);"}});
     wrap.createEl("div",{text:isZh?"選擇要開啟的地圖":"Choose the map to open",attr:{style:"font-size:12px;color:var(--text3);margin-top:-6px;"}});
     candidates.forEach(candidate=>{
@@ -914,7 +914,7 @@ var Q=class extends I.Modal{
   _minimize(){
     if(this._minimized) return;
     this._minimized=true;
-    this.containerEl.style.display="none";
+    this.containerEl.classList.add("lh-minimized");
     // Release modal keymap scope so global hotkeys (Ctrl+P / Ctrl+O) work while minimized
     try{this.app.keymap.popScope(this.scope);}catch(e){}
     if(this._fab) return; // already exists
@@ -923,7 +923,7 @@ var Q=class extends I.Modal{
   _restore(){
     if(!this._minimized) return;
     this._minimized=false;
-    this.containerEl.style.display="";
+    this.containerEl.classList.remove("lh-minimized");
     try{this.app.keymap.pushScope(this.scope);}catch(e){}
     if(this._fab){this._fab.remove();this._fab=null;}
   }
@@ -966,8 +966,8 @@ var Q=class extends I.Modal{
     let backFmtBar=backHeader.createEl("div",{attr:{class:"lh-edit-fmt-bar"}});
     let taBack=backField.createEl("textarea",{attr:{class:"lh-edit-textarea"}});
     taBack.value=e.back||"";
-    taBack.style.minHeight="140px";
-    function autoResize(ta){ta.style.height="auto";ta.style.height=ta.scrollHeight+"px";}
+    taBack.classList.add("lh-edit-textarea-tall");
+    function autoResize(ta){ta.setCssProps({height:"auto"});ta.style.height=ta.scrollHeight+"px";}
     autoResize(taBack);
     taBack.addEventListener("input",()=>autoResize(taBack));
     const applyEditFmt=(ta,wrap)=>{
@@ -1053,9 +1053,9 @@ var Q=class extends I.Modal{
     if(!isAiCard){
       const sourceNote=e.notePath||"";
       const modal=themedModal(new I.Modal(this.app));
-      modal.modalEl.style.cssText="width:min(92vw,400px);padding:0;border-radius:16px;overflow:hidden;";
+      modal.modalEl.classList.add("lh-frame-sm");
       const wrap=modal.contentEl;
-      wrap.style.cssText="padding:24px;display:flex;flex-direction:column;gap:14px;";
+      wrap.classList.add("lh-stack-14");
       wrap.createEl("div",{text:"✏️ "+c(t,"EDIT_CARD"),attr:{style:"font-size:16px;font-weight:700;color:var(--text);"}});
       wrap.createEl("div",{text:`這是「${sourceNote}」的手寫筆記卡片，請直接在筆記中刪除對應的 question :: answer 行。`,attr:{style:"font-size:13px;color:var(--text2);line-height:1.6;"}});
       const btnRow=wrap.createEl("div",{attr:{style:"display:flex;gap:8px;justify-content:flex-end;"}});
@@ -1068,9 +1068,9 @@ var Q=class extends I.Modal{
 
     // AI card: confirm then delete
     const modal=themedModal(new I.Modal(this.app));
-    modal.modalEl.style.cssText="width:min(92vw,400px);padding:0;border-radius:16px;overflow:hidden;";
+    modal.modalEl.classList.add("lh-frame-sm");
     const wrap=modal.contentEl;
-    wrap.style.cssText="padding:24px;display:flex;flex-direction:column;gap:14px;";
+    wrap.classList.add("lh-stack-14");
     wrap.createEl("div",{text:c(t,"DELETE_CONFIRM_TITLE").replace("{name}",e.front),attr:{style:"font-size:16px;font-weight:700;color:var(--text);"}});
     wrap.createEl("div",{text:c(t,"DELETE_CONFIRM_FILE"),attr:{style:"font-size:13px;color:var(--text2);line-height:1.6;"}});
     const btnRow=wrap.createEl("div",{attr:{style:"display:flex;gap:8px;justify-content:flex-end;"}});

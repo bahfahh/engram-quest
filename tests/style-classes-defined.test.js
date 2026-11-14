@@ -9,6 +9,9 @@ const require = createRequire(import.meta.url);
 // missing from the stylesheet would silently drop the style, so check each one.
 const MIGRATED_FILES = [
   "src/quest/modal.js",
+  "src/review/session.js",
+  "src/review/create.js",
+  "src/review/modal.js",
 ];
 
 function classesUsedIn(file) {
