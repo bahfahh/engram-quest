@@ -8,7 +8,7 @@
 // batch, one at a time, so each data file is read and written once per batch and two events never
 // rewrite the same file at the same time.
 
-const { srFileName, HINTS_DIR, AI_CARDS_DIR } = require("./helpers");
+const { srFileName, HINTS_DIR, AI_CARDS_DIR, nameKey } = require("./helpers");
 
 const SYNAPSE_DIR = "engram-review/synapse";
 const EXPLAINER_META_DIR = "engram-quest/explainer/meta";
@@ -68,22 +68,38 @@ async function listJson(adapter, dir) {
 
 // Rewrites one JSON file when it mentions a moved path (to `target` when the file itself moves);
 // unreadable files are left alone.
+/** Two paths that differ only in letter case or Unicode form are one file on Windows and macOS. */
+const sameFile = (a, b) => nameKey(a) === nameKey(b);
+
 /**
- * Put `data` at `to` and drop `from`. When the two names differ only in letter case they are one
- * file on Windows and macOS, so writing the new name and then removing the old one would delete it:
- * go through a temporary name instead, which also gives the file its new case.
+ * Put `data` at `to` and drop `from`. When both names are one file on this disk (`sameFile`),
+ * writing the new name and then removing the old one would delete it: the file is renamed through a
+ * temporary name instead, which also gives it the new spelling. Every step that fails leaves the data
+ * under `from` (a failed second rename is undone), so a failure never leaves it only in the temporary file.
  */
 async function replaceFile(adapter, from, to, data) {
   if (from === to) return adapter.write(to, data);
-  if (from.toLowerCase() !== to.toLowerCase()) {
+  if (!sameFile(from, to)) {
     await adapter.write(to, data);
     await adapter.remove(from);
     return;
   }
   const temp = `${to}.moving`;
+  if (typeof adapter.rename === "function") {
+    await adapter.rename(from, temp);
+    try { await adapter.rename(temp, to); } catch (e) {
+      await adapter.rename(temp, from).catch(() => {});
+      throw e;
+    }
+    await adapter.write(to, data);
+    return;
+  }
   await adapter.write(temp, data);
   await adapter.remove(from);
-  await adapter.write(to, data);
+  try { await adapter.write(to, data); } catch (e) {
+    await adapter.write(from, data).then(() => adapter.remove(temp)).catch(() => {});
+    throw e;
+  }
   await adapter.remove(temp);
 }
 
@@ -102,7 +118,7 @@ async function followNoteRenames(adapter, moves) {
   for (const [from, to] of moves) {
     const ownOld = `${SYNAPSE_DIR}/${srFileName(from)}.json`;
     const ownNew = `${SYNAPSE_DIR}/${srFileName(to)}.json`;
-    if (ownOld !== ownNew && (await adapter.exists(ownOld)) && !(await adapter.exists(ownNew))) {
+    if (ownOld !== ownNew && (await adapter.exists(ownOld)) && (sameFile(ownOld, ownNew) || !(await adapter.exists(ownNew)))) {
       await rewrite(adapter, ownOld, moves, ownNew);
     }
   }

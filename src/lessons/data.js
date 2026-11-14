@@ -132,8 +132,9 @@ async function loadCourse(adapter, slug) {
 
 /**
  * Write a course's meta.json. Entries in `lessons` that aren't lessons (strings, arrays, null…) are
- * taken from the file on disk and put back at their index, so they survive whatever copy of the meta
- * the caller holds; a `lessons` value that isn't a list is kept as is unless the caller has lessons.
+ * taken from the file on disk and put back at their old index, so they survive whatever copy of the meta
+ * the caller holds (their content is kept; after lessons are removed or reordered their place among the
+ * lessons can shift); a `lessons` value that isn't a list is kept as is unless the caller has lessons.
  */
 async function saveCourse(adapter, slug, meta) {
   const path = `${LESSONS_DIR}/${slug}/meta.json`;
@@ -319,6 +320,10 @@ async function deleteLesson(app, slug, lessonId) {
   if (!meta) return null;
   const lesson = meta.lessons.find((l) => l.id === lessonId);
   if (lesson && lesson.file) {
+    // The file name comes from AI-written meta.json: never let it point outside the course folder.
+    if (String(lesson.file).split(/[\\/]/).some((part) => part === "..") || /^[\\/]|^[a-z]:/i.test(lesson.file) || String(slug).includes("..")) {
+      throw new Error(`lesson file ${lesson.file} is outside the course folder`);
+    }
     const path = `${LESSONS_DIR}/${slug}/${lesson.file}`;
     if (!(await trashVaultPath(app, path))) throw new Error(`could not move ${path} to the trash`);
   }

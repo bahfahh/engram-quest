@@ -580,6 +580,7 @@ module.exports = {
   hintsPath,
   loadHints,
   listHintFiles,
+  nameKey,
   buildSrRecord,
   recordReviewDay,
   loadSrData,

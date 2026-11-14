@@ -176,3 +176,34 @@ describe("deleteDeckCards with files Obsidian has not indexed", () => {
     ]);
   });
 });
+
+describe("deleteDeckCards when an AI card file cannot be trashed", () => {
+  it("keeps that file's schedule and hints, finishes the other files, and reports the failure", async () => {
+    const files = {
+      "engram-review/ai-cards/Stuck.md": "S :: x\n",
+      "engram-review/sr/engram-review__ai-cards__Stuck.json": "{\"S\":{}}",
+      "engram-review/hints/engram-review__ai-cards__Stuck.json": hints("engram-review/ai-cards/Stuck.md", { S: { l1: "a" } }),
+      "engram-review/ai-cards/Gone.md": "G :: y\n",
+      "engram-review/sr/engram-review__ai-cards__Gone.json": "{\"G\":{}}",
+    };
+    const adapter = {
+      async exists(p) { return p in files; },
+      async read(p) { if (!(p in files)) throw new Error("ENOENT " + p); return files[p]; },
+      async write(p, c) { files[p] = c; },
+      async trashLocal(p) { if (p.includes("ai-cards/Stuck")) throw new Error("locked"); delete files[p]; },
+    };
+    const app = {
+      vault: { getAbstractFileByPath: () => null, read: async () => "", modify: async () => {}, adapter },
+      fileManager: { trashFile: async () => {} },
+    };
+    await expect(deleteDeckCards(app, { cards: [
+      { front: "S", back: "x", notePath: "engram-review/ai-cards/Stuck.md" },
+      { front: "G", back: "y", notePath: "engram-review/ai-cards/Gone.md" },
+    ] })).rejects.toThrow("Stuck.md");
+    expect(Object.keys(files).sort()).toEqual([
+      "engram-review/ai-cards/Stuck.md",
+      "engram-review/hints/engram-review__ai-cards__Stuck.json",
+      "engram-review/sr/engram-review__ai-cards__Stuck.json",
+    ]);
+  });
+});

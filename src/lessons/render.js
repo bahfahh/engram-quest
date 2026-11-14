@@ -499,6 +499,7 @@ function confirmDeleteCourse(hub, t, slug, meta, refresh) {
         new I.Notice(c(t, "LESSON_COURSE_DELETED"));
       } catch (e) {
         console.error("EngramQuest: course delete failed", e);
+        new I.Notice(c(t, "DELETE_FAILED"));
       }
       refresh();
     },

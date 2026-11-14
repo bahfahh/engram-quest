@@ -112,7 +112,7 @@ function openNewVideoModal(hub, t, onSaved, edit = null, onDelete = null) {
   };
   drawTeacher();
   // A series may already name one of the user's own teachers; their files are read after the form is drawn.
-  loadCustomTeachers(app.vault.adapter).catch(() => []).then((list) => { custom = list; drawTeacher(); });
+  loadCustomTeachers(app.vault.adapter).catch(() => []).then((list) => { custom = list; drawTeacher(); }).catch((e) => console.warn("EngramQuest: could not show the series teacher", e));
 
   const srcField = field("VIDEO_NEW_SOURCE", "lh-vid-new-src");
   const select = srcField.createEl("select", { cls: "lh-vid-select", attr: { id: "lh-vid-new-src" } });

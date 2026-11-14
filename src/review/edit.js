@@ -544,13 +544,15 @@ function removeCardFromContent(content, card, fallbackBack) {
  */
 async function deleteDeckCards(app, deck) {
   const paths = [...new Set(deck.cards.map(c => c.notePath).filter(Boolean))];
+  const kept = [];
 
   for (const p of paths) {
     const isAiCard = p.startsWith('engram-review/ai-cards/');
 
     if (isAiCard) {
-      // Trash the whole AI card file (the vault index may not know it yet: trashVaultPath covers both)
-      if (!(await trashVaultPath(app, p))) console.warn("deleteDeckCards: could not trash", p);
+      // Trash the whole AI card file (the vault index may not know it yet: trashVaultPath covers both).
+      // If it stays, its schedule and hints stay with it.
+      if (!(await trashVaultPath(app, p))) { kept.push(p); continue; }
     } else {
       // Remove only the matching :: lines from user source note
       const file = app.vault.getAbstractFileByPath(p);
@@ -587,6 +589,7 @@ async function deleteDeckCards(app, deck) {
       }
     } catch (e) { console.warn('deleteDeckCards: hints cleanup failed', e); }
   }
+  if (kept.length) throw new Error(`could not move ${kept.join(", ")} to the trash`);
 }
 
 /**

@@ -32,7 +32,7 @@ def studio_dir():
     if os.environ.get("STUDIO"): return os.environ["STUDIO"]
     for d in (os.getcwd(), "/tmp/studio"):  # a studio has its projects/ next to render.cjs (08-tools.md section 1)
         if os.path.isdir(os.path.join(d, "projects")) and os.path.isfile(os.path.join(d, "render.cjs")): return d
-    sys.exit("Set STUDIO to the studio folder (reference/08-tools.md section 1).")
+    sys.exit("No studio found: run from the studio folder (projects/ next to render.cjs) or set STUDIO (reference/08-tools.md section 1).")
 STUDIO = studio_dir()
 MUSIC = os.path.join(os.path.dirname(HERE), "assets", "music", "Morning.mp3")
 CREDIT = '"Morning" Kevin MacLeod (incompetech.com) Licensed under Creative Commons: By Attribution 4.0 License http://creativecommons.org/licenses/by/4.0/'
@@ -156,19 +156,21 @@ def make_cards():
 # Cards take a while; meta.json is read afterwards so progress saved by the plugin meanwhile is kept.
 cards_file = make_cards()
 mp = os.path.join(series, "meta.json")
+# --tags and --source, trimmed and without repeats, the same for a new series and an existing one.
+given = {"tags": list(dict.fromkeys(x.strip() for x in (opt('tags') or '').split(',') if x.strip())),
+         "sources": [s.strip() for s in [opt('source') or ''] if s.strip()]}
 if os.path.exists(mp):
     meta = json.load(open(mp, encoding="utf-8"))
     # A series the plugin created already has meta.json; the skill still owns tags and sources, so add to them
     # (union, existing order kept) and leave every other field to its owner.
-    for key, given in (("tags", (opt('tags') or '').split(',')), ("sources", [opt('source') or ''])):
-        extra = list(dict.fromkeys(x.strip() for x in given if x.strip()))
+    for key, extra in given.items():
         have = meta.get(key, [])
         if not extra or not isinstance(have, list): continue  # nothing to add, or not ours to reshape
         merged = have + [x for x in extra if x not in have]
         if merged != have: meta[key] = merged
 else:
     meta = {"title": opt('series-title', os.path.basename(series)), "status": "ready",
-            "tags": [t for t in opt('tags', '').split(',') if t], "sources": [s for s in [opt('source')] if s],
+            "tags": given["tags"], "sources": given["sources"],
             "videos": [], "starred": False,
             "createdAt": subprocess.run(["date", "-u", "+%Y-%m-%dT%H:%M:%S.000Z"], capture_output=True, text=True).stdout.strip()}
 entry = {"id": pid, "title": title, "file": f"{pid}.mp4", "subtitles": f"{pid}.vtt", "duration": round(dur),
