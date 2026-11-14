@@ -7,6 +7,7 @@ import { execFileSync } from "node:child_process";
 import { mkdtempSync, mkdirSync, writeFileSync, copyFileSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { vaultAdapter, json } from "./helpers/vault-adapter.js";
 
 const require = createRequire(import.meta.url);
@@ -135,6 +136,36 @@ describe("note search leaves engram-quest/ out", () => {
       const out = execFileSync("bash", [path.join(scripts, "search_vault.sh"), "mitochondria"], { encoding: "utf8" });
       expect(out).toContain("note.md");
       expect(out).not.toContain("engram-quest");
+    });
+  }
+});
+
+// The video skills' doctor.py warns about key-shaped strings in the custom area. Python only where it is installed.
+const python = ["python", "python3"].find((cmd) => {
+  try { return /Python 3/.test(execFileSync(cmd, ["--version"], { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] })); } catch (_) { return false; }
+});
+
+describe.skipIf(!python)("the video skills' check script finds a key put into the custom area", () => {
+  let dir;
+  afterEach(() => dir && rmSync(dir, { recursive: true, force: true }));
+  const put = (rel, text) => { mkdirSync(path.dirname(path.join(dir, rel)), { recursive: true }); writeFileSync(path.join(dir, rel), text); };
+  const scan = (skill) => {
+    try { return { code: 0, out: execFileSync(python, [fileURLToPath(new URL(`../skills/${skill}/scripts/doctor.py`, import.meta.url)), "--keys", "--vault", dir], { encoding: "utf8" }) }; }
+    catch (e) { return { code: e.status, out: String(e.stdout) }; }
+  };
+
+  for (const skill of ["animated-course", "episodic-review"]) {
+    it(skill, () => {
+      dir = mkdtempSync(path.join(tmpdir(), "eq-keys-"));
+      put("engram-quest/custom/preferences/voice.md", "- 2026-11-14 edge-tts, zh-TW-YunJheNeural, rate -4% (asked twice)\n");
+      expect(scan(skill).code).toBe(0);
+
+      const fake = "FAKE0FAKE1FAKE2FAKE3FAKE4";
+      put("engram-quest/custom/preferences/all.md", `- GEMINI_API_KEY=${fake}\n`);
+      const { code, out } = scan(skill);
+      expect(code).toBe(1);
+      expect(out).toMatch(/preferences[\\/]all\.md:1/);
+      expect(out).not.toContain(fake);
     });
   }
 });

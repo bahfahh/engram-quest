@@ -98,7 +98,7 @@ scripts/
   music/, mix.py            score generator (one theme per film) and final mix
   deliver.py                compress, poster, meta.json entry
   render_canvas.cjs         an Obsidian canvas as an image, for reading
-  obsidian_index.js, doctor.py
+  obsidian_index.js, doctor.py   doctor.py also warns about anything shaped like a key in engram-quest/custom/
 ```
 
 ## Reporting problems

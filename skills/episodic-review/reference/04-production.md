@@ -86,6 +86,7 @@ Changing timing after the score is generated means regenerating the cue sheet; d
   node render_stage.cjs projects/<id> --poster 30        # picks up narration.wav
   ```
   The credits text is in `audio/cues.json`.
+- A track kept in the custom area (`engram-quest/custom/assets/music/`, listed in `assets/index.json` for this skill) may be the score when the decision order (`custom-area.md`) picks it: pass it as `--score`, and its source and licence from the asset list as the credits. It still has to do what the score is for (below).
 - **What the score is for.** A film of six to ten minutes with no narration needs something that is heard as a piece of music: light, slow, with a melody. The cue sheet's style `map` gives one theme for the whole film: the opening states the melody (piano over long strings), the body restates it and carries on as one continuous piece 3 dB lower, the ending brings it back. One key, one tempo, no new piece per chapter. A bed without melody under a long film is heard as no music at all.
 - **Level.** The viewer is reading. `--lufs -25` is the level for a film with music only (measured: about -25 in the opening and ending, -28 in the body); `-16.5` is for a film with narration. `--air 3` lifts the top a little so a quiet score survives small speakers.
 - **Recall.** During each countdown the music steps back about 9 dB and keeps going; one clean chime marks the reveal. Both come from the `marks` in the cue sheet (the `recall` pattern emits them; your own beat can call `cue('recall', t0, t1)`).

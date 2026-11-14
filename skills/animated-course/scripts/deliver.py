@@ -4,11 +4,13 @@
   STUDIO=<studio> python3 deliver.py <project-id> "<video title>" --series <vault>/engram-quest/videos/<series> \
       [--series-title "<course title>"] [--tags "tag1,tag2"] [--source engram-quest/lessons/<course>/meta.json] \
       [--until 9] [--solo 3] [--tail 5] [--style classroom+real-ui] [--after <previous-id>] [--dry] [--vault <vault root>] [--no-cards]
+      [--music <file> --credit "<credit>"]
 
 final.mp4 + narration.wav -> bgm2.py (encoded to the vault's commit spec: CRF 26, maxrate 1800k, AAC 128k; over --max-mb
 (95) it is re-encoded two-pass, so the delivered file can be committed as is; "Morning" at the opening and ending only, ending -3 dB; first frame held 3 s,
 last frame held 5 s; narration at -16 LUFS) -> <series>/<id>.mp4, <id>.vtt, <id>.jpg + an entry in <series>/meta.json
 (with the music credit). The video is placed after --after, or appended; re-delivering an id replaces its entry in place.
+--music / --credit: a track kept in engram-quest/custom/ instead of Morning, with its credit for the entry.
 --solo / --tail: first / last frame holds in seconds (default 3 / 5). A social film whose conflict lands in the first
 seconds can use --solo 0 (experiment 17).
 --dry: use narration_dry.wav (voice only, no sound effects) and deliver as <id>-dry — the B version for A/B listening;
@@ -37,6 +39,12 @@ CREDIT = '"Morning" Kevin MacLeod (incompetech.com) Licensed under Creative Comm
 args = sys.argv[1:]; pid, title = args[0], args[1]
 opt = lambda k, d=None: args[args.index('--' + k) + 1] if '--' + k in args else d
 series = opt('series') or sys.exit("--series <folder> is required")
+# A track from the user's custom area (engram-quest/custom/assets/music/, listed in assets/index.json) plays instead
+# of "Morning"; the delivered entry has to name what plays, so its credit comes with it.
+if opt('music'):
+    MUSIC = opt('music')
+    CREDIT = opt('credit') or sys.exit('--music needs --credit "<title, author, licence>" (the source and licence from assets/index.json)')
+    if not os.path.isfile(MUSIC): sys.exit(f"--music: no such file {MUSIC}")
 until, style = opt('until', '9'), opt('style', 'classroom')
 dry = '--dry' in args
 src = os.path.join(STUDIO, "projects", pid); os.makedirs(series, exist_ok=True)

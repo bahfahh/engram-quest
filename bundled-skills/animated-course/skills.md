@@ -107,7 +107,7 @@ reference/
   08-tools.md                 studio setup and commands, script.json, scene.html contract, components
   09-pitfalls.md              mistakes already made, with the reason
   10-iteration-and-records.md how experience is recorded; status changes; end-of-round checklist
-  11-teachers.md              the learner picks who teaches: shared rhythm, beat styles, the three core teachers, skins, names, custom teachers
+  11-teachers.md              the learner picks who teaches: shared rhythm, beat styles, the three core teachers, skins, names; the learner's own teachers, skins, looks and music (custom area)
   12-modules.md               the full version by default, the learner subtracts: cards (review cards, needs rework); transfer rejected
 templates/                    SERIES, UNDERSTANDING, CARD, SCRIPT, FACTS, NOTES, BRIEF (producer task), SILENT-REVIEW
 scripts/
@@ -116,7 +116,7 @@ scripts/
   deliver.py                  music, holds, poster, subtitles, meta.json entry
   burnsubs.py                 a separate copy with subtitles burned in, for social platforms
   series_status.py            lists the plugin's waiting requests, reports making / ready / failed
-  doctor.py                   checks this machine has what production needs
+  doctor.py                   checks this machine has what production needs, and warns about anything shaped like a key in engram-quest/custom/
 assets/
   music/                      Morning.mp3 (CC BY 4.0, credit required) — opening and ending only
   looks/                      stills from the demo films, with what to learn and what not to copy

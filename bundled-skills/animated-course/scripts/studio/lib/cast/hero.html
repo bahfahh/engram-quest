@@ -7,7 +7,7 @@ import * as THREE from 'three';
 import { makeStage } from '/lib/cast/stage.js';
 const Q = new URLSearchParams(location.search);
 const id = Q.get('style') || 'glossy-owl', role = Q.get('role') || 'teacher', pose = Q.get('pose') || 'idle';
-const mod = await import(`/lib/cast/skins/${id}.js`);
+const mod = await import((await import('/lib/cast/skin-url.js')).skinUrl(id));
 const st = await makeStage({ card: false });
 const cast = await mod.create(st.env, { variant: new URLSearchParams(location.search).get('variant') });
 st.adopt(cast);
