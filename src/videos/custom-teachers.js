@@ -55,9 +55,15 @@ async function loadCustomTeachers(adapter) {
   return [...found.values()];
 }
 
+/** The user's own teachers when one of these series has a film a custom teacher made; otherwise nothing is read. */
+async function customTeachersOfFilms(adapter, topics) {
+  const named = topics.some(({ meta }) => (meta.videos || []).some((v) => v.cast && String(v.cast.teacher).startsWith("custom:")));
+  return named ? loadCustomTeachers(adapter).catch(() => []) : [];
+}
+
 /** The teacher behind a saved id, the user's own included; an unknown id reads as the default teacher. */
 function findTeacherIn(custom, id) {
   return custom.find((x) => x.id === id) || findTeacher(id);
 }
 
-module.exports = { CUSTOM_DIR, loadCustomTeachers, findTeacherIn };
+module.exports = { CUSTOM_DIR, loadCustomTeachers, customTeachersOfFilms, findTeacherIn };

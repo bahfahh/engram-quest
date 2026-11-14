@@ -9,6 +9,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { vaultAdapter, json } from "./helpers/vault-adapter.js";
+import { FakeEl, drawn } from "./helpers/player-page.js";
 
 const require = createRequire(import.meta.url);
 for (const ext of [".jpg", ".mp3"]) Module._extensions[ext] = (module, file) => { module.exports = file; };
@@ -300,6 +301,7 @@ class El {
   createEl(tag, opts) { const el = new El(tag, opts); this.children.push(el); return el; }
   createDiv(opts) { return this.createEl("div", opts); }
   createSpan(opts) { return this.createEl("span", opts); }
+  appendChild(child) { this.children.push(child); return child; }
   empty() { this.children = []; }
   addClass(...names) { this.cls += " " + names.join(" "); }
   setText(text) { this.text = text; }
@@ -342,6 +344,108 @@ describe("the teacher menu", () => {
   });
 });
 
+describe("films made by a custom teacher", () => {
+  const { teacherOfVideo } = require("../src/videos/teachers.js");
+  const { customTeachersOfFilms } = require("../src/videos/custom-teachers.js");
+  const { renderTopic } = require("../src/videos/render.js");
+  const kayFile = { "engram-quest/custom/cast/teachers/kay.json": json({ name: { en: "Kay" }, skin: "custom:owl" }), "engram-quest/custom/cast/skins/owl/portrait.jpg": "jpg" };
+  const series = (teacher) => ({ slug: "maths", meta: { title: "Maths", status: "ready", sources: [], tags: [], videos: [{ id: "l01", title: "Lesson 1", file: "l01.mp4", duration: 60, cast: { teacher } }] } });
+
+  it("name their teacher, so the player can say who taught", async () => {
+    const custom = await loadCustomTeachers(vaultAdapter({ ...kayFile }));
+    expect(teacherOfVideo("custom:kay", custom)?.name).toEqual({ en: "Kay" });
+    expect(teacherOfVideo("custom:gone", custom)).toBeNull();
+  });
+
+  it("read the custom teachers only when a film names one", async () => {
+    const adapter = vaultAdapter({ ...kayFile });
+    expect(await customTeachersOfFilms(adapter, [series("nico")])).toEqual([]);
+    expect(adapter.reads).toEqual([]);
+    expect((await customTeachersOfFilms(adapter, [series("custom:kay")])).map((x) => x.id)).toEqual(["custom:kay"]);
+  });
+
+  it("show the taught-by label on the player", async () => {
+    const original = { Platform: obsidian.Platform, setIcon: obsidian.setIcon, contains: obsidian.activeDocument.body.classList.contains, RO: globalThis.ResizeObserver };
+    obsidian.Platform = { isDesktopApp: false };
+    obsidian.setIcon = () => {};
+    obsidian.activeDocument.body.classList.contains = () => false;
+    globalThis.ResizeObserver = class { observe() {} disconnect() {} };
+    try {
+      const adapter = Object.assign(vaultAdapter({ ...kayFile, "engram-quest/videos/maths/meta.json": json(series("custom:kay").meta), "engram-quest/videos/maths/l01.mp4": "" }), { getResourcePath: (p) => p });
+      const [topic] = await require("../src/videos/data.js").listTopics(adapter);
+      const hub = { app: { vault: { adapter } }, plugin: { settings: { language: "en" } }, _vTopic: null, _vCustomTeachers: await customTeachersOfFilms(adapter, [topic]) };
+      const body = new FakeEl();
+      renderTopic(body, hub, hub.plugin.settings, topic, () => {});
+      await new Promise((resolve) => setTimeout(resolve, 20));
+      expect(drawn(body).some((el) => el.text === "Taught by Kay")).toBe(true);
+    } finally {
+      obsidian.Platform = original.Platform; obsidian.setIcon = original.setIcon;
+      obsidian.activeDocument.body.classList.contains = original.contains; globalThis.ResizeObserver = original.RO;
+    }
+  });
+});
+
+describe("video settings with a saved custom teacher", () => {
+  const original = { Modal: obsidian.Modal };
+  afterEach(() => { obsidian.Modal = original.Modal; });
+
+  async function notes(teacher, files = {}, language = "en") {
+    let modal;
+    obsidian.Modal = class { constructor() { this.contentEl = new El(); this.modalEl = new El(); modal = this; } open() {} close() {} };
+    const { openVideoSettingsModal } = require("../src/videos/settings-modal.js");
+    const adapter = Object.assign(vaultAdapter({ "engram-quest/videos/settings.json": json({ pro: true, cast: { teacher } }), ...files }), { getResourcePath: (p) => p });
+    await openVideoSettingsModal({ app: { vault: { adapter } }, plugin: { settings: { language, licenseValid: true } } }, { language, licenseValid: true });
+    return modal.contentEl.all().filter((el) => /lh-vid-set-note/.test(el.cls)).map((el) => el.text);
+  }
+
+  it("says when its file is missing or its name cannot be listed, in both languages", async () => {
+    expect((await notes("custom:gone")).some((n) => n.includes('"gone" was not found'))).toBe(true);
+    expect((await notes("custom:Bad_Name", { "engram-quest/custom/cast/teachers/Bad_Name.json": json({ name: { en: "B" } }) })).some((n) => n.includes("was not found"))).toBe(true);
+    expect((await notes("custom:gone", {}, "zh-tw")).some((n) => n.includes("找不到你的老師「gone」"))).toBe(true);
+  });
+
+  it("says nothing of the kind when the teacher is there", async () => {
+    const found = await notes("custom:kay", { "engram-quest/custom/cast/teachers/kay.json": json({ name: { en: "Kay" } }) });
+    expect(found.some((n) => n.includes("not found"))).toBe(false);
+  });
+});
+
+describe("the plugin's own flashcard scan", () => {
+  const { scanReviewDecks } = require("../src/review/decks.js");
+  const reviewHelpers = require("../src/review/helpers.js");
+
+  it("never makes cards from the vault's top-level engram-quest/, but still reads a note folder of that name", async () => {
+    const text = {
+      "Study/bio.md": "Mitochondria :: make energy\n",
+      "engram-quest/custom/preferences/all.md": "Diagrams :: always\n",
+      "engram-quest/explainer/assets/old-skill/references/obsidian-cli.md": "Search :: obsidian search\n",
+      "Projects/engram-quest/plan.md": "Pitch :: the plugin\n",
+    };
+    const files = Object.keys(text).map((p) => ({ path: p, name: p.split("/").pop(), basename: p.split("/").pop().replace(/\.md$/, ""), parent: { name: p.split("/").slice(-2, -1)[0] || "/" } }));
+    const app = {
+      vault: { getMarkdownFiles: () => files, read: async (f) => text[f.path], adapter: { exists: async () => false, list: async () => ({ files: [], folders: [] }), read: async () => "{}" } },
+      metadataCache: { getFileCache: () => null },
+    };
+    const decks = await scanReviewDecks(app, { enableSRScan: true, flashcardTags: "flashcards" }, reviewHelpers);
+    const sources = decks.flatMap((d) => d.cards.map((card) => card.notePath));
+    expect(sources).toContain("Study/bio.md");
+    expect(sources).toContain("Projects/engram-quest/plan.md");
+    expect(sources.filter((p) => p.startsWith("engram-quest/"))).toEqual([]);
+  });
+});
+
+describe("the Hub help explains the custom area", () => {
+  const CONTENT = require("../src/hub/help-content.js");
+  for (const [lang, words] of [["zh", ["engram-quest/custom/", "自訂區", "環境變數"]], ["en", ["engram-quest/custom/", "Custom area", "environment variables"]]]) {
+    it(lang, () => {
+      const section = CONTENT[lang].sections.find((s) => s.id === "custom");
+      expect(section).toBeTruthy();
+      const text = JSON.stringify(section.body);
+      for (const w of words) expect(text).toContain(w);
+    });
+  }
+});
+
 describe("settings: open the custom folder", () => {
   const original = { Setting: obsidian.Setting, Platform: obsidian.Platform };
   afterEach(() => { obsidian.Setting = original.Setting; obsidian.Platform = original.Platform; });
@@ -353,7 +457,7 @@ describe("settings: open the custom folder", () => {
       setName(n) { this.row.name = n; return this; }
       setDesc() { return this; } setHeading() { return this; }
       addButton(cb) { const b = { setButtonText: () => b, setCta: () => b, onClick: (fn) => { this.row.click = fn; return b; } }; cb(b); return this; }
-      addText(cb) { const x = new Proxy({}, { get: (_, k) => (k === "inputEl" ? { style: {} } : () => x) }); cb(x); return this; }
+      addText(cb) { const x = new Proxy({}, { get: (_, k) => (k === "inputEl" ? { style: {}, classList: { add() {} } } : () => x) }); cb(x); return this; }
       addTextArea(cb) { return this.addText(cb); } addToggle(cb) { return this.addText(cb); } addDropdown(cb) { return this.addText(cb); } addSlider(cb) { return this.addText(cb); }
     };
     obsidian.Platform = { isDesktopApp: true };

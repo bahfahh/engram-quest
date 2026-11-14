@@ -11,6 +11,7 @@ const data = require("./data");
 const { openNewVideoModal } = require("./new-modal");
 const { openVideoSettingsModal } = require("./settings-modal");
 const { teacherOfVideo } = require("./teachers");
+const { customTeachersOfFilms } = require("./custom-teachers");
 const { teacherTag } = require("./teacher-picker");
 const { seriesBadge, statusText, openSeriesStatusModal } = require("./request-ui");
 const { fmtTime, rowStatus } = require("./playlist");
@@ -55,6 +56,8 @@ async function renderVideoTab(el, hub) {
     // The skill reads the licence state from settings.json.
     await data.syncSettingsLicense(adapter, !!t.licenseValid).catch((e) => console.warn("EngramQuest: video licence sync failed", e));
     topics = await data.listTopics(adapter);
+    // Films a custom:<id> teacher made name that teacher, so its file is read for the "taught by" label.
+    hub._vCustomTeachers = await customTeachersOfFilms(adapter, topics);
   } catch (err) {
     console.error("EngramQuest: video topic scan failed", err);
   }
@@ -213,7 +216,7 @@ function renderSeriesCard(card, hub, t, { slug, meta }, open) {
   card.createSpan({ cls: "lh-vid-scard-title", text: meta.title });
   card.createSpan({ cls: "lh-vid-scard-meta", text: K(c(t, "VIDEO_TOPIC_META"), { count: prog.total, done: prog.completed }) });
   const taught = meta.videos.find((v) => v.cast);
-  if (taught) teacherTag(card, t, teacherOfVideo(taught.cast.teacher), taught.cast.variant);
+  if (taught) teacherTag(card, t, teacherOfVideo(taught.cast.teacher, hub._vCustomTeachers), taught.cast.variant);
   card.addEventListener("click", open);
 }
 
@@ -326,7 +329,7 @@ function renderTopic(body, hub, t, topic, refresh) {
   titles.createDiv({ cls: "lh-vid-info-title", text: video.title });
   const infoMeta = titles.createDiv({ cls: "lh-vid-info-meta" });
   if (video.duration) infoMeta.createSpan({ text: fmtTime(video.duration) });
-  if (video.cast) teacherTag(infoMeta, t, teacherOfVideo(video.cast.teacher), video.cast.variant);
+  if (video.cast) teacherTag(infoMeta, t, teacherOfVideo(video.cast.teacher, hub._vCustomTeachers), video.cast.variant);
   // On a desktop the buttons are one group, so in a narrow window they drop below the title together.
   const tools = phone ? titleRow : titleRow.createDiv({ cls: "lh-vid-info-actions" });
   // Desktop only: open the OS file manager at this video's mp4 (or its folder if the file isn't on this device).

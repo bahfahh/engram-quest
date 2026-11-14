@@ -50,6 +50,8 @@ async function openVideoSettingsModal(hub, t) {
         },
       });
     });
+    // A saved custom:<id> whose file is gone, or whose name the picker cannot list, would otherwise read as Nico.
+    if (String(s.cast.teacher).startsWith("custom:") && teacher.id !== s.cast.teacher) form.createDiv({ cls: "lh-vid-set-note", text: K(c(t, "VIDEO_TEACHER_CUSTOM_MISSING"), { id: s.cast.teacher.slice(7) }) });
     if (!canUse(teacher, isPro)) form.createDiv({ cls: "lh-vid-set-note", text: K(c(t, "VIDEO_TEACHER_NEEDS_PRO"), { name: localText(teacher.name, locale) }) });
     form.createDiv({ cls: "lh-vid-set-note", text: c(t, "VIDEO_SET_STUDIO") });
 
