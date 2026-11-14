@@ -23,6 +23,13 @@ describe("Polar client validation", () => {
     expect(request.headers).toEqual({ "Content-Type": "application/json" });
     expect(JSON.parse(request.body)).toEqual({ key: "test-key", organization_id: config.organizationId, benefit_id: config.benefitId });
   });
+  it("ships the production profile unless a sandbox build asks for it", () => {
+    const shipped = require("../src/license/config");
+    expect(shipped.environment).toBe("production");
+    expect(shipped.checkoutUrl).toMatch(/^https:\/\/buy\.polar\.sh\/polar_cl_/);
+    expect(shipped.portalUrl).toMatch(/^https:\/\/polar\.sh\/[^/]+\/portal$/);
+    expect(JSON.stringify(shipped)).not.toContain("sandbox");
+  });
   it("uses the live endpoint only with production config", async () => {
     const a = args({ config: { ...config, environment: "production" } });
     await checkLicense(a);

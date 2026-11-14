@@ -306,7 +306,9 @@ Mark key answers with `==highlight==` or `**bold**`, then add a rule to your AI 
 Video Academy management, Nico, and watching any video, including recall films you already have, remain free. Open **Pro** at the bottom of the Hub sidebar (on a phone, the Pro row on the Memory page) or **Settings → EngramQuest → Explore Pro** for the illustrated overview. It opens only when selected; no automatic upgrade popup. Separate light and dark illustrations follow the Obsidian theme. Copy your key from Polar and activate it in Settings, then reopen the Hub.
 
 
-**Disclosures.** Pro is an optional one-time payment (US$11.99, through Polar). The plugin uses the network for two things: license validation with Polar (api.polar.sh; sandbox-api.polar.sh for local tests), which sends the key and organization/benefit identifiers and never note content, and downloading the video assets from this project's GitHub Releases when you install the video skills. Hosted checkout and the customer portal are operated by Polar. The key and a bounded success cache stay in plugin data.json; a successful validation allows up to fourteen days offline, and plugin updates trigger an online recheck. Removing the local license preserves learning data. Installing skills writes files to your vault's `.claude/skills/` (and the matching folders for other AI tools). This development build uses sandbox and accepts only test keys.
+**Disclosures.** Pro is an optional one-time payment (US$11.99, through Polar). The plugin uses the network for two things: license validation with Polar (api.polar.sh), which sends the key and organization/benefit identifiers and never note content, and downloading the video assets from this project's GitHub Releases when you install the video skills. Hosted checkout and the customer portal are operated by Polar. The key and a bounded success cache stay in plugin data.json; a successful validation allows up to fourteen days offline, and plugin updates trigger an online recheck. Removing the local license preserves learning data. Installing skills writes files to your vault's `.claude/skills/` (and the matching folders for other AI tools).
+
+**Refunds and support.** Not happy with Pro? Email a87088@gmail.com within 14 days of purchase for a full refund, no questions asked. Refunding revokes the license key; your notes and learning data stay. Lost your key? Open the [Polar customer portal](https://polar.sh/ai-dev/portal), sign in with the email you bought with, and copy it again (Settings → EngramQuest → Pro links there too). Applicable taxes are added at checkout.
 
 ---
 
@@ -625,7 +627,9 @@ engram-quest/custom/
 
 影片學院的管理、Nico，以及觀看任何影片（包括已經做好的回顧片）都維持免費。從 **Hub 側欄底部的 Pro**（手機上是記憶首頁的 Pro 列）或 **設定 → EngramQuest → 看看 Pro** 開啟圖解介紹，不會自動彈出；淺色、深色使用獨立圖片，跟隨 Obsidian 主題。付款後從 Polar 複製 key，在設定啟用，再重新開啟 Hub。
 
-**揭露事項。** Pro 是選購的一次性付款（US$11.99，透過 Polar）。插件只在兩件事用到網路：向 Polar 驗證授權（只傳送 key 與組織／Benefit 識別碼，不傳送筆記內容），以及安裝影片 skill 時從本專案的 GitHub Releases 下載影片素材。key 與成功快取存於 plugin data.json；成功驗證後最多有 14 天離線緩衝，更新後重新連線驗證。移除本機授權保留學習資料。安裝 skill 會寫入 vault 的 `.claude/skills/`（以及其他 AI 工具對應的資料夾）。目前開發版本使用 sandbox，只接受測試 key。
+**揭露事項。** Pro 是選購的一次性付款（US$11.99，透過 Polar）。插件只在兩件事用到網路：向 Polar 驗證授權（只傳送 key 與組織／Benefit 識別碼，不傳送筆記內容），以及安裝影片 skill 時從本專案的 GitHub Releases 下載影片素材。key 與成功快取存於 plugin data.json；成功驗證後最多有 14 天離線緩衝，更新後重新連線驗證。移除本機授權保留學習資料。安裝 skill 會寫入 vault 的 `.claude/skills/`（以及其他 AI 工具對應的資料夾）。
+
+**退款與客服。** 購買後 14 天內寄信到 a87088@gmail.com 即可全額退款，不需理由。退款後授權 key 會失效，筆記和學習資料都會保留。授權 key 不見了：打開 [Polar 顧客入口](https://polar.sh/ai-dev/portal)，用購買時的 email 登入，就能再複製一次（設定 → EngramQuest → Pro 也有連結）。適用的稅會在結帳時另外列出。
 
 ---
 

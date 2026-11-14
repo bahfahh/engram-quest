@@ -9,6 +9,7 @@
     "dev": "node esbuild.config.mjs",
     "build": "node scripts/sync-bundled-skills.js && node scripts/embed-skills.js && node scripts/embed-assets.mjs && node esbuild.config.mjs --prod",
     "check:bundle-parity": "node scripts/check-bundle-parity.mjs",
+    "build:sandbox": "node scripts/sync-bundled-skills.js && node scripts/embed-skills.js && node scripts/embed-assets.mjs && node esbuild.config.mjs --prod --sandbox",
     "sync:bundled-skills": "node scripts/sync-bundled-skills.js",
     "sync:video-skills": "node scripts/sync-video-skills.mjs",
     "sync:vault": "node scripts/sync-to-vault.mjs",

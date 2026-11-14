@@ -51,6 +51,13 @@ function renderLicenseSettings(container, plugin, rerender = () => {}) {
         finally { paint(); busy(false); }
       });
     });
+  if (license.config.portalUrl) {
+    new Setting(container).setName(tr("LICENSE_RECOVER")).setDesc(tr("LICENSE_RECOVER_DESC"))
+      .addButton(button => {
+        button.setButtonText(tr("LICENSE_RECOVER_OPEN"));
+        button.onClick(() => window.open(license.config.portalUrl, "_blank", "noopener,noreferrer"));
+      });
+  }
   new Setting(container).setName(tr("LICENSE_REMOVE")).setDesc(tr("LICENSE_REMOVE_DESC"))
     .addButton(button => {
       remove = button;

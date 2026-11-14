@@ -32,6 +32,7 @@ export default [
         // Replaced with text by esbuild (`define` in scripts/build-options.mjs).
         __EXPLAINER_PAGE__: "readonly",
         __SETUP_PROMPT__: "readonly",
+        __POLAR_SANDBOX__: "readonly",
       },
     },
     rules: {

@@ -8,6 +8,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const args = new Set(process.argv.slice(2));
 const prod = args.has('--prod');
+const sandbox = args.has('--sandbox');
 const sync = args.has('--sync');
 
 function runSync() {
@@ -25,7 +26,8 @@ function runSync() {
   });
 }
 
-await esbuild.build(buildOptions({ prod }));
+await esbuild.build(buildOptions({ prod, sandbox }));
+if (sandbox) console.warn('Built against the Polar SANDBOX. Run npm run build before any release.');
 
 if (sync) {
   await runSync();
