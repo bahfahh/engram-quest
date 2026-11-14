@@ -26,17 +26,31 @@ function classesUsedIn(file) {
   const source = fs.readFileSync(file, "utf8");
   const names = new Set();
   for (const call of source.matchAll(/(?:classList\.(?:add|remove)|addClass|removeClass)\(([^)]*)\)/g)) {
-    for (const lit of call[1].matchAll(/"([a-z0-9_-]+)"/gi)) names.add(lit[1]);
+    // A literal ending in "-" is the start of a name built at run time (for example "f-" + kind).
+    for (const lit of call[1].matchAll(/"([a-z0-9_-]*[a-z0-9_])"/gi)) names.add(lit[1]);
   }
   return [...names];
+}
+
+// ".name" followed by anything but another class-name character, so a prefix of a longer class does not count.
+function defines(css, name) {
+  const escaped = name.replace(/[-/\\^$*+?.()|[\]{}]/g, "\\$&");
+  return new RegExp("\\." + escaped + "(?![\\w-])").test(css);
 }
 
 describe("classes added by migrated modules exist in the stylesheet", () => {
   const css = require("../src/styles");
   for (const file of MIGRATED_FILES) {
     it(file, () => {
-      const missing = classesUsedIn(file).filter((name) => !css.includes("." + name));
+      const missing = classesUsedIn(file).filter((name) => !defines(css, name));
       expect(missing).toEqual([]);
     });
   }
+
+  // The Deep Dive page script runs in its own document and styles itself from page.css.
+  it("src/explainer/page/runtime.js (against page.css)", () => {
+    const pageCss = fs.readFileSync("src/explainer/page/page.css", "utf8");
+    const missing = classesUsedIn("src/explainer/page/runtime.js").filter((name) => !defines(pageCss, name));
+    expect(missing).toEqual([]);
+  });
 });
