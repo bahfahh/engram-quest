@@ -12,7 +12,7 @@ const {
   shouldShowRefreshBanner,
   isSynapseEnabled
 } = require("./synapse");
-const { collectAllCards, pickTopN, computeCardPriority } = require("./timebox");
+const { pickTimeboxCards } = require("./timebox");
 const { icon } = require("../hub/ui");
 
 const SKILL_COMMAND = "engram-synapse";
@@ -103,10 +103,7 @@ function renderTimeboxRow(parent, plugin, app, decks, openSession, backToHub) {
   const t = plugin.settings;
   const minSuffix = c(t, "TIMEBOX_MIN_SUFFIX");
   const pickAndOpen = (minutes) => {
-    const all = collectAllCards(decks);
-    if (all.length === 0) { new I.Notice(c(t, "TIMEBOX_NO_CARDS")); return; }
-    const today = new Date();
-    const picked = pickTopN(all, minutes, (card) => computeCardPriority(card, today));
+    const picked = pickTimeboxCards(decks, minutes, { links: app.metadataCache.resolvedLinks });
     if (picked.length === 0) { new I.Notice(c(t, "TIMEBOX_NO_CARDS")); return; }
     openSession(picked, `⏱ ${minutes} ${minSuffix}`, backToHub, minutes);
   };
