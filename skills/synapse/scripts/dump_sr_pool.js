@@ -67,7 +67,19 @@ const markSeenAt = process.argv.indexOf("--mark-seen");
 const markSeen = markSeenAt >= 0;
 const markSeenToken = markSeen ? process.argv[markSeenAt + 1] : undefined;
 
+// A schedule file is named after its note's path with "/" turned into "__", so a note whose own name
+// holds "__" (AI card files are named "A__note.md") reads back ambiguously. Take the reading that
+// exists on disk, folders first; with none on disk, every "__" is a folder.
 function srFileNameToNotePath(srFileName) {
+  const parts = srFileName.split("__");
+  const gaps = parts.length - 1;
+  if (gaps > 0 && gaps <= 10) {
+    for (let mask = (1 << gaps) - 1; mask >= 0; mask--) {
+      let candidate = parts[0];
+      for (let i = 1; i < parts.length; i++) candidate += (mask & (1 << (gaps - i)) ? "/" : "__") + parts[i];
+      if (fs.existsSync(candidate + ".md")) return candidate + ".md";
+    }
+  }
   return srFileName.replace(/__/g, "/") + ".md";
 }
 

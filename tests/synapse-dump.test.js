@@ -577,3 +577,28 @@ describe("dump_sr_pool: the same front in two notes", () => {
     expect(byFront.skip).toEqual(expect.arrayContaining([byFront.deckCard, byFront.otherCard]));
   });
 });
+
+describe("dump_sr_pool: AI card files whose names hold a double underscore (ticket-073)", () => {
+  const CARD = "engram-review/ai-cards/Photography__Depth of field.md";
+  const CARD_SR = "engram-review/sr/engram-review__ai-cards__Photography__Depth of field.json";
+
+  it("reads the note path that exists on disk, not one folder per double underscore", () => {
+    seedSr();
+    write(CARD, "Hard card :: its answer\n\nEasy card :: easy answer\n");
+    write(CARD_SR, { "Hard card": { stability: 2 }, "Easy card": { stability: 30 } });
+
+    const out = dump();
+
+    expect(out.targets.find((t) => t.front === "Hard card").notePath).toBe(CARD);
+    const easy = out.mastered.find((m) => m.front === "Easy card");
+    expect(easy.notePath).toBe(CARD);
+    expect(easy.back).toBe("easy answer");
+  });
+
+  it("still treats every double underscore as a folder when no reading exists on disk", () => {
+    seedSr();
+    write("engram-review/sr/Gone__Away.json", { "Lost card": { stability: 2 } });
+
+    expect(dump().targets.find((t) => t.front === "Lost card").notePath).toBe("Gone/Away.md");
+  });
+});
