@@ -222,8 +222,9 @@ async function deleteExplainer(adapter, id) {
   if (!id) return;
   const metaRemoved = await trashPath(adapter, `${META_DIR}/${id}.json`);
   if (!metaRemoved) throw new Error(`EngramQuest: could not delete explainer "${id}"`);
-  await trashPath(adapter, `${EXPLAINER_DIR}/${id}.html`);
-  await trashPath(adapter, `${EXPLAINER_DIR}/${id}.spec.json`);
+  for (const page of [`${EXPLAINER_DIR}/${id}.html`, `${EXPLAINER_DIR}/${id}.spec.json`]) {
+    if (!(await trashPath(adapter, page))) console.warn(`EngramQuest: could not move ${page} to the trash; it stays in the vault`);
+  }
   try {
     const queue = await readQueue(adapter);
     const before = queue.entries.length;
@@ -254,6 +255,5 @@ module.exports = {
   queueRegenerate,
   moveExplainerCardLinks,
   isQueued,
-  trashPath,
   deleteExplainer,
 };

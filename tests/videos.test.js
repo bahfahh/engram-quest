@@ -236,6 +236,16 @@ describe("createRequest / deleteTopic", () => {
     expect(a.files[metaPath("t")]).toBe("{}"); // topic stays listed so the user sees it wasn't deleted
   });
 
+  it("deleteTopic fails, and removes nothing, when an existing folder cannot be listed", async () => {
+    const a = makeAdapter({ [metaPath("t")]: "{}", [`${VIDEOS_DIR}/t/assets/a.png`]: "img" });
+    const list = a.list;
+    a.list = async (dir) => { if (dir === `${VIDEOS_DIR}/t/assets`) throw new Error("EIO"); return list(dir); };
+    a.exists = async (p) => p === `${VIDEOS_DIR}/t/assets` || p in a.files;
+    a.rmdir = async () => { throw new Error("rmdir must not run"); };
+    expect(await deleteTopic(a, "t")).toBe(false);
+    expect(a.files[`${VIDEOS_DIR}/t/assets/a.png`]).toBe("img");
+  });
+
   it("deleteTopic rejects slugs that escape the topic folder", async () => {
     for (const bad of ["", "..", "a/b", "a\\b"]) await expect(deleteTopic(makeAdapter(), bad)).rejects.toThrow();
   });

@@ -6,7 +6,8 @@
 // pending topic the skill picks up later. Pure of Obsidian UI — every function takes a vault
 // adapter so the logic is unit-testable. Contract: doc/features/video-academy/contract.md.
 
-const { safeSlugPart, trashPath } = require("../lessons/data");
+const { safeSlugPart } = require("../lessons/data");
+const { trashAdapterPath: trashPath } = require("../vault-trash");
 
 const VIDEOS_DIR = "engram-quest/videos";
 const SETTINGS_PATH = `${VIDEOS_DIR}/settings.json`;
@@ -382,7 +383,9 @@ async function cancelEpisodicRequest(adapter, id) {
 /** Trash every file under dir (subfolders included) except `skip`. True only if all were trashed. */
 async function trashTree(adapter, dir, skip) {
   let listing = null;
-  try { listing = await adapter.list(dir); } catch { return true; }
+  // An absent folder has nothing to trash; one that exists but cannot be listed is a failed delete,
+  // or the final rmdir would permanently remove what was never trashed.
+  try { listing = await adapter.list(dir); } catch { return !(await adapter.exists(dir).catch(() => true)); }
   let ok = true;
   for (const file of listing.files || []) if (file !== skip) ok = (await trashPath(adapter, file)) && ok;
   for (const sub of listing.folders || []) ok = (await trashTree(adapter, sub, skip)) && ok;

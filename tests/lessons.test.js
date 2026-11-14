@@ -295,6 +295,15 @@ describe("deleteLesson with a file name from meta.json that leaves the course fo
       expect(adapter.files).toEqual(before);
     }
   });
+
+  it("refuses a course slug with a dot segment too", async () => {
+    for (const slug of ["c/.", "c/..", "./c"]) {
+      const adapter = makeAdapter(seedCourse(slug, { title: "Course", lessons: [{ id: "lsn-1", title: "One", file: "lsn-1.html" }], completion: {} }));
+      const before = { ...adapter.files };
+      await expect(deleteLesson(appFor(adapter), slug, "lsn-1")).rejects.toThrow("outside the course folder");
+      expect(adapter.files).toEqual(before);
+    }
+  });
 });
 
 describe("createCourse / addPlannedLesson", () => {

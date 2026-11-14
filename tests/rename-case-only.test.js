@@ -142,3 +142,41 @@ describe("start-up recovery", () => {
     expect(readFileSync("src/main.js", "utf8")).toContain("onLayoutReady(()=>renameFollow.recoverMovingFiles(this.app.vault.adapter))");
   });
 });
+
+describe("start-up recovery, harder cases", () => {
+  it("one temporary file that cannot be restored does not stop the others", async () => {
+    const adapter = caseInsensitiveAdapter({ "engram-review/sr/a.json.moving": "1", "engram-review/sr/b.json.moving": "2", "engram-review/sr/c.json.moving": "3" });
+    const rename = adapter.rename;
+    adapter.rename = async (from, to) => { if (from.endsWith("a.json.moving")) throw new Error("locked"); return rename(from, to); };
+    await recoverMovingFiles(adapter);
+    expect(Object.keys(adapter.files).sort()).toEqual(["engram-review/sr/a.json.moving", "engram-review/sr/b.json", "engram-review/sr/c.json"]);
+  });
+
+  it("a folder that cannot be listed does not stop the other folders", async () => {
+    const adapter = caseInsensitiveAdapter({ "engram-review/sr/x.json": "0", "engram-review/hints/h.json.moving": "1" });
+    const list = adapter.list;
+    adapter.list = async (dir) => { if (dir === "engram-review/sr") throw new Error("EIO"); return list(dir); };
+    await recoverMovingFiles(adapter);
+    expect(adapter.files["engram-review/hints/h.json"]).toBe("1");
+  });
+
+  it("a recovered AI card brings its schedule and anchors file to the new spelling", async () => {
+    const adapter = caseInsensitiveAdapter({
+      "engram-review/ai-cards/A__foo.md.moving": "Q :: A\n",
+      "engram-review/sr/engram-review__ai-cards__A__Foo.json": "{\"Q\":{}}",
+      "engram-review/synapse/engram-review__ai-cards__A__Foo.json": "{}",
+    });
+    await recoverMovingFiles(adapter);
+    expect(Object.keys(adapter.files).sort()).toEqual([
+      "engram-review/ai-cards/A__foo.md",
+      "engram-review/sr/engram-review__ai-cards__A__foo.json",
+      "engram-review/synapse/engram-review__ai-cards__A__foo.json",
+    ]);
+  });
+
+  it("replaceFile never renames over a temporary file still waiting to be restored", async () => {
+    const adapter = caseInsensitiveAdapter({ "sr/Foo.json": "new", "sr/foo.json.moving": "old" });
+    await expect(replaceFile(adapter, "sr/Foo.json", "sr/foo.json", "new")).rejects.toThrow("in the way");
+    expect(adapter.files).toEqual({ "sr/Foo.json": "new", "sr/foo.json.moving": "old" });
+  });
+});

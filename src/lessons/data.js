@@ -6,7 +6,7 @@
 // inserting/reordering is plain array surgery. Pure of Obsidian UI: every function takes a vault
 // adapter so the logic is unit-testable (deleteCourse takes the app: it follows Obsidian's trash setting).
 
-const { trashVaultPath, trashAdapterPath: trashPath } = require("../vault-trash");
+const { trashVaultPath } = require("../vault-trash");
 
 const LESSONS_DIR = "engram-quest/lessons";
 
@@ -407,7 +407,6 @@ module.exports = {
   safeSlugPart,
   extractHtmlTitle,
   importLesson,
-  trashPath,
   deleteLesson,
   deleteCourse,
   reorderLessons,

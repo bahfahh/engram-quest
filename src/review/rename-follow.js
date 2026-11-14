@@ -87,6 +87,8 @@ async function replaceFile(adapter, from, to, data) {
     return;
   }
   const temp = to + MOVING;
+  // A temporary file left from an earlier interrupted rename holds data: never rename over it.
+  if (await adapter.exists(temp)) throw new Error(`${temp} from an earlier interrupted rename is in the way`);
   await adapter.rename(from, temp);
   try { await adapter.rename(temp, to); } catch (e) {
     await adapter.rename(temp, from).catch((u) => console.warn(`EngramQuest: the data is in ${temp} and goes back to ${to} at the next start`, u));
@@ -95,17 +97,35 @@ async function replaceFile(adapter, from, to, data) {
   await adapter.write(to, data);
 }
 
-/** Move every `<name>.moving` left by an interrupted replaceFile back to `<name>`, unless that name is taken. */
+/**
+ * Move every `<name>.moving` left by an interrupted replaceFile back to `<name>`, unless that name is
+ * taken (then both stay and a warning names them). Each file stands alone: one that fails does not stop
+ * the others. A recovered AI card also gives its schedule and anchors file its new spelling, the moves
+ * followCardFilesRename skipped when the card could not move.
+ */
 async function recoverMovingFiles(adapter) {
   for (const dir of MOVING_DIRS) {
+    let temps;
     try {
       if (!(await adapter.exists(dir))) continue;
-      for (const temp of (await adapter.list(dir)).files.filter((p) => p.endsWith(MOVING))) {
-        const to = temp.slice(0, -MOVING.length);
-        if (await adapter.exists(to)) console.warn(`EngramQuest: ${temp} was left by an interrupted rename and ${to} exists too; both are kept`);
-        else await adapter.rename(temp, to);
-      }
-    } catch (e) { console.warn(`EngramQuest: could not restore interrupted renames in ${dir}`, e); }
+      temps = (await adapter.list(dir)).files.filter((p) => p.endsWith(MOVING));
+    } catch (e) { console.warn(`EngramQuest: could not look for interrupted renames in ${dir}`, e); continue; }
+    for (const temp of temps) {
+      const to = temp.slice(0, -MOVING.length);
+      try {
+        if (await adapter.exists(to)) { console.warn(`EngramQuest: ${temp} was left by an interrupted rename and ${to} exists too; both are kept`); continue; }
+        await adapter.rename(temp, to);
+        if (dir === AI_CARDS_DIR) await followCardSpelling(adapter, to);
+      } catch (e) { console.warn(`EngramQuest: could not restore ${temp}`, e); }
+    }
+  }
+}
+
+async function followCardSpelling(adapter, card) {
+  for (const dir of ["engram-review/sr", SYNAPSE_DIR]) {
+    const target = `${dir}/${srFileName(card)}.json`;
+    const old = (await listJson(adapter, dir)).find((p) => p !== target && sameFile(p, target));
+    if (old) await moveFile(adapter, old, target);
   }
 }
 
