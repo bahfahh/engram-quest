@@ -20,10 +20,18 @@ into <series>/cards/ and an EngramQuest ai-cards deck is written to <vault>/engr
 for each card, in card order; each answer ends with a line back into the film: `Video: <title> (m:ss)` when the narration
 is English, `影片：<title>（m:ss）` otherwise); the meta.json entry gets "cards" pointing at it.
 Re-delivering keeps the entry's other fields (e.g. cast); "cast" is taken from projects/<id>/cast.json when present.
+When meta.json already exists (a series the plugin created), --tags and --source are added to its "tags" and "sources";
+every other series field stays as its owner wrote it. Without STUDIO, the current folder is used when it is a studio.
 settings.json quality "compact" delivers a 720p film (the render stays 1920x1080); "high" or unset keeps the full size."""
 import json, os, shutil, subprocess, sys, tempfile
 HERE = os.path.dirname(os.path.abspath(__file__))
-STUDIO = os.environ.get("STUDIO", "/tmp/studio")
+def studio_dir():
+    # STUDIO wins; otherwise the current folder when it is a studio (commands run there), then /tmp/studio (cloud).
+    if os.environ.get("STUDIO"): return os.environ["STUDIO"]
+    for d in (os.getcwd(), "/tmp/studio"):
+        if os.path.isdir(os.path.join(d, "projects")): return d
+    sys.exit("Set STUDIO to the studio folder (reference/08-tools.md section 1).")
+STUDIO = studio_dir()
 MUSIC = os.path.join(os.path.dirname(HERE), "assets", "music", "Morning.mp3")
 CREDIT = '"Morning" Kevin MacLeod (incompetech.com) Licensed under Creative Commons: By Attribution 4.0 License http://creativecommons.org/licenses/by/4.0/'
 args = sys.argv[1:]; pid, title = args[0], args[1]
@@ -142,6 +150,12 @@ cards_file = make_cards()
 mp = os.path.join(series, "meta.json")
 if os.path.exists(mp):
     meta = json.load(open(mp, encoding="utf-8"))
+    # A series the plugin created already has meta.json; the skill still owns tags and sources, so add to them
+    # (union, existing order kept) and leave every other field to its owner.
+    for key, extra in (("tags", [t for t in opt('tags', '').split(',') if t]), ("sources", [s for s in [opt('source')] if s])):
+        have = meta.get(key) if isinstance(meta.get(key), list) else []
+        merged = have + [x for x in extra if x not in have]
+        if merged != meta.get(key, []): meta[key] = merged
 else:
     meta = {"title": opt('series-title', os.path.basename(series)), "status": "ready",
             "tags": [t for t in opt('tags', '').split(',') if t], "sources": [s for s in [opt('source')] if s],

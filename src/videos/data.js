@@ -128,7 +128,6 @@ function normalizeTopic(meta) {
           createdAt: req.createdAt || null,
         }
       : null,
-    note: String(meta.note || ""),
     // Written by the skill (broad subject areas such as "軟體"); drives the shelf's tag filter.
     tags: Array.isArray(meta.tags) ? [...new Set(meta.tags.map((x) => String(x).trim()).filter(Boolean))] : [],
     sources: Array.isArray(meta.sources) ? meta.sources.map(String) : [],

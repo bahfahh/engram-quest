@@ -33,7 +33,7 @@
  },
  "token_hint_note": "token_hint is a rough multiplier relative to 'long', not a measurement. It depends mostly on the number of films, the number of questions walked and whether checking subagents are used. Record the session's usage when a film is delivered and recalibrate this field.",
  "settings_keys": {
-  "note": "The plugin's data.json has a single field for this (following its existing flat naming). Nothing else is configurable: topics are picked automatically from the ranking, and the estimate and the choice of tier are asked in the same question.",
+  "note": "The plugin stores this one field in engram-quest/videos/settings.json. Nothing else is configurable: topics are picked automatically from the ranking, and the estimate and the choice of tier are asked in the same question.",
   "episodicLength": "short | medium | long (default medium)"
  },
  "default_note": "Used when the plugin setting is unset and the user cannot be asked. When the user can be asked, the skill asks instead of relying on the default (reference/04-production.md section 1)."

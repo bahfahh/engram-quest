@@ -224,7 +224,7 @@ function renderQueueCard(card, hub, t, { slug, meta }, refresh) {
   const box = card.createSpan({ cls: "lh-vid-scard-cover is-pending" });
   box.createSpan({ cls: "lh-vid-badge-pending" + badgeTone(meta), text: statusText(t, meta) });
   const req = meta.request;
-  box.createSpan({ cls: "lh-vid-scard-goal", text: (failed && meta.error) || meta.note || (req && req.detail) || c(t, "VIDEO_PENDING_HINT") });
+  box.createSpan({ cls: "lh-vid-scard-goal", text: (failed && meta.error) || (req && req.detail) || c(t, "VIDEO_PENDING_HINT") });
   card.createSpan({ cls: "lh-vid-scard-title", text: meta.title });
   const bits = [req && req.source === "general" ? c(t, "VIDEO_SOURCE_GENERAL") : c(t, "VIDEO_SOURCE_NOTES")];
   if (req && req.refs.length) bits.push(K(c(t, "VIDEO_REFS_COUNT"), { count: req.refs.length }));

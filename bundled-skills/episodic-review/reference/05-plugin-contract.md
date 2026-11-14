@@ -9,7 +9,7 @@ The plugin shows, plays and schedules; it never makes content and never calls a 
 | Film series | `engram-quest/videos/episodic-recall/meta.json` | skill: `videos[]`, `kind`, `requests[].status`. Plugin: `requests[]` (new, removed), `progress` | both |
 | Films, posters | `engram-quest/videos/episodic-recall/<id>.mp4`, `<id>.jpg` | skill | plugin |
 | Default length | `engram-quest/videos/settings.json` -> `episodicLength` (`short` / `medium` / `long`) | plugin | skill, read only |
-| Pack | `engram-quest/episodic-review/packs/<period>/pack.json` (+ overview page, `chapters.json`) | skill | plugin, pages built from it |
+| Pack | `engram-quest/episodic-review/packs/<period>/pack.json` (+ overview page) | skill | skill (month film, next period); the plugin does not read it |
 | Topic cache | `engram-quest/episodic-review/topics/<id>/topic.json` | skill | skill next period |
 | Cards and hints | `engram-review/ai-cards/*.md`, `engram-review/hints/*.json` | skill (`build_pack.py`) | the Review Deck |
 
@@ -45,5 +45,3 @@ The plugin shows, plays and schedules; it never makes content and never calls a 
 `topic.json`: the full entry of `02-content.md` §5, plus `cachedAt`, `periods`, `noteMtime`.
 
 Cards are ordinary Review Deck files with two extra front-matter keys, `topic` and `period`, in a deck named after the period. Hints never contain the answer.
-
-`chapters.json` maps a topic id to the film passages that cover it: `{"<topic id>": [{"film": "<video id>", "label": "...", "from": 0, "to": 0}]}`.

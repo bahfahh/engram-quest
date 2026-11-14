@@ -17,7 +17,7 @@ const SKILLS = [
   // The vault's development copy carries a `dev-` name so it never clashes with the installed copy; `name` is
   // what the published copy is called.
   { id: 'animated-course', dir: 'dev-engram-quest-animated-course', name: 'engram-quest-animated-course' },
-  { id: 'episodic-review', dir: 'engram-episodic-review', name: 'engram-episodic-review' },
+  { id: 'episodic-review', dir: 'engram-episodic-review', name: 'engram-quest-episodic-review' },
 ];
 const terms = readPrivateTerms(vaultRoot);
 const { publicText, findPrivate } = publicFilter(terms);

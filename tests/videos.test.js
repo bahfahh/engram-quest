@@ -284,7 +284,9 @@ describe("series request: goal, detail, teacher", () => {
     const raw = JSON.parse(a.files[metaPath(slug)]);
     a.files[metaPath(slug)] = JSON.stringify({ ...raw, note: "no notes found" });
     const meta = await updateRequest(a, slug, { text: "SEO 教學", detail: "技術 SEO", refs: ["b.md"] });
-    expect(meta).toMatchObject({ title: "SEO 教學", note: "no notes found" });
+    expect(meta).toMatchObject({ title: "SEO 教學" });
+    // A field the plugin does not use is still written back as it was.
+    expect(JSON.parse(a.files[metaPath(slug)]).note).toBe("no notes found");
     expect(meta.request).toMatchObject({ text: "SEO 教學", detail: "技術 SEO", refs: ["b.md"] });
     expect(meta.request.createdAt).toBe(raw.request.createdAt);
   });
