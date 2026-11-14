@@ -1,9 +1,10 @@
 // Tests for the Lesson Academy data layer (src/lessons/data.js): course scan/CRUD, completion
 // marking, planned-outline lessons, HTML import, and the sidebar aggregations.
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import {
   LESSONS_DIR,
   normalizeMeta,
+  lessonTitle,
   lessonCompletion,
   lessonStatus,
   courseProgress,
@@ -112,16 +113,23 @@ describe("normalizeMeta", () => {
     expect(normalizeMeta("not an object")).toBe(null);
   });
 
-  it("keeps type:canvas, defaults everything else to html", () => {
+  it("keeps a lesson's type and title exactly as the skill wrote them", () => {
     const meta = normalizeMeta({
       lessons: [
         { id: "a", title: "map", file: "a.canvas", type: "canvas" },
         { id: "b", title: "html", file: "b.html" },
-        { id: "c", title: "bogus", file: "c.html", type: "excalidraw" },
-        { id: "d", title: "planned map", file: null, type: "canvas" },
+        { id: "c", title: "newer type", file: "c.html", type: "excalidraw" },
+        { id: "d", title: "", file: "d.html" },
       ],
     });
-    expect(meta.lessons.map((l) => l.type)).toEqual(["canvas", "html", "html", "canvas"]);
+    expect(meta.lessons.map((l) => l.type)).toEqual(["canvas", undefined, "excalidraw", undefined]);
+    expect(meta.lessons[3].title).toBe("");
+  });
+
+  it("lessonTitle falls back to the file name for display only", () => {
+    expect(lessonTitle({ title: "Intro", file: "a.html" })).toBe("Intro");
+    expect(lessonTitle({ title: "", file: "lsn-2-b.html" })).toBe("lsn-2-b.html");
+    expect(lessonTitle({ id: "x" })).toBe("");
   });
 });
 
@@ -225,7 +233,45 @@ describe("markLesson", () => {
     await markLesson(adapter, "c", "lsn-m", { starred: true });
     const onDisk = JSON.parse(adapter.files[`${LESSONS_DIR}/c/meta.json`]);
     expect(onDisk.lessons.find((l) => l.id === "lsn-m").type).toBe("canvas");
-    expect(onDisk.lessons.find((l) => l.id === "lsn-1").type).toBe("html");
+    expect(onDisk.lessons.find((l) => l.id === "lsn-1").type).toBeUndefined(); // not written: the skill left it out
+  });
+
+  it("writes back the type, title and odd entries the skill wrote, whatever it is the plugin edits", async () => {
+    const skillWrote = {
+      title: "Course",
+      lessons: [
+        { id: "lsn-1", title: "", file: "lsn-1-a.html", type: "excalidraw", source: "skill" },
+        "a stray string",
+        null,
+        { id: "lsn-2", title: "Two", file: "lsn-2-b.html", goal: "g" },
+        7,
+      ],
+      completion: {},
+    };
+    const adapter = makeAdapter(seedCourse("c", skillWrote));
+    await markLesson(adapter, "c", "lsn-1", { starred: true });
+    const onDisk = JSON.parse(adapter.files[`${LESSONS_DIR}/c/meta.json`]);
+    expect(onDisk.lessons[0]).toMatchObject({ id: "lsn-1", title: "", type: "excalidraw" });
+    expect(onDisk.lessons.slice(1, 3)).toEqual(["a stray string", null]);
+    expect(onDisk.lessons[3]).toMatchObject({ id: "lsn-2", title: "Two", goal: "g" });
+    expect(onDisk.lessons[3].type).toBeUndefined();
+    expect(onDisk.lessons[4]).toBe(7);
+    expect(onDisk.completion["lsn-1"].starred).toBe(true);
+  });
+
+  it("keeps the odd entries when a lesson is deleted or added", async () => {
+    const adapter = makeAdapter(seedCourse("c", {
+      title: "Course",
+      lessons: [{ id: "lsn-1", title: "One", file: "lsn-1-a.html" }, "stray", { id: "lsn-2", title: "Two", file: null }],
+      completion: {},
+    }));
+    await deleteLesson(adapter, "c", "lsn-1");
+    let onDisk = JSON.parse(adapter.files[`${LESSONS_DIR}/c/meta.json`]);
+    expect(onDisk.lessons.map((l) => (typeof l === "object" ? l.id : l)).sort()).toEqual(["lsn-2", "stray"]);
+    await addPlannedLesson(adapter, "c", "Three");
+    onDisk = JSON.parse(adapter.files[`${LESSONS_DIR}/c/meta.json`]);
+    expect(onDisk.lessons).toContain("stray");
+    expect(onDisk.lessons).toHaveLength(3);
   });
 });
 
@@ -344,6 +390,16 @@ describe("deleteLesson / deleteCourse", () => {
     expect(updated.lessons).toEqual([]);
   });
 
+  // `indexed` = folder paths Obsidian's vault index knows; the adapter sees everything on disk.
+  function appFor(adapter, indexed = []) {
+    const viaFileManager = [];
+    return {
+      viaFileManager,
+      vault: { adapter, getAbstractFileByPath: (p) => (indexed.includes(p) ? { path: p } : null) },
+      fileManager: { trashFile: async (f) => { viaFileManager.push(f.path); await adapter.trashLocal(f.path); } },
+    };
+  }
+
   it("deleteCourse moves the whole course folder to the trash, unlisted files included", async () => {
     const adapter = makeAdapter({
       ...seedCourse("c", courseMeta()),
@@ -351,16 +407,34 @@ describe("deleteLesson / deleteCourse", () => {
       [`${LESSONS_DIR}/c/lsn-2-b.html`]: "2",
       [`${LESSONS_DIR}/c/assets/diagram.png`]: "img", // not listed in meta.json
     });
-    await deleteCourse(adapter, "c");
+    await deleteCourse(appFor(adapter), "c");
     expect(Object.keys(adapter.files).filter((k) => k.startsWith(`${LESSONS_DIR}/c/`))).toEqual([]);
     expect(adapter.files[`.trash/${LESSONS_DIR}/c/assets/diagram.png`]).toBe("img");
     expect(adapter.files[`.trash/${LESSONS_DIR}/c/meta.json`]).toBeDefined();
   });
 
+  it("deleteCourse follows the user's trash setting (fileManager) when the folder is indexed", async () => {
+    const adapter = makeAdapter(seedCourse("c", courseMeta()));
+    adapter.trashSystem = vi.fn(async () => true); // must not be reached
+    const app = appFor(adapter, [`${LESSONS_DIR}/c`]);
+    await deleteCourse(app, "c");
+    expect(app.viaFileManager).toEqual([`${LESSONS_DIR}/c`]);
+    expect(adapter.trashSystem).not.toHaveBeenCalled();
+  });
+
+  it("deleteCourse falls back to the adapter's trash only when the folder is not indexed", async () => {
+    const adapter = makeAdapter(seedCourse("c", courseMeta()));
+    adapter.trashSystem = vi.fn(async (p) => { await adapter.trashLocal(p); return true; });
+    const app = appFor(adapter, []);
+    await deleteCourse(app, "c");
+    expect(app.viaFileManager).toEqual([]);
+    expect(adapter.trashSystem).toHaveBeenCalledWith(`${LESSONS_DIR}/c`);
+  });
+
   it("deleteCourse removes nothing and throws when the folder can't be trashed", async () => {
     const adapter = makeAdapter({ ...seedCourse("c", courseMeta()), [`${LESSONS_DIR}/c/x.png`]: "img" });
     delete adapter.trashLocal;
-    await expect(deleteCourse(adapter, "c")).rejects.toThrow();
+    await expect(deleteCourse(appFor(adapter), "c")).rejects.toThrow();
     expect(adapter.files[`${LESSONS_DIR}/c/x.png`]).toBe("img");
     expect(adapter.files[`${LESSONS_DIR}/c/meta.json`]).toBeDefined();
   });

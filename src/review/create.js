@@ -53,10 +53,10 @@ async function appendManualCard(adapter, deckName, front, back) {
  */
 function openCreateCardModal(app, deck, settings, onSaved) {
   const modal = new obsidian.Modal(app);
-  modal.modalEl.style.cssText = "width:min(92vw,480px);max-width:none;padding:0;border-radius:16px;overflow:hidden;";
+  modal.modalEl.classList.add("lh-frame-create");
 
   const wrap = modal.contentEl;
-  wrap.style.cssText = "padding:24px;display:flex;flex-direction:column;gap:16px;";
+  wrap.classList.add("lh-stack-16");
 
   // Title
   wrap.createEl("div", {

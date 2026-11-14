@@ -32,8 +32,8 @@ class ExplainerViewerModal extends I.Modal {
     const { contentEl, modalEl } = this;
     this._isOpen = true;
     hubUi().themedModal(this);
-    modalEl.style.cssText = "width:min(96vw,760px);max-height:95vh;padding:0;border-radius:18px;overflow:hidden;display:flex;flex-direction:column;";
-    contentEl.style.cssText = "padding:12px;display:flex;flex-direction:column;gap:6px;overflow-y:auto;flex:1;min-height:0;";
+    modalEl.classList.add("lh-doc-frame-explainer");
+    contentEl.classList.add("lh-doc-body", "lh-doc-body-gap6");
 
     // Title row — right padding reserves space for Obsidian's built-in close (X) button.
     const titleRow = contentEl.createEl("div", {

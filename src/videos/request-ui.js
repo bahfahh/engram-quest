@@ -59,7 +59,7 @@ function openSeriesStatusModal(hub, t, { slug, meta }, { onRequeue, onDelete }) 
   const wrap = modal.contentEl;
   const prompt = seriesPrompt(t, slug, meta.title);
   wrap.createDiv({ cls: "lh-vid-modal-title", text: meta.title });
-  wrap.createDiv({ cls: "lh-vid-modal-desc", text: `${statusText(t, meta)}　${c(t, meta.status === "failed" ? "VIDEO_STATUS_FAILED_BODY" : meta.status === "making" ? "VIDEO_STATUS_MAKING_BODY" : "VIDEO_PENDING_HINT")}` });
+  wrap.createDiv({ cls: "lh-vid-modal-desc", text: `${statusText(t, meta)}\u3000${c(t, meta.status === "failed" ? "VIDEO_STATUS_FAILED_BODY" : meta.status === "making" ? "VIDEO_STATUS_MAKING_BODY" : "VIDEO_PENDING_HINT")}` });
   if (meta.status === "failed" && meta.error) wrap.createDiv({ cls: "lh-vid-error", text: K(c(t, "VIDEO_STATUS_ERROR"), { error: meta.error }) });
   appendPrompt(wrap, prompt);
   const row = wrap.createDiv({ cls: "lh-vid-modal-actions" });

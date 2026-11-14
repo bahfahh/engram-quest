@@ -17,7 +17,7 @@ function recordingSetting(rows) {
     // A control accepts any chained call; only its change handler is kept.
     _add(kind, cb) {
       const control = new Proxy({}, {
-        get: (_, prop) => prop === "inputEl" ? { style: {} } : (...args) => {
+        get: (_, prop) => prop === "inputEl" ? { style: {}, classList: { add() {} } } : (...args) => {
           if (prop === "onChange" || prop === "onClick") this.row.handlers.push({ kind, fn: args[0] });
           return control;
         },

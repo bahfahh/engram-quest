@@ -4,7 +4,9 @@
 // HTML file per lesson. Lessons come from two sources — the lesson-academy AI skill ("skill") and user
 // imports of external HTML ("import") — and the lessons array's order IS the display order, so
 // inserting/reordering is plain array surgery. Pure of Obsidian UI: every function takes a vault
-// adapter so the logic is unit-testable.
+// adapter so the logic is unit-testable (deleteCourse takes the app: it follows Obsidian's trash setting).
+
+const { trashVaultPath } = require("../vault-trash");
 
 const LESSONS_DIR = "engram-quest/lessons";
 
@@ -20,12 +22,19 @@ async function readJson(adapter, path) {
 
 /**
  * Fill in any missing meta fields so renderers never need null checks. meta.json is shared with the
- * lesson-academy skill, and every plugin write goes through here, so fields the plugin doesn't know
- * (at course and lesson level) are carried through unchanged.
+ * lesson-academy skill, and every plugin write goes through here, so what the plugin doesn't own is
+ * carried through unchanged: unknown fields (course and lesson level), a lesson's `type` and `title`
+ * as the skill wrote them, and entries that aren't objects. Display fallbacks for a missing title
+ * live in lessonTitle(); a `type` other than "canvas" is simply shown as HTML by the readers.
  */
 function normalizeMeta(meta) {
   if (!meta || typeof meta !== "object") return null;
-  return {
+  // Entries that aren't objects can't be shown, but they aren't the plugin's to delete: remember
+  // where they were so saveCourse() puts them back.
+  const skipped = [];
+  const entries = Array.isArray(meta.lessons) ? meta.lessons : [];
+  entries.forEach((entry, index) => { if (!entry || typeof entry !== "object") skipped.push({ index, entry }); });
+  const normalized = {
     ...meta,
     title: String(meta.title || ""),
     topic: String(meta.topic || ""),
@@ -36,24 +45,25 @@ function normalizeMeta(meta) {
     starred: !!meta.starred,
     archived: !!meta.archived,
     createdAt: meta.createdAt || null,
-    lessons: Array.isArray(meta.lessons)
-      ? meta.lessons.filter((l) => l && typeof l === "object").map((l, i) => ({
-          ...l,
-          // An entry without an id would have no place in the completion map; it gets one derived
-          // from its file (or position) instead of being dropped.
-          id: String(l.id || (l.file ? `file-${l.file}` : `entry-${i + 1}`)),
-          title: String(l.title || l.file || ""),
-          // No file = a planned outline entry (user- or AI-authored) whose HTML the lesson-academy
-          // skill hasn't generated yet. It still renders in the list as "pending".
-          file: l.file ? String(l.file) : null,
-          // "canvas" lessons open in a native Obsidian Canvas tab instead of the iframe viewer.
-          // Anything else collapses to "html" so a bogus value can't break the click branch.
-          type: l.type === "canvas" ? "canvas" : "html",
-          source: l.source === "import" ? "import" : "skill",
-        }))
-      : [],
+    lessons: entries.filter((l) => l && typeof l === "object").map((l, i) => ({
+      ...l,
+      // An entry without an id would have no place in the completion map; it gets one derived
+      // from its file (or position) instead of being dropped.
+      id: String(l.id || (l.file ? `file-${l.file}` : `entry-${i + 1}`)),
+      // No file = a planned outline entry (user- or AI-authored) whose HTML the lesson-academy
+      // skill hasn't generated yet. It still renders in the list as "pending".
+      file: l.file ? String(l.file) : null,
+      source: l.source === "import" ? "import" : "skill",
+    })),
     completion: meta.completion && typeof meta.completion === "object" ? meta.completion : {},
   };
+  Object.defineProperty(normalized, "_skippedLessons", { value: skipped, enumerable: false });
+  return normalized;
+}
+
+/** What to show as a lesson's title: its own, else its file name. */
+function lessonTitle(lesson) {
+  return String((lesson && (lesson.title || lesson.file)) || "");
 }
 
 /** Completion state for one lesson — always a full object, never undefined. */
@@ -122,8 +132,14 @@ async function loadCourse(adapter, slug) {
 }
 
 async function saveCourse(adapter, slug, meta) {
+  let out = meta;
+  if (meta._skippedLessons && meta._skippedLessons.length && Array.isArray(meta.lessons)) {
+    const lessons = [...meta.lessons];
+    for (const { index, entry } of meta._skippedLessons) lessons.splice(Math.min(index, lessons.length), 0, entry);
+    out = { ...meta, lessons };
+  }
   await adapter.mkdir(`${LESSONS_DIR}/${slug}`).catch(() => {});
-  await adapter.write(`${LESSONS_DIR}/${slug}/meta.json`, JSON.stringify(meta, null, 2));
+  await adapter.write(`${LESSONS_DIR}/${slug}/meta.json`, JSON.stringify(out, null, 2));
 }
 
 /**
@@ -303,18 +319,13 @@ async function deleteLesson(adapter, slug, lessonId) {
 /**
  * Delete a whole course: the course folder goes to the trash as one piece, so everything in it —
  * including files meta.json doesn't list (images, the skill's working files) — can be restored.
+ * It follows the user's Obsidian "Deleted files" setting when the vault index knows the folder and
+ * falls back to the adapter's trash when it doesn't (the skill writes courses outside Obsidian).
  * Throws when it could not be trashed; nothing is then removed.
  */
-async function deleteCourse(adapter, slug) {
+async function deleteCourse(app, slug) {
   const dir = `${LESSONS_DIR}/${slug}`;
-  if (!(await adapter.exists(dir))) return;
-  for (const trash of [adapter.trashSystem, adapter.trashLocal]) {
-    if (typeof trash !== "function") continue;
-    try {
-      if ((await trash.call(adapter, dir)) !== false) return;
-    } catch (e) { console.warn("EngramQuest: course trash failed", e); }
-  }
-  throw new Error(`could not move ${dir} to the trash`);
+  if (!(await trashVaultPath(app, dir))) throw new Error(`could not move ${dir} to the trash`);
 }
 
 /**
@@ -387,6 +398,7 @@ function overallStats(courses) {
 module.exports = {
   LESSONS_DIR,
   normalizeMeta,
+  lessonTitle,
   lessonCompletion,
   lessonStatus,
   courseProgress,

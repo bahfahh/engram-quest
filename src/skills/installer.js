@@ -41,7 +41,10 @@ function createInstaller(embeddedOverride) {
       id: "explainer",
       title: "Deep Dive (Pro)",
       summary: "Generate plain-language visual deep-dive pages for flashcards that are too hard, badly worded, or missing context. Pro feature.",
-      pro: true
+      pro: true,
+      // Deep Dive pages and their queue are the user's data and stay under engram-quest/explainer/;
+      // only the installed skill copy goes, since the plugin no longer shows the feature.
+      removedWithLicence: true
     },
     {
       id: "animated-course",
