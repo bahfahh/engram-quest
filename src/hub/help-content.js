@@ -224,7 +224,7 @@ module.exports = {
           { list: [
             "電腦：Hub 側邊欄最下方的 Pro 按鈕（未啟用時是「看看 Pro」，啟用後顯示「Pro 已啟用」）。",
             "手機：Hub「記憶」首頁最下方的 Pro 那一列。",
-            "付款後從 Polar 複製 key，到 <strong>設定 → EngramQuest → EngramQuest Pro</strong> 貼上啟用，再重新開啟 Hub。",
+            "付款完成不會自動開通：從付款成功頁或 Polar 寄來的信複製 key，在 Pro 視窗按「輸入 key」貼上（或到 <strong>設定 → EngramQuest → EngramQuest Pro</strong>）按啟用，Hub 會馬上更新。",
           ] },
           { p: "啟用時只傳授權 key 與商品識別碼給 Polar，不傳筆記內容；驗證成功後最多可離線使用 14 天。移除本機授權不會刪除任何學習資料。" },
           { action: "pro" },
@@ -545,7 +545,7 @@ module.exports = {
           { list: [
             "Desktop: the Pro button at the bottom of the Hub sidebar (Explore Pro, or Pro is active once activated).",
             "Phone: the Pro row at the bottom of the Hub's Memory home page.",
-            "After paying, copy your key from Polar, paste it in <strong>Settings → EngramQuest → EngramQuest Pro</strong>, then reopen the Hub.",
+            "Paying does not unlock Pro by itself: copy the key from the success page or the email from Polar, paste it in the Pro window under <strong>Enter a key</strong> (or <strong>Settings → EngramQuest → EngramQuest Pro</strong>) and press Activate. The Hub updates right away.",
           ] },
           { p: "Activation sends only your licence key and product identifiers to Polar, never note content. After a successful check it works offline for up to 14 days. Removing the local licence keeps all your learning data." },
           { action: "pro" },

@@ -115,6 +115,9 @@ const shell = `
 .lh-pti { width:32px; height:32px; border-radius:50%; display:grid; place-items:center; flex:none; background:var(--raised); box-shadow:var(--rshadow); color:var(--text2); }
 .lh-pti svg { width:15px; height:15px; fill:currentColor; }
 .lh-pti.free { background:var(--btn); color:var(--onbtn); box-shadow:0 1px 2px rgba(0,0,0,.18); }
+.lh-pti.active { background:linear-gradient(135deg,#7a62d6,#b07a2c); color:#fff; box-shadow:0 2px 8px rgba(109,91,208,.35); }
+.lh-hub :is(.lh-pro.active .lh-pro-label,.lh-pr.active b) { font-weight:700; background:linear-gradient(135deg,#6a52c8,#8f5f1c); -webkit-background-clip:text; background-clip:text; color:transparent; }
+.theme-dark .lh-hub :is(.lh-pro.active .lh-pro-label,.lh-pr.active b) { background-image:linear-gradient(135deg,#c4b4f5,#e8c48a); }
 
 .lh-hub .lh-ib { width:36px; height:36px; padding:0; border:0; border-radius:10px; background:transparent; box-shadow:none; color:var(--tint); display:grid; place-items:center; cursor:pointer; flex:none; }
 .lh-hub .lh-ib:hover { background:var(--fill); color:var(--tint); }

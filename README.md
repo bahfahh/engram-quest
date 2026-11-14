@@ -303,7 +303,7 @@ Mark key answers with `==highlight==` or `**bold**`, then add a rule to your AI 
 | Time-boxed review | Choose 5 / 10 / 15 minutes to review priority cards | Available |
 | More teachers and recall films | Teachers who each teach in their own way, a teacher per series, and recall films made from your notes | Available; videos are made with Claude Code |
 
-Video Academy management, Nico, and watching any video, including recall films you already have, remain free. Open **Pro** at the bottom of the Hub sidebar (on a phone, the Pro row on the Memory page) or **Settings → EngramQuest → Explore Pro** for the illustrated overview. It opens only when selected; no automatic upgrade popup. Separate light and dark illustrations follow the Obsidian theme. Copy your key from Polar and activate it in Settings, then reopen the Hub.
+Video Academy management, Nico, and watching any video, including recall films you already have, remain free. Open **Pro** at the bottom of the Hub sidebar (on a phone, the Pro row on the Memory page) or **Settings → EngramQuest → Explore Pro** for the illustrated overview. It opens only when selected; no automatic upgrade popup. Separate light and dark illustrations follow the Obsidian theme. Paying does not unlock Pro by itself: copy the license key from the success page or the email from Polar and paste it in the same Pro window (**Enter a key**) or in Settings → EngramQuest → Pro. The Hub updates right away.
 
 
 **Disclosures.** Pro is an optional one-time payment (US$11.99, through Polar). The plugin uses the network for two things: license validation with Polar (api.polar.sh), which sends the key and organization/benefit identifiers and never note content, and downloading the video assets from this project's GitHub Releases when you install the video skills. Hosted checkout and the customer portal are operated by Polar. The key and a bounded success cache stay in plugin data.json; a successful validation allows up to fourteen days offline, and plugin updates trigger an online recheck. Removing the local license preserves learning data. Installing skills writes files to your vault's `.claude/skills/` (and the matching folders for other AI tools).
@@ -627,7 +627,7 @@ engram-quest/custom/
 | 限時複習 | 選擇 5／10／15 分鐘，優先挑出需要複習的卡片 | 已提供 |
 | 更多老師與情境回顧片 | 教法各不相同的老師、替系列指定老師，以及把筆記做成回顧片 | 已提供；影片用 Claude Code 製作 |
 
-影片學院的管理、Nico，以及觀看任何影片（包括已經做好的回顧片）都維持免費。從 **Hub 側欄底部的 Pro**（手機上是記憶首頁的 Pro 列）或 **設定 → EngramQuest → 看看 Pro** 開啟圖解介紹，不會自動彈出；淺色、深色使用獨立圖片，跟隨 Obsidian 主題。付款後從 Polar 複製 key，在設定啟用，再重新開啟 Hub。
+影片學院的管理、Nico，以及觀看任何影片（包括已經做好的回顧片）都維持免費。從 **Hub 側欄底部的 Pro**（手機上是記憶首頁的 Pro 列）或 **設定 → EngramQuest → 看看 Pro** 開啟圖解介紹，不會自動彈出；淺色、深色使用獨立圖片，跟隨 Obsidian 主題。付款完成不會自動開通：從付款成功頁或 Polar 寄來的信複製授權 key，在同一個 Pro 視窗按「輸入 key」貼上（或到設定 → EngramQuest → Pro）按啟用，Hub 會馬上更新。
 
 **揭露事項。** Pro 是選購的一次性付款（US$11.99，透過 Polar）。插件只在兩件事用到網路：向 Polar 驗證授權（只傳送 key 與組織／Benefit 識別碼，不傳送筆記內容），以及安裝影片 skill 時從本專案的 GitHub Releases 下載影片素材。key 與成功快取存於 plugin data.json；成功驗證後最多有 14 天離線緩衝，更新後重新連線驗證。移除本機授權保留學習資料。安裝 skill 會寫入 vault 的 `.claude/skills/`（以及其他 AI 工具對應的資料夾）。
 

@@ -3,7 +3,7 @@
 const { Setting, Notice } = require("obsidian");
 const { t } = require("../i18n");
 const { configured } = require("./core");
-const { ProUpgradeModal } = require("./upgrade");
+const { ProUpgradeModal, activateKey } = require("./upgrade");
 
 function renderLicenseSettings(container, plugin, rerender = () => {}) {
   const license = plugin.license;
@@ -13,6 +13,7 @@ function renderLicenseSettings(container, plugin, rerender = () => {}) {
   const status = container.createEl("p", { cls: "eq-license-status", attr: { "aria-live": "polite" } });
   function paint() {
     status.setText(tr(`LICENSE_STATUS_${license.state.status.toUpperCase()}`));
+    status.toggleClass("is-pro", license.state.valid);
   }
   paint();
   // The first check finishes in the background, possibly after this tab is drawn.
@@ -46,7 +47,7 @@ function renderLicenseSettings(container, plugin, rerender = () => {}) {
         if (!draft.trim()) { new Notice(tr("LICENSE_ENTER_KEY")); return; }
         busy(true);
         status.setText(tr("LICENSE_STATUS_CHECKING"));
-        try { await license.refresh({ key: draft, force: true }); }
+        try { await activateKey(plugin, draft); }
         catch (_) { new Notice(tr("LICENSE_SAVE_ERROR")); }
         finally { paint(); busy(false); }
       });
