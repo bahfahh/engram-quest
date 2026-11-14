@@ -8,6 +8,7 @@ const { ProUpgradeModal } = require("../license/upgrade");
 const { checkSkillsUpdates, SkillsInstallModal } = require("../hub/skills");
 const { PORTRAITS, SAMPLES } = require("./teacher-media");
 const { TEACHERS, localText, canUse, variantsOf, variantOf, portraitKey } = require("./teachers");
+const { loadCustomTeachers } = require("./custom-teachers");
 
 function localeOf(t) {
   return getLocale(t, I.moment && I.moment.locale && I.moment.locale());
@@ -16,7 +17,7 @@ function localeOf(t) {
 /** Portrait in a round frame; the name's first letter when the image isn't available. */
 function teacherAvatar(parent, t, teacher, variant, cls = "") {
   const box = parent.createSpan({ cls: `lh-vid-avatar ${cls}` });
-  const src = PORTRAITS[portraitKey(teacher, variant)];
+  const src = teacher.portrait || PORTRAITS[portraitKey(teacher, variant)];
   if (src) box.createEl("img", { attr: { src, alt: "" } });
   else box.setText(Array.from(localText(teacher.name, localeOf(t)))[0] || "");
   return box;
@@ -35,10 +36,11 @@ async function offerSkillUpdate(row, hub, t) {
 /**
  * `onPick(teacherId, variantId)` runs when a usable teacher is chosen. `pickVariants: false` hides the
  * colour sets (they are a global choice, not a series one). `inherit` adds a choice that clears the
- * selection, passing "" as the id.
+ * selection, passing "" as the id. The user's own teachers (custom:<id>) follow in a section of their own.
  */
-function openTeacherPicker(hub, t, { selected, variants = {}, pickVariants = true, inherit = null, onPick }) {
+async function openTeacherPicker(hub, t, { selected, variants = {}, pickVariants = true, inherit = null, onPick }) {
   const locale = localeOf(t);
+  const custom = await loadCustomTeachers(hub.app.vault.adapter).catch((e) => { console.warn("EngramQuest: custom teachers unreadable", e); return []; });
   const licensed = !!t.licenseValid;
   const modal = new I.Modal(hub.app);
   modal.modalEl.addClass("lh-vid-modal", "lh-vid-picker");
@@ -66,8 +68,7 @@ function openTeacherPicker(hub, t, { selected, variants = {}, pickVariants = tru
       .addEventListener("click", () => choose("", null));
   }
 
-  const grid = wrap.createDiv({ cls: "lh-vid-picker-grid" });
-  for (const teacher of TEACHERS) {
+  const drawCard = (grid, teacher) => {
     const usable = canUse(teacher, licensed);
     const isSelected = teacher.id === selected;
     let variant = variantOf(teacher, variants[teacher.id]);
@@ -76,8 +77,9 @@ function openTeacherPicker(hub, t, { selected, variants = {}, pickVariants = tru
     const photo = card.createDiv({ cls: "lh-vid-tcard-photo" });
     const drawPhoto = () => {
       photo.empty();
-      const src = PORTRAITS[portraitKey(teacher, variant && variant.id)];
+      const src = teacher.portrait || PORTRAITS[portraitKey(teacher, variant && variant.id)];
       if (src) photo.createEl("img", { attr: { src, alt: localText(teacher.name, locale) } });
+      else photo.createSpan({ cls: "lh-vid-tcard-initial", text: Array.from(localText(teacher.name, locale))[0] || "" });
       if (!usable) photo.createSpan({ cls: "lh-vid-tcard-lock", text: "Pro" });
     };
     drawPhoto();
@@ -130,6 +132,15 @@ function openTeacherPicker(hub, t, { selected, variants = {}, pickVariants = tru
       if (usable) choose(teacher.id, variant && variant.id);
       else new ProUpgradeModal(hub.app, hub.plugin).open();
     });
+  };
+
+  const grid = wrap.createDiv({ cls: "lh-vid-picker-grid" });
+  for (const teacher of TEACHERS) drawCard(grid, teacher);
+  if (custom.length) {
+    wrap.createDiv({ cls: "lh-vid-picker-section", text: c(t, "VIDEO_TEACHER_CUSTOM") });
+    wrap.createDiv({ cls: "lh-vid-modal-desc", text: c(t, licensed ? "VIDEO_TEACHER_CUSTOM_SUB" : "VIDEO_TEACHER_CUSTOM_SUB_FREE") });
+    const own = wrap.createDiv({ cls: "lh-vid-picker-grid" });
+    for (const teacher of custom) drawCard(own, teacher);
   }
   modal.open();
 }

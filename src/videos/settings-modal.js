@@ -5,7 +5,8 @@
 const I = require("obsidian");
 const { t: c, interpolate: K } = require("../i18n");
 const data = require("./data");
-const { findTeacher, canUse, localText } = require("./teachers");
+const { canUse, localText } = require("./teachers");
+const { loadCustomTeachers, findTeacherIn } = require("./custom-teachers");
 const { openTeacherPicker, teacherAvatar, localeOf } = require("./teacher-picker");
 
 const QUALITY_TEXT = { high: ["VIDEO_Q_HIGH", "VIDEO_Q_HIGH_DESC"], compact: ["VIDEO_Q_COMPACT", "VIDEO_Q_COMPACT_DESC"] };
@@ -18,6 +19,7 @@ async function openVideoSettingsModal(hub, t) {
   const isPro = !!hub.plugin.settings.licenseValid;
   const locale = localeOf(t);
   let s = await data.readSettings(adapter, isPro);
+  const custom = await loadCustomTeachers(adapter).catch(() => []);
 
   const modal = new I.Modal(hub.app);
   modal.modalEl.addClass("lh-vid-modal", "lh-vid-settings");
@@ -30,7 +32,7 @@ async function openVideoSettingsModal(hub, t) {
     s = data.normalizeSettings(s, isPro);
     form.empty();
 
-    const teacher = findTeacher(s.cast.teacher);
+    const teacher = findTeacherIn(custom, s.cast.teacher);
     const teacherRow = form.createDiv({ cls: "lh-vid-set-row" });
     teacherRow.createSpan({ cls: "lh-vid-set-label", text: c(t, "VIDEO_TEACHER") });
     teacherAvatar(teacherRow, t, teacher, s.cast.variants[teacher.id]);

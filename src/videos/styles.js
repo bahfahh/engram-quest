@@ -95,6 +95,8 @@ body.is-phone .lh-vid-back { height:auto; padding:0 !important; background:none 
 .lh-vid-tcard-photo { position:relative; width:112px; flex-shrink:0; aspect-ratio:3/4; border-radius:10px; overflow:hidden; background:var(--fill); }
 .lh-vid-tcard-photo img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
 .lh-vid-tcard-lock { position:absolute; left:6px; top:6px; padding:1px 6px; border-radius:6px; background:var(--card); color:var(--text2); font-size:11px; font-weight:600; }
+.lh-vid-tcard-initial { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:34px; font-weight:600; color:var(--text3); }
+.lh-vid-picker-section { margin-top:8px; font-size:14px; font-weight:600; color:var(--text); }
 .lh-vid-tcard-body { flex:1; min-width:0; display:flex; flex-direction:column; gap:5px; }
 .lh-vid-tcard-head { display:flex; align-items:baseline; flex-wrap:wrap; gap:2px 8px; }
 .lh-vid-tcard-name { font-size:15px; font-weight:600; color:var(--text); }

@@ -9,7 +9,8 @@ const I = require("obsidian");
 const { t: c } = require("../i18n");
 const { ProUpgradeModal } = require("../license/upgrade");
 const { createRequest, updateRequest, GOAL_MAX } = require("./data");
-const { findTeacher, localText } = require("./teachers");
+const { localText } = require("./teachers");
+const { loadCustomTeachers, findTeacherIn } = require("./custom-teachers");
 const { openTeacherPicker, teacherAvatar, localeOf } = require("./teacher-picker");
 const { openPromptModal, seriesPrompt } = require("./request-ui");
 
@@ -86,11 +87,12 @@ function openNewVideoModal(hub, t, onSaved, edit = null, onDelete = null) {
   // "" means the teacher from Video settings; a series' own teacher is a Pro choice.
   const openedTeacher = (edit && edit.meta.cast && edit.meta.cast.teacher) || "";
   let teacherId = openedTeacher;
+  let custom = [];
   const teacherRow = field("VIDEO_TEACHER").createDiv({ cls: "lh-vid-teacher-pick" });
   const drawTeacher = () => {
     teacherRow.empty();
     if (teacherId) {
-      const teacher = findTeacher(teacherId);
+      const teacher = findTeacherIn(custom, teacherId);
       teacherAvatar(teacherRow, t, teacher);
       teacherRow.createSpan({ cls: "lh-vid-teacher-who", text: localText(teacher.name, localeOf(t)) });
     } else {
@@ -103,6 +105,8 @@ function openNewVideoModal(hub, t, onSaved, edit = null, onDelete = null) {
     });
   };
   drawTeacher();
+  // A series may already name one of the user's own teachers; their files are read after the form is drawn.
+  loadCustomTeachers(app.vault.adapter).then((list) => { custom = list; if (list.length) drawTeacher(); }).catch(() => {});
 
   const srcField = field("VIDEO_NEW_SOURCE", "lh-vid-new-src");
   const select = srcField.createEl("select", { cls: "lh-vid-select", attr: { id: "lh-vid-new-src" } });
