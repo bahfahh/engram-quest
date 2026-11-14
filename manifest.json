@@ -1,7 +1,7 @@
 {
   "id": "engram-quest",
   "name": "EngramQuest",
-  "version": "1.11.1",
+  "version": "2.0.0",
   "minAppVersion": "1.6.0",
   "description": "Turn notes into flashcard Review Decks with FSRS and layered hints, Memory Maps, Quest Maps, Lessons and short video lessons, made by the AI tool you already use. Optional one-time Pro adds Deep Dives, memory anchors and recall films.",
   "author": "powen",
