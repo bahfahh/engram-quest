@@ -5,8 +5,11 @@
 //
 // Order: --teacher (the user named one in the request) > the series' meta.json → cast.teacher (--series)
 //        > engram-quest/videos/settings.json → cast.teacher > the registry's default teacher.
-//        Registry: this skill's lib/cast/teachers.json. A custom teacher is custom:<id> →
-//        engram-quest/cast/custom/<id>.json (or engram-quest/video/teachers/<id>.json).
+//        Registry: this skill's lib/cast/teachers.json. A custom teacher is custom:<id> → the user's custom area,
+//        engram-quest/custom/cast/teachers/<id>.json (older places still read: engram-quest/cast/custom/<id>.json,
+//        engram-quest/video/teachers/<id>.json). Its skin is an official one or custom:<id> →
+//        engram-quest/custom/cast/skins/<id>/skin.js (or the older engram-quest/cast/skins/<id>/), loaded from there by
+//        render.cjs; nothing is copied into this skill. Custom teachers are Pro.
 //        A pro teacher needs "pro": true in settings.json, however it was chosen; a teacher whose skin file
 //        is not installed cannot be used either. Both fall back to the default teacher, reason in notes.
 //        Language: --lang > settings.json → narrationLang > zh-tw ("follow": pass --lang with the notes' language).
@@ -52,10 +55,11 @@ else notes.push(`no teacher chosen → default ${def.id}`);
 let teacher = null;
 if (want && want.startsWith('custom:')) {
   const id = want.slice(7);
-  teacher = readJSON(path.join(vault, `engram-quest/cast/custom/${id}.json`)) || readJSON(path.join(vault, `engram-quest/video/teachers/${id}.json`));
-  if (!teacher) notes.push(`custom teacher ${id} not found → default`);
+  teacher = [`engram-quest/custom/cast/teachers/${id}.json`, `engram-quest/cast/custom/${id}.json`, `engram-quest/video/teachers/${id}.json`]
+    .map(rel => readJSON(path.join(vault, rel))).find(Boolean) || null;
+  if (!teacher) notes.push(`custom teacher ${id} not found in engram-quest/custom/cast/teachers/ → default`);
   else {
-    teacher.tier = 'pro'; teacher.custom = true;
+    teacher.id = want; teacher.tier = 'pro'; teacher.custom = true;
     const bad = ['hook', 'explain', 'pause', 'recap'].filter(b => !teacher.beats || !reg.beats[b] || !(teacher.beats[b] in reg.beats[b]));
     if (bad.length) { notes.push(`custom teacher ${id}: beats not in the registry (${bad.join(', ')}) → default`); teacher = null; }
   }
@@ -70,14 +74,23 @@ if (!teacher) teacher = def;
 
 const skins = reg.skins || [];
 const studio = path.resolve(__dirname, '..', '..');
-const skinOf = t => skins.find(s => s.id === t.skin) || { id: t.skin, kind: '3d', file: `/lib/cast/skins/${t.skin}.js` };
+// A custom skin stays in the user's custom area; render.cjs serves it at /engram-quest/… (lib/cast/skin-url.js).
+// An older custom teacher may name its skin without the custom: prefix; it is looked for in the same folders.
+const customSkin = name => {
+  const id = name.replace(/^custom:/, '');
+  const dir = [`engram-quest/custom/cast/skins/${id}`, `engram-quest/cast/skins/${id}`].map(rel => path.join(vault, rel)).find(d => fs.existsSync(path.join(d, 'skin.js')));
+  if (!dir) return null;
+  const meta = readJSON(path.join(dir, 'meta.json')) || {};
+  return { id: `custom:${id}`, kind: meta.kind || '3d', file: `/engram-quest/custom/cast/skins/${id}/skin.js`, dir, custom: true, status: meta.status, variants: meta.variants };
+};
+const skinOf = t => skins.find(s => s.id === t.skin)
+  || (t.custom && t.skin && customSkin(t.skin))
+  || { id: t.skin, kind: '3d', file: `/lib/cast/skins/${t.skin}.js` };
 const installed = s => !(s.file && s.file.startsWith('/lib/')) || fs.existsSync(path.join(studio, s.file));
+if (teacher.custom && !skins.find(s => s.id === teacher.skin) && !customSkin(String(teacher.skin || ''))) { notes.push(`${teacher.id}: skin ${teacher.skin} not found in engram-quest/custom/cast/skins/ → default`); teacher = def; }
 if (teacher !== def && !teacher.custom && !installed(skinOf(teacher))) { notes.push(`${teacher.id}: skin file ${skinOf(teacher).file} is not installed → default`); teacher = def; }
 let skin = skinOf(teacher);
-if (teacher.custom && !skins.find(s => s.id === teacher.skin)) {
-  const dir = path.join(vault, `engram-quest/cast/skins/${teacher.skin}`);
-  if (fs.existsSync(dir)) { skin = { id: teacher.skin, kind: '3d', file: null, dir, custom: true }; notes.push(`custom skin in ${dir}: copy skin.js to scripts/studio/lib/cast/skins/${teacher.skin}.js before rendering`); }
-}
+if (skin.custom) notes.push(`custom skin ${skin.id} from ${skin.dir}: render.cjs loads it from the custom area (it finds the vault through this cast.json; a cloud render needs $VAULT)`);
 if (!installed(skin)) notes.push(`WARNING: skin file ${skin.file} missing in the studio`);
 if (skin.kind === '2d') notes.push(`skin ${skin.id} is 2D: it cannot go into the 3D classroom (makeCast); place it on a flat scene with /lib/cast/stage.js, and keep the classroom opening with the clay cast or open on the real-UI floor`);
 if (skin.status && skin.status !== 'approved') notes.push(`skin ${skin.id} status: ${skin.status} (the look may still change; the pose interface will not)`);

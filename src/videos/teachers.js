@@ -17,9 +17,12 @@ function findTeacher(id) {
   return TEACHERS.find((x) => x.id === id) || DEFAULT;
 }
 
-/** The teacher named on a finished video, retired ones included; null when the id is unknown. */
-function teacherOfVideo(id) {
-  return teachers.find((x) => x.id === id) || null;
+/**
+ * The teacher named on a finished video, retired ones included; `custom` holds the user's own teachers
+ * (custom-teachers.js), for films a custom:<id> teacher made. null when the id is unknown.
+ */
+function teacherOfVideo(id, custom = []) {
+  return teachers.find((x) => x.id === id) || custom.find((x) => x.id === id) || null;
 }
 
 function canUse(teacher, licensed) {

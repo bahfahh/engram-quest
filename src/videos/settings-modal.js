@@ -5,7 +5,8 @@
 const I = require("obsidian");
 const { t: c, interpolate: K } = require("../i18n");
 const data = require("./data");
-const { findTeacher, canUse, localText } = require("./teachers");
+const { canUse, localText } = require("./teachers");
+const { loadCustomTeachers, findTeacherIn } = require("./custom-teachers");
 const { openTeacherPicker, teacherAvatar, localeOf } = require("./teacher-picker");
 
 const QUALITY_TEXT = { high: ["VIDEO_Q_HIGH", "VIDEO_Q_HIGH_DESC"], compact: ["VIDEO_Q_COMPACT", "VIDEO_Q_COMPACT_DESC"] };
@@ -18,6 +19,7 @@ async function openVideoSettingsModal(hub, t) {
   const isPro = !!hub.plugin.settings.licenseValid;
   const locale = localeOf(t);
   let s = await data.readSettings(adapter, isPro);
+  const custom = await loadCustomTeachers(adapter).catch(() => []);
 
   const modal = new I.Modal(hub.app);
   modal.modalEl.addClass("lh-vid-modal", "lh-vid-settings");
@@ -30,7 +32,7 @@ async function openVideoSettingsModal(hub, t) {
     s = data.normalizeSettings(s, isPro);
     form.empty();
 
-    const teacher = findTeacher(s.cast.teacher);
+    const teacher = findTeacherIn(custom, s.cast.teacher);
     const teacherRow = form.createDiv({ cls: "lh-vid-set-row" });
     teacherRow.createSpan({ cls: "lh-vid-set-label", text: c(t, "VIDEO_TEACHER") });
     teacherAvatar(teacherRow, t, teacher, s.cast.variants[teacher.id]);
@@ -48,6 +50,8 @@ async function openVideoSettingsModal(hub, t) {
         },
       });
     });
+    // A saved custom:<id> whose file is gone, or whose name the picker cannot list, would otherwise read as Nico.
+    if (String(s.cast.teacher).startsWith("custom:") && teacher.id !== s.cast.teacher) form.createDiv({ cls: "lh-vid-set-note", text: K(c(t, "VIDEO_TEACHER_CUSTOM_MISSING"), { id: s.cast.teacher.slice(7) }) });
     if (!canUse(teacher, isPro)) form.createDiv({ cls: "lh-vid-set-note", text: K(c(t, "VIDEO_TEACHER_NEEDS_PRO"), { name: localText(teacher.name, locale) }) });
     form.createDiv({ cls: "lh-vid-set-note", text: c(t, "VIDEO_SET_STUDIO") });
 

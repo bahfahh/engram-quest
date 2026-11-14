@@ -5,7 +5,7 @@
 // Skin test page: lab.html?style=<id> — the fixed 6 s test sequence (labPoses in stage.js), the three roles on the blurred real-UI floor. Copy into a project folder to render.
 import { makeStage, labPoses } from '/lib/cast/stage.js';
 const id = new URLSearchParams(location.search).get('style') || '_sample3d';
-const mod = await import(`/lib/cast/skins/${id}.js`);
+const mod = await import((await import('/lib/cast/skin-url.js')).skinUrl(id));
 const st = await makeStage({ card: true });   // the demo UI panel the teacher points at
 const cast = await mod.create(st.env, { variant: new URLSearchParams(location.search).get('variant') });
 st.adopt(cast);

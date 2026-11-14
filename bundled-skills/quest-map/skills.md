@@ -7,6 +7,8 @@ description:
 
 # Quest Map Skill
 
+> **Custom area.** Before you plan anything, read `custom-area.md` in this skill's folder: where the user's own preferences and assets live (`engram-quest/custom/`), how each choice is decided, and why keys never go into files.
+
 A quest map is where a learner finds out whether they can **use** what they know. Each mission
 puts them in a situation they have not seen, with the real material in front of them, and asks
 them to do what someone with the skill would do. Lessons explain and review decks drill recall;

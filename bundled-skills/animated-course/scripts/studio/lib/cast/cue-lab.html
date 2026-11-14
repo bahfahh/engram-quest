@@ -18,7 +18,7 @@ if (id === 'clay-snackshop') {
   const box = ch => { const g = new THREE.Group(); g.add(ch.root); return { root: g, height: ch.height, pose: ch.poseNative }; };
   cast = { teacher: box(c.teacher), student: box(c.student), embodiment: null };
 } else {
-  cast = await (await import(`/lib/cast/skins/${id}.js`)).create(st.env, { variant: q.get('variant') });
+  cast = await (await import((await import('/lib/cast/skin-url.js')).skinUrl(id))).create(st.env, { variant: q.get('variant') });
 }
 st.adopt(cast);
 const TG = [

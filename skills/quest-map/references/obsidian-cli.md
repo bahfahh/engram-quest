@@ -27,6 +27,8 @@ obsidian search query="keyword" format=json
 obsidian vault="Obsidian_Note" search query="keyword"
 ```
 
+**Leave out `engram-quest/`.** The vault's top-level `engram-quest/` folder holds plugin data and the user's custom area (preferences, assets), not notes: drop every result whose path starts with `engram-quest/`. A folder of the same name deeper in the vault is the user's own and stays in.
+
 ## Query operators
 
 ```

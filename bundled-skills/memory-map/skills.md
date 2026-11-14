@@ -8,6 +8,8 @@ description:
 
 # Memory Map Skill
 
+> **Custom area.** Before you plan anything, read `custom-area.md` in this skill's folder: where the user's own preferences and assets live (`engram-quest/custom/`), how each choice is decided, and why keys never go into files.
+
 ## Output Language Rule
 
 Important: generate user-facing output in the language that best matches the user's prompt or the source note.

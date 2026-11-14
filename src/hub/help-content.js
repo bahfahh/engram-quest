@@ -242,6 +242,20 @@ module.exports = {
         ],
       },
       {
+        id: "custom", icon: "folder", title: "自訂區", tag: "你的偏好與素材",
+        body: [
+          { p: "你的 AI 會漸漸知道你喜歡怎麼做。這些偏好，和值得重用的素材，都放在一個屬於你的資料夾 <code>engram-quest/custom/</code>。插件安裝、自動更新、授權失效都不會改動裡面的檔案；skill 資料夾每次更新都會被覆蓋，所以自己的東西放這裡。" },
+          { table: [
+            ["資料夾", "放什麼"],
+            ["<code>preferences/</code>", "<code>all.md</code> 給所有 skill，<code>&lt;skill&gt;.md</code> 給單一 skill，例如「課程用黑板風格、圖多一點」。每一行記日期和原因，在 Obsidian 裡就能改或刪。"],
+            ["<code>assets/</code>", "想重用的外觀、配樂、圖、版型，登記在 <code>index.json</code>。"],
+            ["<code>cast/</code>", "你的 AI 建的影片老師與造型（Pro），會出現在選老師畫面的「你的老師」。"],
+          ] },
+          { p: "每個 skill 開工先讀這裡，決定順序固定：對話裡你的要求 → 系列自己的設定 → 插件介面上你選的值 → 你的偏好 → skill 的預設。自訂項目一律叫 <code>custom:&lt;名字&gt;</code>，不會取代官方項目。AI 只在你同意後才記偏好，並告訴你加了哪一行。" },
+          { note: "偏好與素材免費；自訂老師和其他老師一樣是 Pro。API key、token、密碼不要放進去：vault 可能同步到 git 或雲端，金鑰只放環境變數。打開方式：<strong>設定 → EngramQuest → 自訂區 → 打開資料夾</strong>。" },
+        ],
+      },
+      {
         id: "settings", icon: "list", title: "設定", tag: "自訂",
         body: [
           { p: "在 Obsidian <strong>設定 → EngramQuest</strong>。" },
@@ -256,6 +270,7 @@ module.exports = {
             ["Memory Map 儲存資料夾", "AI 生成的 <code>-memory.canvas</code> 存放處，留空則放在來源筆記旁。"],
             ["AI Skills", "替 Claude Code、Codex / Antigravity、Gemini CLI、Cursor 安裝 skills。"],
             ["自動更新已安裝的 skills", "插件載入時更新這個 vault 裡由 EngramQuest 安裝的 skills。"],
+            ["自訂區", "打開 <code>engram-quest/custom/</code>，你給 skill 的偏好與素材放在這裡（見上面「自訂區」）。"],
           ] },
           { p: "影片相關的設定在影片學院的「影片設定」裡。" },
         ],
@@ -548,6 +563,20 @@ module.exports = {
         ],
       },
       {
+        id: "custom", icon: "folder", title: "Custom area", tag: "Your preferences and assets",
+        body: [
+          { p: "Your AI learns how you like things made. Those wishes, and anything worth reusing, go into one folder that belongs to you: <code>engram-quest/custom/</code>. Installing, auto-updating or a lapsed licence never changes a file there; the skill folders are overwritten on every update, so this is the place for your own things." },
+          { table: [
+            ["Folder", "What goes there"],
+            ["<code>preferences/</code>", "<code>all.md</code> for every skill, <code>&lt;skill&gt;.md</code> for one, e.g. \"blackboard style, lots of diagrams\". Each line has its date and reason, so you can edit or delete it in Obsidian."],
+            ["<code>assets/</code>", "Looks, music, images and templates you want to reuse, listed in <code>index.json</code>."],
+            ["<code>cast/</code>", "Video teachers and their looks made by your AI (Pro); they appear under \"Your teachers\" in the teacher picker."],
+          ] },
+          { p: "Every skill reads it first, in a fixed order: what you ask in the conversation, then the series' own settings, then what you picked in the plugin, then your preferences, then the skill's defaults. A custom item is called <code>custom:&lt;name&gt;</code>, so it never replaces an official one. Your AI saves a preference only with your agreement and tells you the line it added." },
+          { note: "Preferences and assets are free; custom teachers are Pro, like the other teachers. Never put API keys, tokens or passwords there: your vault may be synced to git or a cloud drive, and keys belong in environment variables. To open it: <strong>Settings → EngramQuest → Custom area → Open folder</strong>." },
+        ],
+      },
+      {
         id: "settings", icon: "list", title: "Settings", tag: "Customize",
         body: [
           { p: "In Obsidian <strong>Settings → EngramQuest</strong>." },
@@ -562,6 +591,7 @@ module.exports = {
             ["Memory Map folder", "Where AI-made <code>-memory.canvas</code> files go; empty means next to the source note."],
             ["AI Skills", "Install skills for Claude Code, Codex / Antigravity, Gemini CLI or Cursor."],
             ["Auto update installed skills", "Refresh the skills EngramQuest installed in this vault when the plugin loads."],
+            ["Custom area", "Opens <code>engram-quest/custom/</code>, where your preferences and assets for the skills live (see Custom area above)."],
           ] },
           { p: "Video options live in Video settings inside the Video Academy." },
         ],

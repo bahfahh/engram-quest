@@ -16,6 +16,8 @@ description: >
 
 # EngramQuest Synapse Skill (Pro)
 
+> **Custom area.** Before you plan anything, read `custom-area.md` in this skill's folder: where the user's own preferences and assets live (`engram-quest/custom/`), how each choice is decided, and why keys never go into files.
+
 ## What This Skill Does
 
 Synapse helps users memorize difficult cards by linking them to what they have **already

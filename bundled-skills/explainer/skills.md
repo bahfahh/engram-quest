@@ -14,6 +14,8 @@ description: >
 
 # Explainer: Deep Dive and Insight
 
+> **Custom area.** Before you plan anything, read `custom-area.md` in this skill's folder: where the user's own preferences and assets live (`engram-quest/custom/`), how each choice is decided, and why keys never go into files.
+
 You write the content of a page as one JSON spec. The plugin draws it: it computes every position,
 follows the app's light or dark theme, adapts to phone width, opens linked notes, and fills in live
 facts from the vault each time the page opens. That division is why a page cannot come out broken,

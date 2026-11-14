@@ -2,6 +2,10 @@
 
 const { anySrPattern, parseSrComment, saveSrData, mapLimit, loadHints, listHintFiles } = require("./helpers");
 
+// The vault's top-level engram-quest/ holds plugin data and the user's custom area (preferences, assets): never
+// notes, so never cards, and never rewritten. A note folder of the same name deeper in the vault is the user's own.
+const notesOnly = (files) => files.filter((file) => !file.path.startsWith("engram-quest/"));
+
 async function migrateReviewDeckFolder(adapter) {
   if (await adapter.exists("engram-review/hints")) return;
   if (!(await adapter.exists(".review-deck"))) return;
@@ -32,7 +36,7 @@ async function migrateSrCommentsToJson(app) {
     }
   } catch {}
 
-  const files = app.vault.getMarkdownFiles();
+  const files = notesOnly(app.vault.getMarkdownFiles());
   for (const file of files) {
     let content = await app.vault.read(file);
     const lines = content.split("\n");
@@ -85,7 +89,7 @@ async function scanReviewDecks(app, settings, reviewHelpers) {
   } catch (e) {
     console.warn("engram-review: migration failed, continuing without it", e);
   }
-  let files = app.vault.getMarkdownFiles();
+  let files = notesOnly(app.vault.getMarkdownFiles());
   let deckMap = {};
   const srScan = settings.enableSRScan ?? false;
   // cachedRead serves from Obsidian's in-memory cache when available instead of hitting disk

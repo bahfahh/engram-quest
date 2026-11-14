@@ -1,7 +1,7 @@
 // Put any teacher's skin into the existing classroom scenes (lib/classroom/*).
 //
 //   import { makeCast } from '/lib/cast/classroom.js';
-//   const cast = await makeCast('glossy-owl', { renderer });      // skin id from resolve.cjs
+//   const cast = await makeCast('glossy-owl', { renderer });      // skin id from resolve.cjs (a custom skin: 'custom:<id>')
 //   cast.teacher.root.position.set(-2.25, 0, -0.7); scene.add(cast.teacher.root);
 //   cast.student.root.position.set(2.1, 0, 0.05);  scene.add(cast.student.root);
 //   // per frame — the same call the clay cast takes:
@@ -16,6 +16,7 @@
 import * as THREE from 'three';
 import * as C from '/lib/classroom/cast.js';
 import { rng } from '/lib/kit/kit.js';
+import { skinUrl } from '/lib/cast/skin-url.js';
 
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const STATES = new Set(['idle', 'think', 'aha', 'doubt']);
@@ -107,7 +108,7 @@ export async function makeCast(skinId = 'clay-snackshop', { renderer = null, see
     const H = clayHeights(), clay = (ch, h) => Object.assign(ch, { height: h, poseNative: s => ch.pose(skinToClay(s)) });
     return { skin: 'clay-snackshop', kind: 'clay', teacher: clay(C.makeTeacher(), H.teacher), student: clay(C.makeStudent(), H.student), embodiment: null };
   }
-  const mod = await import(`/lib/cast/skins/${skinId}.js`);
+  const mod = await import(skinUrl(skinId));
   if (mod.meta && mod.meta.kind === '2d') throw new Error(`makeCast: skin ${skinId} is 2D; use /lib/cast/stage.js`);
   const raw = await mod.create({ THREE, K: null, rng, layer2d: null, seed }, { variant });
   const H = clayHeights(), envTex = studioEnv(renderer);

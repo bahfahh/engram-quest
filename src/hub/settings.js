@@ -1,8 +1,21 @@
 "use strict";
 const I = require("obsidian");
-const { t: c } = require("../i18n");
+const { t: c, interpolate: K } = require("../i18n");
 const { SkillsInstallModal: de, isInstallerAvailable: me } = require("./skills");
 const { renderLicenseSettings } = require("../license/settings");
+const { CUSTOM_DIR } = require("../videos/custom-teachers");
+
+// The custom area belongs to the user: opening it makes at most the empty folder, never a file in it.
+async function openCustomFolder(app, t) {
+  try {
+    if (!(await app.vault.adapter.exists(CUSTOM_DIR))) await app.vault.adapter.mkdir(CUSTOM_DIR);
+    if (I.Platform && I.Platform.isDesktopApp && typeof app.showInFolder === "function") await app.showInFolder(CUSTOM_DIR);
+    else new I.Notice(K(c(t, "SETTINGS_CUSTOM_NO_FOLDER"), { path: CUSTOM_DIR + "/" }));
+  } catch (e) {
+    console.warn("EngramQuest: could not open the custom folder", e);
+    new I.Notice(K(c(t, "SETTINGS_CUSTOM_NO_FOLDER"), { path: CUSTOM_DIR + "/" }));
+  }
+}
 
 var pe = class extends I.PluginSettingTab {
   constructor(e, t) { super(e, t); this.plugin = t; }
@@ -42,7 +55,8 @@ var pe = class extends I.PluginSettingTab {
     }),
     new I.Setting(e).setName(c(t, "SETTINGS_AI_SKILLS")).setHeading(),
     new I.Setting(e).setName(c(t, "SETTINGS_AI_SKILLS")).setDesc(c(t, "SETTINGS_AI_SKILLS_DESC")).addButton(r => r.setButtonText(c(t, "SETTINGS_AI_SKILLS_BUTTON")).setCta().onClick(() => { if (!me()) { new I.Notice("EngramQuest installer assets are unavailable."); return; } new de(this.app, this.plugin).open(); })),
-    new I.Setting(e).setName(c(t, "SETTINGS_AUTO_UPDATE_SKILLS_NAME")).setDesc(c(t, "SETTINGS_AUTO_UPDATE_SKILLS_DESC")).addToggle(r => r.setValue(!!t.autoUpdateInstalledSkills).onChange(async s => { this.plugin.settings.autoUpdateInstalledSkills = s; await this.plugin.saveData(this.plugin.settings); }));
+    new I.Setting(e).setName(c(t, "SETTINGS_AUTO_UPDATE_SKILLS_NAME")).setDesc(c(t, "SETTINGS_AUTO_UPDATE_SKILLS_DESC")).addToggle(r => r.setValue(!!t.autoUpdateInstalledSkills).onChange(async s => { this.plugin.settings.autoUpdateInstalledSkills = s; await this.plugin.saveData(this.plugin.settings); })),
+    new I.Setting(e).setName(c(t, "SETTINGS_CUSTOM_NAME")).setDesc(c(t, "SETTINGS_CUSTOM_DESC")).addButton(r => r.setButtonText(c(t, "SETTINGS_CUSTOM_BUTTON")).onClick(() => openCustomFolder(this.plugin.app, t)));
   }
 };
 

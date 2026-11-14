@@ -14,6 +14,8 @@ description: >
 
 # Lesson Academy Skill
 
+> **Custom area.** Before you plan anything, read `custom-area.md` in this skill's folder: where the user's own preferences and assets live (`engram-quest/custom/`), how each choice is decided, and why keys never go into files.
+
 Create **courses** of interactive HTML **lessons** for the EngramQuest plugin. A course is a
 folder under `engram-quest/lessons/{courseSlug}/` holding a `meta.json` (course info + lesson
 list + completion tracking) and one self-contained HTML file per lesson. The plugin's

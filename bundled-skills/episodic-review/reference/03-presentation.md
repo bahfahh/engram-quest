@@ -72,7 +72,7 @@ The approved look is in `templates/film/look.css`. What it is for:
 - **Cards for pictured objects**: dark cards for interface-like things, a light sheet for documents.
 - Type no smaller than about 26 px at 1920x1080; body text 30-40 px.
 
-A different look is fine when the content calls for it. The fixed points stay: content fills the frame, colour means something, orientation is always visible.
+A different look is fine when the content calls for it, and so is a look kept in the custom area (`engram-quest/custom/assets/looks/`, listed in `assets/index.json` for this skill) when the decision order (`custom-area.md`) picks it. The fixed points stay: content fills the frame, colour means something, orientation is always visible.
 
 ## 6. Language
 

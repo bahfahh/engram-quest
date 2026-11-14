@@ -5,6 +5,8 @@ description: Turn the notes a person touched over a period (usually one month) i
 
 # Episodic review
 
+> **Custom area.** Before you plan anything, read `custom-area.md` in this skill's folder: where the user's own preferences and assets live (`engram-quest/custom/`), how each choice is decided, and why keys never go into files.
+
 ## In one line
 
 **Order is what makes notes memorable.** Read the whole topic as it stands now, find the few questions it answers, and show the content hanging on that skeleton: one thing at a time, every relation named, the picture doing the explaining. Then make the viewer retrieve it.
@@ -98,7 +100,7 @@ scripts/
   music/, mix.py            score generator (one theme per film) and final mix
   deliver.py                compress, poster, meta.json entry
   render_canvas.cjs         an Obsidian canvas as an image, for reading
-  obsidian_index.js, doctor.py
+  obsidian_index.js, doctor.py   doctor.py also warns about anything shaped like a key in engram-quest/custom/
 ```
 
 ## Reporting problems

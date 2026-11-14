@@ -6,10 +6,11 @@
 // what each covers is the video skill's call. Saving only writes a pending series; nothing is generated here.
 
 const I = require("obsidian");
-const { t: c } = require("../i18n");
+const { t: c, interpolate: K } = require("../i18n");
 const { ProUpgradeModal } = require("../license/upgrade");
 const { createRequest, updateRequest, GOAL_MAX } = require("./data");
-const { findTeacher, localText } = require("./teachers");
+const { localText } = require("./teachers");
+const { loadCustomTeachers, findTeacherIn } = require("./custom-teachers");
 const { openTeacherPicker, teacherAvatar, localeOf } = require("./teacher-picker");
 const { openPromptModal, seriesPrompt } = require("./request-ui");
 
@@ -86,11 +87,18 @@ function openNewVideoModal(hub, t, onSaved, edit = null, onDelete = null) {
   // "" means the teacher from Video settings; a series' own teacher is a Pro choice.
   const openedTeacher = (edit && edit.meta.cast && edit.meta.cast.teacher) || "";
   let teacherId = openedTeacher;
-  const teacherRow = field("VIDEO_TEACHER").createDiv({ cls: "lh-vid-teacher-pick" });
+  let custom = null; // the user's own teachers, once read
+  const teacherField = field("VIDEO_TEACHER");
+  const teacherRow = teacherField.createDiv({ cls: "lh-vid-teacher-pick" });
+  let teacherNote = null;
   const drawTeacher = () => {
     teacherRow.empty();
+    // A series' custom:<id> teacher whose file is gone, or whose name cannot be listed, would otherwise read as Nico.
+    if (teacherNote) teacherNote.remove();
+    const missing = custom && teacherId.startsWith("custom:") && !custom.some((x) => x.id === teacherId);
+    teacherNote = missing ? teacherField.createDiv({ cls: "lh-vid-modal-desc", text: K(c(t, "VIDEO_TEACHER_CUSTOM_MISSING"), { id: teacherId.slice(7) }) }) : null;
     if (teacherId) {
-      const teacher = findTeacher(teacherId);
+      const teacher = findTeacherIn(custom || [], teacherId);
       teacherAvatar(teacherRow, t, teacher);
       teacherRow.createSpan({ cls: "lh-vid-teacher-who", text: localText(teacher.name, localeOf(t)) });
     } else {
@@ -103,6 +111,8 @@ function openNewVideoModal(hub, t, onSaved, edit = null, onDelete = null) {
     });
   };
   drawTeacher();
+  // A series may already name one of the user's own teachers; their files are read after the form is drawn.
+  loadCustomTeachers(app.vault.adapter).catch(() => []).then((list) => { custom = list; drawTeacher(); });
 
   const srcField = field("VIDEO_NEW_SOURCE", "lh-vid-new-src");
   const select = srcField.createEl("select", { cls: "lh-vid-select", attr: { id: "lh-vid-new-src" } });
