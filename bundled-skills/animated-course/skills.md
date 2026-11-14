@@ -5,6 +5,8 @@ description: Make animated teaching videos (a whole course, a few lessons, or a 
 
 # engram animated course
 
+> **Custom area.** Before you plan anything, read `custom-area.md` in this skill's folder: where the user's own preferences and assets live (`engram-quest/custom/`), how each choice is decided, and why keys never go into files.
+
 ## How this skill is written
 
 **Purpose** (what the viewer should understand, do or feel), **reason** (what was observed), **options** with when they fit: judge by situation. Numbers are what approved films measured; tools measure, you judge. Firm only: product decisions, technical contracts, truthfulness. Everything else is guidance, because fixed rules make an AI force-fit content.

@@ -27,6 +27,8 @@ obsidian search query="keyword" format=json
 obsidian vault="Obsidian_Note" search query="keyword"
 ```
 
+**Leave out `engram-quest/`.** It holds plugin data and the user's custom area (preferences, assets), not notes. Add `-path:engram-quest` to every note search (`obsidian search query="keyword -path:engram-quest"`) and drop any result under `engram-quest/` that still comes back.
+
 ## Query operators
 
 ```

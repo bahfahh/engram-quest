@@ -163,6 +163,9 @@ function createInstaller(embeddedOverride) {
     }));
   }
 
+  // Every skill carries the same custom-area guide (skills/shared/); the sync step points SKILL.md at it.
+  for (const assets of Object.values(MODULE_ASSETS)) assets.push({ source: "shared/custom-area.md", target: "custom-area.md" });
+
   function joinPath() {
     return Array.from(arguments).filter(Boolean).join("/").replace(/\/+/g, "/");
   }
