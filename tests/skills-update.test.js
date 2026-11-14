@@ -129,11 +129,12 @@ describe("Pro video content after a licence ends", () => {
   });
 });
 
-describe("Synapse skill after a licence ends", () => {
-  // The content skills run Synapse whenever its skill is installed, so a lapsed licence takes it away.
+// The content skills run Synapse whenever its skill is installed, and Deep Dive pages are a Pro
+// feature the plugin no longer shows, so a lapsed licence takes both installed skill copies away.
+describe.each([["synapse", "Synapse"], ["explainer", "Deep Dive"]])("%s skill (%s) after a licence ends", (module) => {
   const preview = async (tool, status) => {
     const root = { claude: ".claude/skills", codex: ".agents/skills", gemini: ".gemini/skills", cursor: ".cursor/skills" }[tool];
-    const folder = `${root}/engram-quest-synapse`;
+    const folder = `${root}/engram-quest-${module}`;
     const plugin = makePlugin({ [folder]: "folder" });
     plugin.license = { state: { status } };
     const result = await getInstallPreview(plugin, tool);
@@ -150,10 +151,20 @@ describe("Synapse skill after a licence ends", () => {
   it("stays when the check merely failed, and for a licence that is valid", async () => {
     expect((await preview("claude", "offline")).removed).toEqual([]);
     expect((await preview("claude", "unavailable")).removed).toEqual([]);
-    const plugin = makePlugin({ ".claude/skills/engram-quest-synapse": "folder" });
+    const plugin = makePlugin({ [`.claude/skills/engram-quest-${module}`]: "folder" });
     plugin.settings = { licenseValid: true };
     plugin.license = { state: { status: "active" } };
     expect((await getInstallPreview(plugin, "claude")).items.filter((i) => i.action === "remove")).toEqual([]);
+  });
+});
+
+describe("skills removed with the licence", () => {
+  it("only installed skill copies are listed; Deep Dive data under engram-quest/ is not", () => {
+    for (const tool of ["claude", "codex", "gemini", "cursor"]) {
+      const paths = G.getProPaths(tool);
+      expect(paths.some((p) => p.endsWith("/engram-quest-explainer"))).toBe(true);
+      expect(paths.some((p) => p.startsWith("engram-quest/"))).toBe(false);
+    }
   });
 
   it("does not offer to remove the free skills", async () => {
