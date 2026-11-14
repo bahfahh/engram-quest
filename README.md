@@ -58,9 +58,9 @@ The library pages (Review Deck, Deep Dive, Memory Map, Lessons, Quest Map, Video
 
 <div align="center">
 
-<a href="https://youtu.be/X9RhfC-l8d4"><img src="https://img.youtube.com/vi/X9RhfC-l8d4/maxresdefault.jpg" width="600" alt="EngramQuest Quick Start — 1 minute"></a>
+<a href="https://youtu.be/yBv9S0oH1z4"><img src="https://img.youtube.com/vi/yBv9S0oH1z4/maxresdefault.jpg" width="600" alt="Get started in 3 steps"></a>
 
-▶️ **[Watch the 1-minute Quick Start](https://youtu.be/X9RhfC-l8d4)**
+▶️ **[Watch: Get started in 3 steps](https://youtu.be/yBv9S0oH1z4)**
 
 </div>
 
@@ -96,9 +96,9 @@ A three-stage recall system that builds real memory, not just familiarity:
 - **Edit writes back** — fix a card mid-review and the change saves to your source note
 - **Auto-detection** — any note tagged `#flashcards/topic` is picked up automatically
 
-**📺 Watch:** <a href="https://youtu.be/XC0NsPVfcwE"><img src="https://img.youtube.com/vi/XC0NsPVfcwE/mqdefault.jpg" width="280" alt="Build your own Review Deck"></a> <a href="https://youtu.be/pMf5mfCswBo"><img src="https://img.youtube.com/vi/pMf5mfCswBo/mqdefault.jpg" width="280" alt="Create a deck by pasting an AI answer"></a>
+**📺 Watch:** <a href="https://youtu.be/8Y45Xs7MhL8"><img src="https://img.youtube.com/vi/8Y45Xs7MhL8/mqdefault.jpg" width="280" alt="Review Deck: flashcards from your goal"></a>
 
-▶️ [Build your own Review Deck](https://youtu.be/XC0NsPVfcwE) · ▶️ [Create a deck by pasting an AI answer](https://youtu.be/pMf5mfCswBo)
+▶️ [Review Deck: flashcards from your goal](https://youtu.be/8Y45Xs7MhL8)
 
 ### 🗺️ Quest Map — Practice Missions
 
@@ -111,6 +111,10 @@ Turns a note, a topic or a Lesson Academy course into a practice map where you f
 - **Boss Battle** — a final applied case that tests judgment, sequencing, tradeoffs, or diagnosis
 - **Progress is safe** — scores and completion live in `engram-quest/state/`, apart from the quest, so AI can update a quest without wiping your progress
 - Older quests written as a `quest-map` block inside a note still open
+
+**📺 Watch:** <a href="https://youtu.be/xFGhgBIbExY"><img src="https://img.youtube.com/vi/xFGhgBIbExY/mqdefault.jpg" width="280" alt="Quest Map: turn notes into practice"></a>
+
+▶️ [Quest Map: turn notes into practice](https://youtu.be/xFGhgBIbExY)
 
 ### 🎓 Lesson Academy — AI-Built Courses
 
@@ -152,6 +156,10 @@ Visualizes abstract concepts using Obsidian Canvas.
 - AI generates a visual knowledge graph using memory science — novelty, association to your existing notes, chunking, and analogy
 - Any file named `{note-name}-memory.canvas` is auto-detected in Hub → Memory Map
 - During review, the Memory Map button finds and opens the matching canvas automatically
+
+**📺 Watch:** <a href="https://youtu.be/277XCDdTIRs"><img src="https://img.youtube.com/vi/277XCDdTIRs/mqdefault.jpg" width="280" alt="Memory Map: see how your notes connect"></a>
+
+▶️ [Memory Map: see how your notes connect](https://youtu.be/277XCDdTIRs)
 
 ### 🎞️ Recall Films — Walk Back Through What You Studied
 
@@ -370,9 +378,9 @@ Anki 解決「何時複習」。EngramQuest 解決「如何真正記住」 — �
 
 <div align="center">
 
-<a href="https://youtu.be/X9RhfC-l8d4"><img src="https://img.youtube.com/vi/X9RhfC-l8d4/maxresdefault.jpg" width="600" alt="EngramQuest 快速開始 — 1 分鐘"></a>
+<a href="https://youtu.be/yBv9S0oH1z4"><img src="https://img.youtube.com/vi/yBv9S0oH1z4/maxresdefault.jpg" width="600" alt="三步開始用 EngramQuest"></a>
 
-▶️ **[看 1 分鐘快速上手影片](https://youtu.be/X9RhfC-l8d4)**
+▶️ **[看影片：三步開始用 EngramQuest](https://youtu.be/yBv9S0oH1z4)**
 
 </div>
 
@@ -408,9 +416,9 @@ Anki 解決「何時複習」。EngramQuest 解決「如何真正記住」 — �
 - **編輯寫回** — 複習中改卡片，修改直接存回來源筆記
 - **自動偵測** — 任何打上 `#flashcards/主題` 的筆記都會自動收錄
 
-**📺 影片：** <a href="https://youtu.be/XC0NsPVfcwE"><img src="https://img.youtube.com/vi/XC0NsPVfcwE/mqdefault.jpg" width="280" alt="自己手動建立 Review Deck"></a> <a href="https://youtu.be/pMf5mfCswBo"><img src="https://img.youtube.com/vi/pMf5mfCswBo/mqdefault.jpg" width="280" alt="貼上 AI 回答快速建卡"></a>
+**📺 影片：** <a href="https://youtu.be/8Y45Xs7MhL8"><img src="https://img.youtube.com/vi/8Y45Xs7MhL8/mqdefault.jpg" width="280" alt="Review Deck：從目標做出複習卡"></a>
 
-▶️ [自己手動建立 Review Deck](https://youtu.be/XC0NsPVfcwE) · ▶️ [貼上 AI 回答快速建卡](https://youtu.be/pMf5mfCswBo)
+▶️ [Review Deck：從目標做出複習卡](https://youtu.be/8Y45Xs7MhL8)
 
 ### 🗺️ Quest Map — 應用任務地圖
 
@@ -423,6 +431,10 @@ Anki 解決「何時複習」。EngramQuest 解決「如何真正記住」 — �
 - **Boss Battle** — 章末的整合案例，測判斷、排序、取捨或診斷能力
 - **進度安全** — 分數和完成度存在 `engram-quest/state/`，和任務本身分開，AI 更新關卡時不會洗掉你的進度
 - 以前寫在筆記裡的 `quest-map` 區塊照樣能打開
+
+**📺 影片：** <a href="https://youtu.be/xFGhgBIbExY"><img src="https://img.youtube.com/vi/xFGhgBIbExY/mqdefault.jpg" width="280" alt="Quest Map：把筆記變成練習"></a>
+
+▶️ [Quest Map：把筆記變成練習](https://youtu.be/xFGhgBIbExY)
 
 ### 🎓 教材（Lesson Academy）— AI 打造的課程
 
@@ -464,6 +476,10 @@ Anki 解決「何時複習」。EngramQuest 解決「如何真正記住」 — �
 - AI 用記憶科學生成視覺知識圖 — 反直覺（novelty）、連結你既有筆記（association）、分組（chunking）、類比（elaboration）
 - 任何命名為 `{筆記名}-memory.canvas` 的檔案會在 Hub → Memory Map 自動偵測
 - 複習途中，Memory Map 按鈕會自動找到並打開對應的 canvas
+
+**📺 影片：** <a href="https://youtu.be/277XCDdTIRs"><img src="https://img.youtube.com/vi/277XCDdTIRs/mqdefault.jpg" width="280" alt="Memory Map：看見筆記怎麼連結"></a>
+
+▶️ [Memory Map：看見筆記怎麼連結](https://youtu.be/277XCDdTIRs)
 
 ### 🎞️ 情境回顧 — 回到讀過的東西
 
