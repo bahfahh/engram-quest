@@ -310,6 +310,8 @@ Video Academy management, Nico, and watching any video, including recall films y
 
 **Refunds and support.** Not happy with Pro? Email a87088@gmail.com within 14 days of purchase for a full refund, no questions asked. Refunding revokes the license key; your notes and learning data stay. Lost your key? Open the [Polar customer portal](https://polar.sh/ai-dev/portal), sign in with the email you bought with, and copy it again (Settings → EngramQuest → Pro links there too). Applicable taxes are added at checkout.
 
+**Video narration.** By default, videos are voiced with edge-tts, a free open-source tool that calls the voice service behind Microsoft Edge's Read Aloud. It runs on your computer when your AI tool makes a video; the plugin does not call it. It is not an official Microsoft API: it can stop working for a while when Microsoft changes the service, until edge-tts is updated, and Microsoft publishes no terms for this use. If you need a dependable or clearly licensed voice, for example for videos you publish, choose Gemini or Azure in Video settings and use your own key.
+
 ---
 
 ## ☕ Support
@@ -630,6 +632,8 @@ engram-quest/custom/
 **揭露事項。** Pro 是選購的一次性付款（US$11.99，透過 Polar）。插件只在兩件事用到網路：向 Polar 驗證授權（只傳送 key 與組織／Benefit 識別碼，不傳送筆記內容），以及安裝影片 skill 時從本專案的 GitHub Releases 下載影片素材。key 與成功快取存於 plugin data.json；成功驗證後最多有 14 天離線緩衝，更新後重新連線驗證。移除本機授權保留學習資料。安裝 skill 會寫入 vault 的 `.claude/skills/`（以及其他 AI 工具對應的資料夾）。
 
 **退款與客服。** 購買後 14 天內寄信到 a87088@gmail.com 即可全額退款，不需理由。退款後授權 key 會失效，筆記和學習資料都會保留。授權 key 不見了：打開 [Polar 顧客入口](https://polar.sh/ai-dev/portal)，用購買時的 email 登入，就能再複製一次（設定 → EngramQuest → Pro 也有連結）。適用的稅會在結帳時另外列出。
+
+**影片配音。** 影片預設用 edge-tts 配音，這是免費的開源工具，用的是 Microsoft Edge「大聲朗讀」背後的語音服務。它在你的 AI 工具做影片時於你的電腦上執行，插件本身不會呼叫它。它不是 Microsoft 的官方 API：Microsoft 調整服務時可能暫時無法使用，要等 edge-tts 更新；Microsoft 也沒有公布這種用法的使用條款。需要穩定或授權清楚的語音（例如要公開發布的影片），請在「影片設定」改用 Gemini 或 Azure，並使用你自己的 key。
 
 ---
 
