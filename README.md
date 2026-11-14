@@ -6,6 +6,10 @@
 
 **You take notes you never open again. EngramQuest turns your Obsidian vault from a note graveyard into memory you can actually use.**
 
+<a href="https://youtu.be/SZv0r-Tgy5o"><img src="https://img.youtube.com/vi/SZv0r-Tgy5o/maxresdefault.jpg" width="600" alt="EngramQuest in one minute"></a>
+
+▶️ **[Watch: EngramQuest in one minute](https://youtu.be/SZv0r-Tgy5o)**
+
 </div>
 
 ![What is EngramQuest](assets/guide/整體概念_英文.webp)
@@ -313,6 +317,10 @@ If EngramQuest is useful to you, consider supporting its development:
 [English ↑](#-engramquest)
 
 **你的筆記寫完就再也沒打開過。EngramQuest 把你的 Obsidian vault 從筆記墳場，變成你真的用得到的記憶。**
+
+<a href="https://youtu.be/SZv0r-Tgy5o"><img src="https://img.youtube.com/vi/SZv0r-Tgy5o/maxresdefault.jpg" width="600" alt="一分鐘看懂 EngramQuest"></a>
+
+▶️ **[看影片：一分鐘看懂 EngramQuest](https://youtu.be/SZv0r-Tgy5o)**
 
 </div>
 

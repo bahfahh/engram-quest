@@ -30,7 +30,7 @@ module.exports = {
     start: {
       introTitle: "歡迎使用 EngramQuest",
       lead: "三步就能開始。挑一個功能用就好，其他不用也沒關係。",
-      video: "",
+      video: "SZv0r-Tgy5o",
       videoLabel: "一分鐘看懂 EngramQuest",
       steps: [
         { art: "install", title: "安裝 skills", sub: "讓你的 AI 工具學會做 EngramQuest 的內容" },
@@ -351,7 +351,7 @@ module.exports = {
     start: {
       introTitle: "Welcome to EngramQuest",
       lead: "Three steps and you are going. One feature is enough; you can ignore the rest.",
-      video: "",
+      video: "SZv0r-Tgy5o",
       videoLabel: "EngramQuest in one minute",
       steps: [
         { art: "install", title: "Install the skills", sub: "They teach your AI tool how to build EngramQuest content" },

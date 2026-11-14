@@ -52,13 +52,13 @@ function fakePlugin(settings = {}, skillFolders = []) {
 }
 
 // Draws the guide into recording elements, without Obsidian's modal machinery.
-function drawGuide({ intro = false, language = "en", skillsInstalled = null, video = "" } = {}) {
+function drawGuide({ intro = false, language = "en", skillsInstalled = null, video } = {}) {
   const plugin = fakePlugin({ language });
   const modal = new HelpModal(plugin.app, plugin, { intro });
   modal.contentEl = new El("div");
   modal.modalEl = new El("div");
   modal.copy = language === "zh-tw" ? CONTENT.zh : CONTENT.en;
-  if (video) modal.copy = { ...modal.copy, start: { ...modal.copy.start, video } };
+  if (video !== undefined) modal.copy = { ...modal.copy, start: { ...modal.copy.start, video } };
   modal.skillsInstalled = skillsInstalled;
   modal.render();
   return { modal, root: modal.contentEl, plugin };
@@ -164,10 +164,13 @@ describe("feature detail behind the first screen", () => {
 });
 
 describe("the one-minute overview video", () => {
-  it("ships with no video and draws nothing for it", () => {
-    expect(CONTENT.zh.start.video).toBe("");
-    expect(CONTENT.en.start.video).toBe("");
-    const { root } = drawGuide();
+  it("ships with the promo video in both languages", () => {
+    expect(CONTENT.zh.start.video).toMatch(/^[A-Za-z0-9_-]{11}$/);
+    expect(CONTENT.en.start.video).toBe(CONTENT.zh.start.video);
+  });
+
+  it("draws nothing while no video is set", () => {
+    const { root } = drawGuide({ video: "" });
     expect(root.byClass("lh-start-video")).toEqual([]);
     expect(root.fullText).not.toContain(CONTENT.en.start.videoLabel);
   });
