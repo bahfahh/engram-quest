@@ -4,7 +4,9 @@
 // HTML file per lesson. Lessons come from two sources — the lesson-academy AI skill ("skill") and user
 // imports of external HTML ("import") — and the lessons array's order IS the display order, so
 // inserting/reordering is plain array surgery. Pure of Obsidian UI: every function takes a vault
-// adapter so the logic is unit-testable.
+// adapter so the logic is unit-testable (deleteCourse takes the app: it follows Obsidian's trash setting).
+
+const { trashVaultPath } = require("../vault-trash");
 
 const LESSONS_DIR = "engram-quest/lessons";
 
@@ -303,18 +305,13 @@ async function deleteLesson(adapter, slug, lessonId) {
 /**
  * Delete a whole course: the course folder goes to the trash as one piece, so everything in it —
  * including files meta.json doesn't list (images, the skill's working files) — can be restored.
+ * It follows the user's Obsidian "Deleted files" setting when the vault index knows the folder and
+ * falls back to the adapter's trash when it doesn't (the skill writes courses outside Obsidian).
  * Throws when it could not be trashed; nothing is then removed.
  */
-async function deleteCourse(adapter, slug) {
+async function deleteCourse(app, slug) {
   const dir = `${LESSONS_DIR}/${slug}`;
-  if (!(await adapter.exists(dir))) return;
-  for (const trash of [adapter.trashSystem, adapter.trashLocal]) {
-    if (typeof trash !== "function") continue;
-    try {
-      if ((await trash.call(adapter, dir)) !== false) return;
-    } catch (e) { console.warn("EngramQuest: course trash failed", e); }
-  }
-  throw new Error(`could not move ${dir} to the trash`);
+  if (!(await trashVaultPath(app, dir))) throw new Error(`could not move ${dir} to the trash`);
 }
 
 /**

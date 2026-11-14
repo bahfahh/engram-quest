@@ -494,7 +494,7 @@ function confirmDeleteCourse(hub, t, slug, meta, refresh) {
     body: K(c(t, "LESSON_DELETE_COURSE_BODY"), { count: meta.lessons.length }),
     onConfirm: async () => {
       try {
-        await deleteCourse(hub.app.vault.adapter, slug);
+        await deleteCourse(hub.app, slug);
         new I.Notice(c(t, "LESSON_COURSE_DELETED"));
       } catch (e) {
         console.error("EngramQuest: course delete failed", e);

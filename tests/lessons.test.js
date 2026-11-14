@@ -1,6 +1,6 @@
 // Tests for the Lesson Academy data layer (src/lessons/data.js): course scan/CRUD, completion
 // marking, planned-outline lessons, HTML import, and the sidebar aggregations.
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import {
   LESSONS_DIR,
   normalizeMeta,
@@ -344,6 +344,16 @@ describe("deleteLesson / deleteCourse", () => {
     expect(updated.lessons).toEqual([]);
   });
 
+  // `indexed` = folder paths Obsidian's vault index knows; the adapter sees everything on disk.
+  function appFor(adapter, indexed = []) {
+    const viaFileManager = [];
+    return {
+      viaFileManager,
+      vault: { adapter, getAbstractFileByPath: (p) => (indexed.includes(p) ? { path: p } : null) },
+      fileManager: { trashFile: async (f) => { viaFileManager.push(f.path); await adapter.trashLocal(f.path); } },
+    };
+  }
+
   it("deleteCourse moves the whole course folder to the trash, unlisted files included", async () => {
     const adapter = makeAdapter({
       ...seedCourse("c", courseMeta()),
@@ -351,16 +361,34 @@ describe("deleteLesson / deleteCourse", () => {
       [`${LESSONS_DIR}/c/lsn-2-b.html`]: "2",
       [`${LESSONS_DIR}/c/assets/diagram.png`]: "img", // not listed in meta.json
     });
-    await deleteCourse(adapter, "c");
+    await deleteCourse(appFor(adapter), "c");
     expect(Object.keys(adapter.files).filter((k) => k.startsWith(`${LESSONS_DIR}/c/`))).toEqual([]);
     expect(adapter.files[`.trash/${LESSONS_DIR}/c/assets/diagram.png`]).toBe("img");
     expect(adapter.files[`.trash/${LESSONS_DIR}/c/meta.json`]).toBeDefined();
   });
 
+  it("deleteCourse follows the user's trash setting (fileManager) when the folder is indexed", async () => {
+    const adapter = makeAdapter(seedCourse("c", courseMeta()));
+    adapter.trashSystem = vi.fn(async () => true); // must not be reached
+    const app = appFor(adapter, [`${LESSONS_DIR}/c`]);
+    await deleteCourse(app, "c");
+    expect(app.viaFileManager).toEqual([`${LESSONS_DIR}/c`]);
+    expect(adapter.trashSystem).not.toHaveBeenCalled();
+  });
+
+  it("deleteCourse falls back to the adapter's trash only when the folder is not indexed", async () => {
+    const adapter = makeAdapter(seedCourse("c", courseMeta()));
+    adapter.trashSystem = vi.fn(async (p) => { await adapter.trashLocal(p); return true; });
+    const app = appFor(adapter, []);
+    await deleteCourse(app, "c");
+    expect(app.viaFileManager).toEqual([]);
+    expect(adapter.trashSystem).toHaveBeenCalledWith(`${LESSONS_DIR}/c`);
+  });
+
   it("deleteCourse removes nothing and throws when the folder can't be trashed", async () => {
     const adapter = makeAdapter({ ...seedCourse("c", courseMeta()), [`${LESSONS_DIR}/c/x.png`]: "img" });
     delete adapter.trashLocal;
-    await expect(deleteCourse(adapter, "c")).rejects.toThrow();
+    await expect(deleteCourse(appFor(adapter), "c")).rejects.toThrow();
     expect(adapter.files[`${LESSONS_DIR}/c/x.png`]).toBe("img");
     expect(adapter.files[`${LESSONS_DIR}/c/meta.json`]).toBeDefined();
   });
