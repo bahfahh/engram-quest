@@ -57,6 +57,12 @@ body.is-phone .lh-vid-back { height:auto; padding:0 !important; background:none 
 .lh-vid-scard > :not(.lh-vid-scard-cover):not(.lh-vid-thumb),.lh-vid-ep-film > :not(.lh-vid-thumb) { margin-left:12px; margin-right:12px; }
 .lh-vid-scard > :last-child,.lh-vid-ep-film > :last-child { margin-bottom:12px; }
 .lh-vid-scard .lh-vid-scard-title,.lh-vid-ep-film .lh-vid-scard-title { margin-top:10px; }
+/* Delete button in the top-right corner of a card (top-left holds the status badge); shown on hover, always on touch. */
+.lh-vid-scard,.lh-vid-ep-film { position:relative; }
+.lh-vid-scard > :is(.lh-ra,.lh-ra-phone),.lh-vid-ep-film > :is(.lh-ra,.lh-ra-phone) { position:absolute; right:8px; top:8px; z-index:2; margin:0 !important; }
+.lh-vid-scard:hover .lh-ra,.lh-vid-ep-film:hover .lh-ra { opacity:1; }
+.lh-hub :is(.lh-vid-scard,.lh-vid-ep-film) :is(.lh-ra,.lh-ra-phone) button { width:32px; height:32px; border-radius:8px; background:var(--glass) !important; -webkit-backdrop-filter:blur(14px); backdrop-filter:blur(14px); color:var(--text) !important; }
+.lh-hub :is(.lh-vid-scard,.lh-vid-ep-film) :is(.lh-ra,.lh-ra-phone) button:hover { background:var(--raisedh) !important; color:var(--tint) !important; }
 .lh-vid-scard.is-new { box-shadow:0 0 0 2px var(--btn) !important; }
 .lh-vid-scard-cover { display:block; position:relative; aspect-ratio:16/9; overflow:hidden; background:linear-gradient(135deg,#3C3C42,#1F1F23); }
 .lh-vid-scard-cover img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }

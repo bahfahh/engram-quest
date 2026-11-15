@@ -48,6 +48,16 @@ async function readExisting(adapter, path) {
  * teachers it may use. Fields the plugin doesn't know are kept, so a save never wipes what the skill
  * or a newer version added; only retired fields (`style`, `length`, `mode`) are dropped.
  */
+/**
+ * Course modules the learner switched in Video settings: `off` turns a default module off, `on` turns
+ * an opt-in one (review cards) on. A module named in both counts as on, as the skill reads it.
+ */
+function courseModules(course) {
+  const ids = (v) => (Array.isArray(v) ? [...new Set(v.map(String))] : []);
+  const on = ids(course.on);
+  return { ...course, on, off: ids(course.off).filter((id) => !on.includes(id)) };
+}
+
 function normalizeSettings(raw, isPro) {
   const { style: _style, length: _length, mode: _mode, ...rest } = isObject(raw) ? raw : {};
   const cast = isObject(rest.cast) ? rest.cast : {};
@@ -60,7 +70,7 @@ function normalizeSettings(raw, isPro) {
     subtitles: rest.subtitles === undefined ? DEFAULT_SETTINGS.subtitles : !!rest.subtitles,
     episodicLength: EPISODIC_LENGTHS.includes(rest.episodicLength) ? rest.episodicLength : DEFAULT_SETTINGS.episodicLength,
     cast: { ...cast, teacher: typeof cast.teacher === "string" && cast.teacher ? cast.teacher : DEFAULT_TEACHER, variants: isObject(cast.variants) ? cast.variants : {} },
-    course: { ...course, off: Array.isArray(course.off) ? [...new Set(course.off.map(String))] : [] },
+    course: courseModules(course),
     voice: { ...voice, engine: VOICE_ENGINES.includes(voice.engine) ? voice.engine : "auto" },
     pro: !!isPro,
   };
@@ -398,13 +408,50 @@ async function trashTree(adapter, dir, skip) {
  * and nothing is removed without going to the trash. Returns whether the topic is fully gone.
  */
 async function deleteTopic(adapter, slug) {
-  if (!slug || /[\\/]|^\.+$/.test(slug)) throw new Error(`invalid topic slug: ${slug}`);
+  checkSlug(slug);
   const dir = `${VIDEOS_DIR}/${slug}`;
   const metaFile = `${dir}/meta.json`;
   if (!(await trashTree(adapter, dir, metaFile)) || !(await trashPath(adapter, metaFile))) return false;
   try {
     if (typeof adapter.rmdir === "function") await adapter.rmdir(dir, true);
   } catch (e) { console.warn("EngramQuest: video topic folder cleanup failed", e); }
+  return true;
+}
+
+function checkSlug(slug) {
+  if (!slug || /[\\/]|^\.+$/.test(slug)) throw new Error(`invalid topic slug: ${slug}`);
+}
+
+/**
+ * Delete one video of a series: trash the files only it points at (video, poster, subtitles), then
+ * drop it and its progress from meta.json. On any trash failure meta.json is left as it was, so the
+ * video stays listed and nothing is removed without going to the trash. Returns whether it is gone.
+ */
+async function deleteVideo(adapter, slug, videoId) {
+  checkSlug(slug);
+  const path = `${VIDEOS_DIR}/${slug}/meta.json`;
+  const raw = await readExisting(adapter, path);
+  const videos = isObject(raw) && Array.isArray(raw.videos) ? raw.videos : [];
+  const video = videos.find((v) => v && String(v.id) === videoId);
+  if (!video) return true;
+  // A name is used only inside the series folder: "." and empty parts dropped, ".." and meta.json refused.
+  const clean = (name) => {
+    const parts = String(name).split(/[\\/]/).filter((x) => x && x !== ".");
+    const rel = parts.join("/");
+    return parts.length && !parts.includes("..") && rel !== "meta.json" ? rel : null;
+  };
+  const filesOf = (v) => [v.subtitles, v.poster, v.file].filter((x) => typeof x === "string" && x).map(clean).filter(Boolean);
+  const shared = new Set(videos.filter((v) => v !== video && v).flatMap(filesOf));
+  // The playable file goes last and the first failure stops, so a partial delete leaves the video watchable.
+  for (const rel of new Set(filesOf(video))) {
+    if (!shared.has(rel) && !(await trashPath(adapter, `${VIDEOS_DIR}/${slug}/${rel}`))) return false;
+  }
+  // Re-read so a progress save that landed while files were being trashed is kept.
+  const fresh = await readExisting(adapter, path);
+  if (!isObject(fresh) || !Array.isArray(fresh.videos)) return true;
+  fresh.videos = fresh.videos.filter((v) => !v || String(v.id) !== videoId);
+  if (isObject(fresh.progress)) delete fresh.progress[videoId];
+  await adapter.write(path, JSON.stringify(fresh, null, 2));
   return true;
 }
 
@@ -439,4 +486,5 @@ module.exports = {
   addEpisodicRequest,
   cancelEpisodicRequest,
   deleteTopic,
+  deleteVideo,
 };

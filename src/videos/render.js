@@ -29,6 +29,20 @@ function queueWrite(slug, fn) {
   return chain;
 }
 
+/**
+ * A card that opens on click and on Enter/Space while focused. It is a div, not a button, because it
+ * holds its own delete button and a button cannot contain one.
+ */
+function asButton(card) {
+  card.setAttr("tabindex", "0");
+  card.addEventListener("keydown", (e) => {
+    if (e.target !== card || (e.key !== "Enter" && e.key !== " ")) return;
+    e.preventDefault();
+    card.click();
+  });
+  return card;
+}
+
 function fileUrl(hub, slug, name) {
   return hub.app.vault.adapter.getResourcePath(I.normalizePath(`${data.VIDEOS_DIR}/${slug}/${name}`));
 }
@@ -174,9 +188,11 @@ function renderShelf(body, hub, t, topics, refresh) {
     }
     const grid = results.createDiv({ cls: "lh-vid-grid" });
     for (const topic of shown) {
-      const card = grid.createEl("button", { cls: "lh-vid-scard" + (flash === topic.slug ? " is-new" : "") });
+      const card = asButton(grid.createDiv({ cls: "lh-vid-scard" + (flash === topic.slug ? " is-new" : "") }));
       if (data.hasPlayable(topic.meta)) renderSeriesCard(card, hub, t, topic, () => openVideo(topic.slug, null, false));
       else renderQueueCard(card, hub, t, topic, refresh);
+      // First child: the card keeps its last line's bottom spacing.
+      card.prepend(ui.rowActions(card, [{ name: "trash", label: c(t, "DELETE"), run: () => confirmDelete(hub, t, topic.slug, topic.meta, refresh) }]));
     }
   };
   if (tags.length) {
@@ -256,7 +272,8 @@ function confirmDelete(hub, t, slug, meta, refresh) {
   modal.modalEl.addClass("lh-vid-modal", "lh-vid-confirm");
   const wrap = modal.contentEl;
   wrap.createDiv({ cls: "lh-vid-modal-title", text: K(c(t, "DELETE_CONFIRM_TITLE"), { name: meta.title }) });
-  wrap.createDiv({ cls: "lh-vid-modal-desc", text: c(t, "VIDEO_DELETE_BODY") });
+  const count = meta.videos.filter((v) => v.file).length;
+  wrap.createDiv({ cls: "lh-vid-modal-desc", text: count ? K(c(t, "VIDEO_DELETE_READY_BODY"), { count }) : c(t, "VIDEO_DELETE_BODY") });
   const row = wrap.createDiv({ cls: "lh-vid-modal-actions" });
   row.createEl("button", { cls: "lh-vid-btn", text: c(t, "DELETE_CANCEL_BTN") }).addEventListener("click", () => modal.close());
   const ok = row.createEl("button", { cls: "lh-vid-btn lh-vid-btn-danger", text: c(t, "DELETE_CONFIRM_BTN") });
@@ -505,4 +522,4 @@ async function renderPhoneContinue(parent, hub) {
   row.addEventListener("click", () => { hub._vTopic = { slug: cw.slug, videoId: cw.video.id, autoplay: true }; hub._openPhonePage("video"); });
 }
 
-module.exports = { renderVideoTab, renderTopic, renderThumb, queueWrite, renderPhoneContinue };
+module.exports = { renderVideoTab, renderTopic, renderThumb, queueWrite, renderPhoneContinue, asButton };

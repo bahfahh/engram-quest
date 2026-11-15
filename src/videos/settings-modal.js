@@ -88,8 +88,10 @@ async function openVideoSettingsModal(hub, t) {
       box.addEventListener("change", () => onChange(box.checked));
     };
     checkRow("VIDEO_SET_SUBS", "VIDEO_SET_SUBS_DESC", s.subtitles, (on) => { s.subtitles = on; });
-    checkRow("VIDEO_SET_CARDS", "VIDEO_SET_CARDS_DESC", !s.course.off.includes(CARDS_MODULE), (on) => {
-      s.course.off = on ? s.course.off.filter((x) => x !== CARDS_MODULE) : [...s.course.off, CARDS_MODULE];
+    // Review cards are opt-in: off unless switched on here (or asked for in a request).
+    checkRow("VIDEO_SET_CARDS", "VIDEO_SET_CARDS_DESC", s.course.on.includes(CARDS_MODULE), (on) => {
+      s.course.on = s.course.on.filter((x) => x !== CARDS_MODULE).concat(on ? [CARDS_MODULE] : []);
+      if (on) s.course.off = s.course.off.filter((x) => x !== CARDS_MODULE);
     });
   };
   render();

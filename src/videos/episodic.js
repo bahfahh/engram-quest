@@ -8,7 +8,7 @@ const { t: c, interpolate: K } = require("../i18n");
 const { ProUpgradeModal } = require("../license/upgrade");
 const { estimate } = require("./episodic-length");
 const data = require("./data");
-const { renderTopic, renderThumb, queueWrite } = require("./render");
+const { renderTopic, renderThumb, queueWrite, asButton } = require("./render");
 const { openPromptModal } = require("./request-ui");
 const ui = require("../hub/ui");
 
@@ -105,16 +105,35 @@ async function renderEpisodicTab(el, hub) {
     body.createDiv({ cls: "lh-vid-ep-period", text: periodText(group.period) || c(t, "EPISODIC_NO_PERIOD") });
     const grid = body.createDiv({ cls: "lh-vid-grid" });
     group.films.forEach((film, index) => {
-      const card = grid.createDiv({ cls: "lh-vid-ep-film" });
+      const card = asButton(grid.createDiv({ cls: "lh-vid-ep-film" }));
       renderThumb(card, hub, series.slug, series.meta, film, "");
       card.createDiv({ cls: "lh-vid-scard-title", text: film.title });
       const bits = [];
       if (film.length) bits.push(c(t, LENGTH_KEY[film.length]));
       if (group.films.length > 1) bits.push(c(t, index === 0 ? "EPISODIC_NEWER" : "EPISODIC_OLDER"));
       if (bits.length) card.createDiv({ cls: "lh-vid-scard-meta", text: bits.join(" · ") });
+      // First child: the card keeps its last line's bottom spacing.
+      card.prepend(ui.rowActions(card, [{ name: "trash", label: c(t, "DELETE"), run: () => confirmDeleteFilm(hub, t, film, refresh) }]));
       card.addEventListener("click", () => { hub._vTopic = { slug: series.slug, videoId: film.id, autoplay: true }; refresh(); });
     });
   }
+}
+
+function confirmDeleteFilm(hub, t, film, refresh) {
+  ui.confirmDialog(hub.app, t, {
+    title: K(c(t, "DELETE_CONFIRM_TITLE"), { name: film.title }),
+    body: c(t, "EPISODIC_DELETE_BODY"),
+    onConfirm: async () => {
+      try {
+        const slug = data.EPISODIC_SLUG;
+        if (!(await queueWrite(slug, () => data.deleteVideo(hub.app.vault.adapter, slug, film.id)))) new I.Notice(c(t, "EPISODIC_DELETE_PARTIAL"));
+      } catch (e) {
+        console.error("EngramQuest: recall film delete failed", e);
+        new I.Notice(c(t, "DELETE_FAILED"));
+      }
+      refresh();
+    },
+  });
 }
 
 /** The one setting for recall films: saved on click, merged into whatever else is in the file. */

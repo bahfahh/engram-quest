@@ -25,6 +25,7 @@ import {
   collectTags,
   GOAL_MAX,
   deleteTopic,
+  deleteVideo,
 } from "../src/videos/data.js";
 
 // In-memory vault adapter mimicking the Obsidian adapter surface the data layer uses.
@@ -76,10 +77,15 @@ const metaPath = (slug) => `${VIDEOS_DIR}/${slug}/meta.json`;
 
 describe("normalizeSettings", () => {
   it("fills defaults for missing or invalid values and stamps the licence", () => {
-    const defaults = { quality: "high", narrationLang: "follow", subtitles: true, episodicLength: "medium", cast: { teacher: "nico", variants: {} }, course: { off: [] }, voice: { engine: "auto" } };
+    const defaults = { quality: "high", narrationLang: "follow", subtitles: true, episodicLength: "medium", cast: { teacher: "nico", variants: {} }, course: { on: [], off: [] }, voice: { engine: "auto" } };
     expect(normalizeSettings(null, false)).toEqual({ ...defaults, pro: false });
     expect(normalizeSettings({ quality: "ultra", narrationLang: "fr", subtitles: 0, episodicLength: "epic", voice: { engine: "nope" } }, true))
       .toEqual({ ...defaults, subtitles: false, pro: true });
+  });
+
+  it("keeps opt-in modules in course.on, and a module named in both lists counts as on", () => {
+    expect(normalizeSettings({ course: { on: ["cards", "cards"] } }, false).course).toEqual({ on: ["cards"], off: [] });
+    expect(normalizeSettings({ course: { on: ["cards"], off: ["cards", "x"] } }, false).course).toEqual({ on: ["cards"], off: ["x"] });
   });
 
   it("keeps fields it doesn't know, at every level", () => {
@@ -248,6 +254,100 @@ describe("createRequest / deleteTopic", () => {
 
   it("deleteTopic rejects slugs that escape the topic folder", async () => {
     for (const bad of ["", "..", "a/b", "a\\b"]) await expect(deleteTopic(makeAdapter(), bad)).rejects.toThrow();
+  });
+});
+
+describe("deleteVideo", () => {
+  const dir = `${VIDEOS_DIR}/s`;
+  const seed = () => makeAdapter({
+    [metaPath("s")]: JSON.stringify({
+      title: "S", videos: [
+        { id: "a", file: "a.mp4", poster: "a.jpg", subtitles: "a.vtt" },
+        { id: "b", file: "b.mp4", poster: "shared.jpg" },
+        { id: "c", file: "c.mp4", poster: "shared.jpg" },
+      ],
+      progress: { a: { position: 10 }, b: { completed: true } }, requests: [{ id: "r1" }],
+    }),
+    [`${dir}/a.mp4`]: "1", [`${dir}/a.jpg`]: "1", [`${dir}/a.vtt`]: "1",
+    [`${dir}/b.mp4`]: "1", [`${dir}/c.mp4`]: "1", [`${dir}/shared.jpg`]: "1",
+  });
+
+  it("trashes the video's own files and drops it and its progress, keeping everything else", async () => {
+    const a = seed();
+    expect(await deleteVideo(a, "s", "a")).toBe(true);
+    for (const f of ["a.mp4", "a.jpg", "a.vtt"]) expect(a.files[`${dir}/${f}`]).toBeUndefined();
+    const meta = JSON.parse(a.files[metaPath("s")]);
+    expect(meta.videos.map((v) => v.id)).toEqual(["b", "c"]);
+    expect(meta.progress).toEqual({ b: { completed: true } });
+    expect(meta.requests).toEqual([{ id: "r1" }]);
+    expect(meta.title).toBe("S");
+  });
+
+  it("keeps a file another video still uses", async () => {
+    const a = seed();
+    expect(await deleteVideo(a, "s", "b")).toBe(true);
+    expect(a.files[`${dir}/b.mp4`]).toBeUndefined();
+    expect(a.files[`${dir}/shared.jpg`]).toBe("1");
+  });
+
+  it("leaves meta.json untouched when a file can't be trashed", async () => {
+    const a = seed();
+    const before = a.files[metaPath("s")];
+    const trash = a.trashLocal;
+    a.trashLocal = async (p) => { if (p.endsWith("a.vtt")) throw new Error("locked"); return trash(p); };
+    expect(await deleteVideo(a, "s", "a")).toBe(false);
+    expect(a.files[metaPath("s")]).toBe(before);
+  });
+
+  it("keeps the film playable on a partial failure, and a retry finishes the delete", async () => {
+    const a = seed();
+    const trash = a.trashLocal;
+    let locked = true;
+    a.trashLocal = async (p) => { if (locked && p.endsWith("a.jpg")) throw new Error("locked"); return trash(p); };
+    expect(await deleteVideo(a, "s", "a")).toBe(false);
+    expect(a.files[`${dir}/a.mp4`]).toBe("1"); // the video file goes last, so it is still there
+    locked = false;
+    expect(await deleteVideo(a, "s", "a")).toBe(true);
+    expect(a.files[`${dir}/a.mp4`]).toBeUndefined();
+    expect(JSON.parse(a.files[metaPath("s")]).videos.map((v) => v.id)).toEqual(["b", "c"]);
+  });
+
+  it("keeps a progress save that lands while files are being trashed", async () => {
+    const a = seed();
+    const trash = a.trashLocal;
+    a.trashLocal = async (p) => {
+      const meta = JSON.parse(a.files[metaPath("s")]);
+      meta.progress.c = { position: 42 };
+      a.files[metaPath("s")] = JSON.stringify(meta);
+      return trash(p);
+    };
+    expect(await deleteVideo(a, "s", "a")).toBe(true);
+    expect(JSON.parse(a.files[metaPath("s")]).progress.c).toEqual({ position: 42 });
+  });
+
+  it("never trashes meta.json or the series folder through a file name", async () => {
+    const a = makeAdapter({ [metaPath("s")]: JSON.stringify({ videos: [{ id: "x", file: "./meta.json", poster: ".", subtitles: "./" }] }) });
+    const seen = [];
+    const trash = a.trashLocal;
+    a.trashLocal = async (p) => { seen.push(p); return trash(p); };
+    expect(await deleteVideo(a, "s", "x")).toBe(true);
+    expect(seen).toEqual([]);
+    expect(JSON.parse(a.files[metaPath("s")]).videos).toEqual([]);
+  });
+
+  it("never follows a file name out of the series folder", async () => {
+    const a = makeAdapter({ [metaPath("s")]: JSON.stringify({ videos: [{ id: "x", file: "../other/meta.json" }] }), [metaPath("other")]: "{}" });
+    expect(await deleteVideo(a, "s", "x")).toBe(true);
+    expect(a.files[metaPath("other")]).toBe("{}");
+    expect(JSON.parse(a.files[metaPath("s")]).videos).toEqual([]);
+  });
+
+  it("counts an unknown video as already gone and rejects a bad slug", async () => {
+    const a = seed();
+    const before = a.files[metaPath("s")];
+    expect(await deleteVideo(a, "s", "nope")).toBe(true);
+    expect(a.files[metaPath("s")]).toBe(before);
+    await expect(deleteVideo(a, "../x", "a")).rejects.toThrow();
   });
 });
 

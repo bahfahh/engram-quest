@@ -142,7 +142,7 @@ Say what you want to learn or review — "my coding workflow", "SEO" — and the
 - **Just say the goal** — "build a website", "learn functions"; add detail if you like. The AI decides which of your notes to use (drop notes in to narrow it down, or choose *Don't use my notes*), whether it's a lesson or a review, and how many videos to make
 - **Shelf → player** — browse series as cards (filter by watching / not started / finished / to be generated, by tags the AI assigns such as "Software", and search once you have many), open one to watch. The playlist sits beside the player on a wide window (under it on a narrow one or a phone) and shows each video's length and whether it is watched, where you stopped, or not started; the sidebar folds while a video is open so the video has the room. Your position is saved so you resume where you stopped
 - **Choose your teacher** — each teacher teaches in a different way, and you can see and hear them first. Nico is free; the other teachers and giving one series its own teacher need Pro. Series still waiting to be made can be edited
-- **Set it once** — teacher, quality (*High quality* is 1080p, *Space saver* is 720p), narration language, voice engine, subtitles and review cards live in *Video settings*. Every video is shot in the Engram studio, and the AI picks a light or dark set to suit the content
+- **Set it once** — teacher, quality (*High quality* is 1080p, *Space saver* is 720p), narration language, voice engine, subtitles and review cards (off unless you turn them on) live in *Video settings*. Every video is shot in the Engram studio, and the AI picks a light or dark set to suit the content
 - Videos live in `engram-quest/videos/` inside your vault. On desktop, the folder button next to *Mark as watched* shows the video file in your system file explorer. To watch on your phone, make sure your sync tool also syncs the mp4 files there — don't exclude them (with git, every video stays in the history; that is your trade-off to make)
 
 > Videos are made with **Claude Code**: install the **Animated Course** skill in `Settings → EngramQuest → AI Skills`, add a series with **New series**, then ask Claude Code to make it.
@@ -165,7 +165,7 @@ Visualizes abstract concepts using Obsidian Canvas.
 
 ![Recall Films](assets/guide/episodic_review_english.webp)
 
-A recall film takes you back to what you read over a month, or a range of months, so the ideas come back in the context you met them. Every topic first gets a **recall pack** — a one-line overview plus retrieval questions that go into your Review Deck — and only the topics worth it get a film.
+A recall film takes you back to what you read over a month, or a range of months, so the ideas come back in the context you met them. Every topic first gets a **recall pack** — a one-line overview plus retrieval questions on the pack page (they become Review Deck cards only when you ask for them) — and only the topics worth it get a film.
 
 - **Watch for free** — films are grouped by period, newest first; open one to play it
 - **Make a new film (Pro)** — click **+ New film**, pick the period and a length (short, medium or long; set a default once), and the request waits in *Waiting to be made*. Copy its prompt into Claude Code, which makes the film with the **Episodic Review** skill; you can cancel a request any time
@@ -466,7 +466,7 @@ Anki 解決「何時複習」。EngramQuest 解決「如何真正記住」 — �
 - **說目標就好** — 例如「架設網站」「學會函數」，想補充再補充。要用哪些筆記、是教學還是複習、拆成幾支，都由 AI 判斷（也可以拖入筆記指定範圍，或選「不使用筆記」）
 - **書架 → 播放器** — 系列以卡片呈現（可篩選觀看中／未開始／已看完／待生成、依 AI 分好的標籤如「軟體」篩選，系列多了可搜尋），點進去就能看片。寬視窗的播放清單在播放器右側（窄視窗和手機在影片下方），每支都標出長度，以及已看完、看到幾分幾秒或未看；看影片時側欄會自動收起，把空間讓給影片。看到哪裡都會記住，下次從上次的位置續播
 - **選你的老師** — 每位老師教法不同，可以先看、先聽。Nico 免費；其他老師和替單一系列指定老師需要 Pro。還在待製作的系列可以編輯
-- **設一次就好** — 老師、畫質（高畫質 1080p，省空間 720p）、旁白語言、配音引擎、字幕、複習卡都在「影片設定」。畫面都在 Engram 攝影棚，AI 依內容選明棚或暗棚
+- **設一次就好** — 老師、畫質（高畫質 1080p，省空間 720p）、旁白語言、配音引擎、字幕、複習卡（預設不附）都在「影片設定」。畫面都在 Engram 攝影棚，AI 依內容選明棚或暗棚
 - 影片存在 vault 的 `engram-quest/videos/`。桌面版可按「標記已看完」旁的資料夾按鈕，直接在系統檔案總管中找到影片檔。想在手機上看，同步工具也要同步這裡的 mp4，不要排除（用 git 的話，每支影片都會留在 git 歷史裡，這個取捨由你決定）
 
 > 影片用 **Claude Code** 製作：在 `設定 → EngramQuest → AI Skills` 安裝 **Animated Course** skill，在影片學院按 **新系列** 寫下想學什麼，再請 Claude Code 製作。
@@ -489,7 +489,7 @@ Anki 解決「何時複習」。EngramQuest 解決「如何真正記住」 — �
 
 ![情境回顧](assets/guide/episodic_review_中文.webp)
 
-情境回顧片帶你回到一個月（或連續幾個月）讀過的東西，讓概念在你當初遇到它的情境裡回來。每個主題都會先有一份**回想包**——一句話總覽，加上放進 Review Deck 的回想題——值得的主題才做成影片。
+情境回顧片帶你回到一個月（或連續幾個月）讀過的東西，讓概念在你當初遇到它的情境裡回來。每個主題都會先有一份**回想包**——一句話總覽，加上回想題（寫在回想包頁面；你要求時才做成 Review Deck 的卡片）——值得的主題才做成影片。
 
 - **觀看免費** — 回顧片依期間分組，新的在上面，點開就播放
 - **製作新片（Pro）** — 按 **+ 做新的一支**，選期間和長度（短、中、長，可設定預設長度），請求會出現在「等待製作」。複製它的提示詞貼到 Claude Code，由 **Episodic Review** skill 做成影片；請求隨時可以取消
