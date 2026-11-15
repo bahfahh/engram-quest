@@ -1,15 +1,17 @@
 // Generates src/assets/embedded.js: the images the plugin draws itself, as data URLs inside main.js.
 // A store install receives only main.js, manifest.json and styles.css, so anything read from the
-// plugin's own assets/ folder would be missing for real users. Large pictures are re-encoded to WebP
-// at the size they are shown; small icons are copied as they are. The list is in asset-list.mjs.
+// plugin's own assets/ folder would be missing for real users. Large pictures come from their committed
+// WebP encodings (encode-assets.mjs); small icons are copied as they are. The list is in asset-list.mjs.
 import fs from 'fs';
 import path from 'path';
-import sharp from 'sharp';
-import { root, assetGroups } from './asset-list.mjs';
+import { root, assetGroups, encodedDir, encodedFile, encodeRecipe } from './asset-list.mjs';
 
 const outPath = path.join(root, 'src', 'assets', 'embedded.js');
+const recipesPath = path.join(root, encodedDir, 'sources.json');
+const recipes = fs.existsSync(recipesPath) ? JSON.parse(fs.readFileSync(recipesPath, 'utf8')) : {};
 const MIME = { '.webp': 'image/webp', '.png': 'image/png' };
 const entries = {};
+const stale = [];
 let bytes = 0;
 for (const group of assetGroups()) {
   for (const rel of group.files) {
@@ -17,7 +19,11 @@ for (const group of assetGroups()) {
     if (!fs.existsSync(file)) throw new Error(`embed-assets: ${rel} is listed but missing`);
     let data, mime;
     if (group.width) {
-      data = await sharp(file).resize({ width: group.width, withoutEnlargement: true }).webp({ quality: group.quality || 80 }).toBuffer();
+      if (JSON.stringify(recipes[rel]) !== JSON.stringify(encodeRecipe(group, fs.readFileSync(file)))) {
+        stale.push(rel);
+        continue;
+      }
+      data = fs.readFileSync(path.join(root, encodedFile(rel)));
       mime = 'image/webp';
     } else {
       data = fs.readFileSync(file);
@@ -26,6 +32,9 @@ for (const group of assetGroups()) {
     bytes += data.length;
     entries[rel] = `data:${mime};base64,${data.toString('base64')}`;
   }
+}
+if (stale.length) {
+  throw new Error(`embed-assets: these images are new or changed since they were encoded; run npm run encode:assets and commit ${encodedDir}/:\n${stale.join('\n')}`);
 }
 
 fs.writeFileSync(outPath, [

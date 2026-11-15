@@ -1,0 +1,3 @@
+# Check out every file with the bytes that were committed. Skill text is embedded in main.js, so an
+# end-of-line conversion on checkout (Git for Windows defaults to core.autocrlf=true) changes the release build.
+* -text

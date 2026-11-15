@@ -11,7 +11,9 @@ const outPath = path.join(repoRoot, 'src', 'skills', 'embedded-skills.js');
 
 function walk(dir, prefix) {
   const entries = {};
-  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+  // Sorted by code unit: readdir order differs between filesystems, and key order is part of main.js.
+  const sorted = fs.readdirSync(dir, { withFileTypes: true }).sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0));
+  for (const entry of sorted) {
     const rel = prefix ? prefix + '/' + entry.name : entry.name;
     if (entry.isDirectory()) {
       Object.assign(entries, walk(path.join(dir, entry.name), rel));
