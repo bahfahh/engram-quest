@@ -184,8 +184,12 @@ describe.skipIf(!python)("the video skills' check script finds a key put into th
 
   it("says it scanned nothing when no vault was found", () => {
     dir = mkdtempSync(path.join(tmpdir(), "eq-keys-"));
+    // Run a copy from the temp folder: the script also looks for a vault above its own location, and a
+    // checkout path such as .../engram-quest/engram-quest (GitHub Actions) has an engram-quest/ above it.
+    const doctor = path.join(dir, "doctor.py");
+    copyFileSync(new URL("../skills/animated-course/scripts/doctor.py", import.meta.url), doctor);
     const { code, out } = (() => {
-      try { return { code: 0, out: execFileSync(python, [fileURLToPath(new URL("../skills/animated-course/scripts/doctor.py", import.meta.url)), "--keys"], { encoding: "utf8", cwd: dir, env: { ...process.env, VAULT: "" } }) }; }
+      try { return { code: 0, out: execFileSync(python, [doctor, "--keys"], { encoding: "utf8", cwd: dir, env: { ...process.env, VAULT: "" } }) }; }
       catch (e) { return { code: e.status, out: String(e.stdout) }; }
     })();
     expect(code).toBe(2);
