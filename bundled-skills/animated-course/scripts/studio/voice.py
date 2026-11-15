@@ -293,12 +293,29 @@ def synth_azure(text, v, out, rate, pitch):
     open(out, "wb").write(raw)
 
 
+def shell_arg(s):
+    """One quoted argument for the shell that runs TTS_CUSTOM_CMD (shell=True): sh on macOS/Linux; cmd.exe on Windows,
+    which does not know single quotes (shlex.quote's), so there it is double quotes by the Windows argv rules:
+    backslashes are literal except right before a quote, where they are doubled."""
+    if os.name != "nt":
+        return shlex.quote(s)
+    out, slashes = ['"'], 0
+    for ch in s:
+        if ch == "\\":
+            slashes += 1
+            continue
+        out.append("\\" * (slashes * 2 + 1) + '"' if ch == '"' else "\\" * slashes + ch)
+        slashes = 0
+    out.append("\\" * (slashes * 2) + '"')
+    return "".join(out)
+
+
 def synth_custom(text, v, out, rate, pitch):
     c = v.get("custom", {})
     with tempfile.NamedTemporaryFile("w", suffix=".txt", delete=False, encoding="utf-8") as f:
         f.write(text); tf = f.name
-    cmd = os.environ["TTS_CUSTOM_CMD"].format(voice=shlex.quote(c.get("voice", v["voice"])), style=shlex.quote(c.get("style", "")),
-                                              rate=shlex.quote(rate), pitch=shlex.quote(pitch), text_file=shlex.quote(tf), out=shlex.quote(out))
+    cmd = os.environ["TTS_CUSTOM_CMD"].format(voice=shell_arg(c.get("voice", v["voice"])), style=shell_arg(c.get("style", "")),
+                                              rate=shell_arg(rate), pitch=shell_arg(pitch), text_file=shell_arg(tf), out=shell_arg(out))
     try:
         subprocess.run(cmd, shell=True, check=True, timeout=300)
     finally:
