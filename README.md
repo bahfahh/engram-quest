@@ -346,7 +346,7 @@ If EngramQuest is useful to you, consider supporting its development:
 
 **你的筆記寫完就再也沒打開過。EngramQuest 把你的 Obsidian vault 從筆記墳場，變成你真的用得到的記憶。**
 
-<img src="assets/guide/hero_中文.webp" width="800" alt="EngramQuest：用教材學、看教學影片、用間隔複習記住">
+<img src="assets/guide/hero_chinese.webp" width="800" alt="EngramQuest：用教材學、看教學影片、用間隔複習記住">
 
 </div>
 
@@ -357,7 +357,7 @@ If EngramQuest is useful to you, consider supporting its development:
 - 🧠 **真正記得住**：複習卡用 FSRS 間隔重複，加上分層提示，在你快忘記之前把卡片帶回來。
 - 🤖 **用你已經有的 AI**：Claude Code、Codex、Gemini CLI、Cursor 等工具負責生成，不用另外訂閱、不用付 API 費用，AI 也可以完全不用。
 
-<p align="center"><img src="assets/guide/hero_videos_中文.webp" width="800" alt="用 EngramQuest 做出的教學影片畫面"><br><sub>用 EngramQuest 做出的教學影片實際畫面</sub></p>
+<p align="center"><img src="assets/guide/hero_videos_chinese.webp" width="800" alt="用 EngramQuest 做出的教學影片畫面"><br><sub>用 EngramQuest 做出的教學影片實際畫面</sub></p>
 
 <div align="center">
 
