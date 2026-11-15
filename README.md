@@ -6,6 +6,21 @@
 
 **You take notes you never open again. EngramQuest turns your Obsidian vault from a note graveyard into memory you can actually use.**
 
+<img src="assets/guide/hero_english.webp" width="800" alt="EngramQuest: learn with lessons, watch teaching videos, remember with spaced repetition">
+
+</div>
+
+### ✨ Highlights
+
+- 🎬 **Teaching videos from your notes** — tell Claude Code what you want to learn and it makes short animated lessons, taught by a teacher in a classroom. Watch them in the Video Academy and pick up where you stopped.
+- 📚 **Courses built around your goal** — your AI tool turns a topic or your notes into a step-by-step course with quizzes, studied inside Obsidian.
+- 🧠 **Memory that sticks** — flashcards with FSRS spaced repetition and step-by-step hints bring each card back just before you forget it.
+- 🤖 **The AI you already have** — Claude Code, Codex, Gemini CLI, Cursor and more do the generating: no extra subscription, no API fees, and AI stays optional.
+
+<p align="center"><img src="assets/guide/hero_videos_english.webp" width="800" alt="Frames from teaching videos made with EngramQuest"><br><sub>Frames from real teaching videos made with EngramQuest</sub></p>
+
+<div align="center">
+
 <a href="https://youtu.be/SZv0r-Tgy5o"><img src="https://img.youtube.com/vi/SZv0r-Tgy5o/maxresdefault.jpg" width="600" alt="EngramQuest in one minute"></a>
 
 ▶️ **[Watch: EngramQuest in one minute](https://youtu.be/SZv0r-Tgy5o)**
@@ -330,6 +345,21 @@ If EngramQuest is useful to you, consider supporting its development:
 [English ↑](#-engramquest)
 
 **你的筆記寫完就再也沒打開過。EngramQuest 把你的 Obsidian vault 從筆記墳場，變成你真的用得到的記憶。**
+
+<img src="assets/guide/hero_中文.webp" width="800" alt="EngramQuest：用教材學、看教學影片、用間隔複習記住">
+
+</div>
+
+### ✨ 重點
+
+- 🎬 **筆記變成教學影片**：跟 Claude Code 說你想學什麼，它做出一支支動畫短課，由老師在教室裡講給你聽。在影片學院觀看，下次從停下的地方繼續。
+- 📚 **照目標排好的課程**：你的 AI 工具把主題或筆記做成一步步的課程，附小測驗，直接在 Obsidian 裡學。
+- 🧠 **真正記得住**：複習卡用 FSRS 間隔重複，加上分層提示，在你快忘記之前把卡片帶回來。
+- 🤖 **用你已經有的 AI**：Claude Code、Codex、Gemini CLI、Cursor 等工具負責生成，不用另外訂閱、不用付 API 費用，AI 也可以完全不用。
+
+<p align="center"><img src="assets/guide/hero_videos_中文.webp" width="800" alt="用 EngramQuest 做出的教學影片畫面"><br><sub>用 EngramQuest 做出的教學影片實際畫面</sub></p>
+
+<div align="center">
 
 <a href="https://youtu.be/SZv0r-Tgy5o"><img src="https://img.youtube.com/vi/SZv0r-Tgy5o/maxresdefault.jpg" width="600" alt="一分鐘看懂 EngramQuest"></a>
 
