@@ -98,8 +98,8 @@ background:var(--paper);color:var(--ink);font-family:var(--sans);line-height:1.7
 .scen{display:flex;flex-wrap:wrap;gap:8px}
 .ln{font-size:14px;margin:0 0 12px;color:var(--muted);min-height:24px}
 .cap{font-size:13px;color:var(--muted);margin:10px 0 0}
-.lk{font:inherit;padding:0;border:0;background:none;color:var(--link);cursor:pointer;text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:3px}
-.lk.un{color:var(--muted);text-decoration-style:dashed}
+.lk{font:inherit;padding:0;border:0;background:linear-gradient(currentColor,currentColor) 0 calc(100% - 3.5px)/100% 1px no-repeat;color:var(--link);cursor:pointer}
+.lk.un{color:var(--muted);background-image:repeating-linear-gradient(90deg,currentColor 0 3px,transparent 3px 6px)}
 .why{list-style:none;margin:0;padding:0;counter-reset:w}
 .why li{counter-increment:w;display:grid;grid-template-columns:34px 1fr;padding:12px 0;border-top:1px solid var(--wash)}
 .why li::before{content:counter(w);font-family:var(--num);font-size:24px;line-height:1.25;color:var(--accent)}

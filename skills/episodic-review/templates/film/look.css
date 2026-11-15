@@ -31,7 +31,7 @@ svg.wire { position: absolute; left: 0; top: 0; overflow: visible; pointer-event
 .blue { color: var(--blue); } .teal { color: var(--teal); } .violet { color: var(--violet); } .rose { color: var(--rose); } .lime { color: var(--lime); } .green { color: var(--green); } .coral { color: var(--coral); } .amber { color: var(--amber); } .sand { color: var(--sand); } .slate { color: var(--slate); } .ink { color: var(--ink); } .dim { color: var(--dim); }
 .c { text-align: center; } .nw { white-space: nowrap; }
 .h1, .h2, .p { text-wrap: balance; word-break: keep-all; overflow-wrap: anywhere; }
-.ul { text-decoration: underline 4px rgba(255,255,255,.75); text-underline-offset: 24px; text-decoration-skip-ink: none; }   /* under each line: a wrapped line is not underlined across the frame */
+.ul { border-bottom: 4px solid rgba(255,255,255,.75); padding-bottom: .06em; }   /* under each line: a wrapped line is not underlined across the frame */
 #v.notext * { -webkit-text-fill-color: transparent; }   /* scene.html?notext=1: the picture without its words */
 #v.notext img { opacity: .25; }
 /* cards */

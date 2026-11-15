@@ -35,6 +35,21 @@ var QZ = (function () {
     } catch (e) {}
   }
 
+  // A .chk shows its box's state on itself, because a stylesheet cannot read a child: .on while ticked, .lock
+  // while disabled. Ticks and disabling by the learner or a mission's script are followed; a script that
+  // sets .checked directly calls QZ.sync() afterwards.
+  function sync() {
+    $$(".chk").forEach(function (c) {
+      var box = $("input", c);
+      if (!box) return;
+      c.classList.toggle("on", box.checked);
+      c.classList.toggle("lock", box.disabled);
+    });
+  }
+  document.addEventListener("change", sync);
+  try { new MutationObserver(sync).observe(document.documentElement, { subtree: true, childList: true, attributes: true, attributeFilter: ["disabled"] }); } catch (e) {}
+  sync();
+
   var zh = /^zh/i.test(document.documentElement.lang || "");
   var WORDS = zh ? { of: "分（滿分 100）", finish: "完成關卡", sent: "已送出" } : { of: "out of 100", finish: "Finish", sent: "Sent" };
 
@@ -80,6 +95,7 @@ var QZ = (function () {
     tot.appendChild(btn);
     box.appendChild(tot);
     (o.into || $(".wrap") || document.body).appendChild(box);
+    sync();
     resize();
     return score;
   }
@@ -105,5 +121,5 @@ var QZ = (function () {
     })();
   }
 
-  return { $: $, $$: $$, el: el, verdict: verdict, flash: flash, show: show, resize: resize };
+  return { $: $, $$: $$, el: el, verdict: verdict, flash: flash, show: show, resize: resize, sync: sync };
 })();

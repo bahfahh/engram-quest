@@ -8,7 +8,7 @@ const read = (p) => fs.readFileSync(path.join(root, p), "utf8");
 
 // Runs the shared mission script against a page that records what it posts to the plugin. `parent`
 // stands for the plugin's window; messages arrive through `receive`.
-function runMission({ lang = "zh-Hant", height = 400, standalone = false, systemDark = false } = {}) {
+function runMission({ lang = "zh-Hant", height = 400, standalone = false, systemDark = false, checks = [] } = {}) {
   const posted = [], listeners = {}, frames = [], parent = { postMessage: (m) => posted.push(m) };
   const node = (tag) => {
     const n = {
@@ -26,7 +26,7 @@ function runMission({ lang = "zh-Hant", height = 400, standalone = false, system
   });
   const rootClasses = new Set();
   const documentElement = { lang, classList: { add: (name) => rootClasses.add(name) } };
-  const document = { body, documentElement, createElement: node, querySelector: () => null, querySelectorAll: () => [] };
+  const document = { body, documentElement, createElement: node, querySelector: () => null, querySelectorAll: (sel) => (sel === ".chk" ? checks : []), addEventListener() {} };
   const window = {
     parent, addEventListener: (type, fn) => (listeners[type] = fn),
     matchMedia: () => ({ matches: systemDark, addEventListener() {} }),
@@ -62,9 +62,22 @@ describe("mission house style: contract with the plugin", () => {
     ]);
   });
 
+  it("shows a .chk's ticked and disabled state on the label, so the stylesheet needs no :has", () => {
+    const label = (box) => { const on = new Set(); return { on, querySelector: () => box, classList: { toggle: (name, force) => (force ? on.add(name) : on.delete(name)) } }; };
+    const ticked = { checked: true, disabled: false }, locked = { checked: false, disabled: true }, plain = { checked: false, disabled: false };
+    const [a, b, c] = [label(ticked), label(locked), label(plain)];
+    const m = runMission({ checks: [a, b, c] });
+    expect([[...a.on], [...b.on], [...c.on]]).toEqual([["on"], ["lock"], []]);
+    ticked.disabled = true; locked.checked = true;
+    m.QZ.sync();
+    expect([[...a.on].sort(), [...b.on].sort()]).toEqual([["lock", "on"], ["lock", "on"]]);
+    const css = read("skills/quest-map/assets/quest-base.css");
+    expect(css).toMatch(/\.chk\.on\{/);
+    expect(css).not.toMatch(/:has\(/);
+  });
+
   it("draws no scrollbar of its own inside the plugin's frame, and keeps it as an ordinary page", () => {
     const css = read("skills/quest-map/assets/quest-base.css");
-    expect(css).toMatch(/html\.qz-framed\{scrollbar-width:none\}/);
     expect(css).toMatch(/html\.qz-framed::-webkit-scrollbar\{display:none\}/);
     expect(runMission().rootClasses.has("qz-framed")).toBe(true);
     expect(runMission({ standalone: true }).rootClasses.has("qz-framed")).toBe(false);

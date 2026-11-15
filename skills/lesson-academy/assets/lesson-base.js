@@ -124,6 +124,10 @@ var LZ = (function () {
     });
   });
 
+  // A table cell that holds a status dot keeps its text on one line on a phone; the stylesheet cannot select a
+  // cell by what it contains, so the cell is marked here.
+  each(".tb .dot", function (d) { var td = d.closest("td"); if (td) td.classList.add("nw"); });
+
   // Understanding check: data-answer is the right option; every option explains itself; wrong picks can be retried.
   each(".ask", function (ask) {
     var opts = $$(".opt", ask), fb = $(".fb", ask), right = +ask.dataset.answer;

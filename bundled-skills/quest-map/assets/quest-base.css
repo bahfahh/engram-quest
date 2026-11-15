@@ -42,7 +42,6 @@
 *{box-sizing:border-box}
 /* Inside the plugin's frame the page never draws a scrollbar of its own: the frame follows the page's
    height, and a scrollbar that took width while the frame caught up would change that height again. */
-html.qz-framed{scrollbar-width:none}
 html.qz-framed::-webkit-scrollbar{display:none}
 /* what the browser draws itself (a select's list, a range input) follows the theme too */
 body.qz.dark{color-scheme:dark}
@@ -55,7 +54,6 @@ a{color:var(--accent)}
 button,select,input,textarea{font:inherit;color:inherit}
 code{font-family:var(--mono);font-size:.88em;background:var(--wash);padding:1px 5px;border-radius:4px;color:var(--ink)}
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-[hidden]{display:none!important}
 
 /* the case: who the learner is here, what is asked of them, and the ability this mission exercises */
 .case{margin-bottom:16px}
@@ -105,15 +103,15 @@ input[type=range]{accent-color:var(--accent);min-height:36px;width:100%;margin:0
 .choice .pick-tag{flex-basis:100%}
 .chk{display:flex;align-items:flex-start;gap:10px;min-height:44px;margin-top:6px;padding:9px 12px;border:1px solid var(--line);border-radius:10px;background:var(--card);font-size:15px;line-height:1.55;cursor:pointer}
 .chk input{flex:none;width:18px;height:18px;margin:3px 0 0;accent-color:var(--accent)}
-.chk:has(input:checked){border-color:var(--accent);background:var(--soft)}
-.chk:has(input:disabled){cursor:default}
-.chk:has(input:disabled:not(:checked)){opacity:.55}
+.chk.on{border-color:var(--accent);background:var(--soft)}
+.chk.lock{cursor:default}
+.chk.lock:not(.on){opacity:.55}
 
 /* Something the learner can mark: any element with data-pick, and every .choice. .picked is the learner's
    mark. Once the mission is judged (.judged on an ancestor) a mark becomes .hit (right), .part (defensible
    but weaker) or .miss (wrong), and .was shows what should have been marked. Each state also carries a
    word, in a .pick-tag child, so it never depends on colour alone. */
-[data-pick],.choice{position:relative;border:1px solid var(--line);border-radius:10px;background:var(--card);color:var(--ink);cursor:pointer;transition:border-color .15s,background .15s}
+[data-pick],.choice{position:relative;border:1px solid var(--line);border-radius:10px;background:var(--card);color:var(--ink);cursor:pointer}
 [data-pick]:hover,.choice:hover{border-color:var(--accent)}
 [data-pick].picked,.choice.picked{border-color:var(--accent);background:var(--soft);box-shadow:inset 0 0 0 1px var(--accent)}
 .judged [data-pick],.judged .choice{cursor:default}
@@ -165,7 +163,6 @@ input[type=range]{accent-color:var(--accent);min-height:36px;width:100%;margin:0
 .tile.ok{border-color:var(--ok)}.tile.ok small{color:var(--ok)}
 .tile.warn{border-color:var(--warn)}.tile.warn small{color:var(--warn)}
 .tile.bad{border-color:var(--bad);background:var(--bad-soft)}.tile.bad small{color:var(--bad)}
-.flash{animation:flash 1s}
 @keyframes flash{0%{transform:scale(1.05)}100%{transform:none}}
 .news{margin:10px 0 0;font-size:13.5px;line-height:1.6;color:var(--body)}
 .news:empty{display:none}
@@ -173,7 +170,7 @@ input[type=range]{accent-color:var(--accent);min-height:36px;width:100%;margin:0
 details.past{margin:0 0 8px;border:1px solid var(--line);border-radius:12px;background:var(--card)}
 details.past summary{display:flex;align-items:center;gap:8px;min-height:42px;padding:6px 12px;font-size:14px;line-height:1.5;cursor:pointer;list-style:none}
 details.past summary::-webkit-details-marker{display:none}
-details.past summary::before{content:"";flex:none;border:5px solid transparent;border-left:7px solid var(--muted);border-right:0;transition:transform .15s}
+details.past summary::before{content:"";flex:none;border:5px solid transparent;border-left:7px solid var(--muted);border-right:0}
 details.past[open] summary::before{transform:rotate(90deg)}
 details.past summary span{flex:1;min-width:0}
 details.past summary b{flex:none;font-family:var(--mono)}
@@ -187,4 +184,11 @@ h1{font-size:20px}
 .tiles{grid-template-columns:1fr 1fr}
 .verdict{padding:14px}
 }
-@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+/* Motion is opt-in: a reader who asked for less of it gets none of these. */
+@media (prefers-reduced-motion:no-preference){
+[data-pick],.choice{transition:border-color .15s,background .15s}
+.flash{animation:flash 1s}
+details.past summary::before{transition:transform .15s}
+}
+/* hidden always wins over a display set by a class; the repeated attribute raises the specificity, and the rule stays last */
+[hidden][hidden][hidden]{display:none}

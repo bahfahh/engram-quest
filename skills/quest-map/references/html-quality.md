@@ -101,7 +101,7 @@ The pieces, by what they are for (the CSS comments have the details):
 | For | Piece |
 |---|---|
 | Material | `.stage` the desk · `.win` something on a screen · `.paper` something on paper · `.flag` a small label · `.hand` handwriting · `.sim` the line that says data is invented |
-| Controls | `.btn` (`.pri` commits) · `.sel` · `.fld` a text or number field or a textarea · `.seg` a few short options, pressed ones `aria-pressed="true"` · `.choice` one of several longer answers · `.chk` any of a list · range inputs |
+| Controls | `.btn` (`.pri` commits) · `.sel` · `.fld` a text or number field or a textarea · `.seg` a few short options, pressed ones `aria-pressed="true"` · `.choice` one of several longer answers · `.chk` any of a list, a `<label>` around its input (the base script mirrors the box's ticked and disabled state onto the label; a script that sets `.checked` itself calls `QZ.sync()` afterwards) · range inputs |
 | A mark on the material | An HTML box with `data-pick`, and every `.choice`, looks markable; `.picked` is the learner's mark. After judging, put `.judged` on an ancestor and `.hit` / `.part` / `.miss` on what was marked, `.was` on what should have been, with the word for the state in a `.pick-tag` child. A judged `.fld` takes `.hit` / `.part` / `.miss` too. These states are drawn with border and background, so on a part of an SVG or a table row, draw the same states yourself from the tokens (stroke, fill, cell background) |
 | Progress toward committing | `.act` with `.act-note` (what has been done so far) and the commit button |
 | Reasons | `.why` with `.good`, `.part` or `.off`, opening with a bold phrase |
@@ -208,7 +208,8 @@ verdict whose score you would defend. A mission is not finished until it has bee
 - **A mission that opens to a wall of instructions** has put the work in the wrong place. The
   desk should show what kind of task this is; the header says the rest in a few sentences.
 - **Something that plays must rest on its result.** An animation ends in the state that shows
-  what happened, and jumps straight there when the reader has asked for reduced motion.
+  what happened, and jumps straight there when the reader has asked for reduced motion: declare
+  the transition or animation inside `@media (prefers-reduced-motion:no-preference)`.
 - **Indented text goes in `<pre>`.** HTML collapses whitespace anywhere else.
 - **Text inside an SVG does not wrap** and shrinks with the drawing. Keep words the learner
   must read in HTML, or draw the SVG at its real width.
