@@ -31,4 +31,9 @@ print(f"middle {m0:.2f}–{m1:.2f} s = {dur:.1f} s | speech {spoken/dur*100:.0f}
 print(f"silence beats: {len(sil)} totalling {sum(b for _, b in big):.1f} s -> {big}")
 print(f"longest stretch without a >=1 s pause: {longest:.0f} s (from {longest_at:.1f} s)")
 print(f"student lines: {sum(1 for l in sp if l['speaker'] not in ('teacher', None))} of {len(sp)}")
+speed = float(tl.get('speed', 1))
+if speed != 1:
+    print(f"speech speed {speed:g} is the learner's setting: the 字/分 above includes it (about 270 at speed 1 becomes "
+          f"about {270 * speed:.0f}); pauses are not scaled, so below 1 the speech share and the longest stretch rise "
+          f"(above 1 they fall) without any change to the design; do not change rates to undo it")
 print("targets: speech <= 80%, longest stretch <= 40 s, recap silence 2.5–3 s, one 3–5 s silent picture at the moment of understanding (04-skeleton.md §2)")

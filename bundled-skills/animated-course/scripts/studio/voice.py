@@ -40,6 +40,11 @@ Per-engine voice settings sit inside each voice: {"voice": ..., "rate": ..., "pi
 "azure": {"voice"}, "custom": {"voice", "style"}}. Engines without word timings are aligned with faster-whisper.
 If the chosen engine fails or does not match the text, the WHOLE narration is redone with edge-tts (one voice per film).
 
+Speech speed (the learner's choice, settings.json voice.speed; speech_speed() says where it is read): a factor on
+every speaker's speech, pauses unchanged. Engines that take a rate (edge, azure, custom whose command uses {rate}) get
+it multiplied into each line's rate; the others (gemini, custom without {rate}) are time-stretched with the pitch kept,
+before their words are aligned. Write rates as usual (the teacher's base, speed bands); never fold the speed in by hand.
+
 timeline.json gives every line's start/end in seconds and, for spoken lines, word timings
 ("words": [{"text","start","end"}]) so visuals can land exactly when a word is said.
 TTS results are cached in studio/.tts-cache, so re-running after editing one line is fast. The edge-tts clips a project
@@ -86,6 +91,63 @@ def pick_engine(spec):
         return "edge", (f"AI voice available ({', '.join(found)}) but not chosen -> edge-tts "
                         "(only the user picks an AI voice, at the start-up question; do not ask now, SKILL.md rule 0)")
     return "edge", "no AI voice configured -> edge-tts (default)"
+
+
+SPEED_RANGE = (0.8, 1.2)   # beyond this a time-stretched voice starts to sound processed
+
+
+def speech_speed(project):
+    """Return (speed, reason): the learner's narration speed, a factor on every speaker's speech (pauses stay as written).
+    VOICE_SPEED wins (record teacher samples with VOICE_SPEED=1: the plugin plays them at the learner's speed); else
+    engram-quest/videos/settings.json voice.speed (the plugin's Video settings) in $VAULT or the first folder above the
+    project, else above this studio, that has engram-quest/ or .obsidian/ (as resolve.cjs looks); else 1."""
+    raw, src = os.environ.get("VOICE_SPEED"), "VOICE_SPEED"
+    if raw is None:
+        vault = os.environ.get("VAULT")
+        for d in (project, os.path.dirname(os.path.abspath(__file__))):
+            while not vault:
+                if os.path.isdir(os.path.join(d, "engram-quest")) or os.path.isdir(os.path.join(d, ".obsidian")):
+                    vault = d
+                elif os.path.dirname(d) == d:
+                    break
+                d = os.path.dirname(d)
+        if not vault:
+            print("WARNING: no vault found above the project or the studio, so the learner's narration speed is not "
+                  "applied; set VAULT to the vault root", flush=True)
+            return 1.0, "no vault found; set VAULT"
+        try:
+            settings = json.load(open(os.path.join(vault, "engram-quest", "videos", "settings.json"), encoding="utf-8"))
+        except FileNotFoundError:
+            return 1.0, "no settings.json"
+        except (OSError, ValueError) as e:
+            return 1.0, f"settings.json unreadable ({e})"
+        voice = settings.get("voice") if isinstance(settings, dict) else None
+        raw, src = (voice.get("speed", 1) if isinstance(voice, dict) else 1), "settings.json voice.speed"
+    try:
+        x = float(raw)
+    except (TypeError, ValueError):
+        return 1.0, f"{src} {raw!r} is not a number"
+    lo, hi = SPEED_RANGE
+    if not lo <= x <= hi:
+        return min(hi, max(lo, x)), f"{src} {x:g} is outside {lo:g} to {hi:g}, clamped"
+    return x, src
+
+
+def takes_rate():
+    """Engines that apply a rate themselves get the learner's speed folded into it; the others are time-stretched."""
+    return ENGINE in ("edge", "azure") or (ENGINE == "custom" and "{rate}" in os.environ.get("TTS_CUSTOM_CMD", ""))
+
+
+def scaled_rate(rate):
+    """'+N%' at the learner's speed. The factors multiply, so per-line speed bands stay relative to the teacher's base:
+    −8 % at speed 0.9 -> 0.92 × 0.9 = 0.828 -> −17 %."""
+    return rate if SPEED == 1 else f"{round((1 + int(rate[:-1]) / 100) * SPEED * 100 - 100):+d}%"
+
+
+def stretch(src, out, tempo):
+    """Change the speed of a clip without changing its pitch (ffmpeg atempo)."""
+    subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", src, "-filter:a", f"atempo={tempo:g}", out],
+                   capture_output=True, check=True)
 
 
 def _lang(spec, voice):
@@ -245,27 +307,38 @@ def synth_custom(text, v, out, rate, pitch):
         raise RuntimeError("custom engine wrote no audio")
 
 
-ENGINE = "edge"; LANG = "zh"; MIN_MATCH = float(os.environ.get("ALIGN_MIN_MATCH", 0.7))
+ENGINE = "edge"; LANG = "zh"; SPEED = 1.0; MIN_MATCH = float(os.environ.get("ALIGN_MIN_MATCH", 0.7))
 
 
 async def synth_any(text, v, rate, pitch):
-    """One clip with the current ENGINE. Returns (audio path, words)."""
+    """One clip with the current ENGINE at the learner's SPEED. Returns (audio path, words)."""
+    tempo = 1.0
+    if takes_rate():
+        rate = scaled_rate(rate)
+    else:
+        tempo = SPEED
     if ENGINE == "edge":
         return await synth(text, v["voice"], rate, pitch)
     sub = v.get(ENGINE, {})
     key = hashlib.sha1(f"{ENGINE}|{json.dumps(sub, sort_keys=True)}|{v['voice']}|{rate}|{pitch}|{text}".encode()).hexdigest()[:20]
-    wav, meta = f"{CACHE}/{ENGINE}-{key}.wav", f"{CACHE}/{ENGINE}-{key}.json"
+    # the engine's own clip is kept apart from its stretched copy, so changing the speed never pays for a new synthesis
+    raw = f"{CACHE}/{ENGINE}-{key}.wav"
+    wav = raw if tempo == 1 else f"{CACHE}/{ENGINE}-{key}-x{tempo:g}.wav"
+    meta = wav[:-4] + ".json"
     if os.path.exists(wav) and os.path.exists(meta):
         return wav, json.load(open(meta, encoding="utf-8"))
     last = None
     for attempt in range(max(1, min(RETRIES, 3))):
         try:
-            if ENGINE == "gemini":
-                await asyncio.to_thread(synth_gemini, text, v, wav)
-            elif ENGINE == "azure":
-                await asyncio.to_thread(synth_azure, text, v, wav, rate, pitch)
-            else:
-                await asyncio.to_thread(synth_custom, text, v, wav, rate, pitch)
+            if not os.path.exists(raw):
+                if ENGINE == "gemini":
+                    await asyncio.to_thread(synth_gemini, text, v, raw)
+                elif ENGINE == "azure":
+                    await asyncio.to_thread(synth_azure, text, v, raw, rate, pitch)
+                else:
+                    await asyncio.to_thread(synth_custom, text, v, raw, rate, pitch)
+            if tempo != 1:
+                await asyncio.to_thread(stretch, raw, wav, tempo)
             words, match = await asyncio.to_thread(align_words, text, wav, LANG)
             speech = trim(decode(wav))[0]
             per_unit = (len(speech) / SR) / max(1, len(words))
@@ -277,8 +350,12 @@ async def synth_any(text, v, rate, pitch):
             return wav, words
         except Exception as e:
             last = e
-            if os.path.exists(wav):
-                os.remove(wav)
+            # a clip an earlier run already checked (its .json is there) is not what failed a stretch or alignment now:
+            # keep it, so a hiccup never pays for a new synthesis; an unchecked clip goes, or a bad one would come back
+            keep_raw = os.path.exists(raw[:-4] + ".json")
+            for f in {wav} if keep_raw else {raw, wav}:
+                if os.path.exists(f):
+                    os.remove(f)
             await asyncio.sleep(min(2 + attempt, 5))
     raise RuntimeError(f"{ENGINE} failed for {text!r}: {last}")
 
@@ -565,10 +642,11 @@ async def main(project):
     seed_cache(project)
     spec = json.load(open(os.path.join(project, "script.json"), encoding="utf-8"))
     voices = spec["voices"]
-    global ENGINE, LANG
+    global ENGINE, LANG, SPEED
     ENGINE, why = pick_engine(spec)
     LANG = _lang(spec, voices.get("teacher", next(iter(voices.values())))["voice"])
-    print(f"voice engine: {ENGINE} ({why})", flush=True)
+    SPEED, why_speed = speech_speed(project)
+    print(f"voice engine: {ENGINE} ({why}); speech speed {SPEED:g} ({why_speed})", flush=True)
     if ENGINE != "edge":
         try:
             await prefetch(spec)
@@ -693,7 +771,7 @@ async def main(project):
         except Exception as e:  # never block voicing on this check
             print(f"(handover check skipped: {e})")
 
-    timeline = {"duration": round(total, 3), "lines": out_lines}
+    timeline = {"duration": round(total, 3), "speed": SPEED, "lines": out_lines}
     json.dump(timeline, open(os.path.join(project, "timeline.json"), "w", encoding="utf-8"),
               ensure_ascii=False, indent=1)
     cues = ["WEBVTT", ""]

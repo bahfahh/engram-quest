@@ -23,7 +23,9 @@ const terms = readPrivateTerms(vaultRoot);
 const { publicText, findPrivate } = publicFilter(terms);
 const SAMPLES_DIR = path.join(vaultRoot, terms.samplesDir);
 const REGISTRY = 'scripts/studio/lib/cast/teachers.json';
-const SKIP_DIRS = new Set(['node_modules', '__pycache__', '.git']);
+// The studio's run-time files (its .gitignore): a test run in the vault must not ship in the skill.
+const SKIP_DIRS = new Set(['node_modules', '__pycache__', '.git', '.tts-cache', 'projects']);
+const SKIP_FILE = /^.(asr-slot-|render-slots|preview-slots)/;
 const BINARY_EXT = new Set(['.png', '.jpg', '.jpeg', '.webp', '.gif', '.mp3', '.wav', '.ogg', '.m4a', '.mp4', '.woff', '.woff2', '.ttf', '.otf', '.pdf']);
 const packsDir = path.join(repoRoot, 'video-packs');
 const teachersAssets = path.join(repoRoot, 'assets', 'teachers');
@@ -31,7 +33,7 @@ const teachersAssets = path.join(repoRoot, 'assets', 'teachers');
 function walk(dir, rel = '') {
   const out = [];
   for (const entry of fs.readdirSync(dir, { withFileTypes: true }).sort((a, b) => (a.name < b.name ? -1 : 1))) {
-    if (entry.isDirectory() && SKIP_DIRS.has(entry.name)) continue;
+    if (entry.isDirectory() ? SKIP_DIRS.has(entry.name) : SKIP_FILE.test(entry.name)) continue;
     const childRel = rel ? `${rel}/${entry.name}` : entry.name;
     if (entry.isDirectory()) out.push(...walk(path.join(dir, entry.name), childRel));
     else out.push(childRel);

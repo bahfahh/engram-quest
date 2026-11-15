@@ -12,6 +12,7 @@ const { openTeacherPicker, teacherAvatar, localeOf } = require("./teacher-picker
 const QUALITY_TEXT = { high: ["VIDEO_Q_HIGH", "VIDEO_Q_HIGH_DESC"], compact: ["VIDEO_Q_COMPACT", "VIDEO_Q_COMPACT_DESC"] };
 const LANG_TEXT = { follow: "VIDEO_LANG_FOLLOW", "zh-tw": "VIDEO_LANG_ZH", en: "VIDEO_LANG_EN" };
 const VOICE_TEXT = { auto: "VIDEO_VOICE_AUTO", edge: "VIDEO_VOICE_EDGE", gemini: "VIDEO_VOICE_GEMINI", azure: "VIDEO_VOICE_AZURE", custom: "VIDEO_VOICE_CUSTOM" };
+const SPEED_TEXT = { 0.85: "VIDEO_SPEED_SLOW", 0.92: "VIDEO_SPEED_SLOWER", 1: "VIDEO_SPEED_NORMAL", 1.08: "VIDEO_SPEED_FASTER", 1.15: "VIDEO_SPEED_FAST" };
 const CARDS_MODULE = "cards";
 
 async function openVideoSettingsModal(hub, t) {
@@ -43,6 +44,7 @@ async function openVideoSettingsModal(hub, t) {
       openTeacherPicker(hub, t, {
         selected: teacher.id,
         variants: s.cast.variants,
+        speed: s.voice.speed,
         onPick: (id, variant) => {
           s.cast.teacher = id;
           if (variant) s.cast.variants[id] = variant;
@@ -64,19 +66,24 @@ async function openVideoSettingsModal(hub, t) {
       btn.addEventListener("click", () => { s.quality = id; render(); });
     }
 
-    const selectRow = (labelKey, keys, value, onChange) => {
+    // options: [value, shown text] in the order shown
+    const selectRow = (labelKey, options, value, onChange) => {
       const row = form.createDiv({ cls: "lh-vid-set-row" });
       row.createSpan({ cls: "lh-vid-set-label", text: c(t, labelKey) });
       const sel = row.createEl("select", { cls: "lh-vid-select" });
-      for (const [id, key] of Object.entries(keys)) {
-        const opt = sel.createEl("option", { text: c(t, key), attr: { value: id } });
+      for (const [id, text] of options) {
+        const opt = sel.createEl("option", { text, attr: { value: id } });
         if (id === value) opt.selected = true;
       }
       sel.addEventListener("change", () => onChange(sel.value));
     };
-    selectRow("VIDEO_SET_LANG", LANG_TEXT, s.narrationLang, (v) => { s.narrationLang = v; });
-    selectRow("VIDEO_SET_VOICE", VOICE_TEXT, s.voice.engine, (v) => { s.voice.engine = v; });
+    const translated = (keys) => Object.entries(keys).map(([id, key]) => [id, c(t, key)]);
+    selectRow("VIDEO_SET_LANG", translated(LANG_TEXT), s.narrationLang, (v) => { s.narrationLang = v; });
+    selectRow("VIDEO_SET_VOICE", translated(VOICE_TEXT), s.voice.engine, (v) => { s.voice.engine = v; });
     form.createDiv({ cls: "lh-vid-set-note", text: c(t, "VIDEO_SET_VOICE_NOTE") });
+    const speeds = data.speedChoices(s.voice.speed).map((x) => [String(x), SPEED_TEXT[x] ? `${c(t, SPEED_TEXT[x])} ${x}×` : `${x}×`]);
+    selectRow("VIDEO_SET_SPEED", speeds, String(s.voice.speed), (v) => { s.voice.speed = Number(v); });
+    form.createDiv({ cls: "lh-vid-set-note", text: c(t, "VIDEO_SET_SPEED_NOTE") });
 
     const checkRow = (labelKey, descKey, checked, onChange) => {
       const row = form.createDiv({ cls: "lh-vid-set-row" });

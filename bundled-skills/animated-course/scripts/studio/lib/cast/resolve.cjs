@@ -115,6 +115,8 @@ const conv = v => v && { voice: v.name, rate: v.rate || '+0%', pitch: v.pitch ||
 const sv = (reg.studentVoices || {})[L];
 let studentV = sv ? conv(sv) : (L === 'en' ? { voice: 'en-US-AvaMultilingualNeural', rate: '+6%', pitch: '+10Hz' } : { voice: 'zh-TW-HsiaoYuNeural', rate: '-8%', pitch: '+20Hz' });
 if (!sv && L !== 'zh-tw' && L !== 'en') notes.push(`no student voice for ${L}: add studentVoices.${L} to the registry`);
+const speed = settings.voice && settings.voice.speed;
+if (Number.isFinite(Number(speed)) && speed !== null && speed !== '' && Number(speed) !== 1) notes.push(`speech speed ${speed} (settings.json voice.speed, the learner's choice): voice.py applies it to every line; write the rates below as they are`);
 if (tv && tv.name === studentV.voice) studentV = L === 'en' ? { voice: 'en-US-AndrewMultilingualNeural', rate: '+6%', pitch: '+0Hz' } : { voice: 'zh-TW-HsiaoChenNeural', rate: '+8%', pitch: '+10Hz' };
 
 const beats = {};

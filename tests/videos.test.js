@@ -5,6 +5,7 @@ import {
   VIDEOS_DIR,
   SETTINGS_PATH,
   normalizeSettings,
+  speedChoices,
   readSettings,
   saveSettings,
   syncSettingsLicense,
@@ -77,7 +78,7 @@ const metaPath = (slug) => `${VIDEOS_DIR}/${slug}/meta.json`;
 
 describe("normalizeSettings", () => {
   it("fills defaults for missing or invalid values and stamps the licence", () => {
-    const defaults = { quality: "high", narrationLang: "follow", subtitles: true, episodicLength: "medium", cast: { teacher: "nico", variants: {} }, course: { on: [], off: [] }, voice: { engine: "auto" } };
+    const defaults = { quality: "high", narrationLang: "follow", subtitles: true, episodicLength: "medium", cast: { teacher: "nico", variants: {} }, course: { on: [], off: [] }, voice: { engine: "auto", speed: 1 } };
     expect(normalizeSettings(null, false)).toEqual({ ...defaults, pro: false });
     expect(normalizeSettings({ quality: "ultra", narrationLang: "fr", subtitles: 0, episodicLength: "epic", voice: { engine: "nope" } }, true))
       .toEqual({ ...defaults, subtitles: false, pro: true });
@@ -89,8 +90,20 @@ describe("normalizeSettings", () => {
   });
 
   it("keeps fields it doesn't know, at every level", () => {
-    const s = normalizeSettings({ future: 1, cast: { teacher: "luna", variants: { nico: "wine" }, extra: 2 }, course: { off: ["cards", "cards"], note: "x" }, voice: { engine: "edge", speed: 3 } }, false);
-    expect(s).toMatchObject({ future: 1, cast: { teacher: "luna", variants: { nico: "wine" }, extra: 2 }, course: { off: ["cards"], note: "x" }, voice: { engine: "edge", speed: 3 } });
+    const s = normalizeSettings({ future: 1, cast: { teacher: "luna", variants: { nico: "wine" }, extra: 2 }, course: { off: ["cards", "cards"], note: "x" }, voice: { engine: "edge", pace: 3 } }, false);
+    expect(s).toMatchObject({ future: 1, cast: { teacher: "luna", variants: { nico: "wine" }, extra: 2 }, course: { off: ["cards"], note: "x" }, voice: { engine: "edge", pace: 3 } });
+  });
+
+  it("keeps a narration speed the skill accepts (0.8 to 1.2) and reads anything else as 1", () => {
+    const speed = (v) => normalizeSettings({ voice: { speed: v } }, false).voice.speed;
+    expect([0.8, 0.85, 0.9, 1.15, 1.2, "0.92"].map(speed)).toEqual([0.8, 0.85, 0.9, 1.15, 1.2, 0.92]);
+    expect([0.79, 1.21, 3, 0, null, "", "fast", NaN, undefined].map(speed)).toEqual([1, 1, 1, 1, 1, 1, 1, 1, 1]);
+  });
+
+  it("offers the speeds slowest first, keeping a hand-set one in its place", () => {
+    expect(speedChoices(1)).toEqual([0.85, 0.92, 1, 1.08, 1.15]);
+    expect(speedChoices(0.9)).toEqual([0.85, 0.9, 0.92, 1, 1.08, 1.15]);
+    expect(speedChoices(5)).toEqual([0.85, 0.92, 1, 1.08, 1.15]);
   });
 
   it("drops retired settings: style (ADR-29), length and production mode", () => {

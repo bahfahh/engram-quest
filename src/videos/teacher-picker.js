@@ -9,6 +9,7 @@ const { checkSkillsUpdates, SkillsInstallModal } = require("../hub/skills");
 const { PORTRAITS, SAMPLES } = require("./teacher-media");
 const { TEACHERS, localText, canUse, variantsOf, variantOf, portraitKey } = require("./teachers");
 const { loadCustomTeachers } = require("./custom-teachers");
+const { readSettings } = require("./data");
 
 function localeOf(t) {
   return getLocale(t, I.moment && I.moment.locale && I.moment.locale());
@@ -36,10 +37,13 @@ async function offerSkillUpdate(row, hub, t) {
 /**
  * `onPick(teacherId, variantId)` runs when a usable teacher is chosen. `pickVariants: false` hides the
  * colour sets (they are a global choice, not a series one). `inherit` adds a choice that clears the
- * selection, passing "" as the id. The user's own teachers (custom:<id>) follow in a section of their own.
+ * selection, passing "" as the id. `speed` is the narration speed the samples play at (default: the
+ * saved one). The user's own teachers (custom:<id>) follow in a section of their own.
  */
-async function openTeacherPicker(hub, t, { selected, variants = {}, pickVariants = true, inherit = null, onPick }) {
+async function openTeacherPicker(hub, t, { selected, variants = {}, pickVariants = true, inherit = null, speed, onPick }) {
   const locale = localeOf(t);
+  // Samples are recorded at speed 1; they play at the narration speed videos will use.
+  const rate = speed ?? (await readSettings(hub.app.vault.adapter, !!t.licenseValid).catch(() => null))?.voice.speed ?? 1;
   const custom = await loadCustomTeachers(hub.app.vault.adapter).catch((e) => { console.warn("EngramQuest: custom teachers unreadable", e); return []; });
   const licensed = !!t.licenseValid;
   const modal = new I.Modal(hub.app);
@@ -117,6 +121,7 @@ async function openTeacherPicker(hub, t, { selected, variants = {}, pickVariants
         stop();
         if (same) return;
         const audio = new Audio(sample);
+        audio.playbackRate = rate;
         audio.addEventListener("ended", stop);
         playing = { audio, button: listen };
         listen.setText(c(t, "VIDEO_TEACHER_STOP"));

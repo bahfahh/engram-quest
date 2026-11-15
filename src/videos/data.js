@@ -18,6 +18,9 @@ const EPISODIC_SLUG = "episodic-recall";
 const QUALITIES = ["high", "compact"];
 const NARRATION_LANGS = ["follow", "zh-tw", "en"];
 const VOICE_ENGINES = ["auto", "edge", "gemini", "azure", "custom"];
+// Narration speed the skill applies to every voice and engine (voice.py speech_speed); its range is the skill's.
+const VOICE_SPEEDS = [0.85, 0.92, 1, 1.08, 1.15];
+const SPEED_RANGE = [0.8, 1.2];
 const EPISODIC_LENGTHS = ["short", "medium", "long"];
 const SERIES_STATUSES = ["pending", "making", "ready", "failed"];
 const DEFAULT_TEACHER = "nico";
@@ -58,6 +61,16 @@ function courseModules(course) {
   return { ...course, on, off: ids(course.off).filter((id) => !on.includes(id)) };
 }
 
+function speechSpeed(value) {
+  const x = Number(value);
+  return Number.isFinite(x) && x >= SPEED_RANGE[0] && x <= SPEED_RANGE[1] ? x : 1;
+}
+
+/** The speeds the settings offer, slowest first; a speed set by hand stays a choice, so saving keeps it. */
+function speedChoices(current) {
+  return [...new Set([...VOICE_SPEEDS, speechSpeed(current)])].sort((a, b) => a - b);
+}
+
 function normalizeSettings(raw, isPro) {
   const { style: _style, length: _length, mode: _mode, ...rest } = isObject(raw) ? raw : {};
   const cast = isObject(rest.cast) ? rest.cast : {};
@@ -71,7 +84,7 @@ function normalizeSettings(raw, isPro) {
     episodicLength: EPISODIC_LENGTHS.includes(rest.episodicLength) ? rest.episodicLength : DEFAULT_SETTINGS.episodicLength,
     cast: { ...cast, teacher: typeof cast.teacher === "string" && cast.teacher ? cast.teacher : DEFAULT_TEACHER, variants: isObject(cast.variants) ? cast.variants : {} },
     course: courseModules(course),
-    voice: { ...voice, engine: VOICE_ENGINES.includes(voice.engine) ? voice.engine : "auto" },
+    voice: { ...voice, engine: VOICE_ENGINES.includes(voice.engine) ? voice.engine : "auto", speed: speechSpeed(voice.speed) },
     pro: !!isPro,
   };
 }
@@ -462,6 +475,8 @@ module.exports = {
   QUALITIES,
   NARRATION_LANGS,
   VOICE_ENGINES,
+  VOICE_SPEEDS,
+  speedChoices,
   EPISODIC_LENGTHS,
   DEFAULT_TEACHER,
   DEFAULT_SETTINGS,
