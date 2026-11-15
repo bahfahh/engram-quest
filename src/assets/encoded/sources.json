@@ -1,0 +1,342 @@
+{
+  "assets/icons/century.webp": {
+    "sha256": "34f0f58223a7e3c122934cd67f6d223882411ce924df570ae6f47d171cdabf0f",
+    "width": 128,
+    "quality": 80
+  },
+  "assets/icons/course_finisher.webp": {
+    "sha256": "05f697c8fdf3b56c38e80bb7092ed2c11b3717dd433c473cfcd55fd6d9f41d53",
+    "width": 128,
+    "quality": 80
+  },
+  "assets/icons/daily_100.webp": {
+    "sha256": "bce0ab390f090902a7278d85d269ce8973e02382315c1b6231fb610464f98621",
+    "width": 128,
+    "quality": 80
+  },
+  "assets/icons/daily_150.webp": {
+    "sha256": "c8b20352d995ad1476543f9df2436843c5db8d9fd2cb0d1112b9182eb9121a17",
+    "width": 128,
+    "quality": 80
+  },
+  "assets/icons/daily_20.webp": {
+    "sha256": "f1270f139c33a2a1636f32abf1cd58ce08f9cbed9dfa6796eb75a945b50a49eb",
+    "width": 128,
+    "quality": 80
+  },
+  "assets/icons/daily_200.webp": {
+    "sha256": "d691999a2171b03d0943d69cb73f6cba17c72ca668177045e851f66f50cbea6e",
+    "width": 128,
+    "quality": 80
+  },
+  "assets/icons/daily_50.webp": {
+    "sha256": "aceadadddb2400f407dea91f8ac0462723aa9a0dd2acd2ed5b4df6dcd58a5cfd",
+    "width": 128,
+    "quality": 80
+  },
+  "assets/icons/daily_80.webp": {
+    "sha256": "7fa16818a5b727fa27e7ae613b3be34f83fd67a72eb8ed581c952ba4b054fb37",
+    "width": 128,
+    "quality": 80
+  },
+  "assets/icons/daily_storm.webp": {
+    "sha256": "1a6c57c861ad6c9daaa3a535268513dc93f13b4694c8fd7f09712087f00e67ab",
+    "width": 128,
+    "quality": 80
+  },
+  "assets/icons/daily_surge.webp": {
+    "sha256": "9a566f6802b84be509f66bacb1b4e09273c4a9efb4525877405f63a6ba18aaf0",
+    "width": 128,
+    "quality": 80
+  },
+  "assets/icons/fifty_cards.webp": {
+    "sha256": "8e7283387097bee0a44911186ab3e18c1a6ace5674e231e152748455d2e6e52a",
+    "width": 128,
+    "quality": 80
+  },
+  "assets/icons/first_card.webp": {
+    "sha256": "032cbfe16063ea720c9743253565a91f2f6abbec3abdbf5fca265b4ac46b68c0",
+    "width": 128,
+    "quality": 80
+  },
+  "assets/icons/first_lesson.webp": {
+    "sha256": "f800417e883640dab07e08f07a24e5f253d0ea5ad51be31dd30db2702ae16c9c",
+    "width": 128,
+    "quality": 80
+  },
+  "assets/icons/first_memory_map.webp": {
+    "sha256": "a7b00d19ad9fb63107f09453a4c370ae89b9a6f5130494339d4416faec29b06d",
+    "width": 128,
+    "quality": 80
+  },
+  "assets/icons/first_quest_map.webp": {
+    "sha256": "b1e01dee57292d6a622aaabcca5989dfc312028d526d167d56f4d363e81f790d",
+    "width": 128,
+    "quality": 80
+  },
+  "assets/icons/first_quest_step.webp": {
+    "sha256": "142ac243e761f6b2c93afaab0e588bb7e74fb398ead9c59a2d5998343e4eb1cd",
+    "width": 128,
+    "quality": 80
+  },
+  "assets/icons/five_hundred.webp": {
+    "sha256": "1f18a4a5ff2b721acafe5c3c78860b40b14d12b91b2828201289e47a4552f9c6",
+    "width": 128,
+    "quality": 80
+  },
+  "assets/icons/four_thousand.webp": {
+    "sha256": "6bdba4f2c50c8c8aae43d2dbfcac5d0b0db3c30360a0881c28fe1e1550e758ae",
+    "width": 128,
+    "quality": 80
+  },
+  "assets/icons/hundred_again.webp": {
+    "sha256": "4e122509bb51c873886f0c330ab3f3913de62dd7d6772f6cb028ed0c457a9894",
+    "width": 128,
+    "quality": 80
+  },
+  "assets/icons/lesson_marathon.webp": {
+    "sha256": "4e5608bc1e41329aefdc58ab151e5b63ea9223b5f1aab4bc5eecb9d3e9420757",
+    "width": 128,
+    "quality": 80
+  },
+  "assets/icons/master_200.webp": {
+    "sha256": "94c406ea6867564ccf2b9dccb7d86133dfe2d18b1bb06ba6f2a8e4eb441f4a10",
+    "width": 128,
+    "quality": 80
+  },
+  "assets/icons/master_50.webp": {
+    "sha256": "db6ed8e19a64ea11116fcd5ba38bf97a4329e0529f7b1f69b50e5de08c896c44",
+    "width": 128,
+    "quality": 80
+  },
+  "assets/icons/multiple_decks.webp": {
+    "sha256": "056c2ca4a6061434860bf6d53efd8df5fc8e4e43898dc840d7a4d8bff5a11c2d",
+    "width": 128,
+    "quality": 80
+  },
+  "assets/icons/one_thousand.webp": {
+    "sha256": "0ad5ab13b2cb93d0f66d8c636b6a59c73b1b7555e5f8293535a22664e14f6096",
+    "width": 128,
+    "quality": 80
+  },
+  "assets/icons/perfect_session.webp": {
+    "sha256": "19a2608975f0cdfb600515b53c885a1ce4f11f9b500a4b1a7dfb7f2627bc83a8",
+    "width": 128,
+    "quality": 80
+  },
+  "assets/icons/quest_cleared.webp": {
+    "sha256": "dcda0be482543be6984d9e8bf54a7f66087a120d96d07afa602709746af50c62",
+    "width": 128,
+    "quality": 80
+  },
+  "assets/icons/quest_veteran.webp": {
+    "sha256": "d31d0e159b72fa45922f721ec089ce7111978d39ca8fe4acc02f5a3ee1f5bbce",
+    "width": 128,
+    "quality": 80
+  },
+  "assets/icons/streak_100.webp": {
+    "sha256": "6bf053476088014656bee41f7ada5b5c5514fc8016908628c5f669fc778d1deb",
+    "width": 128,
+    "quality": 80
+  },
+  "assets/icons/streak_3.webp": {
+    "sha256": "f582b7e34bcfad5358125eefe5190588c871af76ec2f88c53c4c38ba1b2cc3ed",
+    "width": 128,
+    "quality": 80
+  },
+  "assets/icons/streak_30.webp": {
+    "sha256": "652ba2c1390e2bdaa188bbac824de9ca81ba22549f94e434327ad0593f1736f5",
+    "width": 128,
+    "quality": 80
+  },
+  "assets/icons/streak_365.webp": {
+    "sha256": "b02996e4616ec3efee6bb4bf5b7b243cb621c1dd6dad00a184565fad96ee04b1",
+    "width": 128,
+    "quality": 80
+  },
+  "assets/icons/streak_7.webp": {
+    "sha256": "cb5fff5d843a731c6294cd5d71934a151d12d80b7b113679ece9731113106d72",
+    "width": 128,
+    "quality": 80
+  },
+  "assets/icons/synapse_awaken.webp": {
+    "sha256": "5d4d4b227bb9856aa4197caea54d8d5727958abf2512943d119faedff6cea79a",
+    "width": 128,
+    "quality": 80
+  },
+  "assets/icons/synapse_network.webp": {
+    "sha256": "c7605f6426935d1c32b2842de2d2a2ca3659499249bec60974a95258eb6724b8",
+    "width": 128,
+    "quality": 80
+  },
+  "assets/icons/ten_cards.webp": {
+    "sha256": "90e42b49576987bb891fe8d580fb9bb60b690beba1439f49e031fb9998dc5e2e",
+    "width": 128,
+    "quality": 80
+  },
+  "assets/icons/ten_thousand.webp": {
+    "sha256": "011757b08194e806481f1b6fac423dc49a50ec82bc542b1221c7024e595a85ac",
+    "width": 128,
+    "quality": 80
+  },
+  "assets/icons/two_thousand.webp": {
+    "sha256": "05ca9e268c427548a23a45e3cc6714b690072a7d63cd082552fc889cf1f634d5",
+    "width": 128,
+    "quality": 80
+  },
+  "assets/quest-map/generated/boss-gate.webp": {
+    "sha256": "e1d62140b20f04508339c14df64d05112c665e574226b80f685cc4886148dbbb",
+    "width": 320,
+    "quality": 80
+  },
+  "assets/quest-map/generated/boss-lock-badge.webp": {
+    "sha256": "deeb6e8dccb36dce9142b15bece626cc3a032652e598905a98c951e676557410",
+    "width": 320,
+    "quality": 80
+  },
+  "assets/quest-map/generated/crown-current-node.webp": {
+    "sha256": "daab94bf26558007e93823401d65f7775037b0e77f60262afd7ceb8dd1416d2b",
+    "width": 320,
+    "quality": 80
+  },
+  "assets/quest-map/generated/node-number-frame.webp": {
+    "sha256": "e5361896d17dc31c6dff004e1a8950ce835847f3fc371301c9efa79b3e0d6a99",
+    "width": 320,
+    "quality": 80
+  },
+  "assets/quest-map/card-headers/quest-card-header-easy.webp": {
+    "sha256": "67364e25d0e71eb135646102a2b4b36e49235a895ca6bbf10473612fc328f963",
+    "width": 800,
+    "quality": 80
+  },
+  "assets/quest-map/card-headers/quest-card-header-hard.webp": {
+    "sha256": "58a58e04f7fd5e7c4caf8ecc36a50ea62eb5303e26820f7b1ebbaca243ea76c5",
+    "width": 800,
+    "quality": 80
+  },
+  "assets/quest-map/card-headers/quest-card-header-medium.webp": {
+    "sha256": "0fa68085b017753a80b3726ed812f60e9018db4fb081f3873f6164f050794d95",
+    "width": 800,
+    "quality": 80
+  },
+  "assets/pro/learning-notebook-light.webp": {
+    "sha256": "c506c044e15f4ca01c75684dccfdc9a065323344271b3e0e4a34823a1395c37e",
+    "width": 600,
+    "quality": 80
+  },
+  "assets/pro/learning-notebook-dark.webp": {
+    "sha256": "90f1ea30e17adc674d55a19c59a78d7fa689e4e26c586e114f0d414e2ce5a417",
+    "width": 600,
+    "quality": 80
+  },
+  "assets/guide/reviewdeck_中文.webp": {
+    "sha256": "4420c7a94c55a709c3e39d3bb61319bc6a902cbbff99f9dd4547cfc5bdd7ac6e",
+    "width": 1200,
+    "quality": 80
+  },
+  "assets/guide/reviewdeck_english.webp": {
+    "sha256": "99b46b20503142877cd08bc66b155a71434a2221e18fa348bb8b892e4d4e77b1",
+    "width": 1200,
+    "quality": 80
+  },
+  "assets/guide/questmap_中文.webp": {
+    "sha256": "f616348a1353a9443e44690195f326397e22e4ef689f7fbce01282297118af18",
+    "width": 1200,
+    "quality": 80
+  },
+  "assets/guide/questmap_english.webp": {
+    "sha256": "8f01b3097076115d4bd6c74dfca5e497bda0360496a0b5f6ca0ea350c67798ec",
+    "width": 1200,
+    "quality": 80
+  },
+  "assets/install-skills.png": {
+    "sha256": "94dc3db346621eeab1387618c42c953e74e4e70909aa81edc8680192b442edf1",
+    "width": 1200,
+    "quality": 80
+  },
+  "assets/guide/lesson_academy_中文.webp": {
+    "sha256": "87d91125d7e70d6864d39c7920432f7bb6151860710c6bf100afed0e9ee4a45a",
+    "width": 1200,
+    "quality": 80
+  },
+  "assets/guide/lesson_academy_english.webp": {
+    "sha256": "465de801edcbfbd2ac420a00a5189d0942c3b081cfc44abd13209e9bd0f69d2a",
+    "width": 1200,
+    "quality": 80
+  },
+  "assets/guide/memory_map_中文.webp": {
+    "sha256": "7ab783171416d0633bed7d14c08f78a8c3329442f0ddf21f7f7b4f9dba2776c6",
+    "width": 1200,
+    "quality": 80
+  },
+  "assets/guide/memory_map_english.webp": {
+    "sha256": "81599dac27fe2a698ac28423d6af74a4c14e71be2e3bfedb95f027fd3a52df53",
+    "width": 1200,
+    "quality": 80
+  },
+  "assets/guide/episodic_review_中文.webp": {
+    "sha256": "25d1e360ad069cbd8d3cdebe8b2b136306e13cbae236e97e89278c7231b363d9",
+    "width": 1200,
+    "quality": 80
+  },
+  "assets/guide/episodic_review_english.webp": {
+    "sha256": "5a6107da592a4375113355fdc4e95ce29b5489987d4a5044fd2e525d94ba95e3",
+    "width": 1200,
+    "quality": 80
+  },
+  "assets/guide/video_academy_中文.webp": {
+    "sha256": "c0c5c79f16545781fde81d1c4f6a198bb4fd75ddd13c0c4f30bcdba78fb5f980",
+    "width": 1200,
+    "quality": 80
+  },
+  "assets/guide/video_academy_english.webp": {
+    "sha256": "50026688b84f7f3659efa5248a2ffa1ebae603bbf2c70e4082b96527450d4eae",
+    "width": 1200,
+    "quality": 80
+  },
+  "assets/guide/deepdive_中文.webp": {
+    "sha256": "425a42204af41c27ab4f6c34288a047484bba22e1cd00edffb5c281dedad7ed5",
+    "width": 1200,
+    "quality": 80
+  },
+  "assets/guide/deepdive_english.webp": {
+    "sha256": "7b6a131c2c204a2c0b50aa48e4f0858fc5c5288d280cdaa67815d69eee9e0d01",
+    "width": 1200,
+    "quality": 80
+  },
+  "assets/guide/achievements_中文.webp": {
+    "sha256": "1bff0ca2cb28f18c1442842104af3d328a81d2a1ac3d35ee29670f2d9234318c",
+    "width": 1200,
+    "quality": 80
+  },
+  "assets/guide/achievements_english.webp": {
+    "sha256": "14727c609d58048805e42b50bd2e0f4bfbaef3d966aff6c54129e45a870977e4",
+    "width": 1200,
+    "quality": 80
+  },
+  "assets/quest-map/bg_dark.png": {
+    "sha256": "106ad1335f81795d8e7bc611b897e6d2fd1943e65fd246dcb04dfe201ee4e509",
+    "width": 1024,
+    "quality": 80
+  },
+  "assets/quest-map/bg_light.png": {
+    "sha256": "55a8bc1cb53db053f1d1da628812076679b6cbf098311f4c7c26144d942bdf19",
+    "width": 1024,
+    "quality": 80
+  },
+  "assets/quest-map/quest-map_backgroud_easy.png": {
+    "sha256": "018c7212b1ad760e30b4e202e8c39d37256fc7a2765b0d329c9dd37ad9d51ef8",
+    "width": 1200,
+    "quality": 72
+  },
+  "assets/quest-map/quest-map_backgroud_medium.png": {
+    "sha256": "181a9c123535fbe6dc524b2dbc75bbb16d1bf6698fcf58ddb15ae8c49bac5768",
+    "width": 1200,
+    "quality": 72
+  },
+  "assets/quest-map/quest-map_backgroud_hard.png": {
+    "sha256": "c81c4ebfc1beffb6a5b1a2d53dc8a49f8b0fa18318209df630c52cc6afed899c",
+    "width": 1200,
+    "quality": 72
+  }
+}

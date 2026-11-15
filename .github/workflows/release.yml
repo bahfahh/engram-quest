@@ -1,0 +1,69 @@
+# Builds the release from the tagged source, attests main.js and manifest.json, and opens a draft release.
+# Triggered by pushing a version tag (X.Y.Z, no "v"). The draft stays unpublished until the video packs,
+# which are built from the Obsidian vault and cannot be made here, are uploaded to it by hand.
+name: Release
+
+on:
+  push:
+    tags:
+      - "[0-9]+.[0-9]+.[0-9]+"
+
+permissions:
+  contents: write      # create the release
+  id-token: write      # sign the attestation (Sigstore)
+  attestations: write  # store the attestation
+
+jobs:
+  release:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .node-version
+
+      - name: Tag matches the version files
+        run: |
+          node -e '
+            const tag = process.env.GITHUB_REF_NAME;
+            const manifest = require("./manifest.json").version;
+            const pkg = require("./package.json").version;
+            const listed = tag in require("./versions.json");
+            if (manifest !== tag || pkg !== tag || !listed) {
+              console.error(`tag ${tag}: manifest.json ${manifest}, package.json ${pkg}, versions.json ${listed ? "has it" : "missing"}`);
+              process.exit(1);
+            }'
+
+      - run: npm ci
+      - run: npm run build
+      - run: npm test
+      - run: npm run check:bundle-parity
+
+      - name: main.js uses the production Polar profile
+        run: |
+          grep -q 'environment:"production"' main.js
+          if grep -q -e 'environment:"sandbox"' -e 'sandbox-api.polar.sh/v1/checkout-links' main.js; then
+            echo "main.js was built against the Polar sandbox" >&2
+            exit 1
+          fi
+
+      - run: npm run check:polar
+
+      - name: Release files
+        id: files
+        run: |
+          files="main.js manifest.json"
+          if [ -f styles.css ]; then files="$files styles.css"; fi
+          sha256sum $files
+          echo "list=$files" >> "$GITHUB_OUTPUT"
+          echo "csv=${files// /,}" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-path: ${{ steps.files.outputs.csv }}
+
+      - name: Create draft release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" ${{ steps.files.outputs.list }} --draft --title "$GITHUB_REF_NAME" --generate-notes
