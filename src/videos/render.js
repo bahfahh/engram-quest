@@ -43,6 +43,45 @@ function asButton(card) {
   return card;
 }
 
+/**
+ * A video's star (recall films only): shows the new state at once, then saves it in the series' write
+ * queue. A failed save (the film gone counts) says so and, unless the learner has clicked again since,
+ * switches back to the last state that was actually saved. `onChange(starred)` runs on every change
+ * of the shown state, the switch-back included.
+ */
+function starToggle(parent, hub, t, slug, video, starred, onChange) {
+  // One fixed label; aria-pressed says whether it is on.
+  const btn = parent.createEl("button", { cls: "lh-vid-star", attr: { "aria-label": c(t, "EXPLAINER_STAR_TIP") } });
+  ui.icon(btn, "star");
+  let on = !!starred;
+  let saved = on;
+  const paint = () => {
+    btn.classList.toggle("is-on", on);
+    btn.setAttribute("aria-pressed", String(on));
+  };
+  paint();
+  btn.addEventListener("click", (ev) => {
+    ev.stopPropagation();
+    const want = (on = !on);
+    paint();
+    if (onChange) onChange(on);
+    queueWrite(slug, () => data.setVideoStar(hub.app.vault.adapter, slug, video.id, want))
+      .then((result) => {
+        if (result === null) throw new Error("video is gone");
+        saved = want;
+      })
+      .catch((e) => {
+        console.error("EngramQuest: video star save failed", e);
+        new I.Notice(c(t, "EPISODIC_STAR_FAILED"));
+        if (on !== want || on === saved) return;
+        on = saved;
+        paint();
+        if (onChange) onChange(on);
+      });
+  });
+  return btn;
+}
+
 function fileUrl(hub, slug, name) {
   return hub.app.vault.adapter.getResourcePath(I.normalizePath(`${data.VIDEOS_DIR}/${slug}/${name}`));
 }
@@ -362,7 +401,13 @@ function renderTopic(body, hub, t, topic, refresh) {
     });
   }
   const done = data.videoProgress(meta, video.id).completed;
-  const doneBtn = tools.createEl("button", { cls: phone ? "lh-pbtn" + (done ? " alt" : "") : "lh-vid-btn" + (done ? " is-done" : " lh-vid-btn-primary"), text: c(t, done ? "VIDEO_MARKED_DONE" : "VIDEO_MARK_DONE") });
+  // Recall films can be starred here too: a learner often knows only after watching that a film is worth keeping.
+  let doneParent = tools;
+  if (slug === data.EPISODIC_SLUG) {
+    if (phone) doneParent = tools.createDiv({ cls: "lh-vid-star-row" });
+    starToggle(doneParent, hub, t, slug, video, data.videoProgress(meta, video.id).starred);
+  }
+  const doneBtn = doneParent.createEl("button", { cls: phone ? "lh-pbtn" + (done ? " alt" : "") : "lh-vid-btn" + (done ? " is-done" : " lh-vid-btn-primary"), text: c(t, done ? "VIDEO_MARKED_DONE" : "VIDEO_MARK_DONE") });
   doneBtn.addEventListener("click", () => { save({ completed: !done }); leave({ slug, videoId: video.id, autoplay: false }); });
 
   if (meta.sources.length) {
@@ -522,4 +567,4 @@ async function renderPhoneContinue(parent, hub) {
   row.addEventListener("click", () => { hub._vTopic = { slug: cw.slug, videoId: cw.video.id, autoplay: true }; hub._openPhonePage("video"); });
 }
 
-module.exports = { renderVideoTab, renderTopic, renderThumb, queueWrite, renderPhoneContinue, asButton };
+module.exports = { renderVideoTab, renderTopic, renderThumb, queueWrite, renderPhoneContinue, asButton, starToggle };

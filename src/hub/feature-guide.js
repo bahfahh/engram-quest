@@ -376,7 +376,7 @@ const CONTENT = {
     "zh-tw": {
       title: "情境回顧 — 回到那段時間讀過的東西",
       lines: [
-        "把一段時間（通常一個月）讀過的筆記做成<strong>動畫回顧片</strong>，帶你回到當時學到的東西。片子依期間分組，點了就播。",
+        "把一段時間（通常一個月）讀過的筆記做成<strong>動畫回顧片</strong>，帶你回到當時學到的東西。片子依期間分組，點了就播；按 ☆ 加星，切到「<strong>已加星</strong>」只看想珍藏的片子。",
         "按「<strong>+ 做新的一支</strong>」選月份與片長，插件會給你一段提示，貼進 <strong>Claude Code</strong> 就開始製作。還沒做好的需求會列在上方。",
         "看已經做好的回顧片免費；做新的回顧片需要 <strong>Pro</strong>。",
       ],
@@ -385,7 +385,7 @@ const CONTENT = {
     en: {
       title: "Recall Films — back to what you read",
       lines: [
-        "A recall film turns the notes you read over a period (usually a month) into an <strong>animated film</strong> that walks you back through what you learned. Films are grouped by period; click one to play.",
+        "A recall film turns the notes you read over a period (usually a month) into an <strong>animated film</strong> that walks you back through what you learned. Films are grouped by period; click one to play. Press ☆ to keep a film and switch to <strong>Starred</strong> to see only those.",
         "Press \"<strong>+ New film</strong>\", choose the months and a length, and the plugin gives you a prompt to paste into <strong>Claude Code</strong>. Requests still being made are listed at the top.",
         "Watching recall films you already have is free; making new ones needs <strong>Pro</strong>.",
       ],

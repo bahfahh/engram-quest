@@ -194,6 +194,7 @@ function videoProgress(meta, videoId) {
     position: Number(p.position) > 0 ? Number(p.position) : 0,
     completed: !!p.completed,
     lastViewed: p.lastViewed || null,
+    starred: !!p.starred,
   };
 }
 
@@ -279,15 +280,17 @@ function continueWatching(topics) {
 }
 
 /**
- * Patch one video's progress (read → merge → write) without touching skill-owned fields.
- * Always stamps lastViewed. Returns the updated progress entry, or null if the topic is gone.
+ * Patch one video's progress (read → merge → write) without touching skill-owned fields or the
+ * entry's other fields (its star). Always stamps lastViewed. Returns the updated progress entry,
+ * or null if the topic is gone.
  */
 async function saveProgress(adapter, slug, videoId, patch = {}) {
   const path = `${VIDEOS_DIR}/${slug}/meta.json`;
   const raw = await readJson(adapter, path);
   if (!raw || typeof raw !== "object") return null;
   const progress = raw.progress && typeof raw.progress === "object" ? raw.progress : {};
-  const next = { ...videoProgress(raw, videoId) };
+  const { position, completed } = videoProgress(raw, videoId);
+  const next = { ...(isObject(progress[videoId]) ? progress[videoId] : {}), position, completed };
   if (patch.position !== undefined) next.position = Math.max(0, Math.round(Number(patch.position) || 0));
   if (patch.completed !== undefined) next.completed = !!patch.completed;
   next.lastViewed = new Date().toISOString();
@@ -295,6 +298,22 @@ async function saveProgress(adapter, slug, videoId, patch = {}) {
   raw.progress = progress;
   await adapter.write(path, JSON.stringify(raw, null, 2));
   return next;
+}
+
+/**
+ * Star or unstar one video: the learner's own mark, kept in its progress entry so it survives the
+ * skill re-delivering the video and leaves with the video when it is deleted. Leaves lastViewed
+ * alone (starring is not watching). Returns the saved value, or null when the series or video is gone.
+ */
+async function setVideoStar(adapter, slug, videoId, starred) {
+  const path = `${VIDEOS_DIR}/${slug}/meta.json`;
+  const raw = await readExisting(adapter, path);
+  if (!isObject(raw) || !Array.isArray(raw.videos) || !raw.videos.some((v) => v && String(v.id) === videoId)) return null;
+  const progress = isObject(raw.progress) ? raw.progress : {};
+  progress[videoId] = { ...(isObject(progress[videoId]) ? progress[videoId] : {}), starred: !!starred };
+  raw.progress = progress;
+  await adapter.write(path, JSON.stringify(raw, null, 2));
+  return !!starred;
 }
 
 /**
@@ -494,6 +513,7 @@ module.exports = {
   listTopics,
   continueWatching,
   saveProgress,
+  setVideoStar,
   createRequest,
   updateRequest,
   requeueSeries,

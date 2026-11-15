@@ -8,7 +8,7 @@ const { t: c, interpolate: K } = require("../i18n");
 const { ProUpgradeModal } = require("../license/upgrade");
 const { estimate } = require("./episodic-length");
 const data = require("./data");
-const { renderTopic, renderThumb, queueWrite, asButton } = require("./render");
+const { renderTopic, renderThumb, queueWrite, asButton, starToggle } = require("./render");
 const { openPromptModal } = require("./request-ui");
 const ui = require("../hub/ui");
 
@@ -65,7 +65,8 @@ async function renderEpisodicTab(el, hub) {
   hub.setHero(!open);
   hub.setWatching(open);
   hub._entryHints = { ...hub._entryHints, episodic: K(c(t, "VIDEO_COUNT"), { count: films.length }) };
-  const toList = () => { hub._vTopic = null; refresh(); };
+  // Wait for this series' pending writes (a star just pressed on the player page) before re-reading it.
+  const toList = () => queueWrite(data.EPISODIC_SLUG, () => null).then(() => { hub._vTopic = null; refresh(); });
   ui.setPhoneNav(hub, open ? { label: c(t, "EPISODIC_BACK"), title: "", onBack: toList } : null);
   const phone = ui.isPhone();
   const addNew = () => {
@@ -91,7 +92,22 @@ async function renderEpisodicTab(el, hub) {
     return;
   }
   if (phone && (isPro || films.length)) newButton(body);
-  if (isPro) renderLengthSetting(body, hub, t, settings.episodicLength, refresh);
+  // Starred films are the learner's keepers; the set follows each click so the list redraws without a re-read.
+  const stars = new Set(films.filter((f) => data.videoProgress(series.meta, f.id).starred).map((f) => f.id));
+  let list = null;
+  const drawFilms = () => renderFilms(list, hub, t, series, films, stars, drawFilms, refresh);
+  if (isPro || films.length) {
+    const bar = body.createDiv({ cls: "lh-vid-ep-bar" });
+    const addFilter = () => {
+      if (!films.length) return;
+      const options = [{ value: "all", label: c(t, "FILTER_ALL") }, { value: "starred", label: c(t, "FILTER_STARRED") }];
+      ui.segmented(bar, options, starredOnly(hub) ? "starred" : "all", (v) => { hub._eFilter = v; drawFilms(); }, "lh-vid-ep-filter");
+    };
+    // Phone: the filter, which everyone uses, above the Pro-only length setting.
+    if (phone) addFilter();
+    if (isPro) renderLengthSetting(bar, hub, t, settings.episodicLength, refresh);
+    if (!phone) addFilter();
+  }
   renderRequests(body, hub, t, series, refresh);
   if (!films.length) {
     const empty = body.createDiv({ cls: "lh-vid-empty" });
@@ -101,9 +117,28 @@ async function renderEpisodicTab(el, hub) {
     if (phone && !isPro) newButton(body);
     return;
   }
-  for (const group of groupByPeriod(films)) {
-    body.createDiv({ cls: "lh-vid-ep-period", text: periodText(group.period) || c(t, "EPISODIC_NO_PERIOD") });
-    const grid = body.createDiv({ cls: "lh-vid-grid" });
+  list = body.createDiv({ cls: "lh-vid-ep-list" });
+  drawFilms();
+}
+
+const starredOnly = (hub) => hub._eFilter === "starred";
+
+/** The films grouped by period, only the starred ones under the "Starred" filter. */
+function renderFilms(list, hub, t, series, films, stars, redraw, refresh) {
+  list.empty();
+  const shown = starredOnly(hub) ? films.filter((f) => stars.has(f.id)) : films;
+  if (!shown.length) {
+    const empty = list.createDiv({ cls: "lh-vid-empty" });
+    ui.icon(empty.createDiv({ cls: "lh-vid-empty-icon" }), "star");
+    empty.createDiv({ cls: "lh-vid-empty-title", text: c(t, "EPISODIC_STARRED_EMPTY_TITLE") });
+    empty.createDiv({ cls: "lh-vid-empty-body", text: c(t, "EPISODIC_STARRED_EMPTY_BODY") });
+    empty.createEl("button", { cls: "lh-vid-btn lh-vid-ep-empty-btn", text: c(t, "EPISODIC_SHOW_ALL") })
+      .addEventListener("click", () => { hub._eFilter = "all"; refresh(); });
+    return;
+  }
+  for (const group of groupByPeriod(shown)) {
+    list.createDiv({ cls: "lh-vid-ep-period", text: periodText(group.period) || c(t, "EPISODIC_NO_PERIOD") });
+    const grid = list.createDiv({ cls: "lh-vid-grid" });
     group.films.forEach((film, index) => {
       const card = asButton(grid.createDiv({ cls: "lh-vid-ep-film" }));
       renderThumb(card, hub, series.slug, series.meta, film, "");
@@ -111,7 +146,12 @@ async function renderEpisodicTab(el, hub) {
       const bits = [];
       if (film.length) bits.push(c(t, LENGTH_KEY[film.length]));
       if (group.films.length > 1) bits.push(c(t, index === 0 ? "EPISODIC_NEWER" : "EPISODIC_OLDER"));
-      if (bits.length) card.createDiv({ cls: "lh-vid-scard-meta", text: bits.join(" · ") });
+      const foot = card.createDiv({ cls: "lh-vid-ep-foot" });
+      foot.createDiv({ cls: "lh-vid-scard-meta", text: bits.join(" · ") });
+      starToggle(foot, hub, t, series.slug, film, stars.has(film.id), (on) => {
+        if (on) stars.add(film.id); else stars.delete(film.id);
+        if (starredOnly(hub)) redraw();
+      });
       // First child: the card keeps its last line's bottom spacing.
       card.prepend(ui.rowActions(card, [{ name: "trash", label: c(t, "DELETE"), run: () => confirmDeleteFilm(hub, t, film, refresh) }]));
       card.addEventListener("click", () => { hub._vTopic = { slug: series.slug, videoId: film.id, autoplay: true }; refresh(); });
@@ -137,8 +177,8 @@ function confirmDeleteFilm(hub, t, film, refresh) {
 }
 
 /** The one setting for recall films: saved on click, merged into whatever else is in the file. */
-function renderLengthSetting(body, hub, t, current, refresh) {
-  const row = body.createDiv({ cls: "lh-vid-ep-setting" });
+function renderLengthSetting(parent, hub, t, current, refresh) {
+  const row = parent.createDiv({ cls: "lh-vid-ep-setting" });
   row.createSpan({ cls: "lh-vid-set-label", text: c(t, "EPISODIC_DEFAULT_LEN") });
   lengthButtons(row, t, current, async (id) => {
     const isPro = !!t.licenseValid;

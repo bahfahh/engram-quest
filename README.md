@@ -168,6 +168,7 @@ Visualizes abstract concepts using Obsidian Canvas.
 A recall film takes you back to what you read over a month, or a range of months, so the ideas come back in the context you met them. Every topic first gets a **recall pack** — a one-line overview plus retrieval questions on the pack page (they become Review Deck cards only when you ask for them) — and only the topics worth it get a film.
 
 - **Watch for free** — films are grouped by period, newest first; open one to play it
+- **Star the keepers** — press ☆ on a film (or next to *Mark as watched* while it plays), then switch the filter at the top to **Starred** to see only those
 - **Make a new film (Pro)** — click **+ New film**, pick the period and a length (short, medium or long; set a default once), and the request waits in *Waiting to be made*. Copy its prompt into Claude Code, which makes the film with the **Episodic Review** skill; you can cancel a request any time
 - Films are stored in `engram-quest/videos/episodic-recall/`
 
@@ -492,6 +493,7 @@ Anki 解決「何時複習」。EngramQuest 解決「如何真正記住」 — �
 情境回顧片帶你回到一個月（或連續幾個月）讀過的東西，讓概念在你當初遇到它的情境裡回來。每個主題都會先有一份**回想包**——一句話總覽，加上回想題（寫在回想包頁面；你要求時才做成 Review Deck 的卡片）——值得的主題才做成影片。
 
 - **觀看免費** — 回顧片依期間分組，新的在上面，點開就播放
+- **加星珍藏** — 在回顧片上按 ☆（播放時「標記已看完」旁邊也有），上方切到 **已加星** 就只看這些片子
 - **製作新片（Pro）** — 按 **+ 做新的一支**，選期間和長度（短、中、長，可設定預設長度），請求會出現在「等待製作」。複製它的提示詞貼到 Claude Code，由 **Episodic Review** skill 做成影片；請求隨時可以取消
 - 回顧片存在 `engram-quest/videos/episodic-recall/`
 

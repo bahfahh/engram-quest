@@ -148,7 +148,7 @@ module.exports = {
       {
         id: "episodic", tab: "episodic", icon: "recall", title: "情境回顧", tag: "觀看免費 · 製作 Pro",
         body: [
-          { p: "情境回顧片把一段時間（通常一個月）讀過的筆記整理成一支動畫影片，帶你回到當時學到的東西。片子依期間分組，點了就播。" },
+          { p: "情境回顧片把一段時間（通常一個月）讀過的筆記整理成一支動畫影片，帶你回到當時學到的東西。片子依期間分組，點了就播。想珍藏的片子按卡片上的 ☆ 加星，上方切到「已加星」就只看這些。" },
           { steps: [
             "按「+ 做新的一支」，選起訖月份與片長（短／中／長，會顯示大約幾分鐘、幾個主題）。",
             "插件記下這個需求並給你一段提示，貼進 Claude Code，episodic-review skill 就會開始做。",
@@ -469,7 +469,7 @@ module.exports = {
       {
         id: "episodic", tab: "episodic", icon: "recall", title: "Recall Films", tag: "Free to watch · Pro to make",
         body: [
-          { p: "A recall film turns the notes you read over a period (usually a month) into an animated film that walks you back through what you learned. Films are grouped by period; click one to play it." },
+          { p: "A recall film turns the notes you read over a period (usually a month) into an animated film that walks you back through what you learned. Films are grouped by period; click one to play it. Press ☆ on a film to keep it, then switch the filter at the top to Starred to see only those." },
           { steps: [
             "Press \"+ New film\", choose the start and end month and a length (Short, Medium or Long, each with an estimate of minutes and topics).",
             "The plugin saves the request and gives you a prompt. Paste it into Claude Code and the episodic-review skill makes the film.",

@@ -15,6 +15,7 @@ import {
   listTopics,
   continueWatching,
   saveProgress,
+  setVideoStar,
   createRequest,
   updateRequest,
   requeueSeries,
@@ -170,7 +171,7 @@ describe("normalizeTopic", () => {
 
 describe("progress", () => {
   it("videoProgress returns a full object", () => {
-    expect(videoProgress(normalizeTopic(topicMeta()), "vid-1")).toEqual({ position: 0, completed: false, lastViewed: null });
+    expect(videoProgress(normalizeTopic(topicMeta()), "vid-1")).toEqual({ position: 0, completed: false, lastViewed: null, starred: false });
   });
 
   it("saveProgress merges without touching skill-owned fields", async () => {
@@ -481,6 +482,45 @@ describe("episodic recall", () => {
     const a = makeAdapter({ [path]: JSON.stringify(topicMeta({ kind: "episodic", requests: [{ id: "a" }] })) });
     await saveProgress(a, "episodic-recall", "vid-1", { position: 12 });
     expect(JSON.parse(a.files[path])).toMatchObject({ kind: "episodic", requests: [{ id: "a" }] });
+  });
+
+  it("stars a film in its progress entry without marking it watched, and unstars it", async () => {
+    const a = makeAdapter({ [path]: JSON.stringify(topicMeta({ kind: "episodic", progress: { "vid-1": { position: 9, lastViewed: "x" } } })) });
+    expect(await setVideoStar(a, "episodic-recall", "vid-1", true)).toBe(true);
+    expect(await setVideoStar(a, "episodic-recall", "vid-2", true)).toBe(true);
+    let raw = JSON.parse(a.files[path]);
+    expect(raw.progress).toEqual({ "vid-1": { position: 9, lastViewed: "x", starred: true }, "vid-2": { starred: true } });
+    expect(videoProgress(normalizeTopic(raw), "vid-2")).toMatchObject({ starred: true, position: 0, lastViewed: null });
+    expect(await setVideoStar(a, "episodic-recall", "vid-1", false)).toBe(false);
+    raw = JSON.parse(a.files[path]);
+    expect(raw.progress["vid-1"]).toEqual({ position: 9, lastViewed: "x", starred: false });
+    expect(raw.kind).toBe("episodic");
+  });
+
+  it("keeps the star when watching progress is saved", async () => {
+    const a = makeAdapter({ [path]: JSON.stringify(topicMeta({ kind: "episodic" })) });
+    await setVideoStar(a, "episodic-recall", "vid-1", true);
+    await saveProgress(a, "episodic-recall", "vid-1", { position: 30 });
+    await saveProgress(a, "episodic-recall", "vid-1", { completed: true });
+    expect(JSON.parse(a.files[path]).progress["vid-1"]).toMatchObject({ starred: true, position: 30, completed: true });
+  });
+
+  it("drops the star with the film when it is deleted", async () => {
+    const a = makeAdapter({ [path]: JSON.stringify(topicMeta({ kind: "episodic" })) });
+    await setVideoStar(a, "episodic-recall", "vid-1", true);
+    expect(await deleteVideo(a, "episodic-recall", "vid-1")).toBe(true);
+    expect(JSON.parse(a.files[path]).progress).toEqual({});
+  });
+
+  it("writes nothing for a film that is gone, and never replaces an unreadable file", async () => {
+    const a = makeAdapter({ [path]: JSON.stringify(topicMeta({ kind: "episodic" })) });
+    const before = a.files[path];
+    expect(await setVideoStar(a, "episodic-recall", "nope", true)).toBeNull();
+    expect(a.files[path]).toBe(before);
+    expect(await setVideoStar(makeAdapter(), "episodic-recall", "vid-1", true)).toBeNull();
+    const broken = makeAdapter({ [path]: "{ not json" });
+    await expect(setVideoStar(broken, "episodic-recall", "vid-1", true)).rejects.toThrow();
+    expect(broken.files[path]).toBe("{ not json");
   });
 });
 

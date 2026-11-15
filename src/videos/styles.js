@@ -136,6 +136,21 @@ body:not(.is-phone) .lh-vid-chapter { width:100%; margin:0 0 2px; box-sizing:bor
 .lh-vid-ep-request-text { flex:1; min-width:0; font-size:15px; line-height:20px; font-weight:600; color:var(--text); overflow:hidden; text-overflow:ellipsis; }
 .lh-vid-ep-period { display:flex; align-items:center; gap:12px; margin:10px 2px 0; font-size:18px; line-height:24px; font-weight:700; color:var(--text); font-variant-numeric:tabular-nums; }
 .lh-vid-ep-period::after { content:""; flex:1; height:.5px; background:var(--sep); }
+/* Recall tab toolbar: default length on the left, the All / Starred filter on the right. */
+.lh-vid-ep-bar { display:flex; align-items:center; flex-wrap:wrap; gap:10px 16px; }
+.lh-vid-ep-bar .lh-vid-ep-filter { margin-left:auto; }
+.lh-vid-ep-list { display:contents; }
+.lh-vid-ep-empty-btn { margin-top:10px; }
+/* Star: an outline you can press, a filled gold star once kept. Its tap area reaches 44px. */
+.lh-vid-star { position:relative; width:32px; height:32px; padding:0 !important; border:0 !important; border-radius:8px !important; background:transparent !important; box-shadow:none !important; color:var(--text2) !important; display:grid; place-items:center; flex:none; cursor:pointer; }
+.lh-vid-star::after { content:""; position:absolute; left:50%; top:50%; width:44px; height:44px; transform:translate(-50%,-50%); }
+.lh-vid-star .lh-i { width:18px; height:18px; fill:none; stroke:currentColor; stroke-width:1.8; }
+.lh-vid-star:hover { color:var(--goldt) !important; }
+.lh-vid-star.is-on { color:var(--goldt) !important; }
+.lh-vid-star.is-on .lh-i { fill:currentColor; }
+.lh-vid-star:focus-visible { outline:2px solid var(--focus); outline-offset:2px; }
+.lh-vid-ep-film > .lh-vid-ep-foot { display:flex; align-items:center; gap:8px; margin:-6px 4px 4px 12px; }
+.lh-vid-ep-foot .lh-vid-scard-meta { flex:1; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .lh-vid-modal.lh-vid-rewatch { width:min(94vw,900px) !important; }
 .lh-vid-rewatch .modal-content { padding:0; }
 .lh-rewatch-row { display:flex; justify-content:center; padding:8px 0 0; }
@@ -262,6 +277,12 @@ body.is-phone .lh-vid-item + .lh-vid-item::before { content:""; position:absolut
 body.is-phone .lh-vid-thumb.is-small { width:62px; height:40px; border-radius:8px; }
 body.is-phone .lh-vid-item-title { font-size:16px; line-height:22px; font-weight:500; }
 body.is-phone .lh-vid-item-text .lh-vid-status { font-size:13px; line-height:18px; }
+body.is-phone .lh-vid-ep-bar { flex-direction:column; align-items:stretch; }
+body.is-phone .lh-vid-ep-bar .lh-vid-ep-filter { margin-left:0; }
+body.is-phone .lh-vid-star-row { display:flex; align-items:center; gap:10px; }
+body.is-phone .lh-vid-star-row > .lh-vid-star { width:52px; height:52px; border-radius:14px !important; background:var(--fill) !important; }
+body.is-phone .lh-vid-star-row > .lh-vid-star .lh-i { width:22px; height:22px; }
+body.is-phone .lh-vid-star-row > .lh-pbtn { flex:1; width:auto; }
 body.is-phone .lh-vid-ep-setting { justify-content:space-between; }
 body.is-phone .lh-vid-ep-setting .lh-vid-lens { order:3; flex:1 1 100%; display:flex; }
 body.is-phone .lh-vid-ep-setting .lh-vid-len { flex:1; height:32px; }
