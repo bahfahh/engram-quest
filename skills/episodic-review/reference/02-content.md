@@ -63,7 +63,7 @@ A level counts only when it is the author's own. A plan that has not been carrie
 | `rule`, `case`, `open` | a decision rule the notes state; a concrete case; what the notes leave undecided. Empty string when absent |
 | `quick` | `{q, clue, a, because}`: one short retrieval question |
 | `apply` | `{q, a}`: the idea applied to a situation the notes do not contain |
-| `cards` | three to five Review Deck cards `{kind: why|how|contrast|apply, q, a}` |
+| `cards` | Review Deck card candidates `{kind: why|how|contrast|apply, q, a}`, best first; write them only when the person asked for cards (one or two are used per topic, so leave out the rest) |
 
 Writing the questions:
 
@@ -82,7 +82,7 @@ python3 .claude/skills/engram-quest-episodic-review/scripts/build_pack.py --vaul
 It writes, without any model call:
 
 - the topic cache `engram-quest/episodic-review/topics/<id>/topic.json`
-- Review Deck cards `engram-review/ai-cards/<prefix>-<title>.md` and their hints (the first hint level is the context line and the topic's question; it never contains the answer)
+- only with `--cards` (the person asked): Review Deck cards `engram-review/ai-cards/<prefix>-<title>.md` and their hints (the first hint level is the context line and the topic's question; it never contains the answer)
 - `engram-quest/episodic-review/packs/<period>/pack.json` and an overview page
 - a film ranking: depth, how often the topic's existing cards were answered badly, and whether it has any cards at all
 

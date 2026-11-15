@@ -113,7 +113,7 @@ const tv = (teacher.voice && teacher.voice[L]) || null;
 if (!tv) notes.push(`no ${L} voice for ${teacher.id} in the registry: pick one from edge-tts --list-voices (registry voicePolicy.other), test it with ASR, and set script.json voices by hand`);
 const conv = v => v && { voice: v.name, rate: v.rate || '+0%', pitch: v.pitch || '+0Hz' };
 const sv = (reg.studentVoices || {})[L];
-let studentV = sv ? conv(sv) : (L === 'en' ? { voice: 'en-US-AvaMultilingualNeural', rate: '+6%', pitch: '+10Hz' } : { voice: 'zh-TW-HsiaoYuNeural', rate: '+8%', pitch: '+20Hz' });
+let studentV = sv ? conv(sv) : (L === 'en' ? { voice: 'en-US-AvaMultilingualNeural', rate: '+6%', pitch: '+10Hz' } : { voice: 'zh-TW-HsiaoYuNeural', rate: '-8%', pitch: '+20Hz' });
 if (!sv && L !== 'zh-tw' && L !== 'en') notes.push(`no student voice for ${L}: add studentVoices.${L} to the registry`);
 if (tv && tv.name === studentV.voice) studentV = L === 'en' ? { voice: 'en-US-AndrewMultilingualNeural', rate: '+6%', pitch: '+0Hz' } : { voice: 'zh-TW-HsiaoChenNeural', rate: '+8%', pitch: '+10Hz' };
 
@@ -145,17 +145,18 @@ if (fixedBy) {
 engine.available = available;
 // an AI voice is the user's choice, never pushed -> the recommended option is always edge-tts (the default)
 engine.options = available.map(id => ({ id, label: LABEL[id], recommended: id === 'edge' }));
-// course modules (reference/12-modules.md): every module is ON (the full version) unless the learner turned it off
+// course modules (reference/12-modules.md): a module is ON (the full version) unless the learner turned it off
 // in settings.json -> course.off; --off a,b (named in the request) also turns them off, --on a,b turns them back on
-// for this run. Subtraction only: the skeleton is not a module.
+// for this run. A module with defaultOn:false is opt-in: off unless --on names it. The skeleton is not a module.
 const modReg = readJSON(path.join(__dirname, '..', 'course', 'modules.json')) || { modules: [] };
 const list = v => (Array.isArray(v) ? v : String(v || '').split(',')).map(x => String(x).trim()).filter(Boolean);
-const offSet = new Set(list(settings.course && settings.course.off)), offReq = new Set(list(opt('off'))), onReq = new Set(list(opt('on')));
+// settings.json -> course.on: [ids] is the learner switching an opt-in module on in the plugin (same weight as asking for it)
+const offSet = new Set(list(settings.course && settings.course.off)), offReq = new Set(list(opt('off'))), onReq = new Set([...list(opt('on')), ...list(settings.course && settings.course.on)]);
 const knownMods = new Set(modReg.modules.map(m => m.id));
 for (const id of [...offSet, ...offReq, ...onReq]) if (!knownMods.has(id)) notes.push(`unknown course module "${id}" (ignored)`);
 const modules = modReg.modules.map(m => {
-  const asked = offReq.has(m.id) || offSet.has(m.id), on = !asked || onReq.has(m.id);
-  const why = !asked ? 'on: default (the full version)' : on ? 'on: --on in the request overrides course.off' : offReq.has(m.id) ? 'off: turned off in the request' : 'off: settings.json course.off';
+  const optIn = m.defaultOn === false, asked = offReq.has(m.id) || offSet.has(m.id), on = onReq.has(m.id) || (!optIn && !asked);
+  const why = onReq.has(m.id) ? 'on: asked for (--on in the request, or course.on in settings.json)' : optIn ? 'off: opt-in module, not asked for' : !asked ? 'on: default (the full version)' : offReq.has(m.id) ? 'off: turned off in the request' : 'off: settings.json course.off';
   return { id: m.id, on, why, status: m.status, name: m.name, where: m.where };
 });
 for (const m of modules) if (!m.on) notes.push(`module ${m.id} off (${m.why})`);

@@ -1,15 +1,22 @@
 #!/usr/bin/env python3
 """Middle-section pacing numbers for one studio project (targets: reference/04-skeleton.md §2).
   python3 pacecheck.py projects/<id>
-Middle = from the first non-classroom segment to the next classroom segment (segments.json), measured on timeline.json."""
+Middle = from the first non-classroom segment to the next classroom segment (segments.json), measured on timeline.json.
+A project without segments.json (a single scene.html) or without classroom segments is measured whole."""
 import json, os, re, sys
 p = sys.argv[1]
-tl = json.load(open(os.path.join(p, 'timeline.json'))); seg = json.load(open(os.path.join(p, 'segments.json')))
-sc = [(s['scene'], float(s['from'])) for s in seg]
+tl = json.load(open(os.path.join(p, 'timeline.json'), encoding='utf-8'))
+seg_path = os.path.join(p, 'segments.json')
+sc = [(s['scene'], float(s['from'])) for s in json.load(open(seg_path, encoding='utf-8'))] if os.path.exists(seg_path) else []
 mid = [i for i, (s, f) in enumerate(sc) if 'classroom' not in s]
-m0 = sc[mid[0]][1]; m1 = sc[mid[-1] + 1][1] if mid[-1] + 1 < len(sc) else tl['duration']
+if sc and mid:
+    m0 = sc[mid[0]][1]; m1 = sc[mid[-1] + 1][1] if mid[-1] + 1 < len(sc) else tl['duration']
+else:
+    m0, m1 = 0.0, float(tl['duration'])
+    print("no segments.json: whole timeline measured" if not sc else "no non-classroom segment: whole timeline measured")
 L = [l for l in tl['lines'] if m0 <= l['start'] < m1]
 sp = [l for l in L if l.get('text')]; sil = [l for l in L if not l.get('text')]
+if not sp: sys.exit(f"no spoken line between {m0:.2f} and {m1:.2f} s")
 dur = m1 - m0; spoken = sum(l['end'] - l['start'] for l in sp)
 cjk = lambda s: len(re.findall(r'[一-鿿]', s))
 gaps = []; st = sp[0]['start']; longest = 0; longest_at = st

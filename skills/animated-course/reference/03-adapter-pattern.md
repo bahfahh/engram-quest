@@ -73,6 +73,30 @@ Pairings that worked (the diagnosis decides):
 - One wow device per segment and one main aha per lesson (silent, composed as the same picture reassembled, `04-skeleton.md` §2) read clearly; more was noise.
 - Three segments, three different shapes (`04-skeleton.md` §2: neighbours differ in at least two knobs).
 
+### 1.3b A segment that shows how something works: what it runs on, and in what order
+
+For a segment whose point is how a thing works inside. Two subjects were each filmed twice from the same facts and goal, and judged by watching (experiment 26). A database index run on 27 rows, all on screen, was clearly better than the same index run on a million rows drawn as a grey field. Noise cancelling run on the whole headphone, kept on screen, was clearly better than the same explanation reduced to a bare pair of waves. So neither "make the case small" nor "show the whole thing" is the rule: each one helped one subject and hurt the other. The content decides.
+
+**What both ways are for**: everything the mechanism acts on can be seen one by one, and the viewer recognises what it is.
+
+- **Carry the whole real thing** on screen and run the mechanism on it.
+- **Reduce to a small case** in which every item is on screen and can be counted, then connect it back to the real size.
+
+**What to read in the content.** These are leanings to weigh together, not conditions, and none is the default:
+
+- *Which form has this learner actually seen?* A headphone worn every day is already the way in. Nobody has looked at a million rows; a few dozen rows of a result is what they know. The form the learner recognises needs no introduction, so the film can start inside it.
+- *What does the mechanism act on?* Many items of one kind (rows, bits, packets, orders) lean towards a small case: with fewer of them, each one is visible. A few parts with different roles (microphone, circuit, speaker, eardrum) lean towards the whole: the meaning is in how the parts relate, and without the whole nobody can tell which is which.
+- *Is it still the same mechanism when there are fewer?* If only the size changes (a tree over 27 rows is walked the same way as over a million), reducing loses nothing. If the behaviour depends on there being many (a database skips the index on a tiny table; an effect that only shows in a crowd), a small case teaches something else: keep the real size, or say what the small case cannot show.
+- *How large is what the segment teaches?* A larger concept with several parts reads well from the whole down into the part that matters, wide to close. A single point that answers one "why" can often be carried by one or a few small cases, each seen whole.
+
+The two combine: the whole stays while one part is enlarged, slowed or cut open (`05-presentation-methods.md`); a small case sits inside the real thing it came from.
+
+**How to tell the choice was wrong.** With a small case: would a viewer ask "what does this have to do with the real one?", and is it ever connected back? With the whole: is anything the mechanism acts on shown only as a mass the viewer has to take on trust?
+
+**Order.** The steps come in the order a curious person's questions arise, which follows the shape of this mechanism (a chain of causes, a search, a cycle, a balance, a transformation). No order is preferred. Showing the result first, running something backwards, or ruling out alternatives each belong only where this subject makes them the natural next question; reference films that do these were following their own subjects (§1.4, point 5).
+
+In `UNDERSTANDING.md`, per such segment: what it runs on, which of the readings above decided it, and why the steps come in that order.
+
 ### 1.4 What carries the viewer from one sentence to the next (judged per segment)
 
 A middle can meet the rhythm baseline and still feel like non-stop talk; experiment 17 §10.5 found four causes, none pause length: every sentence adds new information, the narration says what the picture already shows, nothing makes the viewer want the next sentence, and the shot never changes register. Below is what to achieve; the material decides if a segment needs each point, and in what shape.
@@ -95,7 +119,7 @@ A middle can meet the rhythm baseline and still feel like non-stop talk; experim
    - Check each column alone: narration that retells the picture can be cut; a picture column with nothing the words point at is a signpost (`01-principles.md` §1).
 3. **A cut back to the teacher or student brings something new**: a clue written on the board, a model turned in the room, the student's wrong guess, the teacher's judgement. Form from content: a board for an argument that grows, a model for something spatial, the student's hand for a mistake. The cut lands on the turn in the talk, where the next question starts, not on a clock. A cutback where only mouths move has no content: give it content or stay on the stage. Approved example (experiment 20 test 22, every teacher): a segment's bet moved whole onto the blackboard and back, with hard cuts (`05` §3b, Bet on the blackboard).
 4. **Each sentence stands on the one before.** In a segment that reasons, the place a listener asks "where did that come from?" is a missing link, or two links in one beat (`04-skeleton.md` §2, One link, one beat). A listener review of the script finds these before any picture exists (`06-workflow.md` §1).
-5. **Measure a reference to understand it, not to copy it.** Measure it (cuts, numbers, guide phrases, shot types), explain why each works there, then turn it into the criterion it serves. Its numbers are not targets: another subject and length change them. Only the rhythm baseline (`04-skeleton.md` §2) is series-wide.
+5. **Measure a reference to understand it, not to copy it.** Measure it (cuts, numbers, guide phrases, shot types), explain why each works there, then turn it into the criterion it serves. Its numbers are not targets: another subject and length change them. Its order of steps is not a method either: three deep-dive shorts by one maker had three different structures, each following its subject, and one of them written down as a sequence of moves read as forced on any other subject. What carries over is what the viewer ends up able to see or check (§1.3b). Only the rhythm baseline (`04-skeleton.md` §2) is series-wide.
 
 Per segment, `UNDERSTANDING.md` §3 notes what carries the viewer (or "nothing needed" and why), and what each cutback shows.
 
@@ -154,7 +178,7 @@ Animation can also give viewers **impossible experiences**: impossible senses (s
 Each lesson's `UNDERSTANDING.md` (`templates/UNDERSTANDING.md`), written first so the choices follow from it:
 1. **The change**: what the viewer can do after watching (see, tell apart, reason out, feel, use, want to explore), in concrete sentences.
 2. **Obstacles**: invisible process, no scale, blurred concepts, a wrong intuition? The lesson's self-check questions help find them.
-3. **Per segment, the diagnosis and the layers** (§1): the four answers (the last one, outcome and must-haves, is what the reviews check), then stage (once), shape, device. For a layer that needs a **new** design, **three genuinely different ideas**, each borrowed from a different field — not one explanation in three skins — surfaced the better option.
+3. **Per segment, the diagnosis and the layers** (§1): the four answers (the last one, outcome and must-haves, is what the reviews check), then stage (once), shape, device. For a segment that shows how something works, also what it runs on and the order of its steps (§1.3b). For a layer that needs a **new** design, **three genuinely different ideas**, each borrowed from a different field — not one explanation in three skins — surfaced the better option.
 4. **The moment understanding happens**: which picture, event or contrast makes the viewer suddenly get it; apply the signpost test.
 5. **Cost**: does it need a big metaphor learned first? Could it be fun but teach the wrong mechanism? Render cost, length.
 6. Then the craft (layer 4: camera, morphs, sound), and an interest curve in `CARD.md`.

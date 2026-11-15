@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
 """Recall pack: turn one JSON entry per topic into everything the review needs. No model calls, no rendering.
 
-  python3 build_pack.py --vault <vault> --packs <dir with one .json per topic> --period 2026-10 [--lang zh-tw|en] [--tag flashcards]
+  python3 build_pack.py --vault <vault> --packs <dir with one .json per topic> --period 2026-10 [--lang zh-tw|en] [--tag flashcards] [--cards [--per-topic 2]]
 
 Writes:
   1. topic cache   engram-quest/episodic-review/topics/<id>/topic.json   (reused next period when the notes have not changed)
   2. cards         engram-review/ai-cards/<prefix>-<title>.md + hints    (the Review Deck schedules them)
+                   ONLY with --cards, which is passed only when the person asked for cards: they enter the person's own Review
+                   Deck and its schedule. At most --per-topic (default 2) per topic, taken in the order of the entry's `cards`.
   3. overview      engram-quest/episodic-review/packs/<period>/<name>.md and pack.json
      with a film ranking: depth of the notes + how badly the topic's existing cards went + no cards yet.
 The entry format is templates/topic.example.json. Labels follow --lang; entries are written in the notes' language.
@@ -16,6 +18,7 @@ LABELS = {
     'zh-tw': dict(prefix='情境回顧', deck='情境回顧', page='回顧包', title='回顧包：{y} 年 {m} 月',
                   intro='這段期間動過 {n} 個主題。每個主題一句話，加上進了 Review Deck 的 {c} 張回想題（牌組 `{deck}`）。',
                   how='用法：先遮住「結論」，看問題自己講一次，再對答案。之後交給 Review Deck 排時間再問。',
+                  intro0='這段期間動過 {n} 個主題。每個主題一句話，加上一個快問和一個套用題。', how0='用法：先遮住「結論」，看問題自己講一次，再對答案。',
                   question='問題', context='那時候', answer='結論', why='為什麼', rule='判斷規則', case='案例', open='還沒定的事', quick='快問', apply='套用', notes='筆記',
                   filmed='已有回顧片（{f}）', rank='哪個主題值得做成片',
                   rank_note='分數＝筆記深度＋複習時答不好的比例＋平均難度＋還沒有任何複習卡。分數高的先做。複習紀錄少的時候，分數主要反映筆記深度。',
@@ -24,6 +27,7 @@ LABELS = {
     'en': dict(prefix='Recall', deck='Recall', page='Recall pack', title='Recall pack: {y}-{m:02d}',
                intro='{n} topics were touched in this period. One line each, plus {c} retrieval cards in the Review Deck (deck `{deck}`).',
                how='How to use: cover the conclusion, answer the question in your own words, then compare. The Review Deck brings the cards back later.',
+               intro0='{n} topics were touched in this period. One line each, plus a quick question and an apply question.', how0='How to use: cover the conclusion, answer the question in your own words, then compare.',
                question='Question', context='At the time', answer='Conclusion', why='Why', rule='Rule', case='Case', open='Still open', quick='Quick question', apply='Apply', notes='Notes',
                filmed='has a recall film ({f})', rank='Which topics deserve a film',
                rank_note='Score = depth of the notes + share of bad answers in review + average difficulty + no cards yet. Higher first. With little review history the score mostly reflects depth.',
@@ -33,6 +37,8 @@ LABELS = {
 ap = argparse.ArgumentParser()
 ap.add_argument('--vault', required=True); ap.add_argument('--packs', required=True); ap.add_argument('--period', required=True)
 ap.add_argument('--lang', default='zh-tw'); ap.add_argument('--tag', default='flashcards')
+ap.add_argument('--cards', action='store_true', help='write Review Deck cards; pass only when the person asked for cards')
+ap.add_argument('--per-topic', type=int, default=2, help='most cards written per topic with --cards')
 a = ap.parse_args()
 V, L = a.vault, LABELS.get(a.lang.lower(), LABELS['en'])
 today = dt.date.today().isoformat()
@@ -57,8 +63,9 @@ def sr_stats(notes):
 topics = []
 for f in sorted(glob.glob(os.path.join(a.packs, '*.json'))):
     t = json.load(open(f, encoding='utf8'))
-    if not isinstance(t, dict) or 'id' not in t or 'cards' not in t:
+    if not isinstance(t, dict) or 'id' not in t:
         continue
+    t.setdefault('cards', [])
     s = t['sr'] = sr_stats(t.get('notes', []))
     t['filmScore'] = round(DEPTH.get(t.get('depth'), 2) + (3.0 * s['hard'] / s['reviews'] if s['reviews'] else 0) + (1.0 if s['cards'] == 0 else 0) + (s['difficulty'] or 0) / 10.0, 2)
     topics.append(t)
@@ -76,14 +83,15 @@ for t in topics:
     out = dict(t); out.update(cachedAt=today, periods=sorted(set(periods + [a.period])), noteMtime=mt)
     json.dump(out, open(old, 'w', encoding='utf8'), ensure_ascii=False, indent=1)
 
-# 2 cards and hints
-os.makedirs(os.path.join(V, 'engram-review', 'ai-cards'), exist_ok=True); os.makedirs(os.path.join(V, 'engram-review', 'hints'), exist_ok=True)
+# 2 cards and hints: only when the person asked for cards
 deck = f'{L["deck"]}/{a.period}'; ncards = 0
-for t in topics:
+if a.cards:
+    os.makedirs(os.path.join(V, 'engram-review', 'ai-cards'), exist_ok=True); os.makedirs(os.path.join(V, 'engram-review', 'hints'), exist_ok=True)
+for t in (topics if a.cards else []):
     name = L['prefix'] + '-' + re.sub(r'[\\/:*?"<>|]', ' ', t['title'])
     out = ['---', f'tags: [{a.tag}/{deck}]', f'topic: {t["id"]}', f'period: {a.period}', '---', f'TARGET DECK: {deck}', '']
     hints = {}
-    for c in list(t['cards']) + [dict(kind='apply', q=t['apply']['q'], a=t['apply']['a'])]:
+    for c in list(t['cards'])[:max(a.per_topic, 0)]:
         q = ' '.join(c['q'].split())
         out += ['%%card%%', 'Q: ' + q, 'A:', c['a'].strip(), '%%card%%', '']
         # the first hint is the context cue (what the person was doing, what the topic answers); it never holds the answer
@@ -100,7 +108,7 @@ rank = sorted(topics, key=lambda t: -t['filmScore'])
 json.dump(dict(period=a.period, builtAt=today, topics=[{k: t.get(k) for k in ('id', 'title', 'domain', 'question', 'answer', 'context', 'depth', 'quick', 'filmed', 'filmScore', 'sr')} for t in topics],
                filmOrder=[t['id'] for t in rank if not t.get('filmed')]), open(os.path.join(pd, 'pack.json'), 'w', encoding='utf8'), ensure_ascii=False, indent=1)
 y, m = a.period.split('..')[0].split('-')
-M = ['# ' + L['title'].format(y=y, m=int(m)), '', '> ' + L['intro'].format(n=len(topics), c=ncards, deck=deck), '> ' + L['how'], '']
+M = ['# ' + L['title'].format(y=y, m=int(m)), '', '> ' + (L['intro'].format(n=len(topics), c=ncards, deck=deck) if a.cards else L['intro0'].format(n=len(topics))), '> ' + (L['how'] if a.cards else L['how0']), '']
 dom = None
 for t in topics:
     if t['domain'] != dom:
@@ -117,4 +125,4 @@ for t in rank:
     s = t['sr']
     M += [f'| {t["title"]} | {t["filmScore"]} | {t.get("depth", "")} | {s["cards"]} | {s["reviews"]} | {s["hard"]} | {s["difficulty"] if s["difficulty"] is not None else "—"} | {L["has"] if t.get("filmed") else L["cand"]} |']
 open(os.path.join(pd, f'{L["page"]}-{a.period}.md'), 'w', encoding='utf8').write('\n'.join(M) + '\n')
-print(f'{len(topics)} topics, {ncards} cards -> deck {deck}; film order: {[t["title"] for t in rank if not t.get("filmed")][:5]}')
+print(f'{len(topics)} topics, ' + (f'{ncards} cards -> deck {deck}' if a.cards else 'no cards written (pass --cards only when asked)') + f'; film order: {[t["title"] for t in rank if not t.get("filmed")][:5]}')

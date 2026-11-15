@@ -7,7 +7,7 @@ Aim: a smart, warm teacher, one idea at a time, structure audible in the voice.
 | Role | Chinese films (zh-TW) | English films |
 |---|---|---|
 | Teacher (the resolved teacher's `voices` from `resolve.cjs`; Nico by default; these are Professor Bao's, Pro) | `zh-TW-YunJheNeural`, rate +4%, pitch +0Hz, speaker `teacher` (male; fails often — voice.py synthesises in parallel and retries) | `en-US-AndrewMultilingualNeural`, rate +0%, pitch +0Hz, speaker `teacher` |
-| Student (Taro, owns the project) | `zh-TW-HsiaoYuNeural`, rate +8%, pitch +20Hz, speaker `student` | `en-US-AvaMultilingualNeural`, rate +6%, pitch +10Hz, speaker `student` |
+| Student (Taro, owns the project) | `zh-TW-HsiaoYuNeural`, rate −8%, pitch +20Hz, speaker `student` | `en-US-AvaMultilingualNeural`, rate +6%, pitch +10Hz, speaker `student` |
 | Single narrator (no dialogue) | `zh-TW-HsiaoChenNeural` | |
 
 Take the resolved teacher's voice and register from the registry (`11-teachers.md` §2); the student's voice differs, so the viewer knows who speaks. **`zh-TW-HsiaoYuNeural` is the student's voice in every film; no teacher uses it** (a teacher voiced with HsiaoYu sounded like the student: the wrong voice entirely).
@@ -30,7 +30,7 @@ Take the resolved teacher's voice and register from the registry (`11-teachers.m
 
 Why: the first teacher previews had an odd rhythm and tone, unnatural pauses and no warmth; what was wanted was livelier, more curious and quicker.
 
-Aim: livelier, quicker speech that guides, pauses where a person breathes. edge-tts accepts no custom SSML (one rate/pitch/volume per request; [edge-tts README](https://github.com/rany2/edge-tts)), so rhythm comes from **how lines are cut** and from `pauseAfter`. Measured pauses inside one request (zh-TW HsiaoYu, rate +10%, silencedetect −38 dB):
+Aim: livelier speech that guides, pauses where a person breathes. Lively is not fast: twice a teacher set faster than neutral was judged too fast in a finished film and slowed to about 0.85 of that speed (point 5), so liveliness comes from how lines are cut and where the pauses fall. edge-tts accepts no custom SSML (one rate/pitch/volume per request; [edge-tts README](https://github.com/rany2/edge-tts)), so rhythm comes from **how lines are cut** and from `pauseAfter`. Measured pauses inside one request (zh-TW HsiaoYu, rate +10%, silencedetect −38 dB):
 
 | Inside one line | Pause |
 |---|---|
@@ -45,7 +45,12 @@ So two sentences in one line leave a near one-second hole: that is the "strange 
 2. **Commas where a phrase ends.** Chinese TTS pauses by phrase structure, so a comma inside a phrase (「Kubernetes 就是，你說」) breaks it audibly. Colons in narration became a comma or a new line.
 3. **English terms without spaces in `text`** (「Kubernetes就是」), since the space adds ≈0.12 s; keep the spaces in `sub`.
 4. **Intonation per line**: a question line +4 to +14 Hz; the punch line a little faster; the learner-facing close a little higher.
-5. **Energy comes from form, not adjectives**: short sentences, open on a scene, a quicker-than-neutral rate and tight gaps. Nova's rate is −5 % (+12 % was too fast; about 15 % slower: 1.12 × 0.85 ≈ 0.95), her `defaultPause` 0.1; her key line goes about 4 points slower than her base (−9 %). Pitfall: per-line `rate` is absolute, not relative to the base, so a key-line `−6 %` written for the old +12 % base became *faster* than the new one.
+5. **Energy comes from form, not adjectives**: short sentences, open on a scene and tight gaps. A fast rate did not read as energy; it read as rushed, both times it was tried:
+   - Nova's rate is −5 % (+12 % was too fast; about 15 % slower: 1.12 × 0.85 ≈ 0.95), her `defaultPause` 0.1; her key line goes about 4 points slower than her base (−9 %).
+   - Nico's rate is −8 % and the student's −8 % (both were +8 %: four finished clips at about 320 Chinese characters per minute of speech were judged too fast for a real lesson; the same clip re-voiced at 0.85, 1.08 × 0.85 ≈ 0.92, about 270 characters per minute, was judged right. Experiment 26; the pauses were left as they were).
+   - The other teachers' rates have not been re-judged since. About 270 characters per minute of speech is the one pace approved by ear so far for a Chinese lesson; a teacher who measures well above it is worth a listen before a series is made.
+
+   Pitfall: per-line `rate` is absolute, not relative to the base, so a key-line `−6 %` written for the old +12 % base became *faster* than the new one.
 5b. **Sound like a master teacher, not a slow student** (lines that sound slow-witted lose the viewer; the aim is precise words, little filler, a smart person talking, with the pacing of a top tutor):
    - Precise words: stacked 就是／那個／其實／的那個／喔／啦／對吧, 「好，」 openers and cute phrasing (「來救你的！」「長出來了」「繼續睡就好」) sounded slow. **But (experiment 17, §1b-3):** a few spoken markers per segment are wanted; stacking was the problem.
    - One idea per sentence, declarative and confident; a rhetorical question works when its answer follows at once.

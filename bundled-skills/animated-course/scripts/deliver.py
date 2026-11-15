@@ -15,7 +15,7 @@ last frame held 5 s; narration at -16 LUFS) -> <series>/<id>.mp4, <id>.vtt, <id>
 seconds can use --solo 0 (experiment 17).
 --dry: use narration_dry.wav (voice only, no sound effects) and deliver as <id>-dry — the B version for A/B listening;
 it gets no meta.json entry (it is for review, not for the library).
-Review cards (module `cards`, on by default; reference/12-modules.md §3): if projects/<id>/cards.json exists and the
+Review cards (module `cards`, opt-in: only when the request asked; reference/12-modules.md §3): if projects/<id>/cards.json exists and the
 module is not turned off (settings.json course.off, or --no-cards), each card's front/back frames are cut from final.mp4
 into <series>/cards/ and an EngramQuest ai-cards deck is written to <vault>/engram-review/ai-cards/video-<series>-<id>.md
 (tag <flashcardTags prefix>/videos/<series>; frontmatter video = the delivered film, video_times = the second to rewatch
@@ -119,7 +119,7 @@ def make_cards():
     if '--no-cards' in args or "cards" in ((settings.get("course") or {}).get("off") or []):
         print("cards: module turned off -> no review cards"); return None
     if not os.path.exists(cp):
-        print("cards: no cards.json in the project -> no review cards (module `cards` is on by default; reference/12-modules.md §3)"); return None
+        print("cards: no cards.json in the project -> no review cards (module `cards` is opt-in; reference/12-modules.md §3)"); return None
     if not vault:
         print("cards: vault not found (pass --vault) -> no review cards"); return None
     cards = json.load(open(cp, encoding="utf-8"))

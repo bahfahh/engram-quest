@@ -16,14 +16,15 @@
 ```bash
 node scripts/studio/lib/cast/resolve.cjs [--off cards] [--on cards] > projects/<id>/cast.json   # → modules[]: {id, on, why}
 ```
-1. Default: every module in the registry is on.
-2. `engram-quest/videos/settings.json` → `"course": { "off": ["cards"] }` (written by the plugin) turns modules off.
-3. In the request: "no review cards" → `--off cards`; "this time with review cards" → `--on cards` overrides the setting for this run.
+1. Default: every module in the registry is on, except one marked `"defaultOn": false` (opt-in): that one stays off until the request asks for it (step 3).
+2. `engram-quest/videos/settings.json` → `"course": { "off": [ids], "on": [ids] }` (written by the plugin): `off` turns a default module off; `on` is the learner switching an opt-in module on, which counts as asking for it.
+3. In the request: "no review cards" → `--off cards`; "with review cards" / "make cards for it" → `--on cards` (turns an opt-in module on, and overrides `course.off`, for this run). Never pass `--on` on your own: nothing in a request for a film, a course or a review implies cards.
 4. Unknown ids are ignored with a note. Copy the `modules` lines of `notes` into `NOTES.md`; a series keeps the same modules in every lesson.
 
 ## 3. The modules
 
-### `cards` — Review cards — needs rework
+### `cards` — Review cards — needs rework — opt-in (`defaultOn: false`)
+- **Why opt-in**: cards are written into the learner's own Review Deck and start being scheduled at once, which changes their daily review load. Making a film is not a request for cards, so the module stays off until the learner asks.
 - **Status**: useful but plain. A screenshot of the film's recap card plus "what does it say" is only a second viewing; the direction is cards that practise or take the idea apart (hands-on, a 3D breakdown) or show it as a concept map or mindmap. Until a new design is approved, the mechanics below still work but are not the target.
 - **What**: each segment's recap picture becomes one EngramQuest review card, scheduled by the plugin's spaced repetition. The film does not change.
 - **Why**: the two strongest study techniques are retrieval practice and spacing (Dunlosky et al. 2013); a film is watched once, cards bring it back at the right intervals. The recap pictures are already one picture + one sentence: ready-made cards.

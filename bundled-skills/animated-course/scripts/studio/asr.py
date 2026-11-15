@@ -3,21 +3,40 @@
 Decodes the file with ffmpeg to 16 kHz mono, so timestamps are real seconds.
 Only 2 runs at a time across the machine (others wait their turn): it is CPU heavy.
 """
-import fcntl, os, subprocess, sys, time
+import os, subprocess, sys, time
 import numpy as np
 from faster_whisper import WhisperModel
 
+try:
+    import fcntl
+
+    def try_lock(f):
+        try:
+            fcntl.flock(f, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            return True
+        except BlockingIOError:
+            return False
+except ImportError:  # Windows has no fcntl; a byte-range lock does the same job
+    import msvcrt
+
+    def try_lock(f):
+        try:
+            msvcrt.locking(f.fileno(), msvcrt.LK_NBLCK, 1)
+            return True
+        except OSError:
+            return False
+
+# The OS drops the lock when the process ends, however it ends.
 STUDIO = os.path.dirname(os.path.abspath(__file__))
 lock = None
 while lock is None:
     for i in range(2):
-        f = open(os.path.join(STUDIO, f".asr-slot-{i}"), "w")
-        try:
-            fcntl.flock(f, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        f = open(os.path.join(STUDIO, f".asr-slot-{i}"), "a+")  # "a+": never truncate a slot another run holds
+        f.seek(0)
+        if try_lock(f):
             lock = f
             break
-        except BlockingIOError:
-            f.close()
+        f.close()
     if lock is None:
         time.sleep(5)
 

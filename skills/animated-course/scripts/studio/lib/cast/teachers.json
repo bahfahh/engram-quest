@@ -184,7 +184,7 @@
    "voice": {
     "zh-tw": {
      "name": "zh-TW-YunJheNeural",
-     "rate": "+8%",
+     "rate": "-8%",
      "pitch": "+0Hz"
     },
     "en": {
@@ -195,7 +195,7 @@
     "gemini": {
      "zh-tw": {
       "voice": "Iapetus",
-      "style": "台灣國語口音。俐落、行動派，語速偏快，指令清楚。"
+      "style": "台灣國語口音。俐落、行動派，指令清楚，語速不趕。"
      },
      "en": {
       "voice": "Iapetus",
@@ -208,7 +208,7 @@
    },
    "pace": {
     "defaultPause": 0.14,
-    "rate": "+8%",
+    "rate": "-8%",
     "pitch": "+0Hz"
    },
    "sampleScript": {
@@ -228,7 +228,7 @@
      },
      {
       "text": "多出來的十八個容器，系統自動補上。",
-      "rate": "+2%"
+      "rate": "-14%"
      }
     ]
    },
@@ -752,7 +752,7 @@
  "studentVoices": {
   "zh-tw": {
    "name": "zh-TW-HsiaoYuNeural",
-   "rate": "+8%",
+   "rate": "-8%",
    "pitch": "+20Hz"
   },
   "en": {

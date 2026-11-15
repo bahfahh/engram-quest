@@ -1,9 +1,10 @@
 {
   "version": 1,
-  "about": "Parts of a course that are ON by default (the full version) and that the learner may turn off in the plugin (engram-quest/videos/settings.json -> course.off: [ids]). Subtraction only: nothing here can be added beyond the default, and the skeleton (reference/04-skeleton.md) is not a module and cannot be turned off. resolve.cjs prints the result as `modules`. Rules: reference/12-modules.md.",
+  "about": "Parts of a course that are ON by default (the full version) and that the learner may turn off in the plugin (engram-quest/videos/settings.json -> course.off: [ids]). A module with defaultOn: false is opt-in: it stays off until the request asks for it (resolve.cjs --on). The skeleton (reference/04-skeleton.md) is not a module and cannot be turned off. resolve.cjs prints the result as `modules`. Rules: reference/12-modules.md.",
   "modules": [
     {
       "id": "cards",
+      "defaultOn": false,
       "status": "needs rework",
       "name": {
         "zh-tw": "複習卡",

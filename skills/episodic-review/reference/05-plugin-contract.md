@@ -11,7 +11,7 @@ The plugin shows, plays and schedules; it never makes content and never calls a 
 | Default length | `engram-quest/videos/settings.json` -> `episodicLength` (`short` / `medium` / `long`) | plugin | skill, read only |
 | Pack | `engram-quest/episodic-review/packs/<period>/pack.json` (+ overview page) | skill | skill (month film, next period); the plugin does not read it |
 | Topic cache | `engram-quest/episodic-review/topics/<id>/topic.json` | skill | skill next period |
-| Cards and hints | `engram-review/ai-cards/*.md`, `engram-review/hints/*.json` | skill (`build_pack.py`) | the Review Deck |
+| Cards and hints (only when the person asked for cards) | `engram-review/ai-cards/*.md`, `engram-review/hints/*.json` | skill (`build_pack.py --cards`) | the Review Deck |
 
 ## `meta.json`
 

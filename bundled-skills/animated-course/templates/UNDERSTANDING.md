@@ -24,6 +24,8 @@ Where listening alone gets stuck — map each to a self-check question or a know
 
 **Outcome and must-haves**, per segment (`reference/03-adapter-pattern.md` §1.1, question 4): after it the viewer can …; must-haves: … — the checklist for the listener review and the silent review. For a segment that reasons, also the **chain of links** its answer needs, numbered (one beat each, `reference/04-skeleton.md` §2).
 
+**For a segment that shows how something works** (`reference/03-adapter-pattern.md` §1.3b): what the mechanism runs on (the whole real thing, a small case, or both), which reading of the content decided it, and why its steps come in that order.
+
 **What carries the viewer** (`reference/03-adapter-pattern.md` §1.4), per segment: what the viewer is waiting to find out and in what shape, or "nothing needed" and why; what each cut back to the classroom shows that is new.
 
 Knobs that change between neighbours (scale, form, watch/guess, talk/silence, tension) and why (approved films changed ≥ 2). For a layer that needs a **new** design, three genuinely different ideas from different fields surfaced the better one: list them and why the chosen one wins (trial).
