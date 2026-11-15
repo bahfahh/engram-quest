@@ -99,7 +99,8 @@ describe("every skill carries the same custom-area guide", () => {
 
   it("installs the guide next to each SKILL.md, and SKILL.md sends the AI to it before it starts", async () => {
     for (const tool of Object.keys(G.TOOL_TARGETS)) {
-      const entries = await G.getInstallEntries(tool, writableVault({}).adapter, ".obsidian", { isPro: true });
+      // The video skills' packs are checked against the repo text in video-pack-install.test.js.
+      const entries = (await G.getInstallEntries(tool, writableVault({}).adapter, ".obsidian", { isPro: true })).filter((e) => !e.pack);
       const roots = [...new Set(entries.map((e) => e.path.split("/").slice(0, 3).join("/")))];
       expect(roots.length).toBeGreaterThan(0);
       for (const root of roots) {
@@ -338,6 +339,23 @@ describe("the teacher menu", () => {
     const choose = drawn.slice(name).find((el) => el.tag === "button" && el.text === "Choose");
     choose.on.click();
     expect(picked).toEqual(["custom:cold-math"]);
+  });
+
+  it("a Pro teacher's sample that cannot be downloaded says so and leaves Listen ready to retry", async () => {
+    const had = { requestUrl: obsidian.requestUrl, Notice: obsidian.Notice };
+    const hadAudio = globalThis.Audio;
+    const notices = [];
+    obsidian.requestUrl = async () => { throw new Error("offline"); };
+    obsidian.Notice = class { constructor(msg) { notices.push(msg); } };
+    globalThis.Audio = class { pause() {} play() { throw new Error("must not play"); } addEventListener() {} };
+    try {
+      const { drawn } = await openMenu(false);
+      const name = drawn.findIndex((el) => el.text === "Luna");
+      const listen = drawn.slice(name).find((el) => el.tag === "button" && el.text === "Listen");
+      await listen.on.click();
+      expect(notices).toEqual(["Couldn't download the voice sample. Check your internet connection and press Listen again."]);
+      expect(listen.text).toBe("Listen");
+    } finally { Object.assign(obsidian, had); globalThis.Audio = hadAudio; }
   });
 
   it("shows them locked without Pro", async () => {

@@ -10,12 +10,9 @@ const PORTRAITS = {
   "nico": require("../../assets/teachers/nico.jpg"),
   "nova": require("../../assets/teachers/nova.jpg"),
 };
+// Free teachers' voice samples; the others are in SAMPLE_PACK, downloaded the first time one is played.
 const SAMPLES = {
-  "alden": require("../../assets/teachers/alden.mp3"),
-  "bao": require("../../assets/teachers/bao.mp3"),
-  "iris": require("../../assets/teachers/iris.mp3"),
-  "luna": require("../../assets/teachers/luna.mp3"),
   "nico": require("../../assets/teachers/nico.mp3"),
-  "nova": require("../../assets/teachers/nova.mp3"),
 };
-module.exports = { PORTRAITS, SAMPLES };
+const SAMPLE_PACK = require("./teacher-samples.json");
+module.exports = { PORTRAITS, SAMPLES, SAMPLE_PACK };

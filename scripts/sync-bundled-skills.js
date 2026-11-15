@@ -8,6 +8,8 @@ const sourceRoot = path.join(repoRoot, 'skills');
 const targetRoot = path.join(repoRoot, 'bundled-skills');
 // skills/shared/ holds text every skill carries; the installer puts custom-area.md next to each SKILL.md.
 const SHARED_DIR = 'shared';
+// The video skills reach users inside their packs (scripts/sync-video-skills.mjs), never embedded in main.js.
+const VIDEO_MODULES = Object.keys(require('../src/skills/video-modules.json'));
 const CUSTOM_POINTER = "> **Custom area.** Before you plan anything, read `custom-area.md` in this skill's folder: where the user's own preferences and assets live (`engram-quest/custom/`), how each choice is decided, and why keys never go into files.";
 
 function ensureDir(dirPath) {
@@ -37,14 +39,13 @@ function copyRecursive(src, dest) {
 }
 
 // Every skill gets the same pointer, right under its title, so no skill has to write it by hand.
-function pointToCustomArea(skillFile) {
-  const text = fs.readFileSync(skillFile, 'utf8');
-  if (text.includes('custom-area.md')) throw new Error(`${skillFile} already names custom-area.md; the sync adds the pointer itself`);
+function withCustomPointer(text, where) {
+  if (text.includes('custom-area.md')) throw new Error(`${where} already names custom-area.md; the sync adds the pointer itself`);
   const eol = text.includes('\r\n') ? '\r\n' : '\n';
   const title = text.match(/^# .*$/m);
-  if (!title) throw new Error(`${skillFile} has no "# " title to put the custom-area pointer under`);
+  if (!title) throw new Error(`${where} has no "# " title to put the custom-area pointer under`);
   const at = title.index + title[0].length;
-  fs.writeFileSync(skillFile, text.slice(0, at) + eol + eol + CUSTOM_POINTER + text.slice(at), 'utf8');
+  return text.slice(0, at) + eol + eol + CUSTOM_POINTER + text.slice(at);
 }
 
 function main() {
@@ -54,10 +55,13 @@ function main() {
 
   ensureDir(targetRoot);
   removeDirContents(targetRoot);
-  copyRecursive(sourceRoot, targetRoot);
-  for (const entry of fs.readdirSync(targetRoot, { withFileTypes: true })) {
+  for (const entry of fs.readdirSync(sourceRoot, { withFileTypes: true })) {
+    if (VIDEO_MODULES.includes(entry.name)) continue;
+    copyRecursive(path.join(sourceRoot, entry.name), path.join(targetRoot, entry.name));
     const skillFile = path.join(targetRoot, entry.name, 'skills.md');
-    if (entry.isDirectory() && entry.name !== SHARED_DIR && fs.existsSync(skillFile)) pointToCustomArea(skillFile);
+    if (entry.isDirectory() && entry.name !== SHARED_DIR && fs.existsSync(skillFile)) {
+      fs.writeFileSync(skillFile, withCustomPointer(fs.readFileSync(skillFile, 'utf8'), skillFile), 'utf8');
+    }
   }
 
   console.log('Synced bundled skills.');
@@ -65,4 +69,6 @@ function main() {
   console.log(`Target: ${targetRoot}`);
 }
 
-main();
+if (require.main === module) main();
+
+module.exports = { withCustomPointer };

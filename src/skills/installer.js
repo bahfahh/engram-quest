@@ -158,15 +158,8 @@ function createInstaller(embeddedOverride) {
     ]
   };
 
-  for (const [id, video] of Object.entries(VIDEO_MODULES)) {
-    MODULE_ASSETS[id] = video.files.map((file) => ({
-      source: `${id}/${file === "SKILL.md" ? "skills.md" : file}`,
-      target: file,
-      pro: video.pro.includes(file)
-    }));
-  }
-
   // Every skill carries the same custom-area guide (skills/shared/); the sync step points SKILL.md at it.
+  // The video skills are not in MODULE_ASSETS: their pack holds every file they install, guide included.
   for (const assets of Object.values(MODULE_ASSETS)) assets.push({ source: "shared/custom-area.md", target: "custom-area.md" });
 
   function joinPath() {
@@ -178,26 +171,49 @@ function createInstaller(embeddedOverride) {
     return adapter.read(joinPath(bundledSkillsRoot, relativePath));
   }
 
+  // Rewrite `bash scripts/` → `bash {targetRoot}/scripts/` so the path resolves
+  // correctly when CWD is the vault root (not the skill directory).
+  function rewriteSkillPaths(content, targetRoot) {
+    return content.replace(/\b(bash|node|python3) scripts\//g, `$1 ${targetRoot}/scripts/`);
+  }
+
   async function buildSkillEntries(toolTarget, adapter, bundledSkillsRoot, modules, isPro) {
     const entries = [];
     for (const moduleDefinition of modules) {
       const targetRoot = joinPath(toolTarget.baseDir, `engram-quest-${moduleDefinition.id}`);
+      // A video skill is one entry: its pack, downloaded only when the user installs. The marker holds
+      // the pack's hash, so comparing it tells whether the copy is current without reading the files,
+      // and it is written only after every file has landed.
+      const video = VIDEO_MODULES[moduleDefinition.id];
+      if (video) {
+        entries.push({
+          path: joinPath(targetRoot, PACK_MARKER),
+          content: video.pack.sha256,
+          pack: video.pack,
+          root: targetRoot,
+          // Files whose absence means the copy is incomplete: the skill itself, and the Pro files a licence adds.
+          required: ["SKILL.md", ...(isPro ? video.pro : [])].map((file) => joinPath(targetRoot, file)),
+          skip: isPro ? [] : video.pro
+        });
+        continue;
+      }
       for (const asset of MODULE_ASSETS[moduleDefinition.id] || []) {
-        if (asset.pro && !isPro) continue;
         let content = await readBundledSkill(adapter, bundledSkillsRoot, asset.source);
-        if (asset.target === "SKILL.md") {
-          // Rewrite `bash scripts/` → `bash {targetRoot}/scripts/` so the path resolves
-          // correctly when CWD is the vault root (not the skill directory).
-          content = content.replace(/\b(bash|node|python3) scripts\//g, `$1 ${targetRoot}/scripts/`);
-        }
+        if (asset.target === "SKILL.md") content = rewriteSkillPaths(content, targetRoot);
         entries.push({ path: joinPath(targetRoot, asset.target), content });
       }
-      // The marker holds the pack's hash: comparing it tells whether the binaries are current
-      // without reading them, and it is written only after they have all landed.
-      const video = VIDEO_MODULES[moduleDefinition.id];
-      if (video) entries.push({ path: joinPath(targetRoot, PACK_MARKER), content: video.pack.sha256, pack: video.pack });
     }
     return entries;
+  }
+
+  /** What to write from a downloaded pack: every file except the Pro ones a missing licence leaves out. */
+  function packWrites(entry, files) {
+    return files.filter((file) => !entry.skip.includes(file.path)).map((file) => ({
+      path: joinPath(entry.root, file.path),
+      data: file.path === "SKILL.md"
+        ? new TextEncoder().encode(rewriteSkillPaths(new TextDecoder().decode(file.data), entry.root)).buffer
+        : file.data
+    }));
   }
 
   async function getInstallEntries(toolId, adapter, configDir, { isPro = false } = {}) {
@@ -242,6 +258,7 @@ function createInstaller(embeddedOverride) {
     MODULES,
     TOOL_TARGETS,
     getInstallEntries,
+    packWrites,
     getProPaths,
     getLegacyPaths
   };

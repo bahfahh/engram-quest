@@ -39,6 +39,10 @@ async function claudeEntries() {
   return G.getInstallEntries("claude", plugin.app.vault.adapter, ".obsidian", { isPro: false });
 }
 
+// A video skill as a finished install leaves it: the files it needs, then the marker naming its pack.
+const installedVideo = (entries) => Object.fromEntries(entries.filter((e) => e.pack)
+  .flatMap((e) => [...e.required.map((p) => [p, "x"]), [e.path, e.content]]));
+
 describe("autoUpdateSkills", () => {
   it("updates outdated claude skills even though SKILL.md has no installer marker", async () => {
     const entries = await claudeEntries();
@@ -84,8 +88,8 @@ describe("autoUpdateSkills", () => {
 
   it("leaves up-to-date installs untouched", async () => {
     const entries = await claudeEntries();
-    const files = {};
-    for (const entry of entries) files[entry.path] = entry.content;
+    const files = installedVideo(entries);
+    for (const entry of entries.filter((e) => !e.pack)) files[entry.path] = entry.content;
     const plugin = makePlugin(files);
 
     await autoUpdateSkills(plugin);
@@ -187,13 +191,73 @@ describe("checkSkillsUpdates", () => {
 
   it("recomputes after an install clears the cache", async () => {
     const entries = await claudeEntries();
-    const markers = Object.fromEntries(entries.filter((e) => e.pack).map((e) => [e.path, e.content]));
-    const plugin = makePlugin({ [entries[0].path]: "OLD", ...markers });
+    const plugin = makePlugin({ [entries[0].path]: "OLD", ...installedVideo(entries) });
 
     expect(await checkSkillsUpdates(plugin)).toEqual(["claude"]);
     await autoUpdateSkills(plugin); // doInstall runs and clears the cache
     expect(plugin._skillsUpdateStatus).toBe(null);
     expect(await checkSkillsUpdates(plugin)).toEqual([]);
+  });
+});
+
+describe("an outdated video skill", () => {
+  const root = ".claude/skills/engram-quest-animated-course";
+  const outdated = async (files, settings = {}) => {
+    const entries = await claudeEntries();
+    const plugin = makePlugin({ ...installedVideo(entries), ...files });
+    plugin.settings = settings;
+    const preview = await getInstallPreview(plugin, "claude");
+    return preview.items.find((i) => i.path === `${root}/.engram-pack`).action;
+  };
+
+  it("is found from disk alone: an older pack, a missing SKILL.md, or Pro files a licence adds", async () => {
+    expect(await outdated({})).toBe("unchanged");
+    expect(await outdated({ [`${root}/.engram-pack`]: "0".repeat(64) })).toBe("replace");
+    const noSkill = makePlugin({});
+    expect((await getInstallPreview(noSkill, "claude")).items.find((i) => i.pack).action).toBe("create");
+    expect(await outdated({}, { licenseValid: true })).toBe("replace");
+  });
+
+  it("writes nothing at plugin load when it is the only thing out of date", async () => {
+    const entries = await claudeEntries();
+    const files = { ...installedVideo(entries), [`${root}/.engram-pack`]: "0".repeat(64) };
+    for (const entry of entries.filter((e) => !e.pack)) files[entry.path] = entry.content;
+    const plugin = makePlugin(files);
+    await autoUpdateSkills(plugin);
+    expect(plugin.writes).toEqual({});
+  });
+
+  it("is written from its pack without the Pro files a missing licence leaves out, and SKILL.md finds its scripts", async () => {
+    const plugin = makePlugin({});
+    const enc = (s) => new TextEncoder().encode(s).buffer;
+    for (const isPro of [false, true]) {
+      const entry = (await G.getInstallEntries("claude", plugin.app.vault.adapter, ".obsidian", { isPro })).find((e) => e.path === `${root}/.engram-pack`);
+      const proFile = "scripts/studio/lib/cast/skins/glass.js";
+      const writes = G.packWrites(entry, [
+        { path: "SKILL.md", data: enc("# Course\nRun `python3 scripts/doctor.py` first.\n") },
+        { path: proFile, data: enc("pro") },
+        { path: "assets/a.png", data: enc("png") },
+      ]);
+      const byPath = Object.fromEntries(writes.map((w) => [w.path, new TextDecoder().decode(w.data)]));
+      expect(byPath[`${root}/SKILL.md`]).toBe(`# Course\nRun \`python3 ${root}/scripts/doctor.py\` first.\n`);
+      expect(byPath[`${root}/assets/a.png`]).toBe("png");
+      expect(`${root}/${proFile}` in byPath).toBe(isPro);
+    }
+  });
+
+  it("reaches the user through the update check, and nothing is downloaded until they install", async () => {
+    const obsidian = createRequire(import.meta.url)("obsidian");
+    const had = obsidian.requestUrl;
+    let asked = 0;
+    obsidian.requestUrl = async () => { asked++; throw new Error("no network in this test"); };
+    try {
+      const entries = await claudeEntries();
+      const plugin = makePlugin({ ...installedVideo(entries), [`${root}/.engram-pack`]: "0".repeat(64) });
+      for (const entry of entries.filter((e) => !e.pack)) plugin.app.vault.adapter.write(entry.path, entry.content);
+      await autoUpdateSkills(plugin);
+      expect(asked).toBe(0);
+      expect(await checkSkillsUpdates(plugin)).toEqual(["claude"]);
+    } finally { obsidian.requestUrl = had; }
   });
 });
 
@@ -212,7 +276,7 @@ describe("a failed video asset download", () => {
 
     // The modal shows this message and stays open; it has to say what went wrong, not only that something did.
     expect(failure).toBeInstanceOf(Error);
-    expect(failure.message).toMatch(/^Couldn.t download the video assets./);
+    expect(failure.message).toMatch(/^Couldn.t download the video skill./);
     expect(failure.message.endsWith(" (Request failed, status 404)")).toBe(true);
     for (const entry of preview.items.filter((i) => !i.pack && i.action !== "remove")) expect(plugin.writes[entry.path]).toBe(entry.content);
     for (const entry of preview.items.filter((i) => i.pack)) expect(plugin.writes[entry.path]).toBeUndefined();

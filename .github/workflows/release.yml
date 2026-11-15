@@ -1,6 +1,7 @@
-# Builds the release from the tagged source, attests main.js and manifest.json, and opens a draft release.
-# Triggered by pushing a version tag (X.Y.Z, no "v"). The draft stays unpublished until the video packs,
-# which are built from the Obsidian vault and cannot be made here, are uploaded to it by hand.
+# Builds the release from the tagged source, attests main.js and manifest.json, and publishes the release.
+# Triggered by pushing a version tag (X.Y.Z, no "v"). The packs this build downloads are built from the
+# Obsidian vault and live on releases of their own (npm run release:packs); the release is published only
+# when every one of them is there with the bytes this build expects.
 name: Release
 
 on:
@@ -50,6 +51,9 @@ jobs:
 
       - run: npm run check:polar
 
+      - name: The packs this build downloads are published
+        run: npm run release:packs -- --check
+
       - name: Release files
         id: files
         run: |
@@ -63,7 +67,10 @@ jobs:
         with:
           subject-path: ${{ steps.files.outputs.csv }}
 
-      - name: Create draft release
+      - name: Create release
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create "$GITHUB_REF_NAME" ${{ steps.files.outputs.list }} --draft --title "$GITHUB_REF_NAME" --generate-notes
+        # The notes start at the previous version: pack releases have tags too and must not be the base.
+        run: |
+          previous=$(node -e 'const v=Object.keys(require("./versions.json"));const i=v.indexOf(process.env.GITHUB_REF_NAME);process.stdout.write(i>0?v[i-1]:"")')
+          gh release create "$GITHUB_REF_NAME" ${{ steps.files.outputs.list }} --latest --title "$GITHUB_REF_NAME" --generate-notes ${previous:+--notes-start-tag "$previous"}

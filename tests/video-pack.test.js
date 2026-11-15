@@ -14,7 +14,7 @@ function buildPack(files) {
 
 const files = [["assets/a.png", Buffer.from([1, 2, 3])], ["fonts/b.woff2", Buffer.from([9, 8])]];
 const adapterWith = (local) => ({ exists: async () => !!local, readBinary: async () => local });
-const load = (extra) => loadPack({ configDir: ".obsidian", version: "1.2.3", ...extra });
+const load = (extra) => loadPack({ configDir: ".obsidian", ...extra });
 
 describe("parsePack", () => {
   it("returns every file with its own bytes", () => {
@@ -28,10 +28,10 @@ describe("loadPack", () => {
   const { buffer, sha256 } = buildPack(files);
   const pack = { file: "p.pack", sha256 };
 
-  it("downloads from this version's release when there is no local copy", async () => {
+  it("downloads from the pack's own release, tagged with its file name, when there is no local copy", async () => {
     let asked = null;
-    const result = await load({ adapter: adapterWith(null), pack, fetchUrl: async (url) => { asked = url; return buffer; } });
-    expect(asked).toBe(`${RELEASE_BASE}/1.2.3/p.pack`);
+    const result = await load({ adapter: adapterWith(null), pack: { file: "engram-video-x-0123456789ab.pack", sha256 }, fetchUrl: async (url) => { asked = url; return buffer; } });
+    expect(asked).toBe(`${RELEASE_BASE}/engram-video-x-0123456789ab/engram-video-x-0123456789ab.pack`);
     expect(result).toHaveLength(2);
   });
 

@@ -6,13 +6,27 @@ const I = require("obsidian");
 const { t: c, interpolate: K, getLocale } = require("../i18n");
 const { ProUpgradeModal } = require("../license/upgrade");
 const { checkSkillsUpdates, SkillsInstallModal } = require("../hub/skills");
-const { PORTRAITS, SAMPLES } = require("./teacher-media");
+const { PORTRAITS, SAMPLES, SAMPLE_PACK } = require("./teacher-media");
+const { loadPack } = require("../skills/video-pack");
 const { TEACHERS, localText, canUse, variantsOf, variantOf, portraitKey } = require("./teachers");
 const { loadCustomTeachers } = require("./custom-teachers");
 const { readSettings } = require("./data");
 
 function localeOf(t) {
   return getLocale(t, I.moment && I.moment.locale && I.moment.locale());
+}
+
+// The Pro teachers' samples come in one download the first time any of them is played, kept for the session.
+let samplePack = null;
+function packedSample(app, id) {
+  if (!samplePack) {
+    const pending = loadPack({ adapter: app.vault.adapter, configDir: app.vault.configDir, pack: SAMPLE_PACK, fetchUrl: async (url) => (await I.requestUrl({ url })).arrayBuffer })
+      .then((files) => new Map(files.map((f) => [f.path.replace(/\.mp3$/, ""), URL.createObjectURL(new Blob([f.data], { type: "audio/mpeg" }))])));
+    // A failed download is tried again on the next play.
+    pending.catch(() => { if (samplePack === pending) samplePack = null; });
+    samplePack = pending;
+  }
+  return samplePack.then((urls) => urls.get(id));
 }
 
 /** Portrait in a round frame; the name's first letter when the image isn't available. */
@@ -59,7 +73,7 @@ async function openTeacherPicker(hub, t, { selected, variants = {}, pickVariants
   let playing = null;
   const stop = () => {
     if (!playing) return;
-    playing.audio.pause();
+    if (playing.audio) playing.audio.pause();
     playing.button.setText(c(t, "VIDEO_TEACHER_LISTEN"));
     playing = null;
   };
@@ -113,19 +127,39 @@ async function openTeacherPicker(hub, t, { selected, variants = {}, pickVariants
     }
 
     const actions = body.createDiv({ cls: "lh-vid-tcard-actions" });
-    const sample = SAMPLES[teacher.id];
-    if (sample) {
+    const inline = SAMPLES[teacher.id];
+    if (inline || SAMPLE_PACK.ids.includes(teacher.id)) {
       const listen = actions.createEl("button", { cls: "lh-vid-btn", text: c(t, "VIDEO_TEACHER_LISTEN") });
-      listen.addEventListener("click", () => {
+      listen.addEventListener("click", async () => {
         const same = playing && playing.button === listen;
         stop();
         if (same) return;
-        const audio = new Audio(sample);
+        // The element is made inside the click, so a sample that first has to download still belongs to the press.
+        const audio = new Audio();
+        const current = { audio, button: listen };
+        playing = current;
+        listen.setText(c(t, inline ? "VIDEO_TEACHER_STOP" : "VIDEO_TEACHER_LOADING"));
+        let src = inline;
+        if (!src) {
+          try { src = await packedSample(hub.app, teacher.id); }
+          catch (e) {
+            console.warn("EngramQuest: teacher voice samples could not be downloaded", e);
+            if (playing !== current) return;
+            stop();
+            new I.Notice(c(t, "VIDEO_TEACHER_SAMPLE_FAILED"));
+            return;
+          }
+          // Stopped, or another sample started, while this one was downloading.
+          if (playing !== current) return;
+          listen.setText(c(t, "VIDEO_TEACHER_STOP"));
+        }
+        audio.src = src;
         audio.playbackRate = rate;
         audio.addEventListener("ended", stop);
-        playing = { audio, button: listen };
-        listen.setText(c(t, "VIDEO_TEACHER_STOP"));
-        audio.play().catch(stop);
+        audio.play().catch((e) => {
+          console.warn("EngramQuest: teacher voice sample did not play", e);
+          if (playing === current) stop();
+        });
       });
     }
     actions.createDiv({ cls: "lh-vid-spacer" });

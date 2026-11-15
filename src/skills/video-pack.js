@@ -1,8 +1,13 @@
 "use strict";
-// Video skills keep their images, audio and fonts in a pack published with each GitHub release
-// (ADR-31). Layout: uint32 LE header length, JSON header [{ p: path, s: size }], then the bytes in order.
+// Packs carry what main.js does not: the video skills (every file they install) and the Pro teachers'
+// voice samples. Each pack is published on a GitHub release of its own, tagged with its file name
+// without ".pack"; the name ends in the content hash, so a tag never changes once published.
+// Layout: uint32 LE header length, JSON header [{ p: path, s: size }], then the bytes in order.
 
 const RELEASE_BASE = "https://github.com/bahfahh/engram-quest/releases/download";
+
+const packTag = (pack) => pack.file.replace(/\.pack$/, "");
+const packUrl = (pack) => `${RELEASE_BASE}/${packTag(pack)}/${pack.file}`;
 
 function parsePack(buffer) {
   const headerLength = new DataView(buffer).getUint32(0, true);
@@ -24,13 +29,11 @@ async function sha256Hex(buffer) {
  * Fetch and verify a pack. A copy next to the plugin (development sync) wins over the release download.
  * `fetchUrl(url)` resolves to an ArrayBuffer. Throws when the bytes are not the pack this build expects.
  */
-async function loadPack({ adapter, configDir, version, pack, fetchUrl }) {
+async function loadPack({ adapter, configDir, pack, fetchUrl }) {
   const local = `${configDir}/plugins/engram-quest/video-packs/${pack.file}`;
-  const buffer = (await adapter.exists(local))
-    ? await adapter.readBinary(local)
-    : await fetchUrl(`${RELEASE_BASE}/${version}/${pack.file}`);
-  if ((await sha256Hex(buffer)) !== pack.sha256) throw new Error(`Video assets failed verification: ${pack.file}`);
+  const buffer = (await adapter.exists(local)) ? await adapter.readBinary(local) : await fetchUrl(packUrl(pack));
+  if ((await sha256Hex(buffer)) !== pack.sha256) throw new Error(`Downloaded files failed verification: ${pack.file}`);
   return parsePack(buffer);
 }
 
-module.exports = { parsePack, sha256Hex, loadPack, RELEASE_BASE };
+module.exports = { parsePack, sha256Hex, loadPack, packTag, packUrl, RELEASE_BASE };
