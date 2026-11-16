@@ -10,27 +10,20 @@ const { estimate } = require("./episodic-length");
 const data = require("./data");
 const { renderTopic, renderThumb, queueWrite, asButton, starToggle } = require("./render");
 const { openPromptModal } = require("./request-ui");
+const { periodOf, cardPeriod, groupByPeriod, sortFilms, watchState } = require("./episodic-order");
 const ui = require("../hub/ui");
 
 const LENGTH_KEY = { short: "EPISODIC_LEN_SHORT", medium: "EPISODIC_LEN_MEDIUM", long: "EPISODIC_LEN_LONG" };
 const MODULE = "episodic-review";
 
 const periodText = (period) => String(period || "").replace("..", " – ");
-const periodOf = (video) => video.period || String(video.createdAt || "").slice(0, 7);
-const byNewest = (a, b) => String(b.createdAt || "").localeCompare(String(a.createdAt || ""));
+
+// Watch state buckets, the same words as the Video Academy shelf.
+const FILTERS = [["all", "VIDEO_F_ALL"], ["watching", "VIDEO_F_WATCHING"], ["new", "VIDEO_F_NEW"], ["done", "VIDEO_F_DONE"], ["starred", "FILTER_STARRED"]];
+const SORTS = [["newest", "SORT_NEWEST"], ["oldest", "SORT_OLDEST"], ["period", "EPISODIC_SORT_PERIOD"], ["watched", "EPISODIC_SORT_WATCHED"]];
 
 function promptFor(t, request) {
   return K(c(t, "EPISODIC_PROMPT"), { period: periodText(request.period), length: c(t, LENGTH_KEY[request.length]), id: request.id });
-}
-
-/** Films newest period first; one period can hold several films. */
-function groupByPeriod(films) {
-  const groups = new Map();
-  for (const film of films) {
-    const key = periodOf(film);
-    groups.set(key, [...(groups.get(key) || []), film]);
-  }
-  return [...groups].sort(([a], [b]) => b.localeCompare(a)).map(([period, list]) => ({ period, films: list.sort(byNewest) }));
 }
 
 function lengthButtons(parent, t, value, onPick) {
@@ -86,28 +79,13 @@ async function renderEpisodicTab(el, hub) {
   }
 
   const body = root.createDiv({ cls: "lh-scroll" }).createDiv({ cls: "lh-vid-body" });
+  if (!SORTS.some(([id]) => id === hub._eSort)) hub._eSort = "newest";
   if (open) {
-    const sorted = groupByPeriod(films).flatMap((group) => group.films);
-    renderTopic(body, hub, t, { slug: series.slug, meta: { ...series.meta, videos: sorted }, othersOnPhone: true }, refresh);
+    // The player's film list keeps the order the learner picked on the list page.
+    renderTopic(body, hub, t, { slug: series.slug, meta: { ...series.meta, videos: sortFilms(films, series.meta, hub._eSort) }, othersOnPhone: true }, refresh);
     return;
   }
   if (phone && (isPro || films.length)) newButton(body);
-  // Starred films are the learner's keepers; the set follows each click so the list redraws without a re-read.
-  const stars = new Set(films.filter((f) => data.videoProgress(series.meta, f.id).starred).map((f) => f.id));
-  let list = null;
-  const drawFilms = () => renderFilms(list, hub, t, series, films, stars, drawFilms, refresh);
-  if (isPro || films.length) {
-    const bar = body.createDiv({ cls: "lh-vid-ep-bar" });
-    const addFilter = () => {
-      if (!films.length) return;
-      const options = [{ value: "all", label: c(t, "FILTER_ALL") }, { value: "starred", label: c(t, "FILTER_STARRED") }];
-      ui.segmented(bar, options, starredOnly(hub) ? "starred" : "all", (v) => { hub._eFilter = v; drawFilms(); }, "lh-vid-ep-filter");
-    };
-    // Phone: the filter, which everyone uses, above the Pro-only length setting.
-    if (phone) addFilter();
-    if (isPro) renderLengthSetting(bar, hub, t, settings.episodicLength, refresh);
-    if (!phone) addFilter();
-  }
   renderRequests(body, hub, t, series, refresh);
   if (!films.length) {
     const empty = body.createDiv({ cls: "lh-vid-empty" });
@@ -117,40 +95,87 @@ async function renderEpisodicTab(el, hub) {
     if (phone && !isPro) newButton(body);
     return;
   }
-  list = body.createDiv({ cls: "lh-vid-ep-list" });
-  drawFilms();
+  renderFilmList(body, hub, t, series, films, refresh);
 }
 
-const starredOnly = (hub) => hub._eFilter === "starred";
+/**
+ * Toolbar (watch state chips, sort, length) and the films under it. Chips and list redraw from what is
+ * in memory; a star press updates the counts without a re-read.
+ */
+function renderFilmList(body, hub, t, series, films, refresh) {
+  const meta = series.meta;
+  // Starred films are the learner's keepers; the set follows each click.
+  const stars = new Set(films.filter((f) => data.videoProgress(meta, f.id).starred).map((f) => f.id));
+  const states = new Map(films.map((f) => [f.id, watchState(meta, f)]));
+  const inFilter = (id, f) => id === "all" || (id === "starred" ? stars.has(f.id) : states.get(f.id) === id);
+  const lengths = data.EPISODIC_LENGTHS.filter((id) => films.some((f) => f.length === id));
+  // The length menu only when picking one would leave some films out.
+  const lengthNarrows = lengths.length > 1 || (lengths.length === 1 && films.some((f) => !f.length));
+  if (!FILTERS.some(([id]) => id === hub._eFilter)) hub._eFilter = "all";
+  if (!lengthNarrows || !lengths.includes(hub._eLength)) hub._eLength = "all";
 
-/** The films grouped by period, only the starred ones under the "Starred" filter. */
-function renderFilms(list, hub, t, series, films, stars, redraw, refresh) {
+  const bar = body.createDiv({ cls: "lh-vid-filters lh-vid-ep-tools" });
+  const chips = bar.createDiv({ cls: "lh-seg", attr: { role: "group" } });
+  bar.createDiv({ cls: "lh-vid-spacer" });
+  const list = body.createDiv({ cls: "lh-vid-ep-list" });
+  const byLength = () => films.filter((f) => hub._eLength === "all" || f.length === hub._eLength);
+  const drawChips = () => {
+    const pool = byLength();
+    chips.empty();
+    for (const [id, key] of FILTERS) {
+      const n = pool.filter((f) => inFilter(id, f)).length;
+      // Empty buckets hide, except the one in use, so the learner can always see where they are.
+      if (id !== "all" && n === 0 && hub._eFilter !== id) continue;
+      chips.createEl("button", { cls: hub._eFilter === id ? "on" : "", text: `${c(t, key)} ${n}`, attr: { "aria-pressed": String(hub._eFilter === id) } })
+        .addEventListener("click", () => { hub._eFilter = id; draw(); });
+    }
+  };
+  const drawList = () => {
+    const shown = sortFilms(byLength().filter((f) => inFilter(hub._eFilter, f)), meta, hub._eSort);
+    // "No starred films yet" only when there are none at all, not when the length filter hides them.
+    const noStars = hub._eFilter === "starred" && stars.size === 0;
+    renderFilms(list, hub, t, series, shown, stars, { noStars, onStar: () => (hub._eFilter === "starred" ? draw() : drawChips()), refresh });
+  };
+  const draw = () => { drawChips(); drawList(); };
+  ui.sortSelect(bar, t, SORTS, hub._eSort, (v) => { hub._eSort = v; drawList(); }).classList.add("lh-vid-ep-sort");
+  if (lengthNarrows) {
+    const options = [["all", c(t, "EPISODIC_LEN_ALL")], ...lengths.map((id) => [id, c(t, LENGTH_KEY[id])])];
+    ui.filterSelect(bar, options, hub._eLength, (v) => { hub._eLength = v; draw(); }, { label: c(t, "EPISODIC_LENGTH") });
+  }
+  draw();
+}
+
+/** One card per film; grouped under period headings only when sorted by period. */
+function renderFilms(list, hub, t, series, shown, stars, { noStars, onStar, refresh }) {
   list.empty();
-  const shown = starredOnly(hub) ? films.filter((f) => stars.has(f.id)) : films;
   if (!shown.length) {
+    const starred = noStars;
     const empty = list.createDiv({ cls: "lh-vid-empty" });
-    ui.icon(empty.createDiv({ cls: "lh-vid-empty-icon" }), "star");
-    empty.createDiv({ cls: "lh-vid-empty-title", text: c(t, "EPISODIC_STARRED_EMPTY_TITLE") });
-    empty.createDiv({ cls: "lh-vid-empty-body", text: c(t, "EPISODIC_STARRED_EMPTY_BODY") });
+    ui.icon(empty.createDiv({ cls: "lh-vid-empty-icon" }), starred ? "star" : "recall");
+    empty.createDiv({ cls: "lh-vid-empty-title", text: c(t, starred ? "EPISODIC_STARRED_EMPTY_TITLE" : "EPISODIC_NO_MATCH") });
+    if (starred) empty.createDiv({ cls: "lh-vid-empty-body", text: c(t, "EPISODIC_STARRED_EMPTY_BODY") });
     empty.createEl("button", { cls: "lh-vid-btn lh-vid-ep-empty-btn", text: c(t, "EPISODIC_SHOW_ALL") })
-      .addEventListener("click", () => { hub._eFilter = "all"; refresh(); });
+      .addEventListener("click", () => { hub._eFilter = "all"; hub._eLength = "all"; refresh(); });
     return;
   }
-  for (const group of groupByPeriod(shown)) {
-    list.createDiv({ cls: "lh-vid-ep-period", text: periodText(group.period) || c(t, "EPISODIC_NO_PERIOD") });
+  const grouped = hub._eSort === "period";
+  const groups = grouped ? groupByPeriod(shown) : [{ period: null, films: shown }];
+  for (const group of groups) {
+    if (grouped) list.createDiv({ cls: "lh-vid-ep-period", text: periodText(group.period) || c(t, "EPISODIC_NO_PERIOD") });
     const grid = list.createDiv({ cls: "lh-vid-grid" });
     group.films.forEach((film, index) => {
       const card = asButton(grid.createDiv({ cls: "lh-vid-ep-film" }));
       renderThumb(card, hub, series.slug, series.meta, film, "");
       card.createDiv({ cls: "lh-vid-scard-title", text: film.title });
-      const bits = [];
+      // Without a heading the card names its own period; under one, it says which of the period's films it is.
+      const bits = grouped ? [] : [cardPeriod(periodOf(film)) || c(t, "EPISODIC_NO_PERIOD")];
       if (film.length) bits.push(c(t, LENGTH_KEY[film.length]));
-      if (group.films.length > 1) bits.push(c(t, index === 0 ? "EPISODIC_NEWER" : "EPISODIC_OLDER"));
+      if (grouped && group.films.length > 1) bits.push(c(t, index === 0 ? "EPISODIC_NEWER" : "EPISODIC_OLDER"));
       const foot = card.createDiv({ cls: "lh-vid-ep-foot" });
       foot.createDiv({ cls: "lh-vid-scard-meta", text: bits.join(" · ") });
       starToggle(foot, hub, t, series.slug, film, stars.has(film.id), (on) => {
         if (on) stars.add(film.id); else stars.delete(film.id);
-        if (starredOnly(hub)) redraw();
+        onStar();
       });
       // First child: the card keeps its last line's bottom spacing.
       card.prepend(ui.rowActions(card, [{ name: "trash", label: c(t, "DELETE"), run: () => confirmDeleteFilm(hub, t, film, refresh) }]));
@@ -176,21 +201,15 @@ function confirmDeleteFilm(hub, t, film, refresh) {
   });
 }
 
-/** The one setting for recall films: saved on click, merged into whatever else is in the file. */
-function renderLengthSetting(parent, hub, t, current, refresh) {
-  const row = parent.createDiv({ cls: "lh-vid-ep-setting" });
-  row.createSpan({ cls: "lh-vid-set-label", text: c(t, "EPISODIC_DEFAULT_LEN") });
-  lengthButtons(row, t, current, async (id) => {
-    const isPro = !!t.licenseValid;
-    const adapter = hub.app.vault.adapter;
-    try {
-      await data.saveSettings(adapter, { ...(await data.readSettings(adapter, isPro)), episodicLength: id }, isPro);
-    } catch (e) {
-      console.error("EngramQuest: episodic length save failed", e);
-    }
-    refresh();
-  });
-  row.createSpan({ cls: "lh-vid-set-hint", text: estimate(t, current) });
+/**
+ * The length picked for a request becomes the default (settings.json episodicLength), which the next
+ * request opens with and the skill falls back on when it has no request to read. Merged into the file.
+ */
+async function rememberLength(hub, length) {
+  const isPro = !!hub.plugin.settings.licenseValid;
+  const adapter = hub.app.vault.adapter;
+  const current = await data.readSettings(adapter, isPro);
+  if (current.episodicLength !== length) await data.saveSettings(adapter, { ...current, episodicLength: length }, isPro);
 }
 
 function renderRequests(body, hub, t, series, refresh) {
@@ -260,6 +279,7 @@ function openNewFilmModal(hub, t, defaultLength, refresh) {
     const period = start === end ? start : `${start}..${end}`;
     try {
       const request = await queueWrite(data.EPISODIC_SLUG, () => data.addEpisodicRequest(hub.app.vault.adapter, { period, length }));
+      await rememberLength(hub, length).catch((e) => console.warn("EngramQuest: episodic default length save failed", e));
       modal.close();
       refresh();
       openPromptModal(hub, t, { prompt: promptFor(t, request), module: MODULE });

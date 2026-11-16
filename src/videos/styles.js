@@ -50,6 +50,7 @@ body.is-phone .lh-vid-back { height:auto; padding:0 !important; background:none 
 .lh-vid-filters { display:flex; align-items:center; flex-wrap:wrap; gap:8px; flex:none; }
 .lh-vid-filters .lh-seg { max-width:100%; overflow-x:auto; scrollbar-width:none; }
 .lh-vid-filters select.lh-fp { max-width:160px; }
+.lh-vid-filters select.lh-fp.lh-vid-ep-sort { max-width:none; }
 
 .lh-vid-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:12px; }
 .lh-vid-scard,.lh-vid-ep-film { display:flex !important; flex-direction:column; align-items:stretch; justify-content:flex-start; gap:2px; height:auto !important; min-width:0; padding:0 !important; text-align:left; white-space:normal; border-radius:16px !important; border:0 !important; background:var(--card) !important; color:var(--text) !important; box-shadow:var(--cshadow) !important; cursor:pointer; overflow:hidden; }
@@ -125,8 +126,6 @@ body:not(.is-phone) .lh-vid-chapters .lh-vid-side-head { column-span:all; }
 body:not(.is-phone) .lh-vid-chapter { width:100%; margin:0 0 2px; box-sizing:border-box; break-inside:avoid; }
 .lh-vid-chapter-time { flex-shrink:0; font-variant-numeric:tabular-nums; color:var(--tint); font-weight:500; }
 .lh-vid-credits { font-size:12px; line-height:16px; color:var(--text3); }
-.lh-vid-ep-setting { display:flex; align-items:center; flex-wrap:wrap; gap:10px; flex:none; font-size:13px; color:var(--text2); }
-.lh-vid-ep-setting .lh-vid-set-label { font-weight:500; color:var(--text); }
 .lh-vid-ep-requests { background:var(--card); box-shadow:var(--cshadow); border-radius:16px; overflow:hidden; flex:none; }
 .lh-vid-ep-requests-head { height:34px; display:flex; align-items:center; padding:0 14px; font-size:12px; font-weight:500; color:var(--text3); border-bottom:.5px solid var(--sep); }
 .lh-vid-ep-request { min-height:60px; display:flex; align-items:center; gap:10px; padding:8px 12px 8px 14px; box-sizing:border-box; }
@@ -136,9 +135,6 @@ body:not(.is-phone) .lh-vid-chapter { width:100%; margin:0 0 2px; box-sizing:bor
 .lh-vid-ep-request-text { flex:1; min-width:0; font-size:15px; line-height:20px; font-weight:600; color:var(--text); overflow:hidden; text-overflow:ellipsis; }
 .lh-vid-ep-period { display:flex; align-items:center; gap:12px; margin:10px 2px 0; font-size:18px; line-height:24px; font-weight:700; color:var(--text); font-variant-numeric:tabular-nums; }
 .lh-vid-ep-period::after { content:""; flex:1; height:.5px; background:var(--sep); }
-/* Recall tab toolbar: default length on the left, the All / Starred filter on the right. */
-.lh-vid-ep-bar { display:flex; align-items:center; flex-wrap:wrap; gap:10px 16px; }
-.lh-vid-ep-bar .lh-vid-ep-filter { margin-left:auto; }
 .lh-vid-ep-list { display:contents; }
 .lh-vid-ep-empty-btn { margin-top:10px; }
 /* Star: an outline you can press, a filled gold star once kept. Its tap area reaches 44px. */
@@ -267,6 +263,12 @@ body.is-phone .lh-vid-thumb.is-continue .lh-vid-thumb-dur,body.is-phone .lh-vid-
 body.is-phone .lh-vid-grid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
 body.is-phone .lh-vid-filters { flex-wrap:wrap; }
 body.is-phone .lh-vid-filters .lh-sf { flex:1 1 100%; width:auto !important; }
+/* Recall tab on phone: the chips take their own row, sort and length share the next one edge to edge. */
+body.is-phone .lh-vid-ep-tools .lh-seg { flex:1 1 100%; }
+body.is-phone .lh-vid-ep-tools .lh-vid-spacer { display:none; }
+body.is-phone .lh-vid-ep-tools select.lh-fp { flex:1 1 0; max-width:none; }
+/* A two-column phone card is too narrow for "2026-07–11 · Medium" on one line: wrap rather than cut the period. */
+body.is-phone .lh-vid-ep-foot .lh-vid-scard-meta { white-space:normal; }
 body.is-phone .lh-vid-info-row { flex-direction:column; align-items:stretch; }
 body.is-phone .lh-vid-info-title { font-size:22px; line-height:29px; white-space:normal; }
 body.is-phone .lh-vid-side { background:none; box-shadow:none; padding:0; }
@@ -277,16 +279,10 @@ body.is-phone .lh-vid-item + .lh-vid-item::before { content:""; position:absolut
 body.is-phone .lh-vid-thumb.is-small { width:62px; height:40px; border-radius:8px; }
 body.is-phone .lh-vid-item-title { font-size:16px; line-height:22px; font-weight:500; }
 body.is-phone .lh-vid-item-text .lh-vid-status { font-size:13px; line-height:18px; }
-body.is-phone .lh-vid-ep-bar { flex-direction:column; align-items:stretch; }
-body.is-phone .lh-vid-ep-bar .lh-vid-ep-filter { margin-left:0; }
 body.is-phone .lh-vid-star-row { display:flex; align-items:center; gap:10px; }
 body.is-phone .lh-vid-star-row > .lh-vid-star { width:52px; height:52px; border-radius:14px !important; background:var(--fill) !important; }
 body.is-phone .lh-vid-star-row > .lh-vid-star .lh-i { width:22px; height:22px; }
 body.is-phone .lh-vid-star-row > .lh-pbtn { flex:1; width:auto; }
-body.is-phone .lh-vid-ep-setting { justify-content:space-between; }
-body.is-phone .lh-vid-ep-setting .lh-vid-lens { order:3; flex:1 1 100%; display:flex; }
-body.is-phone .lh-vid-ep-setting .lh-vid-len { flex:1; height:32px; }
-body.is-phone .lh-vid-ep-setting { font-size:15px; }
 body.is-phone .lh-vid-ep-requests-head { display:none; }
 body.is-phone .lh-vid-ep-request { flex-wrap:wrap; padding:12px 8px 8px 14px; }
 body.is-phone .lh-vid-ep-request-text { flex:1 1 100%; font-size:15px; }

@@ -1,6 +1,6 @@
 "use strict";
 // Video Academy settings: only what the video skill actually uses, saved to
-// engram-quest/videos/settings.json (contract.md). Recall film length lives on its own tab.
+// engram-quest/videos/settings.json (contract.md). Recall film length is remembered from the last request.
 
 const I = require("obsidian");
 const { t: c, interpolate: K } = require("../i18n");
