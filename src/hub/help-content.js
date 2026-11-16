@@ -148,7 +148,7 @@ module.exports = {
       {
         id: "episodic", tab: "episodic", icon: "recall", title: "情境回顧", tag: "觀看免費 · 製作 Pro",
         body: [
-          { p: "情境回顧片把一段時間（通常一個月）讀過的筆記整理成一支動畫影片，帶你回到當時學到的東西。最新做好的片排在最前面，點了就播。上方可以依觀看狀態（觀看中、未開始、已看完、已加星）和片長篩選，也能改成依回顧期間分組或最近看過的順序。想珍藏的片子按卡片上的 ☆ 加星。" },
+          { p: "情境回顧片把一段時間（通常一個月）讀過的筆記整理成一支動畫影片，帶你回到當時學到的東西。片子依回顧期間分組，最近的期間在最前面，點了就播。上方可以依觀看狀態（觀看中、未開始、已看完、已加星）和片長篩選，也能改成最新做好的、最舊的或最近看過的順序。想珍藏的片子按卡片上的 ☆ 加星。" },
           { steps: [
             "按「+ 做新的一支」，選起訖月份與片長（短／中／長，會顯示大約幾分鐘、幾個主題）。這次選的片長下次會自動帶入。",
             "插件記下這個需求並給你一段提示，貼進 Claude Code，episodic-review skill 就會開始做。",
@@ -469,7 +469,7 @@ module.exports = {
       {
         id: "episodic", tab: "episodic", icon: "recall", title: "Recall Films", tag: "Free to watch · Pro to make",
         body: [
-          { p: "A recall film turns the notes you read over a period (usually a month) into an animated film that walks you back through what you learned. The newest film comes first; click one to play it. The bar at the top filters by watch state (Watching, Not started, Finished, Starred) and length, and can group the films by period or list them by when you last watched. Press ☆ on a film to keep it." },
+          { p: "A recall film turns the notes you read over a period (usually a month) into an animated film that walks you back through what you learned. Films are grouped by period, the latest period first; click one to play it. The bar at the top filters by watch state (Watching, Not started, Finished, Starred) and length, and can list the films newest or oldest made, or by when you last watched. Press ☆ on a film to keep it." },
           { steps: [
             "Press \"+ New film\", choose the start and end month and a length (Short, Medium or Long, each with an estimate of minutes and topics). The length you pick is preselected next time.",
             "The plugin saves the request and gives you a prompt. Paste it into Claude Code and the episodic-review skill makes the film.",

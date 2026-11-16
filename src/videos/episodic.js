@@ -20,7 +20,8 @@ const periodText = (period) => String(period || "").replace("..", " – ");
 
 // Watch state buckets, the same words as the Video Academy shelf.
 const FILTERS = [["all", "VIDEO_F_ALL"], ["watching", "VIDEO_F_WATCHING"], ["new", "VIDEO_F_NEW"], ["done", "VIDEO_F_DONE"], ["starred", "FILTER_STARRED"]];
-const SORTS = [["newest", "SORT_NEWEST"], ["oldest", "SORT_OLDEST"], ["period", "EPISODIC_SORT_PERIOD"], ["watched", "EPISODIC_SORT_WATCHED"]];
+// A recall film is about a period, so the default (first) order groups films by it.
+const SORTS = [["period", "EPISODIC_SORT_PERIOD"], ["newest", "SORT_NEWEST"], ["oldest", "SORT_OLDEST"], ["watched", "EPISODIC_SORT_WATCHED"]];
 
 function promptFor(t, request) {
   return K(c(t, "EPISODIC_PROMPT"), { period: periodText(request.period), length: c(t, LENGTH_KEY[request.length]), id: request.id });
@@ -79,7 +80,7 @@ async function renderEpisodicTab(el, hub) {
   }
 
   const body = root.createDiv({ cls: "lh-scroll" }).createDiv({ cls: "lh-vid-body" });
-  if (!SORTS.some(([id]) => id === hub._eSort)) hub._eSort = "newest";
+  if (!SORTS.some(([id]) => id === hub._eSort)) hub._eSort = SORTS[0][0];
   if (open) {
     // The player's film list keeps the order the learner picked on the list page.
     renderTopic(body, hub, t, { slug: series.slug, meta: { ...series.meta, videos: sortFilms(films, series.meta, hub._eSort) }, othersOnPhone: true }, refresh);

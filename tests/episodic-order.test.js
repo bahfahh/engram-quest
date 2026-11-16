@@ -1,5 +1,5 @@
-// Recall film order on the Recall tab: a newly made film must come first by default, and grouping by
-// period ranks a period by the month it reaches, so "2026-07..2026-11" is not buried under "2026-08".
+// Recall film order on the Recall tab. Grouping by period (the default) ranks a period by the month it
+// reaches, so "2026-07..2026-11" is not buried under "2026-08"; the other sorts order by date.
 import { describe, it, expect } from "vitest";
 import { sortFilms, cardPeriod, watchState } from "../src/videos/episodic-order.js";
 
@@ -15,7 +15,7 @@ const meta = { progress: { "aug-wall": { lastViewed: "2026-11-15T00:00:00Z" }, n
 const ids = (sort) => sortFilms(films, meta, sort).map((f) => f.id);
 
 describe("recall film order", () => {
-  it("puts the newest made film first by default", () => {
+  it("orders by when films were made, newest or oldest first", () => {
     expect(ids("newest")).toEqual(["jul-nov-b", "jul-nov-a", "nov", "aug-long", "aug-wall", "may-jul"]);
     expect(ids("oldest")).toEqual(["may-jul", "aug-wall", "aug-long", "nov", "jul-nov-a", "jul-nov-b"]);
   });
