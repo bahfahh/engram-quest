@@ -2,7 +2,7 @@
 const I = require("obsidian");
 const { computeFsrs: P } = require("../fsrs");
 const { t: c, tAlt: C, getLocale: _getLocale } = require("../i18n");
-const { anySrPattern: ge, getReviewStatus: $, updateSrData, buildSrRecord, recordReviewDay } = require("./helpers");
+const { anySrPattern: ge, getReviewStatus: $, updateSrData, buildSrRecord, recordReviewDay, splitDeckName } = require("./helpers");
 const { loadSynapseStatus, loadSynapseBatch, attachSynapseToCards, isSynapseEnabled } = require("./synapse");
 const { SynapseMapSession } = require("./synapse-session");
 const { renderSynapseMap } = require("./synapse-panel");
@@ -522,13 +522,28 @@ var Q=class extends I.Modal{
 
     // Card body
     let i=this.contentEl.createEl("div",{attr:{class:"lh-review-body"+(phone?(this.answerShown&&!this.browseOnly?" has-grades":" has-bar"):"")}}).createEl("div",{attr:{class:"lh-review-card"}});
+    // The card's own deck; a session that mixes decks (study all, timed, a video's cards) is named for the mix.
+    const deckLabel=e.deckName||this.deckName;
     if(phone){
-      if(this.browseOnly) i.createEl("span",{text:c(t,"BROWSE_ONLY"),attr:{class:"lh-rc-badge"}});
+      // One short line above the question, so a card read out of context still says where it is from.
+      const ctx=i.createEl("div",{cls:"lh-rc-ctx"});
+      const dk=splitDeckName(deckLabel,e.notePath);
+      const deckEl=ctx.createEl("span",{cls:"lh-rc-ctx-deck",attr:{title:deckLabel}});
+      _uiIcon(deckEl,"layers");
+      deckEl.createEl("b",{text:dk.name});
+      if(dk.path) deckEl.createEl("span",{cls:"lh-rc-ctx-path",text:dk.path});
+      if(this.browseOnly) ctx.createEl("span",{text:c(t,"BROWSE_ONLY"),attr:{class:"lh-rc-badge"}});
+      if(notePaths.length>0){
+        const srcBtn=ctx.createEl("button",{cls:"lh-rc-ctx-src",attr:{title:notePaths[0]}});
+        srcBtn.createEl("span",{text:notePaths[0].split("/").pop().replace(/\.md$/i,"")});
+        if(notePaths.length>1) srcBtn.createEl("em",{text:`+${notePaths.length-1}`});
+        srcBtn.addEventListener("click",()=>openNote(notePaths[0]));
+      }
     } else {
       let d=i.createEl("div",{attr:{class:"lh-rc-top"}});
-      const deck=d.createEl("span",{attr:{class:"lh-rc-deck",title:this.deckName}});
+      const deck=d.createEl("span",{attr:{class:"lh-rc-deck",title:deckLabel}});
       _uiIcon(deck,"layers");
-      deck.createEl("span",{text:this.deckName});
+      deck.createEl("span",{text:deckLabel});
       this.browseOnly&&d.createEl("span",{text:c(t,"BROWSE_ONLY"),attr:{class:"lh-rc-badge"}});
       // Source note buttons — for AI cards show sourceNotePaths only, for hand-written show notePath
       if(notePaths.length>0){

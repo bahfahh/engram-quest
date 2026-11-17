@@ -640,7 +640,18 @@ function matchFlashcardTagPrefix(tags, flashcardTags) {
   return null;
 }
 
+// A deck's name is its tag path ("flashcards/open-source/repo-choice"): the last part is what it is called,
+// the rest is where it sits. A one-part name has no path, so the folder of its note stands in.
+function splitDeckName(name, notePath) {
+  const parts = String(name || "").split("/");
+  const leaf = parts.pop();
+  let path = parts.join("/");
+  if (!path) path = notePath && notePath.includes("/") ? notePath.slice(0, notePath.lastIndexOf("/")) : "";
+  return { name: leaf, path };
+}
+
 module.exports = {
+  splitDeckName,
   advancedSrPattern,
   legacySrPattern,
   anySrPattern,

@@ -3,21 +3,14 @@
 
 const I = require("obsidian");
 const { t: c, interpolate } = require("../i18n");
-const { getReviewStatus } = require("../review/helpers");
+const { getReviewStatus, splitDeckName } = require("../review/helpers");
 const { renderSynapseProBanner, renderTimeboxRow } = require("../review/pro-ui");
 const { openCreateCardModal } = require("../review/create");
 const { renderSkillsUpdateBanner } = require("./skills");
 const ui = require("./ui");
 
 function deckName(deck) {
-  const parts = deck.name.split("/");
-  const name = parts.pop();
-  let path = parts.join("/");
-  if (!path) {
-    const note = deck.cards[0] && deck.cards[0].notePath;
-    path = note && note.includes("/") ? note.slice(0, note.lastIndexOf("/")) : "";
-  }
-  return { name, path };
+  return splitDeckName(deck.name, deck.cards[0] && deck.cards[0].notePath);
 }
 
 function deckStats(deck) {
