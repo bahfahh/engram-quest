@@ -14,6 +14,16 @@ const QUEUE_PATH = "engram-quest/explainer/queue.json";
 // no read-merge-write contract is needed (same split as Quest Map's engram-quest/state/).
 const STATE_PATH = "engram-quest/explainer/state.json";
 
+// A page's picture: a file the skill writes beside the specs, named by the spec's image.file.
+const IMAGE_TYPES = { png: "image/png", jpg: "image/jpeg", jpeg: "image/jpeg", webp: "image/webp", svg: "image/svg+xml" };
+// The extension is looked up as an own key, so a name ending in ".constructor" is not an image.
+const imageType = (file) => {
+  const ext = ((/\.([A-Za-z]+)$/.exec(String(file)) || [])[1] || "").toLowerCase();
+  return Object.prototype.hasOwnProperty.call(IMAGE_TYPES, ext) ? IMAGE_TYPES[ext] : undefined;
+};
+const imagePath = (file) => `${EXPLAINER_DIR}/images/${file}`;
+const isImageFile = (file) => typeof file === "string" && /^[^\\/:.][^\\/:]*$/.test(file) && !!imageType(file);
+
 async function readJson(adapter, path) {
   try {
     return JSON.parse(await adapter.read(path));
@@ -222,7 +232,10 @@ async function deleteExplainer(adapter, id) {
   if (!id) return;
   const metaRemoved = await trashPath(adapter, `${META_DIR}/${id}.json`);
   if (!metaRemoved) throw new Error(`EngramQuest: could not delete explainer "${id}"`);
-  for (const page of [`${EXPLAINER_DIR}/${id}.html`, `${EXPLAINER_DIR}/${id}.spec.json`]) {
+  // The spec names the page's picture, so it is read before it goes.
+  const spec = await readJson(adapter, `${EXPLAINER_DIR}/${id}.spec.json`);
+  const image = spec && spec.image && isImageFile(spec.image.file) ? [imagePath(spec.image.file)] : [];
+  for (const page of [`${EXPLAINER_DIR}/${id}.html`, `${EXPLAINER_DIR}/${id}.spec.json`, ...image]) {
     if (!(await trashPath(adapter, page))) console.warn(`EngramQuest: could not move ${page} to the trash; it stays in the vault`);
   }
   try {
@@ -242,6 +255,10 @@ module.exports = {
   META_DIR,
   QUEUE_PATH,
   STATE_PATH,
+  IMAGE_TYPES,
+  imageType,
+  imagePath,
+  isImageFile,
   scanExplainers,
   groupExplainersByDeck,
   readState,

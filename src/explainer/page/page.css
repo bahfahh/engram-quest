@@ -40,6 +40,14 @@ background:var(--paper);color:var(--ink);font-family:var(--sans);line-height:1.7
 .eq h1{font-size:31px;line-height:1.3;margin:0;font-weight:700;letter-spacing:.2px}
 .sub{font-family:var(--hand);font-size:19px;margin:6px 0 20px}
 .eq h3{font-size:20px;margin:36px 0 10px;font-weight:700}
+.pic{margin:0 0 24px}
+.ps{border:1px solid var(--wash);border-radius:14px;background:#fff;overflow:auto;-webkit-overflow-scrolling:touch}
+.pz{display:block;width:100%;padding:0;border:0;background:none;cursor:zoom-in}
+.pz:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.pz img{display:block;width:100%;height:auto}
+.pic.zoom .pz{cursor:zoom-out}
+.pic.zoom .pz{width:200%}
+.pic figcaption{font-size:13.5px;color:var(--muted);margin:8px 2px 0;line-height:1.6}
 .fig{overflow-x:auto;-webkit-overflow-scrolling:touch}
 .fig svg{display:block;width:100%;height:auto}
 .bx{fill:var(--card);stroke:var(--ink);stroke-width:1.5;transition:fill .25s,stroke .25s}

@@ -63,6 +63,7 @@ function makeApp(files = {}, notes = {}) {
         files,
         exists: async (p) => p in files,
         read: async (p) => { if (!(p in files)) throw new Error("ENOENT " + p); return files[p]; },
+        readBinary: async (p) => { if (!(p in files)) throw new Error("ENOENT " + p); return files[p]; },
         write: async (p, v) => { files[p] = v; },
         mkdir: async () => {},
         trashLocal: async (p) => { trashed.push(p); delete files[p]; },
@@ -257,6 +258,46 @@ describe("composeSpecPage", () => {
     expect(out.html).toContain('class="eq dark"');
     const zh = await composeSpecPage(withSpec(reading()), "p", { page });
     expect(embedded(zh.html, "__LIVE__").lang).toBe("zh");
+  });
+});
+
+describe("a page's picture", () => {
+  const image = { file: "p.png", alt: "三層結構", caption: "外層包住內層" };
+  const imageFile = `${EXPLAINER_DIR}/images/p.png`;
+
+  it("accepts a named image file and refuses a path or another kind of file", () => {
+    expect(validateSpec({ ...reading(), image })).toEqual([]);
+    for (const file of ["../p.png", "a/p.png", "a:p.png", "p.html", ".png", "png", "p.constructor", 3]) {
+      expect(validateSpec({ ...reading(), image: { ...image, file } }).join()).toContain("image.file");
+    }
+    expect(validateSpec({ ...reading(), image: { file: "p.png" } }).join()).toContain("image.alt");
+  });
+
+  it("hands the file to the page as a data URL", async () => {
+    const app = withSpec({ ...reading(), image }, {}, { [imageFile]: new Uint8Array([137, 80, 78, 71]).buffer });
+    const out = await composeSpecPage(app, "p", { page });
+    expect(embedded(out.html, "__LIVE__").image).toBe("data:image/png;base64,iVBORw==");
+    expect(embedded(out.html, "__SPEC__").image.caption).toBe("外層包住內層");
+  });
+
+  it("draws the page without the picture when the file is missing or too large", async () => {
+    for (const extra of [{}, { [imageFile]: new ArrayBuffer(3 * 1024 * 1024 + 1) }]) {
+      const out = await composeSpecPage(withSpec({ ...reading(), image }, {}, extra), "p", { page });
+      expect(out.issues).toBeUndefined();
+      expect(embedded(out.html, "__SPEC__").image).toBeUndefined();
+      expect(embedded(out.html, "__LIVE__").image).toBeNull();
+    }
+  });
+
+  it("goes to the trash with its page", async () => {
+    const app = makeApp({
+      [`${META_DIR}/p.json`]: "{}",
+      [specPath("p")]: JSON.stringify({ ...reading(), image }),
+      [imageFile]: new ArrayBuffer(4),
+      [`${EXPLAINER_DIR}/images/other.png`]: new ArrayBuffer(4),
+    });
+    await deleteExplainer(app.vault.adapter, "p");
+    expect(Object.keys(app.vault.adapter.files)).toEqual([`${EXPLAINER_DIR}/images/other.png`]);
   });
 });
 

@@ -148,6 +148,7 @@ function createInstaller(embeddedOverride) {
     "explainer": [
       { source: "explainer/skills.md", target: "SKILL.md" },
       { source: "explainer/references/spec-guide.md", target: "references/spec-guide.md" },
+      { source: "explainer/references/picture.md", target: "references/picture.md" },
       { source: "explainer/references/obsidian-cli.md", target: "references/obsidian-cli.md" },
       // obsidian-cli.md falls back to this grep search when the Obsidian CLI is unavailable.
       { source: "review-deck/scripts/search_vault.sh", target: "scripts/search_vault.sh" },
@@ -155,6 +156,21 @@ function createInstaller(embeddedOverride) {
       { source: "explainer/assets/examples/contrast.spec.json", target: "assets/examples/contrast.spec.json" },
       { source: "explainer/assets/examples/map.spec.json", target: "assets/examples/map.spec.json" },
       { source: "explainer/assets/examples/reading.spec.json", target: "assets/examples/reading.spec.json" }
+    ]
+  };
+
+  // Files earlier versions installed and the current skill no longer ships, by module.
+  const RETIRED_ASSETS = {
+    "explainer": [
+      "references/html-recipe.md",
+      "references/visual-ip.md",
+      "references/examples.md",
+      "references/insight-composition.md",
+      "references/review-examples.md",
+      "references/examples",
+      "assets/examples/explainer-too-hard.html",
+      "assets/examples/explainer-no-context.html",
+      "assets/examples/explainer-poor-description.html"
     ]
   };
 
@@ -249,8 +265,14 @@ function createInstaller(embeddedOverride) {
    * scripts; it now gets the same skill folders as the other tools.
    */
   function getLegacyPaths(toolId) {
-    if (toolId !== "cursor") return [];
-    return MODULES.map(m => joinPath(TOOL_TARGETS.cursor.baseDir, `engram-quest-${m.id}.mdc`));
+    const toolTarget = TOOL_TARGETS[toolId];
+    if (!toolTarget) return [];
+    // A skill folder is read as a whole, so a guide an earlier version shipped keeps steering the AI
+    // after the skill stopped pointing at it.
+    const retired = Object.entries(RETIRED_ASSETS).flatMap(([id, files]) =>
+      files.map(file => joinPath(toolTarget.baseDir, `engram-quest-${id}`, file)));
+    if (toolId !== "cursor") return retired;
+    return retired.concat(MODULES.map(m => joinPath(TOOL_TARGETS.cursor.baseDir, `engram-quest-${m.id}.mdc`)));
   }
 
   return {

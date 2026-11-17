@@ -19,7 +19,8 @@ description: >
 You write the content of a page as one JSON spec. The plugin draws it: it computes every position,
 follows the app's light or dark theme, adapts to phone width, opens linked notes, and fills in live
 facts from the vault each time the page opens. That division is why a page cannot come out broken,
-so a spec holds words and structure only, with no HTML, CSS, script, or coordinates.
+so a spec holds words and structure only, with no HTML, CSS, script, or coordinates. The one thing you
+may make beside it is a picture file the page shows.
 
 A page is reading material. It has no quiz, score, or schedule of its own, and it leaves source notes
 and review schedules unchanged.
@@ -103,6 +104,11 @@ where this sits in it, watching a mechanism run, setting it beside what it gets 
 one case, learning why it exists: these are examples, not a menu, and a term with nothing around it needs
 none of them. The form is whatever carries that choice.
 
+Ask the same of a picture. The plugin's forms show structure it can lay out from words; what a thing
+looks like, how parts sit in space, or how it resembles something familiar is beyond them. When seeing
+that would give this owner understanding the words leave them to assemble, read `references/picture.md`
+and make one. Most pages need none, and a decorative picture is worse than none.
+
 Then read `references/spec-guide.md`, which sets out how to choose among the four forms and every field of
 the spec. `assets/examples/` holds one finished spec per form; they show the expected finish, and their note
 names are placeholders. An Insight usually has no flashcard, so it omits `card` and uses `origin` to say which
@@ -123,6 +129,8 @@ page. JSON keys and file names stay in English.
 
 **`engram-quest/explainer/{id}.spec.json`**: the spec, as defined in the guide. Field limits are checked when
 the page opens, and a page that fails shows an error instead of content, so count before you save.
+
+**`engram-quest/explainer/images/{id}.{ext}`**: the page's picture, only when it has one.
 
 **`engram-quest/explainer/meta/{id}.json`**:
 
@@ -200,3 +208,5 @@ done: report them as written and add `Synapse: not updated (<reason>)`.
 - Does every point advance understanding rather than repeat the figure?
 - Could the reader rebuild the card's answer from the page?
 - Does every `note` name a real note, or a note genuinely worth writing?
+- If the page has a picture, did you look at the finished image and judge both whether it is correct and
+  whether it reads, and is the file where the spec says?

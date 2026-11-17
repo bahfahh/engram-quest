@@ -117,7 +117,14 @@ describe("installer script path rewriting", () => {
     expect(paths).toContain(".cursor/skills/engram-quest-review-deck/scripts/get_mtime.sh");
     expect(paths.some(p => p.endsWith(".mdc"))).toBe(false);
     expect(installer.getLegacyPaths("cursor")).toContain(".cursor/skills/engram-quest-review-deck.mdc");
-    expect(installer.getLegacyPaths("claude")).toEqual([]);
+    expect(installer.getLegacyPaths("claude").some(p => p.endsWith(".mdc"))).toBe(false);
+  });
+
+  it("marks guides an earlier version shipped for removal, and never a file it still installs", async () => {
+    const legacy = installer.getLegacyPaths("claude");
+    expect(legacy).toContain(".claude/skills/engram-quest-explainer/references/visual-ip.md");
+    const entries = await installer.getInstallEntries("claude", makeAdapter(makeAllBundledFiles()), ".obsidian", { isPro: true });
+    for (const entry of entries) expect(legacy.some(p => entry.path === p || entry.path.startsWith(p + "/"))).toBe(false);
   });
 
   it("does not rewrite scripts/ in non-SKILL.md assets", async () => {

@@ -4,7 +4,7 @@
 // and facts about the owner's vault are read here, when the page opens, so they are always current.
 
 const { loadSrData } = require("../review/helpers");
-const { EXPLAINER_DIR } = require("./data");
+const { EXPLAINER_DIR, IMAGE_TYPES, imageType, imagePath, isImageFile } = require("./data");
 
 // esbuild inlines page/page.css and page/runtime.js here (see esbuild.config.mjs).
 const BUNDLED_PAGE = typeof __EXPLAINER_PAGE__ === "undefined" ? null : __EXPLAINER_PAGE__;
@@ -16,6 +16,24 @@ const DAY_MS = 864e5;
 const MIN_QUOTE_KEY = 4; // shorter than this, finding it in a note proves nothing
 
 const specPath = (id) => `${EXPLAINER_DIR}/${id}.spec.json`;
+
+// A picture the author made for the page. It is a file beside the specs; the page runs in a sandbox
+// with no access to the vault, so the file is read here and handed over as a data URL.
+const IMAGE_MAX_BYTES = 3 * 1024 * 1024;
+
+/** The picture as a data URL, or null when it cannot be shown; the page is then drawn without it. */
+async function imageData(adapter, file) {
+  try {
+    const bytes = new Uint8Array(await adapter.readBinary(imagePath(file)));
+    if (bytes.length > IMAGE_MAX_BYTES) throw new Error("larger than 3 MB");
+    let binary = "";
+    for (let i = 0; i < bytes.length; i += 0x8000) binary += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+    return `data:${imageType(file)};base64,${btoa(binary)}`;
+  } catch (err) {
+    console.warn(`EngramQuest: Deep Dive picture ${file} not shown`, err);
+    return null;
+  }
+}
 
 // Two Latin letters or digits occupy about the width of one CJK character.
 function textLength(value) {
@@ -198,6 +216,12 @@ function checkShapes(f, c) {
   });
 }
 
+function checkImage(im, c) {
+  if (!isImageFile(im.file)) c.fail(`image.file: "${im.file}" must be a file name ending in ${Object.keys(IMAGE_TYPES).join(", ")}`);
+  c.text(im.alt, 60, "image.alt");
+  c.text(im.caption, 70, "image.caption");
+}
+
 /** Everything the page runtime relies on. Returns a list of problems; empty means it can be drawn. */
 function validateSpec(spec) {
   const c = makeChecker();
@@ -227,6 +251,7 @@ function validateSpec(spec) {
     }
     if (spec.edges != null) checkEdges(spec.edges, c);
     if (spec.shapes != null) checkShapes(spec.shapes, c);
+    if (spec.image != null) checkImage(spec.image, c);
   } catch (err) {
     // A wrong shape deep in the file, such as a string where an object belongs.
     c.fail(`malformed: ${err.message}`);
@@ -315,6 +340,10 @@ async function composeSpecPage(app, id, { dark = false, page = BUNDLED_PAGE, now
   await dropUnverifiedQuotes(app, spec, notes);
   // Page labels follow the language the content was written in, not the app's interface language.
   const live = { notes, lang: /[㐀-鿿]/.test(spec.title + spec.hook) ? "zh" : "en" };
+  if (spec.image) {
+    live.image = await imageData(app.vault.adapter, spec.image.file);
+    if (!live.image) delete spec.image;
+  }
   return { html: buildHtml(spec, live, page, dark), notes: names, card: spec.card || null };
 }
 

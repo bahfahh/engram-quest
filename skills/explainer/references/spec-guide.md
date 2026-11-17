@@ -193,6 +193,22 @@ no other text, so the caption says what the panel shows.
 
 2 or 3 panels. `steps` has one entry fewer than `panels`.
 
+### `image` (optional, on any form)
+
+A picture you made, shown under the hook and enlarged when pressed. `picture.md` covers when one earns
+its place and how to make and inspect it. `shapes` is drawn by the plugin from a fixed vocabulary of
+plates; `image` is for what that vocabulary cannot show.
+
+```jsonc
+"image": {
+  "file": "the file name inside engram-quest/explainer/images/, such as https-basics-1785489701.webp",
+  "alt": "what the picture shows, for a reader who cannot see it, at most 60 characters",
+  "caption": "what to read from it, beyond what its labels say, at most 70 characters"
+}
+```
+
+`file` is a name, not a path, ending in `png`, `jpg`, `jpeg`, `webp`, or `svg`.
+
 ## Conventions
 
 - An `id` is a short name without spaces or quotation marks, and cannot be a built-in word such as `constructor`.

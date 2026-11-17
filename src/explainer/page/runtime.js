@@ -87,6 +87,17 @@
     return out;
   }
 
+  // ---- picture: the author's own image; pressing it doubles its size so small labels can be read ----
+  function picture(im) {
+    var fig = h("figure", { class: "pic" }), img = h("img", { src: L.image, alt: im.alt });
+    var zoom = h("button", { type: "button", class: "pz", "aria-pressed": "false", title: T("放大或縮小圖片", "Enlarge or shrink the picture") }, [img]);
+    zoom.addEventListener("click", function () { zoom.setAttribute("aria-pressed", fig.classList.toggle("zoom") ? "true" : "false"); });
+    // A file that is not really an image would leave a broken icon above a caption about nothing.
+    img.addEventListener("error", function () { fig.remove(); });
+    fig.appendChild(h("div", { class: "ps" }, [zoom])); fig.appendChild(h("figcaption", { text: im.caption }));
+    return fig;
+  }
+
   // ---- shapes: plates drawn from a vocabulary, so the picture carries no coordinates or text -------
   function plate(pl, cx, cy, hw, hh, dx) {
     var P = function (u, v) { return (cx + dx - hw + (u + v) * hw).toFixed(1) + " " + (cy + (v - u) * hh).toFixed(1); };
@@ -440,6 +451,7 @@
   try {
   var gaps = Object.keys(L.notes).filter(function (n) { return !L.notes[n].exists; });
   [h("p", { class: "origin", text: S.origin }), h("h1", { text: S.title }), h("p", { class: "sub", text: S.hook }),
+    S.image && L.image ? picture(S.image) : null,
     S.form === "machine" ? machine(S.machine) : S.form === "map" ? map(S.map) : S.form === "contrast" ? contrast(S.contrast) : null,
     S.shapes ? shapes(S.shapes) : null,
     h("h3", { text: S.form === "reading" ? T("其實是這樣", "What is really going on") : T("背後的道理", "Why it works") }),
