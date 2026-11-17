@@ -93,7 +93,7 @@ class SynapseMapSession {
         if (redraw) redraw();
       };
       if (node.type === "note") {
-        this.openers.note(node.ref);
+        await this.openers.note(node.ref);
       } else if (node.type === "lesson") {
         const meta = await loadCourse(this.adapter, entry.slug);
         const lesson = meta && meta.lessons.find((l) => l.id === entry.lessonId);

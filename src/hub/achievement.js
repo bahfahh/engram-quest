@@ -3,6 +3,9 @@ const I = require("obsidian");
 const { t: c } = require("../i18n");
 const { getReviewStatus } = require("../review/helpers");
 const { listCourses, courseProgress } = require("../lessons/data");
+const { listTopics, readEpisodic, videoProgress } = require("../videos/data");
+const { teacherOfVideo } = require("../videos/teachers");
+const { scanExplainers, readState } = require("../explainer/data");
 const ui = require("./ui");
 const { assetUrl } = require("../assets");
 
@@ -45,6 +48,21 @@ const ACHIEVEMENTS = [
   { id: "lesson_marathon",  icon: "assets/icons/lesson_marathon.webp",  rarity: "R",   threshold: 10,    field: "completedLessons",   nameKey: "ACH_LESSON_MARATHON_NAME",  descKey: "ACH_LESSON_MARATHON_DESC"  },
   { id: "first_quest_step", icon: "assets/icons/first_quest_step.webp", rarity: "UC",  threshold: 1,     field: "completedQuestNodes", nameKey: "ACH_FIRST_QUEST_STEP_NAME", descKey: "ACH_FIRST_QUEST_STEP_DESC" },
   { id: "quest_veteran",    icon: "assets/icons/quest_veteran.webp",    rarity: "R",   threshold: 10,    field: "completedQuestNodes", nameKey: "ACH_QUEST_VETERAN_NAME",    descKey: "ACH_QUEST_VETERAN_DESC"    },
+  { id: "first_video", icon: "assets/icons/first_video.webp", rarity: "UC", threshold: 1, field: "completedVideos", nameKey: "ACH_FIRST_VIDEO_NAME", descKey: "ACH_FIRST_VIDEO_DESC" },
+  { id: "video_trio", icon: "assets/icons/video_trio.webp", rarity: "R", threshold: 3, field: "maxVideosInSeries", nameKey: "ACH_VIDEO_TRIO_NAME", descKey: "ACH_VIDEO_TRIO_DESC" },
+  { id: "video_graduate", icon: "assets/icons/video_graduate.webp", rarity: "R", threshold: 1, field: "completedVideoSeries", nameKey: "ACH_VIDEO_GRADUATE_NAME", descKey: "ACH_VIDEO_GRADUATE_DESC" },
+  { id: "video_regular", icon: "assets/icons/video_regular.webp", rarity: "R", threshold: 10, field: "completedVideos", nameKey: "ACH_VIDEO_REGULAR_NAME", descKey: "ACH_VIDEO_REGULAR_DESC" },
+  { id: "video_explorer", icon: "assets/icons/video_explorer.webp", rarity: "R", threshold: 3, field: "startedVideoSeries", nameKey: "ACH_VIDEO_EXPLORER_NAME", descKey: "ACH_VIDEO_EXPLORER_DESC" },
+  { id: "first_recall_film", icon: "assets/icons/first_recall_film.webp", rarity: "UC", threshold: 1, field: "completedRecallFilms", nameKey: "ACH_FIRST_RECALL_FILM_NAME", descKey: "ACH_FIRST_RECALL_FILM_DESC" },
+  { id: "recall_collection", icon: "assets/icons/recall_collection.webp", rarity: "R", threshold: 3, field: "starredCompletedRecallFilms", nameKey: "ACH_RECALL_COLLECTION_NAME", descKey: "ACH_RECALL_COLLECTION_DESC" },
+  { id: "quest_trilogy", icon: "assets/icons/quest_trilogy.webp", rarity: "LEG", threshold: 3, field: "clearedQuestCount", nameKey: "ACH_QUEST_TRILOGY_NAME", descKey: "ACH_QUEST_TRILOGY_DESC" },
+  { id: "mixed_media", icon: "assets/icons/mixed_media.webp", rarity: "R", threshold: 2, field: "completedMediaTypes", nameKey: "ACH_MIXED_MEDIA_NAME", descKey: "ACH_MIXED_MEDIA_DESC" },
+  { id: "first_deep_dive", pro: true, icon: "assets/icons/first_deep_dive.webp", rarity: "UC", threshold: 1, field: "completedDeepDives", nameKey: "ACH_FIRST_DEEP_DIVE_NAME", descKey: "ACH_FIRST_DEEP_DIVE_DESC" },
+  { id: "deep_dive_five", pro: true, icon: "assets/icons/deep_dive_five.webp", rarity: "R", threshold: 5, field: "completedDeepDives", nameKey: "ACH_DEEP_DIVE_FIVE_NAME", descKey: "ACH_DEEP_DIVE_FIVE_DESC" },
+  { id: "pro_teacher_lesson", pro: true, icon: "assets/icons/pro_teacher_lesson.webp", rarity: "R", threshold: 1, field: "completedProTeacherVideos", nameKey: "ACH_PRO_TEACHER_LESSON_NAME", descKey: "ACH_PRO_TEACHER_LESSON_DESC" },
+  { id: "synapse_exploration", pro: true, icon: "assets/icons/synapse_exploration.webp", rarity: "UC", threshold: 1, field: "synapseContentOpens", nameKey: "ACH_SYNAPSE_EXPLORATION_NAME", descKey: "ACH_SYNAPSE_EXPLORATION_DESC" },
+  { id: "timebox_round", pro: true, icon: "assets/icons/timebox_round.webp", rarity: "UC", threshold: 1, field: "completedTimeboxes", nameKey: "ACH_TIMEBOX_ROUND_NAME", descKey: "ACH_TIMEBOX_ROUND_DESC" },
+  { id: "timebox_habit", pro: true, icon: "assets/icons/timebox_habit.webp", rarity: "R", threshold: 5, field: "completedTimeboxes", nameKey: "ACH_TIMEBOX_HABIT_NAME", descKey: "ACH_TIMEBOX_HABIT_DESC" },
 ];
 
 const RARITY_DARK = {
@@ -112,7 +130,7 @@ function openAchievementDetail(plugin, ach, val) {
   const modal = ui.themedModal(new I.Modal(plugin.app));
   modal.modalEl.addClass("lh-ach-modal");
   const el = modal.contentEl;
-  el.createEl("div", { cls: "lh-ach-rar", text: ach.rarity });
+  el.createEl("div", { cls: "lh-ach-rar", text: ach.pro ? `Pro · ${ach.rarity}` : ach.rarity });
   addAchievementIcon(el.createEl("div", { cls: "lh-ach-img" + achievementClass(ach, isUnlocked) }), plugin, ach);
   el.createEl("div", { cls: "lh-confirm-title", text: c(t, ach.nameKey) });
   el.createEl("div", { cls: "lh-confirm-body", text: c(t, ach.descKey) });
@@ -123,7 +141,12 @@ function openAchievementDetail(plugin, ach, val) {
   modal.open();
 }
 
-function buildAchievementEvalCtx(st = {}, decks = [], quests = [], memories = [], courses = []) {
+function playableVideos(meta) {
+  return [...new Map((meta?.videos || []).filter(video => video.id && video.file)
+    .map(video => [video.id, video])).values()];
+}
+
+function buildAchievementEvalCtx(st = {}, decks = [], quests = [], memories = [], courses = [], content = {}) {
   let masteredTotal = 0;
   const counts = { mastered: 0, learning: 0, due: 0, unseen: 0, total: 0 };
   for (const deck of decks) {
@@ -156,8 +179,35 @@ function buildAchievementEvalCtx(st = {}, decks = [], quests = [], memories = []
     return sum;
   }, 0);
 
+  const videoStats = {
+    completedVideos: 0, completedVideoSeries: 0, maxVideosInSeries: 0,
+    startedVideoSeries: 0, completedProTeacherVideos: 0,
+  };
+  for (const { meta } of content.videoTopics || []) {
+    const videos = playableVideos(meta);
+    const done = videos.filter(video => videoProgress(meta, video.id).completed);
+    videoStats.completedVideos += done.length;
+    videoStats.maxVideosInSeries = Math.max(videoStats.maxVideosInSeries, done.length);
+    if (done.length > 0) videoStats.startedVideoSeries++;
+    if (videos.length >= 2 && done.length === videos.length) videoStats.completedVideoSeries++;
+    videoStats.completedProTeacherVideos += done.filter(video =>
+      teacherOfVideo(video.cast?.teacher)?.tier === "pro").length;
+  }
+
+  const recall = content.recallMeta;
+  const finishedRecall = playableVideos(recall).map(video => videoProgress(recall, video.id))
+    .filter(progress => progress.completed);
+  const deepDiveIds = new Set((content.deepDivePages || []).map(page => page.id).filter(Boolean));
+
   return {
     evalCtx: {
+      ...videoStats,
+      completedRecallFilms: finishedRecall.length,
+      starredCompletedRecallFilms: finishedRecall.filter(progress => progress.starred).length,
+      completedMediaTypes: Number(completedLessons > 0) + Number(videoStats.completedVideos > 0),
+      completedDeepDives: [...deepDiveIds].filter(id => content.deepDiveState?.[id]?.completed).length,
+      synapseContentOpens: st.synapseContentOpens || 0,
+      completedTimeboxes: st.completedTimeboxes || 0,
       totalCardsReviewed: st.totalCardsReviewed || 0,
       longestStreak: st.longestStreak || 0,
       maxDaily,
@@ -180,18 +230,33 @@ function buildAchievementEvalCtx(st = {}, decks = [], quests = [], memories = []
   };
 }
 
-async function renderAchievementTab(containerEl, plugin, decks, quests = [], memories = [], courses = null) {
-  if (!courses) {
+async function renderAchievementTab(parent, plugin, decks, quests = [], memories = [], courses = null) {
+  const containerEl = parent.createDiv({ cls: "lh-achievement-page" });
+  const loading = containerEl.createDiv({ cls: "lh-loading" });
+  loading.createDiv({ cls: "lh-spinner" });
+  const adapter = plugin.app.vault.adapter;
+  const load = async (label, read, fallback) => {
     try {
-      courses = await listCourses(plugin.app.vault.adapter);
-    } catch (e) {
-      console.warn("EngramQuest: lesson achievements scan failed", e);
-      courses = [];
+      return await read(adapter);
+    } catch (error) {
+      console.warn(`EngramQuest: ${label} achievements scan failed`, error);
+      return fallback;
     }
-  }
+  };
+  const [courseItems, videoTopics, recall, deepDives, deepDiveState] = await Promise.all([
+    courses || load("lesson", listCourses, []),
+    load("video", listTopics, []),
+    load("recall film", readEpisodic, null),
+    load("Deep Dive", scanExplainers, null),
+    load("Deep Dive progress", readState, {}),
+  ]);
+  if (!containerEl.isConnected) return;
+  loading.remove();
   const t = plugin.settings;
   const { evalCtx, counts, dailyLog, totalReviewed, currentStreak } =
-    buildAchievementEvalCtx(t._stats || {}, decks, quests, memories, courses);
+    buildAchievementEvalCtx(t._stats || {}, decks, quests, memories, courseItems, {
+      videoTopics, recallMeta: recall?.meta, deepDivePages: deepDives?.pages, deepDiveState,
+    });
 
   if (!ui.isPhone()) ui.pageHeader(containerEl, { app: plugin.app, plugin }, { titleKey: "TAB_ACHIEVEMENT", guide: "achievement" });
   ui.metrics(containerEl, [
@@ -228,7 +293,7 @@ async function renderAchievementTab(containerEl, plugin, decks, quests = [], mem
     const val = evalCtx[ach.field] || 0;
     const isUnlocked = val >= ach.threshold;
     const card = grid.createEl("div", { cls: "lh-ac" + achievementClass(ach, isUnlocked), attr: { role: "button", tabindex: "0" } });
-    card.createEl("span", { cls: "lh-ach-rar", text: ach.rarity });
+    card.createEl("span", { cls: "lh-ach-rar", text: ach.pro ? `Pro · ${ach.rarity}` : ach.rarity });
     addAchievementIcon(card, plugin, ach);
     card.createEl("b", { text: c(t, ach.nameKey) });
     card.createEl("small", { text: c(t, ach.descKey) });

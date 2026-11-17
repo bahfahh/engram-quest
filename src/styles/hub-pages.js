@@ -467,6 +467,7 @@ body.is-phone .lh-hd:has(.lh-hd-right) { align-items:center; }
 `;
 
 const achievements = `
+.lh-achievement-page { display:flex; flex-direction:column; flex:1; min-height:0; }
 .lh-ach-charts { display:grid; grid-template-columns:330px minmax(0,1fr); gap:12px; padding:0 0 12px; }
 .lh-ach-fam { display:flex; align-items:center; gap:18px; }
 .lh-ach-fam .lh-dn { margin:0; flex:none; }

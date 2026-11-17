@@ -204,6 +204,8 @@ function buildEvalContext(st) {
     maxDaily:           vals.length > 0 ? Math.max(...vals) : 0,
     perfectSessions:    (st && st.perfectSessions)    || 0,
     totalAgainCount:    (st && st.totalAgainCount)    || 0,
+    synapseContentOpens: (st && st.synapseContentOpens) || 0,
+    completedTimeboxes: (st && st.completedTimeboxes) || 0,
   };
 }
 
@@ -224,6 +226,8 @@ var Q=class extends I.Modal{
     this._timerIntervalId=null;
     this._timerEl=null;
     this._timeboxExpired=false;
+    this._timeboxRatedCard=false;
+    this._timeboxCounted=false;
   }
 
   onOpen(){
@@ -248,6 +252,7 @@ var Q=class extends I.Modal{
     const remaining=this._timeboxMinutes*60-elapsed;
     if(remaining<=0&&!this._timeboxExpired){
       this._timeboxExpired=true;
+      this._recordTimeboxCompletion();
       window.clearInterval(this._timerIntervalId); this._timerIntervalId=null;
     }
     if(!this._timerEl||!this._timerEl.isConnected) return;
@@ -292,7 +297,11 @@ var Q=class extends I.Modal{
       openers:{
         // A note opens in Obsidian and the session steps aside so it can be read; the rest open in
         // the viewer the Hub already uses for them, on top of the session.
-        note:(path)=>{ this.app.workspace.openLinkText(path,"",false); this._minimize(); },
+        note:async(path)=>{
+          if (!this.app.vault.getAbstractFileByPath(path)) throw new Error("Synapse note is missing");
+          await this.app.workspace.openLinkText(path,"",false);
+          this._minimize();
+        },
         lesson:({slug,meta,lesson,onClose})=>{
           if(lesson.type==="canvas") new CanvasLessonModal(this.app,this.plugin,slug,meta,lesson,onClose,this).open();
           else new LessonViewerModal(this.app,this.plugin,slug,meta,lesson,onClose).open();
@@ -333,8 +342,17 @@ var Q=class extends I.Modal{
     this._persist();
   }
 
+  _recordTimeboxCompletion(){
+    if(!this._timeboxMinutes||!this._timeboxRatedCard||this._timeboxCounted) return;
+    this._timeboxCounted=true;
+    const stats=this.plugin.settings._stats||={};
+    stats.completedTimeboxes=(stats.completedTimeboxes||0)+1;
+    this._persist();
+  }
+
   // Task 6: completion screen
   _renderComplete(){
+    this._recordTimeboxCompletion();
     let t=this.plugin.settings;
     if(!this.noResume){
       delete this.plugin.settings._reviewProgress;
@@ -765,6 +783,7 @@ var Q=class extends I.Modal{
                 new I.Notice(c(t,"RATING_SAVE_FAILED"));
               });
             }
+            this._timeboxRatedCard=true;
             // Stats tracking for achievement system
             try {
               let _st=recordReviewDay(this.plugin.settings._stats);
@@ -895,7 +914,15 @@ var Q=class extends I.Modal{
           else el.textContent=c(t,"SYNAPSE_NO_BACK");
         },
         onSelect:(node)=>{
-          if(node.type!=="card"){ this._synapse.open(node,()=>{ if(parent.isConnected) refresh(); }); return; }
+          if(node.type!=="card"){
+            this._synapse.open(node,()=>{ if(parent.isConnected) refresh(); }).then(opened=>{
+              if(!opened) return;
+              const stats=this.plugin.settings._stats||={};
+              stats.synapseContentOpens=(stats.synapseContentOpens||0)+1;
+              this._persist();
+            });
+            return;
+          }
           if(node.locked) return;
           this._synapseExpandedId=this._synapseExpandedId===node.id?null:node.id;
           refresh();
