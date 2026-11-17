@@ -49,6 +49,45 @@ describe("wrapSelection", () => {
     expect(wrapSelection("see the\n[docs](https://x.y) now", "the docs now", "==")).toBe("see ==the\n[docs](https://x.y) now==");
   });
 
+  // Obsidian reads `==x==` as a highlight but not `====x====`, which shows its marks as text (ticket-081).
+  it("takes the highlight off text that is already highlighted, instead of nesting another", () => {
+    const card = "應避免問「你需要什麼軟體」，改問「你每天最煩的重複工作是什麼」";
+    const once = wrapSelection(card, "改問", "==");
+    expect(once).toBe("應避免問「你需要什麼軟體」，==改問==「你每天最煩的重複工作是什麼」");
+    expect(wrapSelection(once, "改問", "==")).toBe(card);
+  });
+
+  it("takes the whole highlight off when part of it is selected", () => {
+    expect(wrapSelection("==abc def== g", "def", "==")).toBe("abc def g");
+  });
+
+  it("joins a highlight the selection runs into", () => {
+    expect(wrapSelection("==bc== d", "c d", "==")).toBe("==bc d==");
+    expect(wrapSelection("a ==bc==", "a b", "==")).toBe("==a bc==");
+  });
+
+  it("takes in a whole highlight inside the selection", () => {
+    expect(wrapSelection("a ==b== c", "a b c", "==")).toBe("==a b c==");
+  });
+
+  it("never writes a pair inside a pair, however the presses go", () => {
+    const src = "x ==ab== cd ==ef== y";
+    for (const sel of ["ab", "b cd", "ab cd ef", "cd", "x ab", "f y", "b", "x ab cd ef y"]) {
+      expect(wrapSelection(src, sel, "==")).not.toMatch(/={3,}/);
+    }
+  });
+
+  it("leaves == inside inline code alone", () => {
+    expect(wrapSelection("`x == y` then z", "then z", "==")).toBe("`x == y` ==then z==");
+    expect(wrapSelection("use `a == b` here", "use a == b here", "==")).toBe("==use `a == b` here==");
+    expect(wrapSelection("`a == b` c ==d==", "c", "==")).toBe("`a == b` ==c== ==d==");
+  });
+
+  it("leaves a == with space on both sides alone, as Obsidian does", () => {
+    expect(wrapSelection("x == y 表示相等，==重點==", "表示相等", "==")).toBe("x == y ==表示相等==，==重點==");
+    expect(wrapSelection("x == y 表示相等，==重點==", "重點", "==")).toBe("x == y 表示相等，重點");
+  });
+
   it("returns null when the text is not in the source", () => {
     expect(wrapSelection(SRC, "不存在的字", "==")).toBe(null);
     expect(locateSelection(SRC, "")).toBe(null);

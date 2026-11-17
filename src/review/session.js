@@ -19,6 +19,7 @@ const { LessonViewerModal, CanvasLessonModal } = require("../lessons/viewer-moda
 const { addRewatchButton, rewatchTarget, openRewatch } = require("../videos/rewatch");
 const { fitDiagrams } = require("../ui/diagram-fit");
 const { useBack } = require("../ui/back-nav");
+const { attachSelectionToolbar } = require("../ui/selection-toolbar");
 const { watchTheme, themedModal, restoreButton: _restoreButton, featureIcon: _featureIcon, icon: _uiIcon, iconButton: _uiIconButton, backButton: _uiBackButton, isPhone: _isPhone } = require("../hub/ui");
 const W_ref = { get locale() { try { return I.moment && I.moment.locale && I.moment.locale(); } catch(e) { return "en"; } } };
 function L(s) { return _getLocale(s, W_ref.locale); }
@@ -634,13 +635,14 @@ var Q=class extends I.Modal{
       if(!phone) renderAnswerFeatures(answerHeader,features);
       // Formatting tools.
       let fmtBtns=answerHeader.createEl("div",{attr:{class:"lh-answer-fmt-btns"}});
+      let fmtActions=null;
       if(e.notePath){
         // In-place answer refresh — full _renderCardContent rebuilds .lh-review-card and
         // resets scrollTop, which the user perceives as a flash + jump-to-top when they
         // had scrolled down to highlight something. Updating just answerEl preserves scroll.
         const refreshAnswerEl=()=>{ renderMd(answerEl,e.back); selectedAnswerText=""; };
-        const applyAnswerFmt=async(wrap)=>{
-          const rawSel=(captureAnswerSelection()||selectedAnswerText).replace(/\r\n/g,"\n");
+        const applyAnswerFmt=async(wrap,picked)=>{
+          const rawSel=(picked||captureAnswerSelection()||selectedAnswerText).replace(/\r\n/g,"\n");
           if(!rawSel){new I.Notice(c(t,"FORMAT_SELECT_TEXT"));return;}
           // The selection is rendered text; the source also holds hidden markup and line breaks.
           const oldBack=e.back;
@@ -656,8 +658,8 @@ var Q=class extends I.Modal{
         let hlBtn=fmtBtns.createEl("button",{text:c(t,"FORMAT_HIGHLIGHT"),attr:{class:"lh-rc-edit-btn lh-fmt-btn"}});
         hlBtn.addEventListener("mousedown",(ev)=>{captureAnswerSelection();ev.preventDefault();});
         hlBtn.addEventListener("click",()=>applyAnswerFmt("=="));
-        const applyBlockquoteToBack=async()=>{
-          const selectedText=(captureAnswerSelection()||selectedAnswerText||'').trim();
+        const applyBlockquoteToBack=async(picked)=>{
+          const selectedText=(picked||captureAnswerSelection()||selectedAnswerText||'').trim();
           if(!selectedText){new I.Notice(c(t,"FORMAT_SELECT_PARA"));return;}
           const lines=e.back.split('\n');
           // Quote only the lines the selection covers; a selection that cannot be found changes nothing.
@@ -677,12 +679,15 @@ var Q=class extends I.Modal{
         };
         let bqBtn=fmtBtns.createEl("button",{text:c(t,"FORMAT_BLOCKQUOTE"),attr:{class:"lh-rc-edit-btn lh-fmt-btn"}});
         bqBtn.addEventListener("mousedown",(ev)=>{captureAnswerSelection();ev.preventDefault();});
-        bqBtn.addEventListener("click",applyBlockquoteToBack);
+        bqBtn.addEventListener("click",()=>applyBlockquoteToBack());
+        // The same two tools beside the selection itself, so a long answer need not be scrolled back up.
+        fmtActions=[{label:c(t,"FORMAT_HIGHLIGHT"),run:(s)=>applyAnswerFmt("==",s)},{label:c(t,"FORMAT_BLOCKQUOTE"),run:(s)=>applyBlockquoteToBack(s)}];
       }
       answerEl=p.createEl("div",{attr:{class:"lh-answer-text"+(String(e.back||"").length<=90?" is-short":"")}});
       renderMd(answerEl,e.back);
       answerEl.addEventListener("mouseup",captureAnswerSelection);
       answerEl.addEventListener("keyup",captureAnswerSelection);
+      if(fmtActions) attachSelectionToolbar({host:p,target:answerEl,actions:fmtActions,owner:mdOwner,prefer:I.Platform&&I.Platform.isMobile?"below":"above"});
       // Once the answer shows, the relation map sits below it: the answer stays the first thing in view.
       // On a phone the feature row comes first and the map opens right under it, above the note link.
       if(phone){

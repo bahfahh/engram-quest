@@ -175,7 +175,19 @@ body:not(.is-phone) .lh-hub.lh-session .lh-answer-header { flex-wrap:wrap; row-g
 .lh-hub.lh-session .lh-answer-label { display:inline-flex; align-items:center; height:28px; padding:0 12px; border-radius:9px; background:var(--fill); color:var(--text) !important; font-size:13.5px; font-weight:700; text-transform:none; letter-spacing:0; }
 .lh-hub.lh-session .lh-answer-fmt-btns { display:flex; align-items:center; gap:6px; margin-left:auto; flex-wrap:wrap; justify-content:flex-end; }
 .lh-hub.lh-session .lh-answer-text { color:var(--text) !important; font-size:16.5px; line-height:1.65; }
-.lh-hub.lh-session .lh-answer-text mark { background:var(--fill); color:var(--text); }
+/* A highlight in the answer looks like one in the owner's notes, not like the grey fill labels and code blocks use.
+   The answer is not drawn as .markdown-rendered, so Obsidian's own mark rule does not reach it: this repeats it.
+   Obsidian 1.15 colours highlights with --highlight-background and no longer defines --text-highlight-bg (a theme
+   may still set it); older versions only have the latter. */
+.lh-hub.lh-session .lh-answer-text mark { background:var(--highlight-background, var(--text-highlight-bg, rgba(255,208,0,.4))); color:inherit; }
+/* Highlight and quote beside a selection in the answer (src/ui/selection-toolbar.js): placed in the answer block
+   so it scrolls with the text; hidden until text is selected. Phones and tablets get finger-sized buttons. */
+.lh-hub.lh-session .lh-answer-block { position:relative; }
+.lh-hub.lh-session .lh-sel-bar { position:absolute; z-index:5; display:none; gap:2px; padding:4px; border-radius:12px; background:var(--raised); box-shadow:var(--float); white-space:nowrap; }
+.lh-hub.lh-session .lh-sel-bar.is-shown { display:flex; }
+.lh-hub.lh-session .lh-sel-bar-btn { height:32px; margin:0; padding:0 12px !important; border:0 !important; border-radius:8px !important; background:transparent !important; box-shadow:none !important; color:var(--tint) !important; font-size:13.5px; font-weight:600; cursor:pointer; }
+.lh-hub.lh-session .lh-sel-bar-btn:hover,.lh-hub.lh-session .lh-sel-bar-btn:focus-visible { background:var(--fill) !important; }
+body.is-mobile .lh-hub.lh-session .lh-sel-bar-btn { height:40px; padding:0 16px !important; font-size:15px; }
 .lh-hub.lh-session .lh-answer-text blockquote,.lh-hub.lh-session .lh-hint-text blockquote { border-left:3px solid var(--line); background:transparent; }
 /* Code blocks in the card's question, hints, answer and in a Synapse node. The markdown is drawn without
    Obsidian's reading-view class, so its block styling does not apply: a block that names no language neither

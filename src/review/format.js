@@ -12,10 +12,18 @@ const PAIRS = ["**", "==", "~~", "`"];
 
 const escape = (ch) => ch.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
-function count(text, marker) {
-  let n = 0;
-  for (let i = text.indexOf(marker); i !== -1; i = text.indexOf(marker, i + marker.length)) n++;
-  return n;
+// Where `marker` stands as markup in `source`. Inside inline code `==` or `**` is plain text (`a == b`),
+// so it neither opens nor closes a pair.
+function markerPositions(source, marker) {
+  const at = [];
+  let code = false;
+  for (let i = 0; i < source.length;) {
+    if (marker !== "`" && source[i] === "`") { code = !code; i++; continue; }
+    // With space on both sides it can neither open nor close a pair, as in `x == y` written in prose.
+    const loose = /\s/.test(source[i - 1] || " ") && /\s/.test(source[i + marker.length] || " ");
+    if (!code && source.startsWith(marker, i) && !loose) { at.push(i); i += marker.length; } else i++;
+  }
+  return at;
 }
 
 /**
@@ -35,26 +43,45 @@ function locateSelection(source, selection) {
     end = start + m[0].length;
   }
   for (const marker of PAIRS) {
-    const openAtStart = count(source.slice(0, start), marker) % 2 === 1;
-    const openAtEnd = count(source.slice(0, end), marker) % 2 === 1;
+    const at = markerPositions(source, marker);
+    const before = (i) => at.filter((p) => p + marker.length <= i);
+    const openAtStart = before(start).length % 2 === 1;
+    const openAtEnd = before(end).length % 2 === 1;
     // Wholly inside one pair: wrapping inside it is valid markdown, so leave the span alone.
-    if (openAtStart && openAtEnd && count(source.slice(start, end), marker) === 0) continue;
+    if (openAtStart && openAtEnd && before(end).length === before(start).length) continue;
     // Starts inside a pair: begin at its opening marker.
-    if (openAtStart) start = source.lastIndexOf(marker, start - marker.length);
+    if (openAtStart) start = before(start).pop();
     // Ends inside a pair: end after its closing marker.
     if (openAtEnd) {
-      const close = source.indexOf(marker, end);
-      if (close !== -1) end = close + marker.length;
+      const close = at.find((p) => p >= end);
+      if (close !== undefined) end = close + marker.length;
     }
   }
   return { start, end };
 }
 
-/** `source` with the selection wrapped in `wrap` (e.g. "=="), or null when it cannot be found. */
+/**
+ * `source` with the selection wrapped in `wrap` (e.g. "=="), or null when it cannot be found. A pair never
+ * goes inside another of its kind: Obsidian does not read `====text====` as a highlight and shows the
+ * marks as text. So a selection wholly inside a pair takes that pair off (Highlight on highlighted text
+ * removes the highlight, as Obsidian's own toggle does), and a pair the selection takes in or runs into
+ * becomes part of the one new pair.
+ */
 function wrapSelection(source, selection, wrap) {
   const span = locateSelection(source, selection);
   if (!span) return null;
-  return source.slice(0, span.start) + wrap + source.slice(span.start, span.end) + wrap + source.slice(span.end);
+  const { start, end } = span;
+  const at = markerPositions(source, wrap);
+  const opened = at.filter((p) => p + wrap.length <= start);
+  const inside = at.filter((p) => p >= start && p + wrap.length <= end);
+  const close = at.find((p) => p >= end);
+  if (opened.length % 2 === 1 && inside.length === 0 && close !== undefined) {
+    const open = opened.pop();
+    return source.slice(0, open) + source.slice(open + wrap.length, close) + source.slice(close + wrap.length);
+  }
+  let body = "", from = start;
+  for (const p of inside) { body += source.slice(from, p); from = p + wrap.length; }
+  return source.slice(0, start) + wrap + body + source.slice(from, end) + wrap + source.slice(end);
 }
 
 /** First and last line index of `source` the selection covers, or null when it cannot be found. */

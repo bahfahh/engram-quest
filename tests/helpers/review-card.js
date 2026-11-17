@@ -15,6 +15,9 @@ const NOTE = "Git/Git 基礎 閃卡.md";
 const ORIGINAL = { contains: obsidian.activeDocument.body.classList.contains, Menu: obsidian.Menu };
 export const CARD = { front: "git status 的用途？", back: "顯示哪些檔案被修改、已暫存或未追蹤。", notePath: NOTE };
 
+// The document the card is drawn in; nothing in these tests dispatches events on it.
+const DOC = { defaultView: {}, addEventListener() {}, removeEventListener() {} };
+
 export class FakeEl {
   constructor(tag = "div", opts = {}) {
     this.tag = tag;
@@ -33,7 +36,11 @@ export class FakeEl {
       toggle: (name, on) => (on ?? !this.cls.has(name) ? this.cls.add(name) : this.cls.delete(name)),
     };
   }
+  get ownerDocument() { return DOC; }
   createEl(tag, opts) { return this.appendChild(new FakeEl(tag, opts)); }
+  createDiv(opts) { return this.createEl("div", opts); }
+  addClass(name) { this.cls.add(name); }
+  removeClass(name) { this.cls.delete(name); }
   // As in the DOM: appending an element that is already in the tree moves it.
   appendChild(child) {
     if (!(child instanceof FakeEl)) return child;

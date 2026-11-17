@@ -44,6 +44,7 @@ class Component {
   constructor() { this.loaded = false; this.unloads = 0; }
   load() { this.loaded = true; }
   unload() { this.loaded = false; this.unloads += 1; }
+  registerDomEvent(el, type, callback) { el.addEventListener(type, callback); }
 }
 
 class Modal {
