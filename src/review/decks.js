@@ -94,6 +94,7 @@ async function scanReviewDecks(app, settings, reviewHelpers) {
   } catch (e) {
     console.warn("engram-review: migration failed, continuing without it", e);
   }
+  await scanCache.whenRestored();
   let files = notesOnly(app.vault.getMarkdownFiles());
   let deckMap = {};
   const srScan = settings.enableSRScan ?? false;

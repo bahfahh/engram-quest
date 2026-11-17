@@ -40,7 +40,7 @@ async loadData(){await Promise.all([this.loadDecks(),this.loadLibrary()]);}
 // Which load promises a tab needs before it can render. Explainer/lesson tabs do their own
 // scoped loads; achievement (and anything unknown) needs everything.
 _needsFor(h){return h==="review"?[this._ensureDecks()]:h==="memory"||h==="quest"?[this._ensureLibrary()]:h==="explainer"||h==="lesson"||h==="video"||h==="episodic"?[]:h==="achievement"?[this._ensureDecks(),this._ensureLibrary(),this.loadLessons()]:[this._ensureDecks(),this._ensureLibrary()]}
-async _loadLibrary(){this.quests=[];
+async _loadLibrary(){await scanCache.whenRestored();this.quests=[];
 // Quest scan: filter candidates via metadataCache (sync), then read them with bounded
 // parallelism. cachedRead serves from Obsidian's in-memory cache when available.
 const _readNote=e=>this.app.vault.cachedRead?this.app.vault.cachedRead(e):this.app.vault.read(e);

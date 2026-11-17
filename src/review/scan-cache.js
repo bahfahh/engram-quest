@@ -85,7 +85,13 @@ function importAll(data) {
     }
   }
 }
+// While the copy saved on this device is being restored (scan-cache-store.js), scans wait for it
+// rather than read files the restore is about to cover.
+let restoring = null;
+function setRestoring(promise) { restoring = promise; }
+function whenRestored() { return restoring || Promise.resolve(); }
+
 /** fn() runs after any change; returns a function that stops it. */
 function onChange(fn) { listeners.add(fn); return () => listeners.delete(fn); }
 
-module.exports = { setStamper, stampOf, fileStamp, get, put, drop, prune, clear, exportAll, importAll, onChange, clone };
+module.exports = { setRestoring, whenRestored, setStamper, stampOf, fileStamp, get, put, drop, prune, clear, exportAll, importAll, onChange, clone };
