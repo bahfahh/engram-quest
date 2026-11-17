@@ -7,7 +7,7 @@ const { t: c } = require("../i18n");
 const { ProUpgradeModal } = require("../license/upgrade");
 const { HelpModal } = require("./help");
 const { attachInfoButton, hasFeatureGuide } = require("./feature-guide");
-const { STAR, PLAY, rawIcon, iconButton, featureIcon, isPhone, metrics, segBar, clearCapsuleActions } = require("./ui");
+const { STAR, PLAY, rawIcon, iconButton, backButton, featureIcon, isPhone, metrics, segBar, clearCapsuleActions } = require("./ui");
 const { RAIL_MAX_WIDTH, isCollapsed, setCollapsed, watchingTab } = require("./sidebar");
 const { renderPhoneContinue } = require("../videos/render");
 const { TABS, categories } = require("./categories");
@@ -238,12 +238,11 @@ function renderPhoneSub(hub, shell, page, cats) {
   const cat = cats.find(x => x.tabs.includes(page)) || cats[0];
   const body = shell.createEl("div", { cls: "lh-pbody" });
   const nav = body.createEl("div", { cls: "lh-pnav" });
-  const back = nav.createEl("div", { cls: "lh-pnav-side" }).createEl("button", { cls: "lh-pback", text: `‹ ${cat.label}` });
-  back.addEventListener("click", () => { if (hub.phoneNav.onBack) hub.phoneNav.onBack(); else hub._closePhonePage(); });
+  const back = backButton(nav.createEl("div", { cls: "lh-pnav-side" }), cat.label, () => { if (hub.phoneNav.onBack) hub.phoneNav.onBack(); else hub._closePhonePage(); });
   nav.createEl("span", { cls: "lh-pnav-title", text: c(t, TABS[page].key) });
   const side = nav.createEl("div", { cls: "lh-pnav-side" });
   if (hasFeatureGuide(page)) attachInfoButton(side, hub.app, hub.plugin, page);
-  hub.phoneNav = { back, title: nav.querySelector(".lh-pnav-title"), side, backLabel: back.textContent, titleText: c(t, TABS[page].key), onBack: null };
+  hub.phoneNav = { back, title: nav.querySelector(".lh-pnav-title"), side, backLabel: cat.label, titleText: c(t, TABS[page].key), onBack: null };
   const content = body.createEl("div", { cls: "lh-pmain" });
   showTab(hub, content, page);
 }

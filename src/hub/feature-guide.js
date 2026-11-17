@@ -601,8 +601,10 @@ class FeatureGuideModal extends I.Modal {
     const page = copy.pages[this.page];
     if (!page) { this.page = null; this.render(); return; }
     const body = this.contentEl.createDiv({ cls: "lh-guide-body" });
-    const back = body.createEl("button", { cls: "lh-guide-back", text: this.zh() ? "‹ 返回" : "‹ Back" });
-    back.addEventListener("click", () => { this.page = null; this.render(); });
+    const toList = () => { this.page = null; this.render(); };
+    const backLabel = this.zh() ? "‹ 返回" : "‹ Back";
+    if (hubUi().isPhone()) hubUi().backButton(body, backLabel, toList, "lh-guide-back-pill");
+    else body.createEl("button", { cls: "lh-guide-back", text: backLabel }).addEventListener("click", toList);
     body.createEl("h2", { cls: "lh-guide-ptitle", text: page.title });
     page.body.forEach(item => {
       if (item.v) videoEmbed(body, item.v, item.label, this.locale);

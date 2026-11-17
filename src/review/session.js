@@ -17,7 +17,8 @@ const { addToQueue, readQueue, isQueued } = require("../explainer/data");
 const { ExplainerViewerModal } = require("../explainer/viewer-modal");
 const { LessonViewerModal, CanvasLessonModal } = require("../lessons/viewer-modal");
 const { addRewatchButton, rewatchTarget, openRewatch } = require("../videos/rewatch");
-const { watchTheme, themedModal, restoreButton: _restoreButton, featureIcon: _featureIcon, icon: _uiIcon, iconButton: _uiIconButton, isPhone: _isPhone } = require("../hub/ui");
+const { fitDiagrams } = require("../ui/diagram-fit");
+const { watchTheme, themedModal, restoreButton: _restoreButton, featureIcon: _featureIcon, icon: _uiIcon, iconButton: _uiIconButton, backButton: _uiBackButton, isPhone: _isPhone } = require("../hub/ui");
 const W_ref = { get locale() { try { return I.moment && I.moment.locale && I.moment.locale(); } catch(e) { return "en"; } } };
 function L(s) { return _getLocale(s, W_ref.locale); }
 
@@ -307,11 +308,24 @@ var Q=class extends I.Modal{
     this._renderCardContent(this.cards[this.idx]);
   }
 
+  // data.json saves from this window, one at a time: a rating saves the stats and then the resume
+  // point, and two overlapping writes of the same file could leave it half-written if the phone
+  // puts Obsidian away mid-write. A save asked for while one is waiting is folded into it.
+  _persist(){
+    if(this._persistQueued) return this._persistP;
+    this._persistQueued=true;
+    this._persistP=(this._persistP||Promise.resolve()).then(()=>{
+      this._persistQueued=false;
+      return this.plugin.saveData(this.plugin.settings);
+    }).catch(err=>console.error("EngramQuest: saving review progress failed",err));
+    return this._persistP;
+  }
+
   // The Hub's resume banner names a real deck; a partial session (one video's cards) must neither set nor clear it.
   _saveResumePoint(){
     if(this.noResume)return;
     this.plugin.settings._reviewProgress={deck:this.deckName,idx:this.idx};
-    this.plugin.saveData(this.plugin.settings);
+    this._persist();
   }
 
   // Task 6: completion screen
@@ -319,7 +333,7 @@ var Q=class extends I.Modal{
     let t=this.plugin.settings;
     if(!this.noResume){
       delete this.plugin.settings._reviewProgress;
-      this.plugin.saveData(this.plugin.settings);
+      this._persist();
     }
 
     const _postCtx = buildEvalContext(this.plugin.settings._stats);
@@ -391,6 +405,7 @@ var Q=class extends I.Modal{
       I.MarkdownRenderer.renderMarkdown(normalizeMarkdown(text||""),el,e.notePath||"",mdOwner);
       postProcessEmbed(el,this.app,e.notePath||"");
       attachImgZoom(el);
+      fitDiagrams(el,mdOwner);
     };
     const phone=_isPhone();
     const notePaths=getCardDisplayNotePaths(e);
@@ -460,7 +475,7 @@ var Q=class extends I.Modal{
         menu.showAtMouseEvent(ev);
       };
       const nav=this.contentEl.createEl("div",{cls:"lh-snav"});
-      nav.createEl("button",{cls:"lh-pback",text:`‹ ${c(t,"DECK_COLUMN")}`}).addEventListener("click",goBack);
+      _uiBackButton(nav,c(t,"DECK_COLUMN"),goBack);
       nav.createEl("span",{cls:"lh-snav-count",text:`${this.idx+1} / ${this.cards.length}`});
       if(this._timeboxMinutes>0){
         this._timerEl=nav.createEl("span",{attr:{class:"lh-timebox-clock"}});
@@ -732,7 +747,7 @@ var Q=class extends I.Modal{
               }
 
               this.plugin.settings._stats=_st;
-              this.plugin.saveData(this.plugin.settings);
+              this._persist();
             } catch(_se){console.error('achievement stats failed',_se);}
 
             e.srMeta={due:w.due,interval:w.interval,stability:w.stability,difficulty:w.difficulty,state:w.state,repetitions:w.repetitions};
@@ -942,10 +957,13 @@ var Q=class extends I.Modal{
 
     // Nav (minimal — just back arrow)
     let nav=this.contentEl.createEl("div",{attr:{class:"lh-review-nav"}});
-    nav.createEl("span",{text:c(t,"HUB_TITLE"),attr:{class:"lh-review-logo"}});
-    let backBtn=nav.createEl("button",{attr:{class:"lh-review-back"}});
-    backBtn.textContent="← "+c(t,"BACK");
-    backBtn.addEventListener("click",()=>this.renderCard());
+    if(_isPhone()) _uiBackButton(nav,c(t,"BACK"),()=>this.renderCard());
+    else {
+      nav.createEl("span",{text:c(t,"HUB_TITLE"),attr:{class:"lh-review-logo"}});
+      let backBtn=nav.createEl("button",{attr:{class:"lh-review-back"}});
+      backBtn.textContent="← "+c(t,"BACK");
+      backBtn.addEventListener("click",()=>this.renderCard());
+    }
 
     // Form body
     let body=this.contentEl.createEl("div",{attr:{class:"lh-edit-form"}});

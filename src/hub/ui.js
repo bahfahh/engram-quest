@@ -26,6 +26,7 @@ const PATHS = {
   plus: '<path d="M12 5v14M5 12h14"/>',
   trash: '<path d="M3 6h18"/><path d="m19 6-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/>',
   chevron: '<path d="m9 6 6 6-6 6"/>',
+  'chevron-left': '<path d="m15 6-6 6 6 6"/>',
   fold: '<path d="m11 6-6 6 6 6"/><path d="m18 6-6 6 6 6"/>',
   timer: '<circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2"/><path d="M9 2h6"/>',
   learn: '<path d="M5 5.5A2.5 2.5 0 0 1 7.5 3H19v15H7.5A2.5 2.5 0 0 0 5 20.5z"/>',
@@ -70,6 +71,24 @@ function iconButton(parent, name, label, onClick, cls = "lh-ib") {
   // browser's own tooltip on top.
   const btn = icon(parent.createEl("button", { cls, attr: { "aria-label": label } }), name);
   btn.addEventListener("click", onClick);
+  return btn;
+}
+
+// The phone back control (see .lh-back-pill). Labels may still carry the old "‹ " prefix from the
+// strings table; the chevron is drawn as an icon, so it is dropped from the text.
+const backText = (label) => String(label || "").replace(/^\s*[‹←<]\s*/, "");
+function backButton(parent, label, onClick, cls = "") {
+  const btn = parent.createEl("button", { cls: `lh-back-pill${cls ? " " + cls : ""}` });
+  icon(btn, "chevron-left");
+  btn._lhBackLabel = btn.createEl("span", { cls: "lh-back-pill-label" });
+  setBackLabel(btn, label);
+  if (onClick) btn.addEventListener("click", onClick);
+  return btn;
+}
+function setBackLabel(btn, label) {
+  const text = backText(label);
+  (btn._lhBackLabel || btn.querySelector(".lh-back-pill-label")).textContent = text;
+  btn.setAttribute("aria-label", text);
   return btn;
 }
 
@@ -159,7 +178,7 @@ function setPhoneNav(hub, over) {
   const nav = hub.phoneNav;
   if (!nav) return;
   nav.onBack = over ? over.onBack : null;
-  nav.back.textContent = over ? over.label : nav.backLabel;
+  setBackLabel(nav.back, over ? over.label : nav.backLabel);
   nav.title.textContent = over ? over.title : nav.titleText;
   nav.side.style.visibility = over ? "hidden" : "";
 }
@@ -376,4 +395,4 @@ function rowActions(parent, actions) {
   return wrap;
 }
 
-module.exports = { STAR, PLAY, icon, rawIcon, iconButton, isPhone, isDark, watchTheme, iconUrl, featureIcon, restoreButton, applyHubVars, themedModal, setPhoneNav, pageHeader, clearCapsuleActions, primaryButton, metrics, segBar, donut, track, segmented, filterSelect, sortSelect, tagFilter, confirmDialog, emptyState, searchBox, viewToggle, rowActions };
+module.exports = { STAR, PLAY, icon, rawIcon, iconButton, backButton, setBackLabel, isPhone, isDark, watchTheme, iconUrl, featureIcon, restoreButton, applyHubVars, themedModal, setPhoneNav, pageHeader, clearCapsuleActions, primaryButton, metrics, segBar, donut, track, segmented, filterSelect, sortSelect, tagFilter, confirmDialog, emptyState, searchBox, viewToggle, rowActions };

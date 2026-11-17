@@ -188,6 +188,25 @@ body:not(.is-phone) .lh-hub.lh-session .lh-answer-header { flex-wrap:wrap; row-g
 .lh-hub.lh-session :is(.lh-rc-question,.lh-hint-text,.lh-answer-text,.lh-syg-back) pre > button.copy-code-button:hover { background:var(--raisedh) !important; color:var(--tint) !important; }
 .lh-hub.lh-session :is(.lh-rc-question,.lh-hint-text,.lh-answer-text,.lh-syg-back) pre > button.copy-code-button .svg-icon { width:16px; height:16px; }
 body:not(.is-phone):not(.is-tablet) .lh-hub.lh-session :is(.lh-rc-question,.lh-hint-text,.lh-answer-text,.lh-syg-back) pre:not(:hover):not(:focus-within) > button.copy-code-button { display:none; }
+/* Wide content in a card scrolls sideways inside its own box instead of being cut at the card's edge. */
+.lh-hub.lh-session :is(.lh-rc-question,.lh-hint-text,.lh-answer-text,.lh-syg-back) table { display:block; max-width:100%; overflow-x:auto; }
+.lh-hub.lh-session :is(.lh-rc-question,.lh-hint-text,.lh-answer-text,.lh-syg-back) .math-block { max-width:100%; overflow-x:auto; overflow-y:hidden; }
+/* Diagrams (src/ui/diagram-fit.js): shrunk to the card, or a sideways strip with a fade on the side
+   that has more, plus a button that opens the diagram full screen. */
+.lh-hub.lh-session .lh-syg-back { --lh-diagram-bg:var(--base); }
+.lh-diagram { position:relative; max-width:100%; margin:8px 0; }
+.lh-diagram-scroll { overflow-x:auto; overflow-y:hidden; overscroll-behavior-x:contain; -webkit-overflow-scrolling:touch; scrollbar-width:thin; }
+.lh-diagram .mermaid { margin:0; cursor:zoom-in; text-align:center; }
+/* Mermaid writes its own max-width inline; the width diagram-fit.js picks has to win over it. */
+.lh-diagram[data-fit] .mermaid svg { display:inline-block; vertical-align:top; max-width:none !important; height:auto !important; }
+.lh-diagram[data-fit="scroll"] .mermaid { width:max-content; text-align:left; padding-right:40px; }
+.lh-diagram::before,.lh-diagram::after { content:""; position:absolute; top:0; bottom:0; width:32px; z-index:1; pointer-events:none; opacity:0; transition:opacity .15s ease; }
+.lh-diagram::before { left:0; background:linear-gradient(to right,var(--lh-diagram-bg,var(--card)),transparent); }
+.lh-diagram::after { right:0; background:linear-gradient(to left,var(--lh-diagram-bg,var(--card)),transparent); }
+.lh-diagram.has-more-left::before,.lh-diagram.has-more-right::after { opacity:1; }
+.lh-hub button.lh-diagram-expand { position:absolute; top:4px; right:4px; z-index:2; display:grid; place-items:center; width:34px; height:34px; margin:0; padding:0 !important; border:0 !important; border-radius:10px !important; background:var(--raised) !important; box-shadow:var(--rshadow) !important; color:var(--tint) !important; cursor:pointer; }
+.lh-hub button.lh-diagram-expand::before { content:""; position:absolute; inset:-5px; }
+.lh-diagram-expand svg { width:17px; height:17px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
 .lh-hub.lh-session .lh-pill-row { gap:10px; }
 .lh-hub.lh-session .lh-pill-btn { display:inline-flex; align-items:center; justify-content:center; gap:10px; border:0 !important; background:var(--tone) !important; color:var(--tint) !important; box-shadow:var(--tonering) !important; border-radius:12px; font-size:15px; font-weight:600; min-height:46px; transform:none; filter:none; opacity:1; cursor:pointer; }
 .lh-hub.lh-session .lh-pill-btn:hover { background:var(--toneh) !important; }
@@ -241,7 +260,9 @@ body.is-phone .lh-hub.lh-session .lh-rb-top { gap:4px; }
 .lh-hub.lh-session .lh-edit-cancel-btn { background:var(--raised) !important; border:0 !important; color:var(--tint) !important; border-radius:10px; box-shadow:var(--rshadow); }
 .lh-hub.lh-session .lh-timebox-clock { background:var(--fill); color:var(--text2); }
 
-.lh-snav { display:flex; align-items:center; gap:4px; flex:none; min-height:44px; padding:calc(env(safe-area-inset-top,0px) + 8px) 12px 0 18px; }
+.lh-snav { display:flex; align-items:center; gap:6px; flex:none; min-height:48px; padding:calc(var(--lh-safe-top) + 6px) 8px 0 12px; }
+/* The edit form keeps the desktop bar; on a phone it too has to clear the status bar. */
+body.is-phone .lh-hub.lh-session .lh-review-nav { padding-top:calc(var(--lh-safe-top) + 8px); }
 .lh-snav-count { flex:1; min-width:0; text-align:center; font-size:13px; font-weight:500; color:var(--text3); font-variant-numeric:tabular-nums; white-space:nowrap; }
 .lh-snav-acts { display:flex; flex:none; }
 .lh-hub .lh-sib { width:40px; height:44px; padding:0; border:0; background:transparent; box-shadow:none; color:var(--text2); display:grid; place-items:center; cursor:pointer; }
@@ -252,8 +273,8 @@ body.is-phone .lh-hub.lh-session .lh-rb-top { gap:4px; }
 .lh-sprog { flex:none; height:3px; margin:4px 18px 0; border-radius:2px; background:var(--trk); overflow:hidden; }
 .lh-sprog i { display:block; height:100%; background:var(--bar); }
 body.is-phone .lh-hub.lh-session .lh-review-body { padding:14px 18px 0; overflow-y:auto; display:block; }
-body.is-phone .lh-hub.lh-session .lh-review-body.has-bar { padding-bottom:calc(env(safe-area-inset-bottom,0px) + 118px); }
-body.is-phone .lh-hub.lh-session .lh-review-body.has-grades { padding-bottom:calc(env(safe-area-inset-bottom,0px) + 150px); }
+body.is-phone .lh-hub.lh-session .lh-review-body.has-bar { padding-bottom:calc(var(--lh-safe-bottom) + 118px); }
+body.is-phone .lh-hub.lh-session .lh-review-body.has-grades { padding-bottom:calc(var(--lh-safe-bottom) + 150px); }
 body.is-phone .lh-hub.lh-session .lh-review-card { background:transparent !important; box-shadow:none; padding:0; border-radius:0; overflow:visible; flex:none; display:flex; flex-direction:column; gap:10px; }
 body.is-phone .lh-hub.lh-session .lh-rc-question { font-size:24px; line-height:33px; font-weight:600; letter-spacing:-.01em; flex:none; }
 body.is-phone .lh-hub.lh-session .lh-rc-question.is-done { font-size:17px; line-height:25px; font-weight:500; color:var(--text2) !important; }
@@ -283,10 +304,10 @@ body.is-phone .lh-hub.lh-session .lh-ans-feature { flex:0 1 calc(50% - 5px); min
 body.is-phone .lh-hub.lh-session .lh-ans-feature:not(.is-done):not([aria-pressed="true"]):active { background:var(--toneh) !important; }
 /* When the map opens it is scrolled into view: keep it clear of the glass bar at the bottom, and
    keep the row that opened it in sight above a map taller than the screen. */
-body.is-phone .lh-hub.lh-session .lh-synapse-container { scroll-margin:66px 0 calc(env(safe-area-inset-bottom,0px) + 150px); }
+body.is-phone .lh-hub.lh-session .lh-synapse-container { scroll-margin:66px 0 calc(var(--lh-safe-bottom) + 150px); }
 body.is-phone .lh-hub.lh-session .lh-answer-text.is-short { font-size:21px; line-height:31px; font-weight:600; letter-spacing:-.01em; }
 .lh-hub .lh-open-note { align-self:flex-start; min-height:30px; }
-.lh-sbar { position:absolute; left:12px; right:12px; bottom:calc(env(safe-area-inset-bottom,0px) + 30px); z-index:3; border-radius:22px; padding:10px; display:flex; flex-direction:column; gap:8px; box-sizing:border-box; }
+.lh-sbar { position:absolute; left:12px; right:12px; bottom:calc(var(--lh-safe-bottom) + 30px); z-index:3; border-radius:22px; padding:10px; display:flex; flex-direction:column; gap:8px; box-sizing:border-box; }
 .lh-sbar-row { flex-direction:row; }
 .lh-hub .lh-sbar-row .lh-pbtn.alt { flex:0 0 43%; width:auto; }
 .lh-hub .lh-sbar-row .lh-pbtn:not(.alt) { flex:1; width:auto; }
@@ -510,9 +531,9 @@ const help = `
 .lh-help-first-h,.lh-guide-first-h { margin-bottom:2px; font-size:12px; line-height:16px; font-weight:600; color:var(--tint); }
 .lh-help-acts { display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; }
 .lh-help-foot { display:flex; flex-wrap:wrap; justify-content:center; align-items:center; gap:8px; padding-top:8px; font-size:13px; color:var(--text3); }
-body.is-phone .lh-help-head { padding:calc(env(safe-area-inset-top,0px) + 8px) 8px 6px 18px; }
+body.is-phone .lh-help-head { padding:calc(var(--lh-safe-top) + 8px) 8px 6px 18px; }
 body.is-phone .lh-help-title { font-size:20px; }
-body.is-phone .lh-help-body { padding:4px 16px calc(env(safe-area-inset-bottom,0px) + 24px); }
+body.is-phone .lh-help-body { padding:4px 16px calc(var(--lh-safe-bottom) + 24px); }
 body.is-phone .lh-help-sec-b { padding:0 14px 16px; }
 body.is-phone .lh-help-tag:not(.pro) { display:none; }
 
@@ -546,14 +567,24 @@ body.is-phone .lh-help-tag:not(.pro) { display:none; }
 .lh-hub .lh-guide-yt:hover { text-decoration:underline; }
 .lh-guide-foot { flex:none; display:flex; align-items:center; justify-content:space-between; gap:10px; padding:10px 22px; border-top:.5px solid var(--sep); }
 .lh-guide-hint { min-width:0; font-size:12px; line-height:16px; color:var(--text3); }
-body.is-phone .lh-guide-body { padding:calc(env(safe-area-inset-top,0px) + 12px) 18px 12px; }
-body.is-phone .lh-guide-hero { padding-top:env(safe-area-inset-top,0px); }
+body.is-phone .lh-guide-body { padding:calc(var(--lh-safe-top) + 12px) 18px 12px; }
+body.is-phone .lh-guide-hero { padding-top:var(--lh-safe-top); }
 body.is-phone .lh-guide-hero:not([hidden]) + .lh-guide-body { padding-top:14px; }
-body.is-phone .lh-guide-foot { padding:10px 18px calc(env(safe-area-inset-bottom,0px) + 12px); }
-body.is-phone .lh-hub .lh-guide-back { min-height:44px; font-size:17px; }
+body.is-phone .lh-guide-foot { padding:10px 18px calc(var(--lh-safe-bottom) + 12px); }
+.lh-guide-back-pill.lh-guide-back-pill { margin:0 0 6px; }
 
 .eq-guide-lightbox { position:fixed; inset:0; z-index:99999; display:flex; align-items:center; justify-content:center; padding:24px; background:rgba(0,0,0,.88); cursor:zoom-out; -webkit-tap-highlight-color:transparent; }
 .eq-guide-lightbox img { max-width:96vw; max-height:96vh; object-fit:contain; border-radius:8px; }
 `;
 
-module.exports = session + library + lessons + achievements + help;
+const viewer = `
+/* Full-screen diagram (src/ui/diagram-fit.js). It sits on Obsidian's page colour so a diagram drawn
+   for the light theme stays readable. The close button clears the status bar. */
+.eq-lightbox.lh-diagram-viewer { background:var(--background-primary,#1e1e1e); cursor:default; animation:none; }
+.lh-diagram-stage { position:absolute; inset:0; overflow:hidden; touch-action:none; }
+.lh-diagram-stage > svg { position:absolute; left:0; top:0; transform-origin:0 0; max-width:none !important; }
+.eq-lightbox .eq-lightbox-close { top:calc(var(--lh-safe-top,0px) + 12px); z-index:2; }
+.lh-diagram-viewer .eq-lightbox-close { display:grid; place-items:center; width:44px; height:44px; padding:0; border-radius:22px; background:var(--background-secondary,#2a2a2a); box-shadow:0 1px 6px rgba(0,0,0,.25); color:var(--text-normal,#ddd); font-size:20px; opacity:1; }
+`;
+
+module.exports = session + library + lessons + achievements + help + viewer;

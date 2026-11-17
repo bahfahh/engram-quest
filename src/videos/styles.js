@@ -295,7 +295,7 @@ body.is-phone .lh-vid-picker-grid { grid-template-columns:minmax(0,1fr); }
 body.is-phone .lh-vid-tcard-photo { width:88px; }
 body.is-phone .lh-vid-set-row { flex-wrap:wrap; }
 body.is-phone .lh-vid-modal.lh-vid-recall-new { position:fixed; left:0; right:0; bottom:0; width:100% !important; border-radius:24px 24px 0 0 !important; box-shadow:0 -10px 40px rgba(0,0,0,.25); }
-body.is-phone .lh-vid-recall-new .modal-content { padding:18px 18px calc(env(safe-area-inset-bottom,0px) + 28px); }
+body.is-phone .lh-vid-recall-new .modal-content { padding:18px 18px calc(var(--lh-safe-bottom) + 28px); }
 body.is-phone .lh-vid-recall-new .lh-vid-modal-actions { flex-direction:column-reverse; }
 body.is-phone .lh-vid-recall-new .lh-vid-btn { width:100%; height:52px; border-radius:14px !important; font-size:17px; }
 body.is-phone .lh-vid-recall-new .lh-vid-select { height:46px; font-size:17px; }

@@ -107,7 +107,7 @@ const shell = `
 .lh-nv-label { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .lh-nv em { margin-left:auto; font-style:normal; font-size:12.5px; font-weight:500; color:var(--text3); font-variant-numeric:tabular-nums; }
 .lh-hub .lh-nv.on em { color:var(--text2); }
-.lh-hub :is(.lh-nv,.lh-ib,.lh-side-fold,.lh-pro,.lh-btn,.lh-pbtn,.lh-seg button,.lh-fp,.lh-link,.lh-ra button,.lh-pr,.lh-pact,.lh-pcycle,.lh-tf-opt,.lh-tabg button,.lh-pback):focus-visible,.lh-hub .lh-sf:focus-within,.lh-theme :is(.lh-btn,.lh-ib):focus-visible { outline:2px solid var(--focus); outline-offset:2px; box-shadow:none; }
+.lh-hub :is(.lh-nv,.lh-ib,.lh-side-fold,.lh-pro,.lh-btn,.lh-pbtn,.lh-seg button,.lh-fp,.lh-link,.lh-ra button,.lh-pr,.lh-pact,.lh-pcycle,.lh-tf-opt,.lh-tabg button):focus-visible,.lh-hub .lh-sf:focus-within,.lh-theme :is(.lh-btn,.lh-ib):focus-visible { outline:2px solid var(--focus); outline-offset:2px; box-shadow:none; }
 
 .lh-foot { margin-top:auto; flex:none; display:flex; align-items:center; gap:4px; padding:6px 0 0; }
 .lh-hub .lh-pro { flex:1; min-width:0; height:44px; border:0; border-radius:10px; background:transparent; box-shadow:none; color:var(--text); display:flex; align-items:center; justify-content:flex-start; gap:10px; padding:0 6px; font-size:14px; font-weight:500; cursor:pointer; text-align:left; white-space:nowrap; }
@@ -309,13 +309,28 @@ body.is-mobile .lh-ra { opacity:1; }
 `;
 
 const phone = `
+/* Space the phone's status bar and gesture bar take. Obsidian's own --safe-area-inset-* comes first:
+   on Android the WebView draws under the status bar while env() still reads 0, so env() alone left
+   the top bar under the clock, where taps land on the system bar. Android gets a 24px floor for the
+   same reason. Reused by every full-screen page (Hub, review session, help). */
+body { --lh-safe-top:max(var(--safe-area-inset-top,0px),env(safe-area-inset-top,0px)); --lh-safe-bottom:max(var(--safe-area-inset-bottom,0px),env(safe-area-inset-bottom,0px)); }
+body.is-android { --lh-safe-top:max(var(--safe-area-inset-top,0px),env(safe-area-inset-top,0px),24px); }
+/* The phone back control: a chevron and where it goes, in a capsule that reads as a button. 36px tall
+   on screen, a 44px touch target through the ::before; a long destination is cut with an ellipsis. */
+button.lh-back-pill.lh-back-pill { position:relative; display:inline-flex; align-items:center; gap:2px; flex:none; height:36px; min-width:44px; max-width:min(48vw,220px); margin:0; padding:0 14px 0 6px; border:0; border-radius:18px; background:var(--raised); box-shadow:var(--rshadow); color:var(--tint); font-size:15px; line-height:20px; font-weight:600; white-space:nowrap; cursor:pointer; -webkit-tap-highlight-color:transparent; transition:transform .12s ease,background-color .12s ease; }
+button.lh-back-pill.lh-back-pill::before { content:""; position:absolute; inset:-4px -4px; }
+button.lh-back-pill.lh-back-pill:hover { background:var(--raisedh); }
+button.lh-back-pill.lh-back-pill:active { background:var(--raisedh); transform:scale(.96); }
+button.lh-back-pill.lh-back-pill:focus-visible { outline:2px solid var(--focus,var(--tint)); outline-offset:2px; }
+.lh-back-pill .lh-i { width:20px; height:20px; flex:none; stroke-width:2.2; }
+.lh-back-pill-label { min-width:0; overflow:hidden; text-overflow:ellipsis; }
 body.is-phone .modal.lh-hub { width:100vw; height:100vh; height:100dvh; max-height:none; border-radius:0; margin:0; }
 body.is-phone .modal-container:has(.lh-hub) { padding:0; align-items:stretch; }
 .lh-ph { position:relative; flex:1; min-height:0; display:flex; flex-direction:column; background:var(--base); isolation:isolate; overflow:hidden; }
-.lh-ph .lh-capsule { top:calc(env(safe-area-inset-top,0px) + 10px); right:14px; }
+.lh-ph .lh-capsule { top:calc(var(--lh-safe-top) + 10px); right:14px; }
 .lh-hub .lh-ph .lh-capsule .lh-ib { width:44px; height:40px; background:transparent; }
-.lh-pbody { flex:1; min-height:0; display:flex; flex-direction:column; gap:10px; padding:calc(env(safe-area-inset-top,0px) + 10px) 18px calc(env(safe-area-inset-bottom,0px) + 16px); overflow-y:auto; box-sizing:border-box; }
-.lh-ph.is-home .lh-pbody { padding-top:calc(env(safe-area-inset-top,0px) + 64px); padding-bottom:calc(env(safe-area-inset-bottom,0px) + 112px); gap:11px; }
+.lh-pbody { flex:1; min-height:0; display:flex; flex-direction:column; gap:10px; padding:calc(var(--lh-safe-top) + 10px) 18px calc(var(--lh-safe-bottom) + 16px); overflow-y:auto; box-sizing:border-box; }
+.lh-ph.is-home .lh-pbody { padding-top:calc(var(--lh-safe-top) + 64px); padding-bottom:calc(var(--lh-safe-bottom) + 112px); gap:11px; }
 .lh-ptl { margin:0; font-size:30px; line-height:38px; font-weight:700; letter-spacing:-.02em; color:var(--text); }
 .lh-psb { margin:2px 0 0; font-size:16px; line-height:23px; color:var(--text2); }
 .lh-hub .lh-pbtn { width:100%; height:52px; flex:none; border:0; border-radius:14px; background:var(--btn); box-shadow:inset 0 .5px 0 rgba(255,255,255,.22),0 2px 10px rgba(91,72,184,.22); color:var(--onbtn); font-size:17px; font-weight:600; display:flex; align-items:center; justify-content:center; gap:8px; cursor:pointer; }
@@ -333,16 +348,15 @@ body.is-phone .modal-container:has(.lh-hub) { padding:0; align-items:stretch; }
 .lh-pr .lh-chev { color:var(--tint); font-size:20px; line-height:1; }
 .lh-hub .lh-pr .lh-pti { width:30px; height:30px; }
 .lh-hub .lh-pr .lh-pti svg { width:17px; height:17px; }
-.lh-tabg { position:absolute; left:44px; right:44px; bottom:calc(env(safe-area-inset-bottom,0px) + 24px); height:64px; border-radius:32px; z-index:4; display:flex; padding:4px; box-sizing:border-box; }
+.lh-tabg { position:absolute; left:44px; right:44px; bottom:calc(var(--lh-safe-bottom) + 24px); height:64px; border-radius:32px; z-index:4; display:flex; padding:4px; box-sizing:border-box; }
 .lh-hub .lh-tabg button { flex:1; height:auto; border:0; border-radius:28px; background:transparent; box-shadow:none; color:var(--text); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; font-size:12px; font-weight:600; cursor:pointer; padding:0; }
 .lh-hub .lh-tabg button.on { background:var(--tabon); color:var(--text); }
 .lh-hub .lh-tabg button:not(.on) .lh-fi { opacity:.72; }
 .lh-hub .lh-tabg .lh-i { width:22px; height:22px; stroke-width:1.8; }
-.lh-pnav { display:flex; align-items:center; justify-content:space-between; min-height:44px; gap:8px; flex:none; }
-.lh-hub .lh-pback { border:0; background:none; box-shadow:none; padding:0; height:auto; min-height:44px; color:var(--tint); font-size:17px; font-weight:500; cursor:pointer; white-space:nowrap; }
-.lh-hub .lh-pback:hover { background:none; }
+.lh-pnav { display:grid; grid-template-columns:minmax(44px,1fr) minmax(0,auto) minmax(44px,1fr); align-items:center; min-height:44px; gap:8px; flex:none; }
 .lh-pnav-title { font-size:17px; line-height:22px; font-weight:600; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0; }
-.lh-pnav-side { width:58px; flex:none; display:flex; justify-content:flex-end; }
+.lh-pnav-side { min-width:0; display:flex; justify-content:flex-end; }
+.lh-pnav-side .lh-back-pill.lh-back-pill { max-width:100%; }
 .lh-pnav-side:first-child { justify-content:flex-start; }
 .lh-hub .lh-pnav .lh-feature-info { width:44px !important; height:44px !important; color:var(--tint) !important; }
 .lh-hub .lh-pnav .lh-feature-info svg { width:22px; height:22px; stroke-width:1.7; }
@@ -380,7 +394,7 @@ body.is-phone .lh-scroll { margin:0; padding:0 0 20px; -webkit-mask-image:none; 
 `;
 
 const fab = `
-.lh-fab { position:fixed; z-index:9999; right:20px; bottom:calc(env(safe-area-inset-bottom,0px) + 88px); width:48px; height:48px; padding:0; border:0; border-radius:50%; display:grid; place-items:center; background:var(--raised); box-shadow:var(--rshadow),0 8px 24px rgba(0,0,0,.16); cursor:pointer; -webkit-tap-highlight-color:transparent; transition:transform .15s; }
+.lh-fab { position:fixed; z-index:9999; right:20px; bottom:calc(var(--lh-safe-bottom) + 88px); width:48px; height:48px; padding:0; border:0; border-radius:50%; display:grid; place-items:center; background:var(--raised); box-shadow:var(--rshadow),0 8px 24px rgba(0,0,0,.16); cursor:pointer; -webkit-tap-highlight-color:transparent; transition:transform .15s; }
 .lh-fab:hover { background:var(--raisedh); transform:translateY(-1px); }
 .lh-fab:focus-visible { outline:2px solid var(--focus); outline-offset:3px; }
 `;
