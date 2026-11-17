@@ -30,7 +30,7 @@ function deckStats(deck) {
 function deckActions(parent, hub, deck, refresh) {
   const t = hub.plugin.settings;
   return ui.rowActions(parent, [
-    { name: "plus", label: c(t, "CREATE_CARD"), run: () => openCreateCardModal(hub.app, deck, t, async () => { await hub.loadData(); refresh(); }) },
+    { name: "plus", label: c(t, "CREATE_CARD"), run: () => openCreateCardModal(hub.app, deck, t, async () => { await hub.loadDecks(); refresh(); }) },
     { name: "trash", label: c(t, "DELETE"), run: () => hub._confirmDelete(deck, "deck") },
   ]);
 }
@@ -136,7 +136,7 @@ function renderPhoneList(parent, hub, decks, refresh) {
     const cnt = row.createEl("div", { cls: "lh-pcnt" });
     cnt.createEl("b", { text: String(s.ready), cls: s.ready ? "" : "dim" });
     cnt.createEl("span", { text: c(t, "READY") });
-    ui.iconButton(row, "plus", c(t, "CREATE_CARD"), (ev) => { ev.stopPropagation(); openCreateCardModal(hub.app, deck, t, async () => { await hub.loadData(); refresh(); }); }, "lh-pact");
+    ui.iconButton(row, "plus", c(t, "CREATE_CARD"), (ev) => { ev.stopPropagation(); openCreateCardModal(hub.app, deck, t, async () => { await hub.loadDecks(); refresh(); }); }, "lh-pact");
     ui.iconButton(row, "trash", c(t, "DELETE"), (ev) => { ev.stopPropagation(); hub._confirmDelete(deck, "deck"); }, "lh-pact");
     row.addEventListener("click", () => hub._startDeckReview(deck));
   });
