@@ -26,7 +26,13 @@ function openRewatch(app, { path, at }) {
     player.currentTime = at;
     player.play().catch(() => { /* autoplay blocked — the user presses play */ });
   });
-  modal.onClose = () => player.pause();
+  // Emptied, not just paused: a closed player would keep the video file open until garbage
+  // collection, and its series could not be moved to the trash meanwhile.
+  modal.onClose = () => {
+    player.pause();
+    player.removeAttribute("src");
+    player.load();
+  };
   modal.open();
 }
 

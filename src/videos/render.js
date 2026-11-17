@@ -29,6 +29,41 @@ function queueWrite(slug, fn) {
   return chain;
 }
 
+// Every player this page mounts, held weakly with the vault path of its video. A player taken off
+// the screen keeps its file open until it is garbage collected, and a folder cannot move to the
+// trash while any file in it is open — so a delete first lets go of the players holding its files.
+const players = new Set();
+// A released player lets go of its file a moment later (tens of ms in Chromium), not at once.
+const RELEASE_WAIT_MS = 500;
+
+/** Empty every player of `path` or of a file under it. Returns whether any was still alive. */
+function releasePlayers(path) {
+  let any = false;
+  for (const entry of players) {
+    const vid = entry.ref.deref();
+    if (vid && entry.path !== path && !entry.path.startsWith(`${path}/`)) continue;
+    players.delete(entry);
+    if (!vid) continue;
+    entry.released = true;
+    vid.removeAttribute("src");
+    vid.load();
+    any = true;
+  }
+  return any;
+}
+
+/**
+ * Run a delete of `path` (a series folder or one video file) after letting go of the players that
+ * hold it; when one was let go, a failed first try waits for the file to close and tries once more.
+ */
+async function deleteAfterRelease(path, run) {
+  const released = releasePlayers(path);
+  const gone = await run();
+  if (gone || !released) return gone;
+  await new Promise((resolve) => window.setTimeout(resolve, RELEASE_WAIT_MS));
+  return run();
+}
+
 /**
  * A card that opens on click and on Enter/Space while focused. It is a div, not a button, because it
  * holds its own delete button and a button cannot contain one.
@@ -321,7 +356,8 @@ function confirmDelete(hub, t, slug, meta, refresh) {
     ok.disabled = true;
     modal.close();
     try {
-      if (!(await data.deleteTopic(hub.app.vault.adapter, slug))) new I.Notice(c(t, "VIDEO_DELETE_PARTIAL"));
+      const gone = await deleteAfterRelease(`${data.VIDEOS_DIR}/${slug}`, () => queueWrite(slug, () => data.deleteTopic(hub.app.vault.adapter, slug)));
+      if (!gone) new I.Notice(c(t, "VIDEO_DELETE_KEPT"), 10000);
     } catch (e) {
       console.error("EngramQuest: video topic delete failed", e);
     }
@@ -511,6 +547,9 @@ function mountPlayer(stage, hub, t, slug, meta, video, autoplay, save, playable,
   const src = `${data.VIDEOS_DIR}/${slug}/${video.file}`;
   const vid = stage.createEl("video", { cls: "lh-vid-player", attr: { controls: "", preload: "metadata", playsinline: "" } });
   vid.src = fileUrl(hub, slug, video.file);
+  for (const old of players) if (!old.ref.deref()) players.delete(old);
+  const entry = { path: src, ref: new WeakRef(vid), released: false };
+  players.add(entry);
   if (video.subtitles) {
     attachSubtitles(vid, hub, t, I.normalizePath(`${data.VIDEOS_DIR}/${slug}/${video.subtitles}`))
       .catch((e) => console.warn("EngramQuest: subtitles not loaded", e));
@@ -536,7 +575,8 @@ function mountPlayer(stage, hub, t, slug, meta, video, autoplay, save, playable,
   });
   vid.addEventListener("play", () => save({ position: vid.currentTime }));
   vid.addEventListener("timeupdate", () => {
-    if (Math.abs(vid.currentTime - lastSaved) < 5) return;
+    // Emptying a released player rewinds it to 0; that is not the learner's position.
+    if (entry.released || Math.abs(vid.currentTime - lastSaved) < 5) return;
     lastSaved = vid.currentTime;
     save({ position: vid.currentTime });
   });
@@ -567,4 +607,4 @@ async function renderPhoneContinue(parent, hub) {
   row.addEventListener("click", () => { hub._vTopic = { slug: cw.slug, videoId: cw.video.id, autoplay: true }; hub._openPhonePage("video"); });
 }
 
-module.exports = { renderVideoTab, renderTopic, renderThumb, queueWrite, renderPhoneContinue, asButton, starToggle };
+module.exports = { renderVideoTab, renderTopic, renderThumb, queueWrite, deleteAfterRelease, renderPhoneContinue, asButton, starToggle };

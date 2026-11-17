@@ -422,32 +422,15 @@ async function cancelEpisodicRequest(adapter, id) {
   return true;
 }
 
-/** Trash every file under dir (subfolders included) except `skip`. True only if all were trashed. */
-async function trashTree(adapter, dir, skip) {
-  let listing = null;
-  // An absent folder has nothing to trash; one that exists but cannot be listed is a failed delete,
-  // or the final rmdir would permanently remove what was never trashed.
-  try { listing = await adapter.list(dir); } catch { return !(await adapter.exists(dir).catch(() => true)); }
-  let ok = true;
-  for (const file of listing.files || []) if (file !== skip) ok = (await trashPath(adapter, file)) && ok;
-  for (const sub of listing.folders || []) ok = (await trashTree(adapter, sub, skip)) && ok;
-  return ok;
-}
-
 /**
- * Delete a topic: trash every file (subfolders included), meta.json last, then drop the now-empty
- * folders. On any trash failure it stops with meta.json still in place, so the topic stays visible
- * and nothing is removed without going to the trash. Returns whether the topic is fully gone.
+ * Delete a topic: its folder goes to the trash as one piece, so the whole series is either in the
+ * trash or exactly where it was — never half of it. The folder cannot move while any file in it is
+ * open (a video still loaded in a player, or open in another app); it then stays as it was.
+ * Returns whether the topic is gone.
  */
 async function deleteTopic(adapter, slug) {
   checkSlug(slug);
-  const dir = `${VIDEOS_DIR}/${slug}`;
-  const metaFile = `${dir}/meta.json`;
-  if (!(await trashTree(adapter, dir, metaFile)) || !(await trashPath(adapter, metaFile))) return false;
-  try {
-    if (typeof adapter.rmdir === "function") await adapter.rmdir(dir, true);
-  } catch (e) { console.warn("EngramQuest: video topic folder cleanup failed", e); }
-  return true;
+  return trashPath(adapter, `${VIDEOS_DIR}/${slug}`);
 }
 
 function checkSlug(slug) {
@@ -472,9 +455,10 @@ async function deleteVideo(adapter, slug, videoId) {
     const rel = parts.join("/");
     return parts.length && !parts.includes("..") && rel !== "meta.json" ? rel : null;
   };
-  const filesOf = (v) => [v.subtitles, v.poster, v.file].filter((x) => typeof x === "string" && x).map(clean).filter(Boolean);
+  const filesOf = (v) => [v.file, v.poster, v.subtitles].filter((x) => typeof x === "string" && x).map(clean).filter(Boolean);
   const shared = new Set(videos.filter((v) => v !== video && v).flatMap(filesOf));
-  // The playable file goes last and the first failure stops, so a partial delete leaves the video watchable.
+  // The video file goes first and the first failure stops: it is the file a player or another app
+  // may hold open, and when it cannot move, nothing of the film has moved.
   for (const rel of new Set(filesOf(video))) {
     if (!shared.has(rel) && !(await trashPath(adapter, `${VIDEOS_DIR}/${slug}/${rel}`))) return false;
   }

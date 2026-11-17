@@ -36,6 +36,9 @@ export class FakeEl {
   hasClass(name) { return this.cls.has(name); }
   addEventListener(type, fn) { (this.listeners[type] ||= []).push(fn); }
   fire(type) { (this.listeners[type] || []).forEach((fn) => fn({ type })); }
+  // As a <video>: `src` reflects its attribute, and load() with none lets go of the file.
+  removeAttribute(name) { delete this.attrs[name]; if (name === "src") this.src = ""; }
+  load() { this.loads = (this.loads || 0) + 1; }
   remove() { this.isConnected = false; if (this.parent) this.parent.children = this.parent.children.filter((el) => el !== this); }
   getBoundingClientRect() { return { top: 0, bottom: 0, height: 0 }; }
 }

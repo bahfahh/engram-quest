@@ -8,7 +8,7 @@ const { t: c, interpolate: K } = require("../i18n");
 const { ProUpgradeModal } = require("../license/upgrade");
 const { estimate } = require("./episodic-length");
 const data = require("./data");
-const { renderTopic, renderThumb, queueWrite, asButton, starToggle } = require("./render");
+const { renderTopic, renderThumb, queueWrite, deleteAfterRelease, asButton, starToggle } = require("./render");
 const { openPromptModal } = require("./request-ui");
 const { periodOf, cardPeriod, groupByPeriod, sortFilms, watchState } = require("./episodic-order");
 const ui = require("../hub/ui");
@@ -192,7 +192,8 @@ function confirmDeleteFilm(hub, t, film, refresh) {
     onConfirm: async () => {
       try {
         const slug = data.EPISODIC_SLUG;
-        if (!(await queueWrite(slug, () => data.deleteVideo(hub.app.vault.adapter, slug, film.id)))) new I.Notice(c(t, "EPISODIC_DELETE_PARTIAL"));
+        const gone = await deleteAfterRelease(`${data.VIDEOS_DIR}/${slug}/${film.file}`, () => queueWrite(slug, () => data.deleteVideo(hub.app.vault.adapter, slug, film.id)));
+        if (!gone) new I.Notice(c(t, "EPISODIC_DELETE_PARTIAL"));
       } catch (e) {
         console.error("EngramQuest: recall film delete failed", e);
         new I.Notice(c(t, "DELETE_FAILED"));

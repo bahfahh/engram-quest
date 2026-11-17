@@ -35,7 +35,7 @@ function makeAdapter(initial = {}) {
   const files = { ...initial };
   return {
     files,
-    async exists(p) { return Object.prototype.hasOwnProperty.call(files, p); },
+    async exists(p) { return Object.keys(files).some((k) => k === p || k.startsWith(`${p}/`)); },
     async read(p) {
       if (!(p in files)) throw new Error("ENOENT " + p);
       return files[p];
@@ -43,7 +43,8 @@ function makeAdapter(initial = {}) {
     async write(p, content) { files[p] = content; },
     async mkdir() {},
     async remove(p) { delete files[p]; },
-    async trashLocal(p) { delete files[p]; },
+    // A file or a whole folder, as Obsidian's adapter moves either.
+    async trashLocal(p) { for (const k of Object.keys(files)) if (k === p || k.startsWith(`${p}/`)) delete files[k]; },
     async list(dir) {
       const prefix = dir.replace(/\/$/, "") + "/";
       const folders = new Set();
@@ -236,34 +237,44 @@ describe("createRequest / deleteTopic", () => {
     await expect(createRequest(makeAdapter(), { text: "  " })).rejects.toThrow();
   });
 
-  it("deleteTopic trashes every file of the topic, subfolders included", async () => {
+  it("deleteTopic sends the series folder to the trash as one piece, subfolders included", async () => {
     const a = makeAdapter({ [metaPath("t")]: "{}", [`${VIDEOS_DIR}/t/vid-1.mp4`]: "bin", [`${VIDEOS_DIR}/t/assets/a.png`]: "img", [metaPath("other")]: "{}" });
-    const removed = [];
-    a.rmdir = async (dir) => { removed.push(dir); };
-    expect(await deleteTopic(a, "t")).toBe(true);
-    expect(Object.keys(a.files)).toEqual([metaPath("other")]);
-    expect(removed).toEqual([`${VIDEOS_DIR}/t`]);
-  });
-
-  it("deleteTopic keeps the folder when a file can't be trashed", async () => {
-    const stuck = `${VIDEOS_DIR}/t/vid-1.mp4`;
-    const a = makeAdapter({ [metaPath("t")]: "{}", [stuck]: "bin" });
+    const trashed = [];
     const trash = a.trashLocal;
-    a.trashLocal = async (p) => { if (p === stuck) throw new Error("locked"); return trash(p); };
-    a.rmdir = async () => { throw new Error("rmdir must not run"); };
-    expect(await deleteTopic(a, "t")).toBe(false);
-    expect(a.files[stuck]).toBe("bin");
-    expect(a.files[metaPath("t")]).toBe("{}"); // topic stays listed so the user sees it wasn't deleted
+    a.trashLocal = async (p) => { trashed.push(p); return trash(p); };
+    expect(await deleteTopic(a, "t")).toBe(true);
+    expect(trashed).toEqual([`${VIDEOS_DIR}/t`]);
+    expect(Object.keys(a.files)).toEqual([metaPath("other")]);
   });
 
-  it("deleteTopic fails, and removes nothing, when an existing folder cannot be listed", async () => {
-    const a = makeAdapter({ [metaPath("t")]: "{}", [`${VIDEOS_DIR}/t/assets/a.png`]: "img" });
-    const list = a.list;
-    a.list = async (dir) => { if (dir === `${VIDEOS_DIR}/t/assets`) throw new Error("EIO"); return list(dir); };
-    a.exists = async (p) => p === `${VIDEOS_DIR}/t/assets` || p in a.files;
-    a.rmdir = async () => { throw new Error("rmdir must not run"); };
+  it("deleteTopic uses the system trash first, then Obsidian's", async () => {
+    const a = makeAdapter({ [metaPath("t")]: "{}" });
+    const used = [];
+    const trash = a.trashLocal;
+    a.trashSystem = async (p) => { used.push(["system", p]); return false; };
+    a.trashLocal = async (p) => { used.push(["local", p]); return trash(p); };
+    expect(await deleteTopic(a, "t")).toBe(true);
+    expect(used).toEqual([["system", `${VIDEOS_DIR}/t`], ["local", `${VIDEOS_DIR}/t`]]);
+  });
+
+  // The reported bug: one video held open, every other file of the series went to the trash, and
+  // meta.json stayed behind pointing at posters that were gone.
+  it("deleteTopic moves nothing when a file in the series is held open", async () => {
+    const dir = `${VIDEOS_DIR}/t`;
+    const held = `${dir}/b.mp4`;
+    const series = { [metaPath("t")]: "{}", [`${dir}/a.mp4`]: "1", [`${dir}/a.jpg`]: "1", [`${dir}/a.vtt`]: "1", [held]: "1", [`${dir}/b.jpg`]: "1" };
+    const a = makeAdapter(series);
+    // As on Windows: neither a held file nor a folder holding it can move, to either trash.
+    const holds = (p) => p === held || held.startsWith(`${p}/`);
+    const trash = a.trashLocal;
+    a.trashSystem = async (p) => { if (holds(p)) return false; await trash(p); return true; };
+    a.trashLocal = async (p) => { if (holds(p)) throw new Error("EPERM"); return trash(p); };
     expect(await deleteTopic(a, "t")).toBe(false);
-    expect(a.files[`${VIDEOS_DIR}/t/assets/a.png`]).toBe("img");
+    expect(a.files).toEqual(series);
+  });
+
+  it("deleteTopic counts a series that is already gone as deleted", async () => {
+    expect(await deleteTopic(makeAdapter({ [metaPath("other")]: "{}" }), "t")).toBe(true);
   });
 
   it("deleteTopic rejects slugs that escape the topic folder", async () => {
@@ -313,16 +324,17 @@ describe("deleteVideo", () => {
     expect(a.files[metaPath("s")]).toBe(before);
   });
 
-  it("keeps the film playable on a partial failure, and a retry finishes the delete", async () => {
+  it("moves nothing while the video file is held open, and a retry once it is free finishes the delete", async () => {
     const a = seed();
+    const before = { ...a.files };
     const trash = a.trashLocal;
-    let locked = true;
-    a.trashLocal = async (p) => { if (locked && p.endsWith("a.jpg")) throw new Error("locked"); return trash(p); };
+    let held = true;
+    a.trashLocal = async (p) => { if (held && p.endsWith("a.mp4")) throw new Error("EPERM"); return trash(p); };
     expect(await deleteVideo(a, "s", "a")).toBe(false);
-    expect(a.files[`${dir}/a.mp4`]).toBe("1"); // the video file goes last, so it is still there
-    locked = false;
+    expect(a.files).toEqual(before); // poster and subtitles were not touched
+    held = false;
     expect(await deleteVideo(a, "s", "a")).toBe(true);
-    expect(a.files[`${dir}/a.mp4`]).toBeUndefined();
+    for (const f of ["a.mp4", "a.jpg", "a.vtt"]) expect(a.files[`${dir}/${f}`]).toBeUndefined();
     expect(JSON.parse(a.files[metaPath("s")]).videos.map((v) => v.id)).toEqual(["b", "c"]);
   });
 
