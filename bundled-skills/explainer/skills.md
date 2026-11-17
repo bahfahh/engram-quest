@@ -35,6 +35,11 @@ A single concept explained well is a Deep Dive, however broad its topic sounds. 
 together are an Insight. Do not force a multi-note synthesis into a failing-card diagnosis, and do not
 invent a learner error for a bare topic.
 
+A flashcard holds one point, cut away from what makes it make sense. A Deep Dive gives the owner what
+the card had no room for. How much that takes depends on the subject, from one sentence said differently
+to the whole the point belongs to: the failing card is where the page starts, not the limit of what it
+explains.
+
 The value of either page is the understanding itself: confusion clearing, a prior experience recognized,
 a new possibility seen. Encouragement, grand statements, and motivational prose take its place without
 doing its work.
@@ -79,6 +84,10 @@ Sources, all readable without asking the owner:
   with this one.
 - Related notes found through Obsidian search; see `references/obsidian-cli.md`.
 
+The card and its note are the owner's record of the subject, not the subject. When the subject exists
+outside the vault, check a source that defines it, and keep apart what that source says, what the notes
+say, and what the owner added. For something of the owner's own, the notes are the authority.
+
 For an Insight, read enough to know what the material actually records, then select what belongs to one
 coherent question. A folder is a place to look, not a scope. Useful connections state why two things relate
 and what changes when they are considered together. When the notes are thin, research or reason further,
@@ -88,6 +97,11 @@ verify what you bring in, and mark proposals as proposals. Infer no personal eve
 
 Before choosing a form, state privately the one thing that becomes clearer and the evidence for it. If you
 cannot, improve the reasoning first; a well-drawn page around a vague claim is still vague.
+
+Then decide how this owner would best come to understand it; the subject decides. Seeing the whole and
+where this sits in it, watching a mechanism run, setting it beside what it gets confused with, following
+one case, learning why it exists: these are examples, not a menu, and a term with nothing around it needs
+none of them. The form is whatever carries that choice.
 
 Then read `references/spec-guide.md`, which sets out how to choose among the four forms and every field of
 the spec. `assets/examples/` holds one finished spec per form; they show the expected finish, and their note

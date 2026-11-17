@@ -5,14 +5,14 @@ vault knows: their notes, their neighbouring cards, their review history.
 
 The spec holds words and structure. A renderer computes the layout and injects live facts from the vault.
 
-## Step 1: choose the form from what the answer is made of
+## Step 1: choose the form that carries the explanation
 
 Start at `reading`. Leave it only when another form's test produces the evidence it asks for. Being able
 to imagine a diagram proves nothing: almost any idea can be given parts and a way to misuse it.
 
-First ask what kind of statement does the work in the card's answer, or in the claim an Insight makes:
+First ask what the reader has to see for the explanation you chose to work:
 
-| The answer mainly says | Candidate |
+| The reader has to see | Candidate |
 |---|---|
 | what happens over time, or what one step causes later | `machine` |
 | how two or three named options behave differently | `contrast` |
@@ -41,7 +41,7 @@ parts is a list, and a list is `reading`.
 **`reading`** covers judgement calls, advice, rules of thumb, definitions, and checklists. It is a
 correct outcome, and a forced diagram is worse than none.
 
-When two forms both produce evidence, take the one that answers the question the card literally asks.
+When two forms both produce evidence, take the one that shows more of what the reader is missing.
 Put the evidence in `formReason`.
 
 Choosing `machine`, pick the layout by the question it answers:
