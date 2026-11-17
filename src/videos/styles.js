@@ -204,7 +204,10 @@ body:not(.is-phone) .lh-vid-info-title { white-space:normal; display:-webkit-box
 .lh-vid-item { display:flex; align-items:center; gap:10px; padding:8px; border-radius:10px; box-sizing:border-box; min-width:0; cursor:pointer; }
 .lh-vid-item:hover { background:var(--fill2); }
 .lh-vid-item.is-current { background:var(--tabon); cursor:default; }
-.lh-vid-item-text { min-width:0; }
+.lh-vid-item-text { min-width:0; flex:1; }
+/* Delete one video: at the row's end, shown on hover (always on touch), like a lesson row's. */
+.lh-vid-item:hover .lh-ra { opacity:1; }
+.lh-hub .lh-vid-item :is(.lh-ra,.lh-ra-phone) button { background:transparent; box-shadow:none; color:var(--tint); }
 body:not(.is-phone) .lh-vid-side-list { display:grid; grid-template-columns:repeat(auto-fill,minmax(250px,1fr)); gap:2px 4px; }
 body:not(.is-phone) .lh-vid-item.is-current .lh-vid-status { color:var(--tint); font-weight:600; }
 body:not(.is-phone) .lh-vid-item-title { white-space:normal; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }

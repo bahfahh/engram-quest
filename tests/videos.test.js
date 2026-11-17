@@ -45,6 +45,15 @@ function makeAdapter(initial = {}) {
     async remove(p) { delete files[p]; },
     // A file or a whole folder, as Obsidian's adapter moves either.
     async trashLocal(p) { for (const k of Object.keys(files)) if (k === p || k.startsWith(`${p}/`)) delete files[k]; },
+    // As Obsidian's desktop adapter: a file or a whole folder; refuses an existing destination.
+    async rename(from, to) {
+      const at = (p) => Object.keys(files).filter((k) => k === p || k.startsWith(`${p}/`));
+      const moving = at(from);
+      if (!moving.length) throw new Error(`ENOENT ${from}`);
+      if (at(to).length) throw new Error("Destination file already exists!");
+      for (const k of moving) { files[to + k.slice(from.length)] = files[k]; delete files[k]; }
+    },
+    async rmdir(p) { for (const k of Object.keys(files)) if (k.startsWith(`${p}/`)) delete files[k]; },
     async list(dir) {
       const prefix = dir.replace(/\/$/, "") + "/";
       const folders = new Set();
@@ -315,27 +324,86 @@ describe("deleteVideo", () => {
     expect(a.files[`${dir}/shared.jpg`]).toBe("1");
   });
 
-  it("leaves meta.json untouched when a file can't be trashed", async () => {
+  // ticket-082: the video's files go to the trash together or not at all.
+  it("sends the video's own files to the trash as one folder", async () => {
     const a = seed();
-    const before = a.files[metaPath("s")];
+    const trashed = [];
     const trash = a.trashLocal;
-    a.trashLocal = async (p) => { if (p.endsWith("a.vtt")) throw new Error("locked"); return trash(p); };
-    expect(await deleteVideo(a, "s", "a")).toBe(false);
-    expect(a.files[metaPath("s")]).toBe(before);
+    a.trashLocal = async (p) => { trashed.push([p, Object.keys(a.files).filter((k) => k.startsWith(`${p}/`)).map((k) => k.split("/").pop()).sort()]); return trash(p); };
+    expect(await deleteVideo(a, "s", "a")).toBe(true);
+    expect(trashed).toHaveLength(1);
+    expect(trashed[0][0].startsWith(`${dir}/.deleted-a-`)).toBe(true);
+    expect(trashed[0][1]).toEqual(["a.jpg", "a.mp4", "a.vtt"]);
   });
 
-  it("moves nothing while the video file is held open, and a retry once it is free finishes the delete", async () => {
+  it("moves every file back and leaves meta.json as it was when one file is held open", async () => {
     const a = seed();
     const before = { ...a.files };
-    const trash = a.trashLocal;
-    let held = true;
-    a.trashLocal = async (p) => { if (held && p.endsWith("a.mp4")) throw new Error("EPERM"); return trash(p); };
+    const rename = a.rename;
+    a.rename = async (from, to) => { if (from.endsWith("a.vtt")) throw new Error("EPERM"); return rename(from, to); };
     expect(await deleteVideo(a, "s", "a")).toBe(false);
-    expect(a.files).toEqual(before); // poster and subtitles were not touched
+    expect(a.files).toEqual(before); // the video and poster were moved, then moved back
+  });
+
+  it("moves every file back when the gathered folder cannot reach the trash", async () => {
+    const a = seed();
+    const before = { ...a.files };
+    a.trashSystem = async () => false;
+    a.trashLocal = async () => { throw new Error("EPERM"); };
+    expect(await deleteVideo(a, "s", "a")).toBe(false);
+    expect(a.files).toEqual(before);
+  });
+
+  it("a retry once the file is free finishes the delete", async () => {
+    const a = seed();
+    const rename = a.rename;
+    let held = true;
+    a.rename = async (from, to) => { if (held && from.endsWith("a.mp4")) throw new Error("EPERM"); return rename(from, to); };
+    expect(await deleteVideo(a, "s", "a")).toBe(false);
     held = false;
     expect(await deleteVideo(a, "s", "a")).toBe(true);
     for (const f of ["a.mp4", "a.jpg", "a.vtt"]) expect(a.files[`${dir}/${f}`]).toBeUndefined();
+    expect(Object.keys(a.files).some((k) => k.includes(".deleted-"))).toBe(false);
     expect(JSON.parse(a.files[metaPath("s")]).videos.map((v) => v.id)).toEqual(["b", "c"]);
+  });
+
+  it("a file that could not move back stays hidden only until the next delete, which takes it along", async () => {
+    const a = seed();
+    const rename = a.rename;
+    let stuck = true;
+    a.rename = async (from, to) => {
+      if (stuck && from.endsWith("/a.vtt")) throw new Error("EPERM"); // stops the gathering
+      if (stuck && from.includes(".deleted-") && from.endsWith("/a.jpg")) throw new Error("EPERM"); // and the way back
+      return rename(from, to);
+    };
+    expect(await deleteVideo(a, "s", "a")).toBe(false);
+    expect(Object.keys(a.files).filter((k) => k.includes(".deleted-a-"))).toHaveLength(1);
+    stuck = false;
+    await new Promise((resolve) => setTimeout(resolve, 2)); // a later delete gets a folder of its own
+    expect(await deleteVideo(a, "s", "a")).toBe(true);
+    expect(Object.keys(a.files).filter((k) => k.includes(".deleted-") || /\/a\.(mp4|jpg|vtt)$/.test(k))).toEqual([]);
+    expect(JSON.parse(a.files[metaPath("s")]).videos.map((v) => v.id)).toEqual(["b", "c"]);
+  });
+
+  it("takes along what an interrupted delete of the same video left hidden, and nothing of other videos", async () => {
+    const a = seed();
+    a.files[`${dir}/.deleted-a-1794000000000/a.mp4`] = a.files[`${dir}/a.mp4`];
+    delete a.files[`${dir}/a.mp4`];
+    a.files[`${dir}/.deleted-a-1-1794000000001/x.mp4`] = "1"; // a video whose id starts with "a-"
+    a.files[`${dir}/.deleted-b-1794000000002/b.jpg`] = "1";
+    expect(await deleteVideo(a, "s", "a")).toBe(true);
+    expect(Object.keys(a.files).filter((k) => k.includes(".deleted-")).sort()).toEqual([
+      `${dir}/.deleted-a-1-1794000000001/x.mp4`,
+      `${dir}/.deleted-b-1794000000002/b.jpg`,
+    ]);
+    expect(a.files[`${dir}/a.jpg`]).toBeUndefined();
+  });
+
+  it("skips a file that is already gone", async () => {
+    const a = seed();
+    delete a.files[`${dir}/a.jpg`];
+    expect(await deleteVideo(a, "s", "a")).toBe(true);
+    expect(a.files[`${dir}/a.mp4`]).toBeUndefined();
   });
 
   it("keeps a progress save that lands while files are being trashed", async () => {

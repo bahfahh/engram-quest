@@ -193,7 +193,7 @@ function confirmDeleteFilm(hub, t, film, refresh) {
       try {
         const slug = data.EPISODIC_SLUG;
         const gone = await deleteAfterRelease(`${data.VIDEOS_DIR}/${slug}/${film.file}`, () => queueWrite(slug, () => data.deleteVideo(hub.app.vault.adapter, slug, film.id)));
-        if (!gone) new I.Notice(c(t, "EPISODIC_DELETE_PARTIAL"));
+        if (!gone) new I.Notice(c(t, "VIDEO_DELETE_ONE_KEPT"), 10000);
       } catch (e) {
         console.error("EngramQuest: recall film delete failed", e);
         new I.Notice(c(t, "DELETE_FAILED"));

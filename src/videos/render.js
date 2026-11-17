@@ -341,13 +341,16 @@ function showStatus(hub, t, topic, refresh, onDelete) {
   });
 }
 
-function confirmDelete(hub, t, slug, meta, refresh) {
+/**
+ * The Video Academy delete confirmation. `run` resolves true when everything went to the trash, false
+ * when nothing could go (`kept` says so), or the text key saying why nothing was deleted.
+ */
+function deleteDialog(hub, t, { name, body, run, kept, refresh }) {
   const modal = new I.Modal(hub.app);
   modal.modalEl.addClass("lh-vid-modal", "lh-vid-confirm");
   const wrap = modal.contentEl;
-  wrap.createDiv({ cls: "lh-vid-modal-title", text: K(c(t, "DELETE_CONFIRM_TITLE"), { name: meta.title }) });
-  const count = meta.videos.filter((v) => v.file).length;
-  wrap.createDiv({ cls: "lh-vid-modal-desc", text: count ? K(c(t, "VIDEO_DELETE_READY_BODY"), { count }) : c(t, "VIDEO_DELETE_BODY") });
+  wrap.createDiv({ cls: "lh-vid-modal-title", text: K(c(t, "DELETE_CONFIRM_TITLE"), { name }) });
+  wrap.createDiv({ cls: "lh-vid-modal-desc", text: body });
   const row = wrap.createDiv({ cls: "lh-vid-modal-actions" });
   row.createEl("button", { cls: "lh-vid-btn", text: c(t, "DELETE_CANCEL_BTN") }).addEventListener("click", () => modal.close());
   const ok = row.createEl("button", { cls: "lh-vid-btn lh-vid-btn-danger", text: c(t, "DELETE_CONFIRM_BTN") });
@@ -356,14 +359,54 @@ function confirmDelete(hub, t, slug, meta, refresh) {
     ok.disabled = true;
     modal.close();
     try {
-      const gone = await deleteAfterRelease(`${data.VIDEOS_DIR}/${slug}`, () => queueWrite(slug, () => data.deleteTopic(hub.app.vault.adapter, slug)));
-      if (!gone) new I.Notice(c(t, "VIDEO_DELETE_KEPT"), 10000);
+      const done = await run();
+      if (done !== true) new I.Notice(c(t, typeof done === "string" ? done : kept), 10000);
     } catch (e) {
-      console.error("EngramQuest: video topic delete failed", e);
+      console.error("EngramQuest: video delete failed", e);
+      new I.Notice(c(t, "DELETE_FAILED"));
     }
     refresh();
   });
   modal.open();
+}
+
+function confirmDelete(hub, t, slug, meta, refresh) {
+  const count = meta.videos.filter((v) => v.file).length;
+  deleteDialog(hub, t, {
+    name: meta.title,
+    body: count ? K(c(t, "VIDEO_DELETE_READY_BODY"), { count }) : c(t, "VIDEO_DELETE_BODY"),
+    run: () => deleteAfterRelease(`${data.VIDEOS_DIR}/${slug}`, () => queueWrite(slug, () => data.deleteTopic(hub.app.vault.adapter, slug))),
+    kept: "VIDEO_DELETE_KEPT",
+    refresh,
+  });
+}
+
+/**
+ * Delete one video of a series. The last video of a finished series takes the series with it: a
+ * finished series left without videos would read as a new request, and the skill would make it again.
+ * A series still being made keeps waiting for the rest. The dialog says which it is from the page
+ * on screen; the delete decides again from meta.json, as a video may have come or gone meanwhile.
+ */
+function confirmDeleteVideo(hub, t, { slug, meta }, video, refresh) {
+  const adapter = hub.app.vault.adapter;
+  const lastOfFinished = (m) => {
+    const playable = m.videos.filter((v) => v.file);
+    return m.status === "ready" && playable.length === 1 && playable[0].id === video.id;
+  };
+  const last = lastOfFinished(meta);
+  const remove = () => queueWrite(slug, async () => {
+    const now = await data.readTopic(adapter, slug);
+    if (!now || !lastOfFinished(now)) return data.deleteVideo(adapter, slug, video.id);
+    // Not told the series goes with it, so nothing goes.
+    return last ? data.deleteTopic(adapter, slug) : "VIDEO_DELETE_NOW_LAST";
+  });
+  deleteDialog(hub, t, {
+    name: last ? meta.title : video.title,
+    body: c(t, last ? "VIDEO_DELETE_LAST_BODY" : "VIDEO_DELETE_ONE_BODY"),
+    run: () => deleteAfterRelease(`${data.VIDEOS_DIR}/${slug}${last ? "" : `/${video.file}`}`, remove),
+    kept: last ? "VIDEO_DELETE_KEPT" : "VIDEO_DELETE_ONE_KEPT",
+    refresh,
+  });
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -412,6 +455,8 @@ function renderTopic(body, hub, t, topic, refresh) {
     const pending = player && !player.ended && player.currentTime > 0 ? save({ position: player.currentTime }) : saveChains.get(slug) || Promise.resolve();
     pending.then(() => { hub._vTopic = next; refresh(); });
   };
+  // A delete draws the page again; the video on screen carries on from where it was.
+  const stay = () => leave({ slug, videoId: video.id, autoplay: !!player && !player.paused });
 
   mountPlayer(stage, hub, t, slug, meta, video, autoplay, save, playable, (p) => { player = p; }, (next) => leave(next));
 
@@ -473,6 +518,8 @@ function renderTopic(body, hub, t, topic, refresh) {
     if (!phone && st.kind === "playing") ui.rawIcon(line, ui.PLAY);
     if (!phone && st.kind === "done") ui.icon(line, "check");
     line.createSpan({ text: (v.duration && !phone ? `${fmtTime(v.duration)} · ` : "") + st.text });
+    // Recall films are deleted from their own shelf; a series' videos from here, one at a time.
+    if (slug !== data.EPISODIC_SLUG) ui.rowActions(item, [{ name: "trash", label: c(t, "DELETE"), run: () => confirmDeleteVideo(hub, t, topic, v, stay) }]);
     if (st.kind === "playing") current = item;
     else item.addEventListener("click", () => leave({ slug, videoId: v.id, autoplay: true }));
   }

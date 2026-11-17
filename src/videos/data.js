@@ -234,6 +234,11 @@ function topicActivity(meta) {
   return latest;
 }
 
+/** One series' meta.json, normalized; null when it is missing or unreadable. */
+async function readTopic(adapter, slug) {
+  return normalizeTopic(await readJson(adapter, `${VIDEOS_DIR}/${slug}/meta.json`));
+}
+
 /**
  * Scan the teaching-video series. Returns [{ slug, meta }]: starred first, then most recent activity.
  * Episodic recall films live in the Memory category (ADR-27) and are read with readEpisodic.
@@ -250,7 +255,7 @@ async function listTopics(adapter) {
     listing.folders.map(async (folderPath) => {
       const slug = String(folderPath).split("/").pop();
       if (!slug) return null;
-      const meta = normalizeTopic(await readJson(adapter, `${VIDEOS_DIR}/${slug}/meta.json`));
+      const meta = await readTopic(adapter, slug);
       return meta ? { slug, meta } : null;
     })
   );
@@ -394,7 +399,7 @@ async function requeueSeries(adapter, slug) {
 
 /** The one episodic recall series, or null when none has been made or requested yet. */
 async function readEpisodic(adapter) {
-  const meta = normalizeTopic(await readJson(adapter, `${VIDEOS_DIR}/${EPISODIC_SLUG}/meta.json`));
+  const meta = await readTopic(adapter, EPISODIC_SLUG);
   return meta ? { slug: EPISODIC_SLUG, meta } : null;
 }
 
@@ -437,10 +442,54 @@ function checkSlug(slug) {
   if (!slug || /[\\/]|^\.+$/.test(slug)) throw new Error(`invalid topic slug: ${slug}`);
 }
 
+/** Remove `folder` only when nothing is in it: a recursive remove is permanent, never a trash. */
+async function removeIfEmpty(adapter, folder) {
+  try {
+    const listing = await adapter.list(folder);
+    if (!listing.files.length && !listing.folders.length) await adapter.rmdir(folder, true);
+  } catch { /* already gone */ }
+}
+
+/** The hidden folder a delete gathers `name`'s files in: this, then the time the delete started. */
+const bundlePrefix = (name) => `.deleted-${String(name).replace(/[^\w.-]+/g, "_")}-`;
+
 /**
- * Delete one video of a series: trash the files only it points at (video, poster, subtitles), then
- * drop it and its progress from meta.json. On any trash failure meta.json is left as it was, so the
- * video stays listed and nothing is removed without going to the trash. Returns whether it is gone.
+ * Move `rels` (paths inside `dir`) to the trash as one piece: each is moved into a new hidden folder
+ * in `dir`, and that folder goes to the trash whole. On any failure every moved file goes back, so
+ * they are either all in the trash or all where they were. Returns whether they are in the trash.
+ */
+async function trashTogether(adapter, dir, name, rels) {
+  const bundle = `${dir}/${bundlePrefix(name)}${Date.now()}`;
+  const moved = [];
+  const names = new Set();
+  let trashed = false;
+  try {
+    await adapter.mkdir(bundle);
+    for (const rel of rels) {
+      // Flat inside the bundle (rename creates no folders); a repeated name gets a number.
+      const base = rel.split("/").pop();
+      const to = `${bundle}/${names.has(base) ? `${moved.length}-${base}` : base}`;
+      names.add(base);
+      await adapter.rename(`${dir}/${rel}`, to);
+      moved.push([rel, to]);
+    }
+    trashed = await trashPath(adapter, bundle);
+  } catch (e) {
+    console.warn("EngramQuest: could not gather files for the trash", e);
+  }
+  if (trashed) return true;
+  for (const [rel, to] of moved.reverse()) {
+    try { await adapter.rename(to, `${dir}/${rel}`); }
+    catch (e) { console.error(`EngramQuest: could not move ${rel} back; it is in ${bundle}`, e); }
+  }
+  await removeIfEmpty(adapter, bundle);
+  return false;
+}
+
+/**
+ * Delete one video of a series: the files only it points at (video, poster, subtitles) go to the
+ * trash together, then it and its progress leave meta.json. When they cannot all go, none goes and
+ * meta.json is left as it was, so the video stays listed and whole. Returns whether it is gone.
  */
 async function deleteVideo(adapter, slug, videoId) {
   checkSlug(slug);
@@ -457,11 +506,19 @@ async function deleteVideo(adapter, slug, videoId) {
   };
   const filesOf = (v) => [v.file, v.poster, v.subtitles].filter((x) => typeof x === "string" && x).map(clean).filter(Boolean);
   const shared = new Set(videos.filter((v) => v !== video && v).flatMap(filesOf));
-  // The video file goes first and the first failure stops: it is the file a player or another app
-  // may hold open, and when it cannot move, nothing of the film has moved.
-  for (const rel of new Set(filesOf(video))) {
-    if (!shared.has(rel) && !(await trashPath(adapter, `${VIDEOS_DIR}/${slug}/${rel}`))) return false;
+  const dir = `${VIDEOS_DIR}/${slug}`;
+  const own = [];
+  for (const rel of new Set(filesOf(video))) if (!shared.has(rel) && (await adapter.exists(`${dir}/${rel}`))) own.push(rel);
+  // A delete of this video that stopped half way (the app closed, or a file could not move back)
+  // left files in its hidden folder; they go to the trash with the rest.
+  const prefix = bundlePrefix(videoId);
+  let folders = [];
+  try { folders = (await adapter.list(dir)).folders; } catch { /* no series folder */ }
+  for (const folder of folders) {
+    const name = String(folder).split("/").pop();
+    if (name.startsWith(prefix) && /^\d+$/.test(name.slice(prefix.length))) own.push(name);
   }
+  if (own.length && !(await trashTogether(adapter, dir, videoId, own))) return false;
   // Re-read so a progress save that landed while files were being trashed is kept.
   const fresh = await readExisting(adapter, path);
   if (!isObject(fresh) || !Array.isArray(fresh.videos)) return true;
@@ -489,6 +546,7 @@ module.exports = {
   saveSettings,
   syncSettingsLicense,
   normalizeTopic,
+  readTopic,
   hasPlayable,
   videoProgress,
   topicProgress,
