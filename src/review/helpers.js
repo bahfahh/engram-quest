@@ -333,7 +333,40 @@ function srFileName(notePath) {
   return notePath.replace(/\//g, "__").replace(/\.md$/i, "");
 }
 
+// Review schedules are written in the background (a rating moves straight on to the next card), so
+// every read-modify-write of one sr/ file goes through a queue for that file: two quick ratings of
+// cards in the same note cannot overwrite each other, and a read waits for the writes already queued
+// for its file, so the Hub never shows a schedule older than the last rating.
+const srQueue = new Map(); // sr/ path -> tail of that file's queue
+const srPathOf = (notePath) => `engram-review/sr/${srFileName(notePath)}.json`;
+
 async function loadSrData(adapter, notePath) {
+  const pending = srQueue.get(srPathOf(notePath));
+  if (pending) await pending;
+  return readSrData(adapter, notePath);
+}
+
+/** Queues `mutate(data)` on a note's schedule file and writes what it returns; returning null or
+ *  undefined leaves the file as it is. Resolves once written; rejects if the read or write failed. */
+function updateSrData(adapter, notePath, mutate) {
+  const key = srPathOf(notePath);
+  const run = (srQueue.get(key) || Promise.resolve()).then(async () => {
+    const next = mutate(await readSrData(adapter, notePath));
+    if (next) await saveSrData(adapter, notePath, next);
+    return next;
+  });
+  const tail = run.then(() => {}, () => {});
+  srQueue.set(key, tail);
+  tail.then(() => { if (srQueue.get(key) === tail) srQueue.delete(key); });
+  return run;
+}
+
+/** Resolves when every queued schedule write has finished (failed ones included). */
+function srWritesSettled() {
+  return Promise.all([...srQueue.values()]).then(() => {});
+}
+
+async function readSrData(adapter, notePath) {
   // read+catch instead of exists+read: halves the adapter round-trips, which matters on
   // mobile where every FS call is a native-bridge hop and this runs once per deck note.
   const newPath = `engram-review/sr/${srFileName(notePath)}.json`;
@@ -408,10 +441,23 @@ async function mapLimit(items, limit, fn) {
   return results;
 }
 
+// The folder is made once per adapter: on a phone each adapter call is a trip through the native bridge.
+const srDirMade = new WeakSet();
 async function saveSrData(adapter, notePath, srData) {
-  const srPath = `engram-review/sr/${srFileName(notePath)}.json`;
-  await adapter.mkdir("engram-review/sr").catch(() => {});
-  await adapter.write(srPath, JSON.stringify(srData, null, 2));
+  const srPath = srPathOf(notePath);
+  if (!srDirMade.has(adapter)) {
+    await adapter.mkdir("engram-review/sr").catch(() => {});
+    srDirMade.add(adapter);
+  }
+  try {
+    await adapter.write(srPath, JSON.stringify(srData, null, 2));
+  } catch (err) {
+    // The folder may have been deleted since it was made: make it again and retry once.
+    srDirMade.delete(adapter);
+    await adapter.mkdir("engram-review/sr").catch(() => {});
+    srDirMade.add(adapter);
+    await adapter.write(srPath, JSON.stringify(srData, null, 2));
+  }
 }
 
 // One rated card, counted into the achievement stats kept in data.json (`_stats`): the total, the
@@ -585,6 +631,8 @@ module.exports = {
   recordReviewDay,
   loadSrData,
   saveSrData,
+  updateSrData,
+  srWritesSettled,
   mergeSrIntoCards,
   mapLimit
 };

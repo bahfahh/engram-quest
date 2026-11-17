@@ -2,7 +2,7 @@
 const I = require("obsidian");
 const { computeFsrs: P } = require("../fsrs");
 const { t: c, tAlt: C, getLocale: _getLocale } = require("../i18n");
-const { anySrPattern: ge, getReviewStatus: $, loadSrData, saveSrData, buildSrRecord, recordReviewDay } = require("./helpers");
+const { anySrPattern: ge, getReviewStatus: $, updateSrData, buildSrRecord, recordReviewDay } = require("./helpers");
 const { loadSynapseStatus, loadSynapseBatch, attachSynapseToCards, isSynapseEnabled } = require("./synapse");
 const { SynapseMapSession } = require("./synapse-session");
 const { renderSynapseMap } = require("./synapse-panel");
@@ -726,11 +726,20 @@ var Q=class extends I.Modal{
             g.querySelectorAll(".lh-rating-btn").forEach(b=>{ b.classList.add("lh-op-50","lh-no-pointer"); });
 
             let w=P(E.q,p,t);
-            if(e.notePath) try {
-              let srData=await loadSrData(this.app.vault.adapter,e.notePath);
-              srData[e.front]=buildSrRecord(srData[e.front],w,E.q);
-              await saveSrData(this.app.vault.adapter,e.notePath,srData);
-            } catch(y){ console.error("review-deck write failed",y); }
+            // The next card shows at once; the schedule is written in the background. On a phone each
+            // file call crosses the native bridge, and waiting for the read and the write here was the
+            // pause after every rating. updateSrData queues writes per file, and reads of that file
+            // (the Hub's deck scan) wait for them, so nothing reads an older schedule.
+            if(e.notePath){
+              const front=e.front;
+              updateSrData(this.app.vault.adapter,e.notePath,(srData)=>{
+                srData[front]=buildSrRecord(srData[front],w,E.q);
+                return srData;
+              }).catch(y=>{
+                console.error("review-deck write failed",y);
+                new I.Notice(c(t,"RATING_SAVE_FAILED"));
+              });
+            }
             // Stats tracking for achievement system
             try {
               let _st=recordReviewDay(this.plugin.settings._stats);

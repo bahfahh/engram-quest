@@ -1,6 +1,6 @@
 "use strict";
 
-const { loadSrData, saveSrData, srFileName, loadHints, hintsPath, parseCommentCardBlock, cardFencePattern, CARD_FENCE, isFencedQaOpener } = require("./helpers");
+const { updateSrData, srFileName, loadHints, hintsPath, parseCommentCardBlock, cardFencePattern, CARD_FENCE, isFencedQaOpener } = require("./helpers");
 
 const { moveSynapseCardEntry } = require("./synapse");
 const { moveExplainerCardLinks } = require("../explainer/data");
@@ -367,12 +367,12 @@ async function saveTagSourceCard(app, card, newData) {
   // 3. Update sr JSON key if front text changed
   if (card.front !== newData.front) {
     try {
-      const srData = await loadSrData(app.vault.adapter, card.notePath);
-      if (srData[card.front]) {
+      await updateSrData(app.vault.adapter, card.notePath, (srData) => {
+        if (!srData[card.front]) return null;
         srData[newData.front] = srData[card.front];
         delete srData[card.front];
-        await saveSrData(app.vault.adapter, card.notePath, srData);
-      }
+        return srData;
+      });
     } catch (e) {
       console.warn("review-edit: sr update failed", e);
     }
@@ -612,11 +612,11 @@ async function deleteTagSourceCard(app, card) {
 
   // 2. Remove SR key
   try {
-    const srData = await loadSrData(app.vault.adapter, card.notePath);
-    if (srData[card.front]) {
+    await updateSrData(app.vault.adapter, card.notePath, (srData) => {
+      if (!srData[card.front]) return null;
       delete srData[card.front];
-      await saveSrData(app.vault.adapter, card.notePath, srData);
-    }
+      return srData;
+    });
   } catch (e) {
     console.warn("review-edit: sr delete failed", e);
   }

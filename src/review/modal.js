@@ -1,7 +1,7 @@
 "use strict";
 
 const obsidian = require("obsidian");
-const { loadSrData, saveSrData, buildSrRecord } = require("./helpers");
+const { updateSrData, buildSrRecord } = require("./helpers");
 const { normalizeMarkdown } = require("../ui/markdown");
 
 function openReviewCardModal(app, card, onDone, settings, deps) {
@@ -77,9 +77,10 @@ function openReviewCardModal(app, card, onDone, settings, deps) {
 
           if (card.notePath) {
             try {
-              let srData = await loadSrData(app.vault.adapter, card.notePath);
-              srData[card.front] = buildSrRecord(srData[card.front], result, rating.q);
-              await saveSrData(app.vault.adapter, card.notePath, srData);
+              await updateSrData(app.vault.adapter, card.notePath, (srData) => {
+                srData[card.front] = buildSrRecord(srData[card.front], result, rating.q);
+                return srData;
+              });
             } catch (error) {
               console.error("review-deck: write FSRS meta failed", error);
             }

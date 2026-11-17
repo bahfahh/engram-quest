@@ -1,6 +1,6 @@
 "use strict";
 
-const { anySrPattern, parseSrComment, saveSrData, mapLimit, loadHints, listHintFiles } = require("./helpers");
+const { anySrPattern, parseSrComment, updateSrData, mapLimit, loadHints, listHintFiles } = require("./helpers");
 
 // The vault's top-level engram-quest/ holds plugin data and the user's custom area (preferences, assets): never
 // notes, so never cards, and never rewritten. A note folder of the same name deeper in the vault is the user's own.
@@ -64,7 +64,7 @@ async function migrateSrCommentsToJson(app) {
 
     if (modified) {
       await app.vault.modify(file, newLines.join("\n"));
-      await saveSrData(app.vault.adapter, file.path, srData);
+      await updateSrData(app.vault.adapter, file.path, () => srData);
     }
   }
 
