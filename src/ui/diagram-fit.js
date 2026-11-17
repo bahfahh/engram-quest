@@ -72,7 +72,11 @@ function enhance(diagram, owner, doc) {
   expand.className = "lh-diagram-expand";
   expand.setAttribute("aria-label", "Full screen");
   expand.appendChild(new DOMParser().parseFromString(EXPAND_SVG, "image/svg+xml").documentElement);
-  const open = (ev) => { ev.preventDefault(); ev.stopPropagation(); openDiagramViewer(svg, doc, owner); };
+  const open = (ev) => {
+    // A link drawn in the diagram (a Mermaid internal-link node, a click href) keeps doing its job.
+    if (ev.target && ev.target.closest && ev.target.closest("a, .internal-link")) return;
+    ev.preventDefault(); ev.stopPropagation(); openDiagramViewer(svg, doc, owner);
+  };
   expand.addEventListener("click", open);
   diagram.addEventListener("click", open);
   scroller.addEventListener("scroll", () => updateFades(wrap, scroller), { passive: true });

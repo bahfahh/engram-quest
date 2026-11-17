@@ -10,7 +10,7 @@
 //
 // The stamp is not enough for files the plugin writes itself through the adapter: on a phone the index
 // may not see such a write. Those writers update or drop their entry here (updateSrData in helpers.js,
-// the hints writers in edit.js, create.js for card notes).
+// the hints writers in edit.js, create.js for card notes, rename-follow.js for files moved after a rename).
 //
 // Stores: notes  (deck note -> its deck name and parsed cards)
 //         sr     (sr/ file -> schedule data)
@@ -56,6 +56,12 @@ function put(store, key, stamp, value) {
 function drop(store, key) {
   if (stores[store].delete(key)) changed();
 }
+/** Drops a path from every store: for files the plugin moves or writes past the index (rename-follow.js). */
+function forget(path) {
+  let any = false;
+  for (const map of Object.values(stores)) if (map.delete(path)) any = true;
+  if (any) changed();
+}
 /** Forgets the keys of a store that a full scan did not visit (deleted or renamed files). */
 function prune(store, visited) {
   let any = false;
@@ -94,4 +100,4 @@ function whenRestored() { return restoring || Promise.resolve(); }
 /** fn() runs after any change; returns a function that stops it. */
 function onChange(fn) { listeners.add(fn); return () => listeners.delete(fn); }
 
-module.exports = { setRestoring, whenRestored, setStamper, stampOf, fileStamp, get, put, drop, prune, clear, exportAll, importAll, onChange, clone };
+module.exports = { setRestoring, whenRestored, setStamper, stampOf, fileStamp, get, put, drop, forget, prune, clear, exportAll, importAll, onChange, clone };

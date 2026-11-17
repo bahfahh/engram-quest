@@ -339,6 +339,10 @@ function srFileName(notePath) {
 // cards in the same note cannot overwrite each other, and a read waits for the writes already queued
 // for its file, so the Hub never shows a schedule older than the last rating.
 const srQueue = new Map(); // sr/ path -> tail of that file's queue
+// sr/ path -> how many writes have been queued for it. A read remembers what it gave only when no
+// write was queued while it ran: that write caches what it wrote, and on a phone the file's stamp may
+// not change, so a slower read would otherwise put the schedule from before the rating back.
+const srWriteGen = new Map();
 const srPathOf = (notePath) => `engram-review/sr/${srFileName(notePath)}.json`;
 
 async function loadSrData(adapter, notePath) {
@@ -349,8 +353,9 @@ async function loadSrData(adapter, notePath) {
   const stamp = scanCache.stampOf(key);
   const hit = scanCache.get("sr", key, stamp);
   if (hit !== undefined) return hit;
+  const gen = srWriteGen.get(key) || 0;
   const data = await readSrData(adapter, notePath);
-  scanCache.put("sr", key, stamp, data);
+  if ((srWriteGen.get(key) || 0) === gen) scanCache.put("sr", key, stamp, data);
   return data;
 }
 
@@ -358,6 +363,7 @@ async function loadSrData(adapter, notePath) {
  *  undefined leaves the file as it is. Resolves once written; rejects if the read or write failed. */
 function updateSrData(adapter, notePath, mutate) {
   const key = srPathOf(notePath);
+  srWriteGen.set(key, (srWriteGen.get(key) || 0) + 1);
   const run = (srQueue.get(key) || Promise.resolve()).then(async () => {
     const next = mutate(await readSrData(adapter, notePath));
     if (next) {

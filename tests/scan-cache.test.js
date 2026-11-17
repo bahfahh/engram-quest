@@ -163,3 +163,42 @@ describe("saved between launches", () => {
     expect(scanCache.exportAll().sr).toEqual([]);
   });
 });
+
+// ticket-078: on a phone the index may not see the plugin's own adapter writes, so a stale entry kept
+// under an unchanged stamp would be shown until the next write or restart.
+describe("entries the index cannot correct", () => {
+  it("does not let a read started before a rating put the old schedule back", async () => {
+    scanCache.setStamper(() => "same"); // the index never sees these writes
+    const path = "engram-review/sr/race.json";
+    const files = new Map([[path, JSON.stringify({ Q: { due: "old" } })]]);
+    let gate = null;
+    const adapter = {
+      async read(p) { if (!files.has(p)) throw new Error("ENOENT"); const d = files.get(p); if (gate) await gate; return d; },
+      async write(p, d) { files.set(p, d); },
+      async mkdir() {},
+    };
+    let release;
+    gate = new Promise((r) => { release = r; });
+    const slowRead = helpers.loadSrData(adapter, "race.md"); // has read the old file, held at the gate
+    gate = null;
+    await helpers.updateSrData(adapter, "race.md", (d) => ({ ...d, Q: { due: "new" } }));
+    release();
+    expect((await slowRead).Q.due).toBe("old");
+    expect((await helpers.loadSrData(adapter, "race.md")).Q.due).toBe("new");
+  });
+
+  it("forgets both paths of a file moved after a note rename", async () => {
+    const { replaceFile } = require("../src/review/rename-follow.js");
+    const files = new Map([["engram-review/sr/x.json", "{}"]]);
+    const adapter = {
+      async exists(p) { return files.has(p); },
+      async write(p, d) { files.set(p, d); },
+      async remove(p) { files.delete(p); },
+    };
+    scanCache.put("sr", "engram-review/sr/x.json", "s", { a: 1 });
+    scanCache.put("sr", "engram-review/sr/y.json", "s", { b: 1 });
+    await replaceFile(adapter, "engram-review/sr/x.json", "engram-review/sr/y.json", "{}");
+    expect(scanCache.get("sr", "engram-review/sr/x.json", "s")).toBeUndefined();
+    expect(scanCache.get("sr", "engram-review/sr/y.json", "s")).toBeUndefined();
+  });
+});

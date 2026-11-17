@@ -9,6 +9,7 @@
 // rewrite the same file at the same time.
 
 const { srFileName, HINTS_DIR, AI_CARDS_DIR, nameKey } = require("./helpers");
+const scanCache = require("./scan-cache");
 
 const SYNAPSE_DIR = "engram-review/synapse";
 const EXPLAINER_META_DIR = "engram-quest/explainer/meta";
@@ -80,6 +81,11 @@ const MOVING_DIRS = ["engram-review/sr", "engram-quest/state", HINTS_DIR, AI_CAR
  * app closes in between or the undo fails too, recoverMovingFiles puts the file back at the next start.
  */
 async function replaceFile(adapter, from, to, data) {
+  // Written past the file index, which a phone may not update: the scan cache reads both paths again.
+  try { await writeMoved(adapter, from, to, data); } finally { scanCache.forget(from); scanCache.forget(to); }
+}
+
+async function writeMoved(adapter, from, to, data) {
   if (from === to) return adapter.write(to, data);
   if (!sameFile(from, to)) {
     await adapter.write(to, data);
