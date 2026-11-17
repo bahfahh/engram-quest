@@ -234,6 +234,8 @@ async function scanReviewDecks(app, settings, reviewHelpers) {
   for (const entry of scanned) {
     if (!entry) continue;
     if (!deckMap[entry.deckName]) deckMap[entry.deckName] = { name: entry.deckName, cards: [] };
+    // A session can mix decks (study all, timed, a video's cards), so each card says where it belongs.
+    entry.cards.forEach((card) => { card.deckName = entry.deckName; });
     deckMap[entry.deckName].cards.push(...entry.cards);
   }
 

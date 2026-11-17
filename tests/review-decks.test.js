@@ -49,6 +49,8 @@ describe("scanReviewDecks", () => {
     expect(decks).toHaveLength(1);
     expect(decks[0].name).toBe("flashcards/math");
     expect(decks[0].total).toBe(1);
+    // Each card carries its deck, for a session that mixes decks.
+    expect(decks[0].cards[0].deckName).toBe("flashcards/math");
   });
 
   it("does NOT read indexed non-deck notes from disk (perf: trust metadataCache)", async () => {

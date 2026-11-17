@@ -288,6 +288,16 @@ body.is-phone .lh-hub.lh-session .lh-review-body { padding:14px 18px 0; overflow
 body.is-phone .lh-hub.lh-session .lh-review-body.has-bar { padding-bottom:calc(var(--lh-safe-bottom) + 118px); }
 body.is-phone .lh-hub.lh-session .lh-review-body.has-grades { padding-bottom:calc(var(--lh-safe-bottom) + 150px); }
 body.is-phone .lh-hub.lh-session .lh-review-card { background:transparent !important; box-shadow:none; padding:0; border-radius:0; overflow:visible; flex:none; display:flex; flex-direction:column; gap:10px; }
+/* Where the card is from: one line, small, so the question keeps the room. */
+body.is-phone .lh-hub.lh-session .lh-rc-ctx { display:flex; align-items:center; gap:10px; min-width:0; overflow:hidden; margin:-4px 0 -2px; font-size:12.5px; line-height:18px; color:var(--text3); }
+body.is-phone .lh-hub.lh-session .lh-rc-ctx-deck { display:flex; align-items:center; gap:6px; flex:0 1 auto; min-width:0; overflow:hidden; white-space:nowrap; }
+body.is-phone .lh-hub.lh-session .lh-rc-ctx-deck .lh-i { flex:none; width:14px; height:14px; stroke-width:1.6; }
+body.is-phone .lh-hub.lh-session .lh-rc-ctx-deck b { flex:0 0 auto; max-width:100%; overflow:hidden; text-overflow:ellipsis; font-weight:600; color:var(--text2); }
+body.is-phone .lh-hub.lh-session .lh-rc-ctx-path { flex:0 100 auto; min-width:0; overflow:hidden; text-overflow:ellipsis; }
+body.is-phone .lh-hub.lh-session .lh-rc-ctx .lh-rc-badge { flex:none; padding:0 7px; font-size:11.5px; line-height:18px; }
+body.is-phone .lh-hub.lh-session .lh-rc-ctx-src { display:flex; align-items:center; gap:4px; flex:0 100 auto; min-width:5em; max-width:40%; height:auto; margin-left:auto; padding:3px 0 3px 4px; border:0; background:transparent !important; box-shadow:none; font-size:12.5px; line-height:18px; color:var(--tint); }
+body.is-phone .lh-hub.lh-session .lh-rc-ctx-src span { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+body.is-phone .lh-hub.lh-session .lh-rc-ctx-src em { flex:none; font-style:normal; color:var(--text3); }
 body.is-phone .lh-hub.lh-session .lh-rc-question { font-size:24px; line-height:33px; font-weight:600; letter-spacing:-.01em; flex:none; }
 body.is-phone .lh-hub.lh-session .lh-rc-question.is-done { font-size:17px; line-height:25px; font-weight:500; color:var(--text2) !important; }
 body.is-phone .lh-hub.lh-session .lh-hints-container { display:flex; flex-direction:column; gap:8px; }
