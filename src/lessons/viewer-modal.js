@@ -5,6 +5,7 @@
 // patch the course's meta.json via the lessons data layer.
 
 const I = require("obsidian");
+const { useBack } = require("../ui/back-nav");
 const { t: c, interpolate: K, getLocale: _getLocale } = require("../i18n");
 const { LESSONS_DIR, markLesson, lessonCompletion, lessonTitle } = require("./data");
 
@@ -120,6 +121,7 @@ class LessonViewerModal extends I.Modal {
   }
 
   onOpen() {
+    useBack(this, () => this.close()); // also an iPhone edge swipe (src/ui/back-nav.js)
     const t = this.plugin.settings;
     const zh = L(t) === "zh-tw";
     const { contentEl, modalEl } = this;
@@ -253,6 +255,7 @@ class CanvasLessonModal extends I.Modal {
   }
 
   onOpen() {
+    useBack(this, () => this.close()); // also an iPhone edge swipe (src/ui/back-nav.js)
     const t = this.plugin.settings;
     const { contentEl, modalEl } = this;
     hubUi().themedModal(this);

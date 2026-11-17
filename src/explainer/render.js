@@ -145,6 +145,8 @@ function renderContent(content, hub, t, pages, refresh) {
   content.empty();
   const visible = filterPages(hub, pages);
   const decks = sortDecks(groupExplainersByDeck(visible), hub._xSort);
+  // On a phone the top bar's back (and the system back / edge swipe) leaves an open deck first.
+  ui.setPhoneNav(hub, null);
 
   // A deck is open: show its pages. Fall back to the deck list when the open deck no longer exists
   // under the current filters.
@@ -327,7 +329,9 @@ function renderDeckPages(content, hub, t, deck, refresh) {
   const back = head.createEl("button", { cls: "lh-btn alt lh-back" });
   ui.icon(back, "back");
   back.createEl("span", { text: c(t, "BACK") });
-  back.addEventListener("click", () => { hub._xDeck = null; refresh(); });
+  const toDecks = () => { hub._xDeck = null; refresh(); };
+  back.addEventListener("click", toDecks);
+  ui.setPhoneNav(hub, { label: c(t, "TAB_EXPLAINER"), title: "", onBack: toDecks });
   ui.icon(head.createEl("span", { cls: "lh-dc-ic" }), "layers");
   const title = head.createEl("div", { cls: "lh-grow" });
   title.createEl("div", { cls: "lh-xdeck", text: deck.name });

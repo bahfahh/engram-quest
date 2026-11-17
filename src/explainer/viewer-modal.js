@@ -5,6 +5,7 @@
 // plain reader with a source-note shortcut and delete.
 
 const I = require("obsidian");
+const { useBack } = require("../ui/back-nav");
 const { t: c, interpolate: K } = require("../i18n");
 const { deleteExplainer, markViewed, toggleStateFlag, queueRegenerate, EXPLAINER_DIR } = require("./data");
 const { composeSpecPage, specPath } = require("./compose");
@@ -28,6 +29,7 @@ class ExplainerViewerModal extends I.Modal {
   }
 
   onOpen() {
+    useBack(this, () => this.close()); // also an iPhone edge swipe (src/ui/back-nav.js)
     const t = this.plugin.settings;
     const { contentEl, modalEl } = this;
     this._isOpen = true;

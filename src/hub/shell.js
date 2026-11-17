@@ -230,6 +230,14 @@ function renderPhone(hub, root) {
   };
   hub._openPhonePage = (id) => { hub._phonePage = id; paint(); };
   hub._closePhonePage = () => { hub._phonePage = null; paint(); };
+  // One step back on the phone, the same for the back button, Android's back button and the iPhone
+  // edge swipe (src/ui/back-nav.js): an inner page of the tab first, then the tab. False on the home
+  // page, where the next step back closes the Hub.
+  hub._phoneBack = () => {
+    if (!hub._phonePage) return false;
+    if (hub.phoneNav && hub.phoneNav.onBack) hub.phoneNav.onBack(); else hub._closePhonePage();
+    return true;
+  };
   paint();
 }
 
@@ -238,7 +246,7 @@ function renderPhoneSub(hub, shell, page, cats) {
   const cat = cats.find(x => x.tabs.includes(page)) || cats[0];
   const body = shell.createEl("div", { cls: "lh-pbody" });
   const nav = body.createEl("div", { cls: "lh-pnav" });
-  const back = backButton(nav.createEl("div", { cls: "lh-pnav-side" }), cat.label, () => { if (hub.phoneNav.onBack) hub.phoneNav.onBack(); else hub._closePhonePage(); });
+  const back = backButton(nav.createEl("div", { cls: "lh-pnav-side" }), cat.label, () => hub._phoneBack());
   nav.createEl("span", { cls: "lh-pnav-title", text: c(t, TABS[page].key) });
   const side = nav.createEl("div", { cls: "lh-pnav-side" });
   if (hasFeatureGuide(page)) attachInfoButton(side, hub.app, hub.plugin, page);

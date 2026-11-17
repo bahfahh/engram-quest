@@ -324,6 +324,11 @@ button.lh-back-pill.lh-back-pill:active { background:var(--raisedh); transform:s
 button.lh-back-pill.lh-back-pill:focus-visible { outline:2px solid var(--focus,var(--tint)); outline-offset:2px; }
 .lh-back-pill .lh-i { width:20px; height:20px; flex:none; stroke-width:2.2; }
 .lh-back-pill-label { min-width:0; overflow:hidden; text-overflow:ellipsis; }
+/* iPhone/iPad swipe-back from the left edge (src/ui/back-nav.js): a round chevron follows the finger in
+   and fills with the accent once letting go will go back. The script sets only its sideways position. */
+.lh-edge-back { position:fixed; left:0; top:50%; z-index:10; width:40px; height:40px; border-radius:20px; display:flex; align-items:center; justify-content:center; background:var(--background-primary); color:var(--text-muted); box-shadow:0 2px 12px rgba(0,0,0,.22); pointer-events:none; transform:translate(-40px,-50%); transition:background-color .12s,color .12s; }
+.lh-edge-back.is-ready { background:var(--interactive-accent); color:var(--text-on-accent); }
+.lh-edge-back svg { width:22px; height:22px; stroke-width:2.4; }
 body.is-phone .modal.lh-hub { width:100vw; height:100vh; height:100dvh; max-height:none; border-radius:0; margin:0; }
 body.is-phone .modal-container:has(.lh-hub) { padding:0; align-items:stretch; }
 .lh-ph { position:relative; flex:1; min-height:0; display:flex; flex-direction:column; background:var(--base); isolation:isolate; overflow:hidden; }

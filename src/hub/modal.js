@@ -6,6 +6,7 @@ const { maybeShowIntro: _maybeShowIntro, maybeShowTabGuide: _maybeShowTabGuide }
 const { scanReviewDecks } = require("../review/decks");
 const { getReviewStatus: $ } = require("../review/helpers");
 const reviewHelpers = require("../review/helpers");
+const backNav = require("../ui/back-nav");
 const scanCache = require("../review/scan-cache");
 const { registerSelectionCopy } = require("../ui/selection-copy");
 const { deleteDeckCards } = require("../review/edit");
@@ -55,6 +56,9 @@ if(!_pc)return null;let parsed=_pc.parsed;let difficulty=parsed.difficulty,style
 scanCache.prune("quests",_visited);
 {let _packages=await listQuestPackages(this.app.vault.adapter),_packageItems=await reviewHelpers.mapLimit(_packages,8,async pkg=>{try{let state=await questState.loadQuestState(this.app.vault.adapter,pkg.stateKey);return questPackageToHubItem(pkg,state)}catch(err){console.warn("EngramQuest: failed to scan quest package",pkg&&pkg.slug,err);return null}});this.quests=[..._packageItems.filter(Boolean),..._scanned.filter(Boolean)];}this.memories=[];let _mdByBase=new Map();for(let _f of this.app.vault.getMarkdownFiles())if(!_mdByBase.has(_f.basename))_mdByBase.set(_f.basename,_f);for(let e of this.app.vault.getFiles())if(e.name.endsWith("-memory.canvas")){let t=e.name.replace("-memory.canvas",""),r=[],s=_mdByBase.get(t);if(s){let l=[],a=this.app.metadataCache.getFileCache(s);if(a&&a.tags&&a.tags.forEach(o=>l.push(o.tag.replace(/^#/,"").toLowerCase())),a&&a.frontmatter&&a.frontmatter.tags){let o=a.frontmatter.tags;typeof o==="string"?o.split(",").forEach(i=>l.push(i.trim().replace(/^#/,"").toLowerCase())):Array.isArray(o)&&o.forEach(i=>l.push(String(i).replace(/^#/,"").toLowerCase()))}r=[...new Set(l.filter(o=>o))].map(o=>"#"+o)}this.memories.push({file:e,baseName:t,tags:r,ctime:e.stat.ctime})}}
 onOpen(){this._closed=false;this.modalEl.addClass("lh-hub");registerSelectionCopy(this);
+// Android back, history.back and the iPhone edge swipe take the back button's step: back one phone
+// page, then close (src/ui/back-nav.js). A minimized Hub just closes, as before.
+backNav.useBack(this,()=>{if(this._minimized||!(this._phoneBack&&this._phoneBack()))this.close();});
 // Until the introduction has been shown or skipped, the tabs' own guides wait (src/hub/intro.js).
 this._introPending=!this.plugin.settings._introSeen;
 ui.watchTheme(this,{vars:true});

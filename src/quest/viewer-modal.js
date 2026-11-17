@@ -1,6 +1,7 @@
 "use strict";
 
 const I = require("obsidian");
+const { useBack } = require("../ui/back-nav");
 const { t, getLocale } = require("../i18n");
 const { assetUrl } = require("../assets");
 const {
@@ -171,6 +172,7 @@ class QuestViewerModal extends I.Modal {
   }
 
   async onOpen() {
+    useBack(this, () => this.close()); // also an iPhone edge swipe (src/ui/back-nav.js)
     this.modalEl.addClass("qm-modal");
     this.modalEl.addClass("lh-hub");
     this.modalEl.addClass("qm-viewer-frame");

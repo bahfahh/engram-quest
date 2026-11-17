@@ -6,6 +6,7 @@
 // the "?" next to a page title on pages that attach one (attachInfoButton).
 
 const I = require("obsidian");
+const { useBack } = require("../ui/back-nav");
 const { getLocale: L } = require("../i18n");
 const { assetUrl } = require("../assets");
 
@@ -515,6 +516,8 @@ class FeatureGuideModal extends I.Modal {
   }
 
   onOpen() {
+    // Back (Android, history.back, iPhone edge swipe) returns from a page to the list, then closes.
+    useBack(this, () => { if (this.page) { this.page = null; this.render(); } else this.close(); });
     const def = CONTENT[this.tab];
     if (!def) { this.close(); return; }
     this.def = def;

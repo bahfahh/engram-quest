@@ -6,6 +6,7 @@
 // The words live in help-content.js; this file only draws them with the Hub's design tokens.
 
 const I = require("obsidian");
+const { useBack } = require("../ui/back-nav");
 const { ProUpgradeModal } = require("../license/upgrade");
 const { t: c, getLocale } = require("../i18n");
 const { registerSelectionCopy } = require("../ui/selection-copy");
@@ -60,6 +61,7 @@ class HelpModal extends I.Modal {
   }
 
   onOpen() {
+    useBack(this, () => this.close()); // also an iPhone edge swipe (src/ui/back-nav.js)
     this.copy = getLocale(this.plugin.settings) === "zh-tw" ? CONTENT.zh : CONTENT.en;
     this.modalEl.addClass("lh-hub", "lh-help");
     watchTheme(this, { vars: true });

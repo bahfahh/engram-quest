@@ -18,6 +18,7 @@ const { ExplainerViewerModal } = require("../explainer/viewer-modal");
 const { LessonViewerModal, CanvasLessonModal } = require("../lessons/viewer-modal");
 const { addRewatchButton, rewatchTarget, openRewatch } = require("../videos/rewatch");
 const { fitDiagrams } = require("../ui/diagram-fit");
+const { useBack } = require("../ui/back-nav");
 const { watchTheme, themedModal, restoreButton: _restoreButton, featureIcon: _featureIcon, icon: _uiIcon, iconButton: _uiIconButton, backButton: _uiBackButton, isPhone: _isPhone } = require("../hub/ui");
 const W_ref = { get locale() { try { return I.moment && I.moment.locale && I.moment.locale(); } catch(e) { return "en"; } } };
 function L(s) { return _getLocale(s, W_ref.locale); }
@@ -230,6 +231,9 @@ var Q=class extends I.Modal{
     this._preSessionEvalCtx = buildEvalContext(this.plugin.settings._stats);
     this.modalEl.addClass("lh-hub","lh-session");
     registerSelectionCopy(this);
+    // Android back, history.back and the iPhone edge swipe take the step of the back button on screen
+    // (each view sets this._back); a minimized session just closes, as before (src/ui/back-nav.js).
+    useBack(this,()=>{ if(!this._minimized&&this._back) this._back(); else this.close(); });
     watchTheme(this,{vars:true});
     if(this._timeboxMinutes>0) this._sessionStartMs=Date.now();
     this.renderCard();
@@ -349,6 +353,7 @@ var Q=class extends I.Modal{
     const rarityStyles = isDark ? RARITY_DARK : RARITY_LIGHT;
 
     this.contentEl.empty();
+    this._back=()=>{ this.close(); this.onBack&&this.onBack(); };
     let wrap=this.contentEl.createEl("div",{attr:{class:"lh-complete-screen",style:"flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;text-align:center;gap:16px;overflow-y:auto;"}});
     wrap.createEl("div",{attr:{style:"font-size:56px;line-height:1;"}}).textContent="🎉";
     wrap.createEl("div",{attr:{class:"lh-complete-title",style:"font-size:24px;font-weight:700;color:var(--text);"}}).textContent=c(t,"REVIEW_COMPLETE");
@@ -409,7 +414,7 @@ var Q=class extends I.Modal{
     };
     const phone=_isPhone();
     const notePaths=getCardDisplayNotePaths(e);
-    const goBack=()=>{ this.close(); this.onBack&&this.onBack(); };
+    const goBack=this._back=()=>{ this.close(); this.onBack&&this.onBack(); };
     const openNote=(np)=>{const _f=this.app.vault.getAbstractFileByPath(np);if(_f){this.app.workspace.openLinkText(_f.path,"",false);}else{const _bn=np.split("/").pop().replace(/\.md$/i,"");const _fb=this.app.metadataCache.getFirstLinkpathDest(_bn,"");if(_fb){this.app.workspace.openLinkText(_fb.path,"",false);}else{new I.Notice("Source note not found: "+_bn);}}};
     const copyCard=()=>{
       let parts=[e.front];
@@ -963,15 +968,16 @@ var Q=class extends I.Modal{
   _renderEditForm(e){
     let t=this.plugin.settings;
     this.contentEl.empty();
+    this._back=()=>this.renderCard();
 
     // Nav (minimal — just back arrow)
     let nav=this.contentEl.createEl("div",{attr:{class:"lh-review-nav"}});
-    if(_isPhone()) _uiBackButton(nav,c(t,"BACK"),()=>this.renderCard());
+    if(_isPhone()) _uiBackButton(nav,c(t,"BACK"),this._back);
     else {
       nav.createEl("span",{text:c(t,"HUB_TITLE"),attr:{class:"lh-review-logo"}});
       let backBtn=nav.createEl("button",{attr:{class:"lh-review-back"}});
       backBtn.textContent="← "+c(t,"BACK");
-      backBtn.addEventListener("click",()=>this.renderCard());
+      backBtn.addEventListener("click",this._back);
     }
 
     // Form body

@@ -1,6 +1,7 @@
 "use strict";
 
 const obsidian = require("obsidian");
+const { useBack } = require("../ui/back-nav");
 const { isHtmlQuestNode, resolveImageOcclusionRect, resolveQuestHtmlPath } = require("./helpers");
 
 function attachImgZoom(el){
@@ -1383,6 +1384,8 @@ function openQuestChapterModal(app, nodes, activeIndex, styleName, difficulty, s
   }
 
   modal.open();
+  // Back (Android, history.back, iPhone edge swipe) closes an open picture first, then the chapter.
+  useBack(modal, () => modal.close());
   render();
 }
 
