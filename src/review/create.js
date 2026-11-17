@@ -3,6 +3,7 @@
 const obsidian = require("obsidian");
 const { t, interpolate } = require("../i18n");
 const { CARD_FENCE } = require("./helpers");
+const scanCache = require("./scan-cache");
 
 /**
  * Append a card line to the manual cards file for a deck.
@@ -36,11 +37,14 @@ async function appendManualCard(adapter, deckName, front, back) {
     const existing = await adapter.read(filePath);
     const sep = existing.endsWith("\n") ? "" : "\n";
     await adapter.write(filePath, existing + sep + cardText);
+    // Written past the vault, which a phone's file index may not notice: read it again next scan.
+    scanCache.drop("notes", filePath);
   } else {
     // New file: add flashcard tag so it gets picked up by scanReviewDecks
     // deckName is already the full tag path (e.g. "flashcards/system-design/strategic")
     const prefix = `#${deckName}\n\n`;
     await adapter.write(filePath, prefix + cardText);
+    scanCache.drop("notes", filePath);
   }
 }
 

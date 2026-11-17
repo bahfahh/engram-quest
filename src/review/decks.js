@@ -1,14 +1,18 @@
 "use strict";
 
-const { anySrPattern, parseSrComment, updateSrData, mapLimit, loadHints, listHintFiles } = require("./helpers");
+const scanCache = require("./scan-cache");
+const { anySrPattern, parseSrComment, updateSrData, mapLimit, loadHints, listHintFiles, srFileName, hintsPath } = require("./helpers");
 
 // The vault's top-level engram-quest/ holds plugin data and the user's custom area (preferences, assets): never
 // notes, so never cards, and never rewritten. A note folder of the same name deeper in the vault is the user's own.
 const notesOnly = (files) => files.filter((file) => !file.path.startsWith("engram-quest/"));
 
+// Checked once per plugin load: it ran on every Hub open, two disk calls each time.
+let migrationChecked = false;
 async function migrateReviewDeckFolder(adapter) {
-  if (await adapter.exists("engram-review/hints")) return;
-  if (!(await adapter.exists(".review-deck"))) return;
+  if (migrationChecked) return;
+  if (await adapter.exists("engram-review/hints")) { migrationChecked = true; return; }
+  if (!(await adapter.exists(".review-deck"))) { migrationChecked = true; return; }
   await adapter.mkdir("engram-review");
   await adapter.mkdir("engram-review/hints");
   if (await adapter.exists(".review-deck/hints")) {
@@ -24,6 +28,7 @@ async function migrateReviewDeckFolder(adapter) {
       await adapter.write(`engram-review/${name}`, await adapter.read(src));
     }
   }
+  migrationChecked = true;
   console.debug("engram-review: migration from .review-deck/ complete; old folder left for manual cleanup");
 }
 
@@ -97,6 +102,8 @@ async function scanReviewDecks(app, settings, reviewHelpers) {
   const readNote = (f) => (app.vault.cachedRead ? app.vault.cachedRead(f) : app.vault.read(f));
   // One listing of the hints folder instead of probing two names per deck note.
   const hintFiles = await listHintFiles(app.vault.adapter);
+  const settingsKey = `${settings.flashcardTags || ""}|${srScan ? 1 : 0}`;
+  const visited = new Set();
 
   // Per-file scan. Returns { deckName, cards } or null. Runs with bounded concurrency below
   // so the 3-5 FS round-trips per deck note overlap instead of serializing on mobile.
@@ -137,27 +144,35 @@ async function scanReviewDecks(app, settings, reviewHelpers) {
       (!cache.headings || cache.headings.length === 0)
     );
     if (!srScan && !matchedDeck && !cacheUnindexed) return null;
+    visited.add(file.path);
 
-    let content = await readNote(file);
+    // The note's deck and cards come from its text: reused while the note is unchanged (scan-cache.js).
+    // The deck tag from the index is part of the key, since it can change after the note was read.
+    const noteStamp = scanCache.fileStamp(file);
+    const noteKey = noteStamp && `${noteStamp}|${matchedDeck || ""}|${cacheUnindexed ? 1 : 0}|${settingsKey}`;
+    let parsed = scanCache.get("notes", file.path, noteKey);
+    if (parsed === undefined) {
+      let content = await readNote(file);
 
-    // Inline-tag fallback: SR-scan mode parses unmatched notes too, and not-yet-indexed
-    // files need their tag recovered from content. Gives the deck a tag-derived name
-    // instead of its parent folder.
-    if (!matchedDeck) {
-      const inlineTags = [...content.matchAll(/(^|\s)#([\w][\w/-]*)/gm)].map(m => m[2]);
-      const contentTags = [...new Set(inlineTags.filter(Boolean))];
-      matchedDeck = reviewHelpers.matchFlashcardTagPrefix(contentTags, settings.flashcardTags);
+      // Inline-tag fallback: SR-scan mode parses unmatched notes too, and not-yet-indexed
+      // files need their tag recovered from content. Gives the deck a tag-derived name
+      // instead of its parent folder.
+      if (!matchedDeck) {
+        const inlineTags = [...content.matchAll(/(^|\s)#([\w][\w/-]*)/gm)].map(m => m[2]);
+        const contentTags = [...new Set(inlineTags.filter(Boolean))];
+        matchedDeck = reviewHelpers.matchFlashcardTagPrefix(contentTags, settings.flashcardTags);
+      }
+
+      const found = reviewHelpers.parseFlashcards(content);
+      let name = matchedDeck || file.parent?.path || "/";
+      if (!name) name = "/";
+      found.forEach((card) => { card.notePath = file.path; });
+      parsed = found.length ? { deckName: name, cards: found } : null;
+      // A note the index has not parsed yet is not remembered: its stamp may not be final.
+      if (!cacheUnindexed) scanCache.put("notes", file.path, noteKey, parsed);
     }
-
-    let cards = reviewHelpers.parseFlashcards(content);
-    if (cards.length === 0) return null;
-
-    let deckName = matchedDeck || file.parent?.path || "/";
-    if (!deckName) deckName = "/";
-
-    cards.forEach((card) => {
-      card.notePath = file.path;
-    });
+    if (!parsed) return null;
+    const { deckName, cards } = parsed;
 
     try {
       let srData = await reviewHelpers.loadSrData(app.vault.adapter, file.path);
@@ -204,6 +219,17 @@ async function scanReviewDecks(app, settings, reviewHelpers) {
   const scanned = await mapLimit(files, 8, (file) =>
     scanFile(file).catch((e) => { console.warn("engram-review: scan failed for", file.path, e); return null; })
   );
+  scanCache.prune("notes", visited);
+  // Schedules and hints of notes that are gone are forgotten too, so the cache saved on the device
+  // (main.js) does not grow with every deleted or renamed note.
+  const sidecars = new Set();
+  for (const notePath of visited) {
+    sidecars.add(`engram-review/sr/${srFileName(notePath)}.json`);
+    sidecars.add(hintsPath(notePath));
+    sidecars.add(`engram-review/hints/${notePath.split("/").pop().replace(/\.md$/i, "")}.json`);
+  }
+  scanCache.prune("sr", sidecars);
+  scanCache.prune("hints", sidecars);
   for (const entry of scanned) {
     if (!entry) continue;
     if (!deckMap[entry.deckName]) deckMap[entry.deckName] = { name: entry.deckName, cards: [] };

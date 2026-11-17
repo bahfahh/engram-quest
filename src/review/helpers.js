@@ -1,4 +1,5 @@
 "use strict";
+const scanCache = require("./scan-cache");
 
 function getLocalDateStr(d = new Date()) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
@@ -341,9 +342,16 @@ const srQueue = new Map(); // sr/ path -> tail of that file's queue
 const srPathOf = (notePath) => `engram-review/sr/${srFileName(notePath)}.json`;
 
 async function loadSrData(adapter, notePath) {
-  const pending = srQueue.get(srPathOf(notePath));
+  const key = srPathOf(notePath);
+  const pending = srQueue.get(key);
   if (pending) await pending;
-  return readSrData(adapter, notePath);
+  // Unchanged since the last read (or our own last write): no disk access (scan-cache.js).
+  const stamp = scanCache.stampOf(key);
+  const hit = scanCache.get("sr", key, stamp);
+  if (hit !== undefined) return hit;
+  const data = await readSrData(adapter, notePath);
+  scanCache.put("sr", key, stamp, data);
+  return data;
 }
 
 /** Queues `mutate(data)` on a note's schedule file and writes what it returns; returning null or
@@ -352,7 +360,16 @@ function updateSrData(adapter, notePath, mutate) {
   const key = srPathOf(notePath);
   const run = (srQueue.get(key) || Promise.resolve()).then(async () => {
     const next = mutate(await readSrData(adapter, notePath));
-    if (next) await saveSrData(adapter, notePath, next);
+    if (next) {
+      try {
+        await saveSrData(adapter, notePath, next);
+      } catch (err) {
+        scanCache.drop("sr", key);
+        throw err;
+      }
+      // What we just wrote is what the file holds, whether or not the index has seen the write yet.
+      scanCache.put("sr", key, scanCache.stampOf(key), next);
+    }
     return next;
   });
   const tail = run.then(() => {}, () => {});
@@ -415,14 +432,26 @@ async function listHintFiles(adapter) {
 async function loadHints(adapter, notePath, known = null) {
   for (const path of [...new Set([hintsPath(notePath), `${HINTS_DIR}/${baseNoteName(notePath)}.json`])]) {
     if (known && !known.has(nameKey(path))) continue;
+    const stamp = scanCache.stampOf(path);
+    const hit = scanCache.get("hints", path, stamp);
+    if (hit) return hit.corrupt ? null : { path, data: hit.data };
     let raw;
     try { raw = await adapter.read(path); } catch { continue; }
     // A file that exists but doesn't parse is corrupt, not missing: don't fall back to a file
     // that may belong to a same-name note elsewhere.
-    try { return { path, data: JSON.parse(raw) }; } catch { return null; }
+    try {
+      const data = JSON.parse(raw);
+      scanCache.put("hints", path, stamp, { data });
+      return { path, data };
+    } catch {
+      scanCache.put("hints", path, stamp, { corrupt: true });
+      return null;
+    }
   }
   return null;
 }
+/** After the plugin writes a hints file itself, so the next scan reads it again. */
+function forgetHints(path) { scanCache.drop("hints", path); }
 
 // Run fn over items with at most `limit` in flight. Used by the hub-open scans so per-file
 // I/O overlaps instead of paying one sequential round-trip per file on mobile.
@@ -633,6 +662,7 @@ module.exports = {
   saveSrData,
   updateSrData,
   srWritesSettled,
+  forgetHints,
   mergeSrIntoCards,
   mapLimit
 };

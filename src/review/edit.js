@@ -1,6 +1,6 @@
 "use strict";
 
-const { updateSrData, srFileName, loadHints, hintsPath, parseCommentCardBlock, cardFencePattern, CARD_FENCE, isFencedQaOpener } = require("./helpers");
+const { updateSrData, forgetHints, srFileName, loadHints, hintsPath, parseCommentCardBlock, cardFencePattern, CARD_FENCE, isFencedQaOpener } = require("./helpers");
 
 const { moveSynapseCardEntry } = require("./synapse");
 const { moveExplainerCardLinks } = require("../explainer/data");
@@ -360,6 +360,7 @@ async function saveTagSourceCard(app, card, newData) {
       l3: newData.hint_l3 !== undefined ? newData.hint_l3 : (oldHint.l3 || ""),
     };
     await app.vault.adapter.write(target, JSON.stringify(hints, null, 2));
+    forgetHints(target);
   } catch (e) {
     console.warn("review-edit: hints update failed", e);
   }
@@ -583,6 +584,7 @@ async function deleteDeckCards(app, deck) {
         for (const c of deck.cards) if (c.notePath === p) delete hints.cards[c.front];
         if (Object.keys(hints.cards).length) {
           await app.vault.adapter.write(loaded.path, JSON.stringify(hints, null, 2));
+          forgetHints(loaded.path);
         } else {
           if (!(await trashVaultPath(app, loaded.path))) console.warn("deleteDeckCards: could not trash", loaded.path);
         }
@@ -628,6 +630,8 @@ async function deleteTagSourceCard(app, card) {
     if (hints && hints.cards && hints.cards[card.front]) {
       delete hints.cards[card.front];
       await app.vault.adapter.write(hintsPath(card.notePath), JSON.stringify(hints, null, 2));
+      forgetHints(hintsPath(card.notePath));
+      forgetHints(loaded.path);
     }
   } catch (e) {
     console.warn("review-edit: hints delete failed", e);
