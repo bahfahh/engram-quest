@@ -1,0 +1,358 @@
+<!doctype html><html><head><meta charset="utf-8">
+<link rel="stylesheet" href="/lib/kit/kit.css">
+<script type="importmap">{"imports":{"three":"/node_modules/three/build/three.module.js","three/addons/":"/node_modules/three/examples/jsm/"}}</script>
+<style>
+  html,body{background:#F2EFE9}
+  #board{position:absolute;left:0;top:0;width:1920px;height:1080px}
+  .chalk{font-family:Kalam,"Noto Sans TC",cursive;font-weight:700}
+  .ui{font-family:Inter,"Noto Sans TC",sans-serif}
+</style>
+</head><body><script type="module">
+// "Why you forget what your AI just explained" — one concept lesson. Nico (free teacher, glossy-bot) at a chalkboard.
+// Every beat is anchored to the narration word timings (timeline.json). renderAt(t) is a pure function of t.
+import * as S from '/lib/stage.js';
+import { makeStage } from '/lib/cast/stage.js';
+import { cueTrack } from '/lib/cast/cue.js';
+const { prog, ease, lerp, clamp } = S;
+const T = await S.loadTimeline('timeline.json');
+const W = (id, n, o) => T.word(id, n, o);
+const L = id => T.line(id);
+const NS = 'http://www.w3.org/2000/svg';
+
+// ---------------------------------------------------------------- palette
+const C = { paper: '#F2EFE9', floor: '#E8E2D8', board: '#1F3B3A', boardHi: '#274847', wood: '#B88A5A', woodDk: '#8F6A41',
+  chalk: '#F6F2E7', dim: '#AFC0BA', yellow: '#F7D568', blue: '#8DCBFF', pink: '#FF9D9D', green: '#9BE3A8', navy: '#14223A', gold: '#E7B84B', ink: '#1C1E21' };
+
+await Promise.all(['700 40px Kalam', '400 40px Kalam', '400 30px Inter', '600 30px Inter', '700 30px Inter'].map(f => document.fonts.load(f, 'Aa0123456789%?')));
+await document.fonts.ready;
+
+// ---------------------------------------------------------------- page layers: backdrop + board (SVG), teacher stage on top
+const svg = document.createElementNS(NS, 'svg'); svg.id = 'board'; svg.setAttribute('viewBox', '0 0 1920 1080'); document.body.append(svg);
+const el = (tag, a = {}, parent = svg) => { const e = document.createElementNS(NS, tag); for (const k in a) e.setAttribute(k, a[k]); parent.append(e); return e; };
+const g = (parent = svg, a = {}) => el('g', a, parent);
+const text = (parent, str, { x, y, size = 50, fill = C.chalk, anchor = 'middle', cls = 'chalk', weight, opacity } = {}) => {
+  const t = el('text', { x, y, 'font-size': size, fill, 'text-anchor': anchor, class: cls }, parent); t.textContent = str; if (weight) t.setAttribute('font-weight', weight); if (opacity != null) t.setAttribute('opacity', opacity); return t; };
+const rect = (parent, x, y, w, h, a = {}) => el('rect', { x, y, width: w, height: h, ...a }, parent);
+const defs = el('defs');
+{ const f = el('filter', { id: 'chalk', x: '-5%', y: '-5%', width: '110%', height: '110%' }, defs);
+  el('feTurbulence', { type: 'fractalNoise', baseFrequency: '0.045', numOctaves: '2', seed: '3', result: 'n' }, f);
+  el('feDisplacementMap', { in: 'SourceGraphic', in2: 'n', scale: '2.6', xChannelSelector: 'R', yChannelSelector: 'G' }, f); }
+
+// icons (lucide-static) inlined as stroked groups
+const ICONS = {};
+for (const n of ['eye', 'eye-off', 'brain', 'calendar-clock', 'pencil', 'repeat', 'star', 'lightbulb', 'bot', 'circle-help', 'check', 'arrow-up']) {
+  ICONS[n] = (await (await fetch(`/node_modules/lucide-static/icons/${n}.svg`)).text()).replace(/^[\s\S]*?<svg[^>]*>/, '').replace(/<\/svg>[\s\S]*$/, '');
+}
+const icon = (parent, name, { x, y, size = 64, color = C.chalk, sw = 2 } = {}) => {
+  const gg = g(parent, { transform: `translate(${x - size / 2} ${y - size / 2}) scale(${size / 24})`, fill: 'none', stroke: color, 'stroke-width': sw, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' });
+  gg.innerHTML = ICONS[name]; return gg; };
+
+// ---------------------------------------------------------------- static set: wall, floor, board
+rect(svg, 0, 0, 1920, 1080, { fill: C.paper });
+rect(svg, 0, 880, 1920, 200, { fill: C.floor });
+rect(svg, 0, 878, 1920, 4, { fill: '#D8D1C4' });
+{ const b = g(svg);
+  rect(b, 646, 46, 1228, 848, { rx: 30, fill: C.woodDk });
+  rect(b, 654, 52, 1212, 836, { rx: 26, fill: C.wood });
+  rect(b, 668, 66, 1184, 808, { rx: 18, fill: C.board });
+  rect(b, 668, 66, 1184, 808, { rx: 18, fill: 'url(#bg)', opacity: 0.5 });
+  const lg = el('radialGradient', { id: 'bg', cx: '45%', cy: '35%', r: '80%' }, defs); el('stop', { offset: '0', 'stop-color': '#35605E' }, lg); el('stop', { offset: '1', 'stop-color': '#1F3B3A' }, lg);
+  rect(b, 700, 884, 1120, 14, { rx: 6, fill: C.woodDk }); // chalk tray
+  rect(b, 1500, 874, 70, 12, { rx: 5, fill: '#F6F2E7' }); rect(b, 1590, 876, 50, 10, { rx: 5, fill: C.yellow });
+}
+// panel region: x 690..1830, y 90..850
+const X0 = 690, X1 = 1830;
+
+// ---------------------------------------------------------------- panels with right-to-left eraser wipes between them
+const panels = [];
+const mkPanel = (a, b) => { const gg = g(svg, { filter: 'url(#chalk)' }); const cp = el('clipPath', { id: 'cp' + panels.length }, defs); const cr = el('rect', { x: X0, y: 70, width: X1 - X0, height: 810 }, cp);
+  gg.setAttribute('clip-path', `url(#cp${panels.length})`); const P = { g: gg, a, b, cr }; panels.push(P); return P; };
+const WIPE = 0.5;
+// order: Q, B(chat), C(curve), D(experiment), E(practice), F(recap)
+const tQ = 0, tB = L('I1a').start - 0.5, tC = L('I4a').start - 0.45, tD = L('E1').start - 0.4, tE = L('P1a').start - 0.45, tF = L('R1').start - 0.35, tEnd = T.duration - 3.6;
+const PQ = mkPanel(tQ, tB + WIPE), PB = mkPanel(tB, tC + WIPE), PC = mkPanel(tC, tD + WIPE), PD = mkPanel(tD, tE + WIPE), PE = mkPanel(tE, tF + WIPE), PF = mkPanel(tF, tEnd + 0.3);
+const eraser = rect(svg, 0, 76, 120, 798, { rx: 14, fill: '#E9E4DA', opacity: 0 });
+const eraserTop = rect(svg, 0, 76, 120, 798, { rx: 14, fill: 'url(#er)', opacity: 0 });
+{ const lg = el('linearGradient', { id: 'er', x1: '0', x2: '1' }, defs); el('stop', { offset: '0', 'stop-color': '#fff', 'stop-opacity': '0.0' }, lg); el('stop', { offset: '1', 'stop-color': '#fff', 'stop-opacity': '0.55' }, lg); }
+const wipes = [[PQ, PB], [PB, PC], [PC, PD], [PD, PE], [PE, PF]];
+function layoutPanels(t) {
+  let xe = null;
+  for (const P of panels) P.g.style.display = (t >= P.a && t < P.b + 0.01) ? '' : 'none';
+  for (const [o, n] of wipes) {
+    const w0 = n.a, w1 = n.a + WIPE;
+    if (t >= w0 && t < w1) { const k = ease.inOut(prog(t, w0, w1)); xe = lerp(X1 + 60, X0 - 120, k);
+      o.cr.setAttribute('x', X0); o.cr.setAttribute('width', Math.max(0, clamp(xe + 120, X0, X1) - X0));
+      n.cr.setAttribute('x', clamp(xe + 120, X0, X1)); n.cr.setAttribute('width', Math.max(0, X1 - clamp(xe + 120, X0, X1))); }
+  }
+  for (const P of panels) if (!(t >= wipes.find(w => w[1] === P)?.[1].a && t < wipes.find(w => w[1] === P)?.[1].a + WIPE) && !(wipes.find(w => w[0] === P) && t >= wipes.find(w => w[0] === P)[1].a && t < wipes.find(w => w[0] === P)[1].a + WIPE)) { P.cr.setAttribute('x', X0); P.cr.setAttribute('width', X1 - X0); }
+  const on = xe != null;
+  for (const e of [eraser, eraserTop]) { e.setAttribute('opacity', on ? 1 : 0); if (on) e.setAttribute('x', xe); }
+}
+
+// ---------------------------------------------------------------- small update registry
+const UPD = [];
+const on = fn => UPD.push(fn);
+const show = (e, t, a, b = 1e9, fade = 0.22) => { const o = prog(t, a, a + fade) * (1 - prog(t, b - fade, b)); e.setAttribute('opacity', o.toFixed(3)); e.style.display = o <= 0.001 ? 'none' : ''; return o; };
+const pop = (e, t, a, cx, cy, d = 0.35) => { const k = ease.outBack(prog(t, a, a + d)); e.setAttribute('transform', `translate(${cx} ${cy}) scale(${Math.max(0.001, k).toFixed(3)}) translate(${-cx} ${-cy})`); e.setAttribute('opacity', prog(t, a, a + 0.12)); e.style.display = k <= 0 ? 'none' : ''; };
+const lineReveal = (path, t, a, b) => { path.setAttribute('pathLength', 1); path.setAttribute('stroke-dasharray', '1 1'); path.setAttribute('stroke-dashoffset', (1 - ease.inOut(prog(t, a, b))).toFixed(4)); path.style.display = t < a ? 'none' : ''; };
+
+// gauge = "how sure I feel" (same motif each time it is used)
+function gauge(parent, cx, cy, r) {
+  const G = g(parent);
+  el('path', { d: `M ${cx - r} ${cy} A ${r} ${r} 0 0 1 ${cx + r} ${cy}`, fill: 'none', stroke: C.dim, 'stroke-width': 8, 'stroke-linecap': 'round' }, G);
+  const arc = el('path', { d: `M ${cx - r} ${cy} A ${r} ${r} 0 0 1 ${cx + r} ${cy}`, fill: 'none', stroke: C.green, 'stroke-width': 8, 'stroke-linecap': 'round' }, G);
+  const needle = el('line', { x1: cx, y1: cy, x2: cx - r * 0.78, y2: cy, stroke: C.chalk, 'stroke-width': 7, 'stroke-linecap': 'round' }, G);
+  el('circle', { cx, cy, r: 10, fill: C.chalk }, G);
+  G.set = v => { const ang = Math.PI * (1 - v); needle.setAttribute('x2', cx + Math.cos(ang) * r * 0.78); needle.setAttribute('y2', cy - Math.sin(ang) * r * 0.78);
+    arc.setAttribute('pathLength', 1); arc.setAttribute('stroke-dasharray', `${v} 1`); arc.setAttribute('stroke', v > 0.6 ? C.green : (v > 0.3 ? C.yellow : C.pink)); };
+  return G; }
+
+// ================================================================= PANEL Q — the question (visible from frame 0)
+{ const P = PQ.g;
+  const l1 = text(P, 'Your AI second brain', { x: 1260, y: 290, size: 100 });
+  const l2 = text(P, 'remembers everything.', { x: 1260, y: 405, size: 100 });
+  const l3 = text(P, 'Do you?', { x: 1260, y: 650, size: 230, fill: C.yellow });
+  const ul = el('path', { d: 'M 1000 700 C 1120 722, 1240 690, 1330 712 S 1480 700, 1530 706', fill: 'none', stroke: C.yellow, 'stroke-width': 9, 'stroke-linecap': 'round' }, P);
+  // a tiny knowledge graph: every note is lit
+  const gg = g(P, { opacity: 0.9 });
+  const nodes = [[760, 150], [830, 215], [1700, 140], [1770, 205], [1740, 760], [1790, 700], [770, 780], [840, 730]];
+  nodes.forEach(([x, y], i) => { el('circle', { cx: x, cy: y, r: 12, fill: C.gold }, gg); if (i % 2 === 1) el('line', { x1: nodes[i - 1][0], y1: nodes[i - 1][1], x2: x, y2: y, stroke: C.gold, 'stroke-width': 4 }, gg); });
+  const tDo = L('Q2').start;
+  on(t => { const k = ease.outBack(prog(t, tDo - 0.05, tDo + 0.4)); const base = t < tDo - 0.05 ? 1 : 1 + 0.0 * k; l3.setAttribute('transform', `translate(1260 650) scale(${(t < tDo - 0.05 ? 1 : 0.92 + 0.08 * k).toFixed(3)}) translate(-1260 -650)`);
+    lineReveal(ul, t, tDo, tDo + 0.5); ul.style.display = ''; if (t < tDo) ul.setAttribute('stroke-dashoffset', 1);
+    gg.setAttribute('opacity', (0.9 * (1 - prog(t, tDo, tDo + 0.5) * 0.7)).toFixed(3)); });
+}
+
+// ================================================================= PANEL B — the illusion: read, it makes sense, a week later you ask again
+{ const P = PB.g;
+  const lab = text(P, 'Day 0', { x: 790, y: 160, size: 56, fill: C.blue, anchor: 'start' });
+  const lab2 = text(P, '1 week later', { x: 790, y: 160, size: 56, fill: C.yellow, anchor: 'start' });
+  // the chat (a real-UI card, light on the dark board)
+  const chat = g(P);
+  rect(chat, 740, 200, 760, 480, { rx: 28, fill: '#F7F6F2' });
+  rect(chat, 740, 200, 760, 62, { rx: 28, fill: '#E6E3DB' }); rect(chat, 740, 232, 760, 30, { fill: '#E6E3DB' });
+  icon(chat, 'bot', { x: 785, y: 231, size: 34, color: '#3D4452' });
+  text(chat, 'Your AI', { x: 815, y: 242, size: 28, fill: '#3D4452', anchor: 'start', cls: 'ui', weight: 700 });
+  const user = g(chat);
+  rect(user, 890, 288, 580, 96, { rx: 26, fill: '#2F6FE0' });
+  text(user, 'How does vector search find', { x: 1180, y: 330, size: 31, fill: '#fff', cls: 'ui', weight: 600 });
+  text(user, 'related notes?', { x: 1180, y: 368, size: 31, fill: '#fff', cls: 'ui', weight: 600 });
+  const ai = g(chat);
+  rect(ai, 770, 408, 640, 252, { rx: 26, fill: '#E4E1D8' });
+  const aiLines = ['Each note becomes a list of numbers.', 'Similar meaning gives similar numbers.', 'Search finds the closest numbers.'];
+  const aiT = aiLines.map((s, i) => { const tt = text(ai, s, { x: 796, y: 470 + i * 62, size: 31, fill: '#2A2F38', anchor: 'start', cls: 'ui', weight: 500 }); return tt; });
+  // week later: same question, blank answer
+  const ai2 = g(chat);
+  rect(ai2, 770, 408, 640, 252, { rx: 26, fill: 'none', stroke: '#9A968B', 'stroke-width': 4, 'stroke-dasharray': '14 12' });
+  text(ai2, '?', { x: 1090, y: 590, size: 170, fill: '#B0AB9E', cls: 'chalk' });
+  // clear check badge
+  const badge = g(P); el('circle', { cx: 1474, cy: 420, r: 38, fill: C.green }, badge); icon(badge, 'check', { x: 1474, y: 420, size: 46, color: '#17342A', sw: 3.4 });
+  // feeling gauge + bulb
+  const gaugeG = gauge(P, 1655, 470, 105);
+  const gTxt = text(P, 'feels learned', { x: 1655, y: 545, size: 42, fill: C.yellow });
+  const bulb = g(P); icon(bulb, 'lightbulb', { x: 1655, y: 285, size: 96, color: C.yellow, sw: 1.8 });
+  // seven days crossed out
+  const days = g(P); const dayX = i => 760 + i * 150;
+  const dayBoxes = [...Array(7)].map((_, i) => { const d = g(days); text(d, String(i + 1), { x: dayX(i) + 55, y: 718, size: 40, fill: C.dim }); rect(d, dayX(i), 730, 110, 90, { rx: 14, fill: 'none', stroke: C.chalk, 'stroke-width': 5 });
+    const x1 = el('line', { x1: dayX(i) + 18, y1: 748, x2: dayX(i) + 92, y2: 804, stroke: C.pink, 'stroke-width': 7, 'stroke-linecap': 'round' }, d);
+    const x2 = el('line', { x1: dayX(i) + 92, y1: 748, x2: dayX(i) + 18, y2: 804, stroke: C.pink, 'stroke-width': 7, 'stroke-linecap': 'round' }, d); return { d, x1, x2 }; });
+  const tClear = W('I1b', 'crystal'), tSense = L('I2a').start, tFeel = W('I2b', 'feel'), tWeek = W('I3', 'week'), tSame = W('I3', 'exact');
+  const tA = L('I1a').start, tAns = L('I1b').start;
+  on(t => {
+    show(lab, t, tA - 0.3, tWeek - 0.2, 0.25); show(lab2, t, tWeek - 0.05, 1e9, 0.25);
+    show(chat, t, tA - 0.35);
+    show(user, t, tA - 0.2);
+    const k1 = ease.out(prog(t, tWeek - 0.1, tWeek + 0.35));  // answer is gone a week later
+    show(ai, t, tAns - 0.05, tWeek + 0.05, 0.3);
+    aiT.forEach((tt, i) => { const a = lerp(tAns, tClear + 0.2, i / 3); tt.setAttribute('opacity', prog(t, a, a + 0.35).toFixed(3)); });
+    show(ai2, t, tWeek + 0.15, 1e9, 0.4);
+    pop(badge, t, tClear + 0.05, 1474, 420); badge.style.display = (t > tClear && t < tWeek + 0.1) ? '' : 'none';
+    // feeling
+    const gOn = prog(t, tSense - 0.05, tSense + 0.4) * (1 - prog(t, tWeek, tWeek + 0.35));
+    gaugeG.setAttribute('opacity', gOn.toFixed(3)); gaugeG.style.display = gOn <= 0.001 ? 'none' : '';
+    gaugeG.set(ease.outBack(prog(t, tSense + 0.1, tSense + 0.9)) * 0.9 + 0.02);
+    show(gTxt, t, tFeel - 0.1, tWeek, 0.3); show(bulb, t, tSense, tWeek, 0.3);
+    // days
+    show(days, t, tWeek - 0.15, 1e9, 0.2);
+    dayBoxes.forEach((d, i) => { const a = lerp(tWeek + 0.05, tSame - 0.25, i / 7); const k = prog(t, a, a + 0.12); d.x1.setAttribute('opacity', k); d.x2.setAttribute('opacity', prog(t, a + 0.06, a + 0.16)); });
+  });
+}
+
+// ================================================================= PANEL C — forgetting curve (schematic), measured 1885, replicated 2015
+{ const P = PC.g; const AX = { x0: 800, x1: 1780, yb: 730, yt: 250 };
+  const px = x => AX.x0 + x * (AX.x1 - AX.x0), py = v => AX.yb - v * (AX.yb - AX.yt);
+  el('path', { d: `M ${AX.x0} ${AX.yt - 20} L ${AX.x0} ${AX.yb} L ${AX.x1 + 10} ${AX.yb}`, fill: 'none', stroke: C.chalk, 'stroke-width': 7, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, P);
+  text(P, 'what you remember', { x: 740, y: 490, size: 44, fill: C.blue }).setAttribute('transform', 'rotate(-90 740 490)');
+  text(P, 'time', { x: 1290, y: 800, size: 46, fill: C.blue });
+  const curve = (a, b, n = 90) => { const pts = []; for (let i = 0; i <= n; i++) { const x = i / n; pts.push(`${i ? 'L' : 'M'} ${px(x).toFixed(1)} ${py(a + (1 - a) * Math.exp(-x * b)).toFixed(1)}`); } return pts.join(' '); };
+  const c1 = el('path', { d: curve(0.14, 4.6), fill: 'none', stroke: C.chalk, 'stroke-width': 10, 'stroke-linecap': 'round' }, P);
+  const c2 = el('path', { d: curve(0.1, 4.2), fill: 'none', stroke: C.blue, 'stroke-width': 8, 'stroke-dasharray': '3 0', 'stroke-linecap': 'round' }, P);
+  const dot0 = el('circle', { cx: px(0), cy: py(1), r: 16, fill: C.yellow }, P);
+  const lab0 = text(P, 'just read it', { x: px(0) + 30, y: py(1) - 10, size: 44, fill: C.yellow, anchor: 'start' });
+  const xw = 0.86, vw = 0.14 + 0.86 * Math.exp(-xw * 4.6);
+  const wk = g(P); el('line', { x1: px(xw), y1: py(vw) - 10, x2: px(xw), y2: AX.yb, stroke: C.pink, 'stroke-width': 6, 'stroke-dasharray': '12 12' }, wk);
+  el('circle', { cx: px(xw), cy: py(vw), r: 15, fill: C.pink }, wk); text(wk, 'a week later', { x: px(xw) - 20, y: py(vw) - 70, size: 44, fill: C.pink });
+  const t1885 = g(P), t2015 = g(P);
+  rect(t1885, 1010, 250, 330, 110, { rx: 16, fill: 'none', stroke: C.yellow, 'stroke-width': 5 }); text(t1885, 'Ebbinghaus', { x: 1175, y: 296, size: 40, fill: C.yellow }); text(t1885, '1885', { x: 1175, y: 340, size: 44, fill: C.yellow });
+  rect(t2015, 1400, 250, 360, 110, { rx: 16, fill: 'none', stroke: C.blue, 'stroke-width': 5 }); text(t2015, 'Replicated', { x: 1580, y: 296, size: 40, fill: C.blue }); text(t2015, '2015', { x: 1580, y: 340, size: 44, fill: C.blue });
+  text(P, 'schematic curve', { x: 1800, y: 840, size: 34, fill: '#D9E3DE', anchor: 'end', cls: 'ui', weight: 600 });
+  const a = L('I4a').start, e = L('I4a').end, w85 = W('I4b', '1885'), w15 = W('I4c', '2015');
+  on(t => { show(dot0, t, a - 0.2); show(lab0, t, a - 0.1, a + 2.2, 0.3);
+    lineReveal(c1, t, a + 0.1, e + 0.2);
+    show(wk, t, e + 0.3, 1e9, 0.3);
+    show(t1885, t, w85 - 0.1, 1e9, 0.3); lineReveal(c2, t, w15 - 0.2, w15 + 1.4); show(t2015, t, w15 - 0.05, 1e9, 0.3); });
+}
+
+// ================================================================= PANEL D — the experiment (Roediger & Karpicke 2006, Exp. 1 numbers)
+{ const P = PD.g;
+  const title = text(P, '5 minutes later', { x: 790, y: 160, size: 58, fill: C.yellow, anchor: 'start' });
+  const title0 = text(P, 'Students read passages', { x: 790, y: 160, size: 58, fill: C.blue, anchor: 'start' });
+  const title2 = text(P, '1 week later', { x: 790, y: 160, size: 58, fill: C.yellow, anchor: 'start' });
+  text(P, 'Roediger & Karpicke, 2006', { x: 792, y: 212, size: 34, fill: '#D9E3DE', anchor: 'start', cls: 'ui', weight: 600 });
+  // paper cards
+  const mkCard = (kind) => { const c = g(P); rect(c, -150, -190, 300, 380, { rx: 20, fill: '#F7F6F2' });
+    for (let i = 0; i < 7; i++) rect(c, -110, -140 + i * 38, i % 3 === 2 ? 150 : 220, 12, { rx: 6, fill: '#C9C5BA' });
+    return c; };
+  const cardA = mkCard(), cardB = mkCard();
+  const eyeA = g(cardA); const eyeA1 = icon(eyeA, 'eye', { x: 0, y: -10, size: 110, color: '#2F6FE0', sw: 2.2 }); const repA = icon(eyeA, 'repeat', { x: 0, y: -10, size: 110, color: '#2F6FE0', sw: 2.2 });
+  const eyeB = g(cardB); const eyeB1 = icon(eyeB, 'eye', { x: 0, y: -10, size: 110, color: '#2F6FE0', sw: 2.2 });
+  const lid = g(cardB); rect(lid, -150, -190, 300, 380, { rx: 20, fill: '#33415C' }); icon(lid, 'eye-off', { x: 0, y: -30, size: 100, color: '#F7F6F2', sw: 2 });
+  const pad = g(cardB); rect(pad, -150, -190, 300, 380, { rx: 20, fill: '#FFF6D8' });
+  const pen = icon(cardB, 'pencil', { x: 70, y: 110, size: 96, color: '#B5791A', sw: 2.2 });
+  const scrib = el('path', { d: 'M -100 -120 q 30 -26 60 0 t 60 0 t 60 0  M -100 -60 q 30 -26 60 0 t 60 0  M -100 0 q 30 -26 60 0 t 60 0 t 60 0 M -100 60 q 30 -26 60 0', fill: 'none', stroke: '#B5791A', 'stroke-width': 7, 'stroke-linecap': 'round' }, cardB);
+  const labA = text(P, 'RE-READ', { x: 0, y: 0, size: 50, fill: C.blue }), labB = text(P, 'RECALL', { x: 0, y: 0, size: 50, fill: C.green });
+  // bars
+  const base = 700, per = 4.8, BX = [1130, 1470], BW = 200;
+  const barA = rect(P, BX[0] - BW / 2, base, BW, 0, { rx: 10, fill: C.blue }), barB = rect(P, BX[1] - BW / 2, base, BW, 0, { rx: 10, fill: C.green });
+  const axisD = el('line', { x1: 960, y1: base + 6, x2: 1640, y2: base + 6, stroke: C.chalk, 'stroke-width': 7, 'stroke-linecap': 'round' }, P);
+  const nA = text(P, '', { x: BX[0], y: 0, size: 76, fill: C.chalk }), nB = text(P, '', { x: BX[1], y: 0, size: 76, fill: C.chalk });
+  const star = g(P); icon(star, 'star', { x: 0, y: 0, size: 78, color: C.yellow, sw: 2.4 }); star.firstChild.setAttribute('fill', C.yellow);
+  const gaugeD = gauge(P, BX[0], 372, 78); const gLab = text(P, 'felt surest', { x: BX[0], y: 262, size: 44, fill: C.yellow });
+  // times
+  const tL1 = L('E1').start, tReA = L('E2a').start, tClose = W('E2b', 'closed'), tWrite = W('E2b', 'wrote');
+  const tE3 = L('E3').start, tE81 = W('E3', 'eighty'), tE75 = W('E3', 'seventy'), tFlip = L('E4a').start, tE4b = L('E4b').start, tE56 = W('E4b', 'fifty'), tE42 = W('E4b', 'forty'), tE5 = L('E5a').start, tFelt = W('E5a', 'felt');
+  const posA = [1000, 500], posB = [1470, 500], miniA = [BX[0], 775], miniB = [BX[1], 775], ms = 0.25;
+  on(t => {
+    show(axisD, t, tE3 - 0.4, 1e9, 0.3);
+    // titles
+    show(title0, t, tL1 - 0.2, tE3 - 0.5, 0.25); show(title, t, tE3 - 0.4, tFlip + 0.5, 0.25); show(title2, t, tFlip + 0.3, 1e9, 0.3);
+    // cards: arrive, re-read / recall, then shrink into the bar labels
+    const arr = ease.out(prog(t, tL1 - 0.2, tL1 + 0.4)), shr = ease.inOut(prog(t, tE3 - 1.0, tE3 - 0.15));
+    const place = (c, p, m, dy) => { const x = lerp(p[0], m[0], shr), y = lerp(p[1] + (1 - arr) * -80, m[1], shr), s = lerp(1, ms, shr); c.setAttribute('transform', `translate(${x} ${y}) scale(${s})`); c.setAttribute('opacity', arr.toFixed(3)); c.style.display = arr <= 0 ? 'none' : ''; };
+    place(cardA, posA, miniA); place(cardB, posB, miniB);
+    // the "reading" eye on both at first, then A -> repeat (re-read), B closes and a pad opens
+    const rA = prog(t, tReA - 0.05, tReA + 0.3), cl = ease.out(prog(t, tClose - 0.05, tClose + 0.4)), wr = prog(t, tWrite - 0.1, tWrite + 0.5);
+    eyeA1.setAttribute('opacity', 1 - rA); repA.setAttribute('opacity', rA); eyeB1.setAttribute('opacity', 1 - cl);
+    lid.setAttribute('transform', `translate(0 ${(-1 + cl) * 380 * (wr > 0 ? 1 : 1)})`); lid.setAttribute('opacity', (cl * (1 - wr)).toFixed(3)); lid.style.display = (cl <= 0 || wr >= 1) ? 'none' : '';
+    pad.setAttribute('opacity', wr.toFixed(3)); pad.style.display = wr <= 0 ? 'none' : ''; pen.setAttribute('opacity', wr.toFixed(3)); pen.style.display = wr <= 0 ? 'none' : '';
+    scrib.setAttribute('pathLength', 1); scrib.setAttribute('stroke-dasharray', '1 1'); scrib.setAttribute('stroke-dashoffset', (1 - prog(t, tWrite, tWrite + 1.6)).toFixed(3)); scrib.setAttribute('opacity', wr.toFixed(3)); scrib.style.display = wr <= 0 ? 'none' : '';
+    // labels under the shrunk cards
+    const shr2 = shr; labA.setAttribute('x', lerp(posA[0], BX[0], shr2)); labA.setAttribute('y', lerp(745, 855, shr2)); labB.setAttribute('x', lerp(posB[0], BX[1], shr2)); labB.setAttribute('y', lerp(745, 855, shr2));
+    labA.setAttribute('opacity', prog(t, tReA, tReA + 0.3)); labB.setAttribute('opacity', prog(t, tClose, tClose + 0.3));
+    // bars: 5 min (81 / 75) then the flip (42 / 56)
+    const gA = t < tFlip ? 81 * ease.out(prog(t, tE81, tE81 + 0.7)) : lerp(81, 42, ease.inOut(prog(t, tFlip + 0.1, tFlip + 1.3)));
+    const gB = t < tFlip ? 75 * ease.out(prog(t, tE75, tE75 + 0.7)) : lerp(75, 56, ease.inOut(prog(t, tFlip + 0.1, tFlip + 1.3)));
+    const setBar = (b, n, v, cx, show_) => { const h = v * per; b.setAttribute('y', base - h); b.setAttribute('height', Math.max(0, h)); b.style.display = v < 0.5 ? 'none' : '';
+      n.setAttribute('y', base - h - 22); n.textContent = Math.round(v) + '%'; n.style.display = (v < 0.5 || !show_) ? 'none' : ''; };
+    setBar(barA, nA, gA, BX[0], t >= tE81 + 0.3); setBar(barB, nB, gB, BX[1], t >= tE75 + 0.3);
+    // star on the winner (moves across at the flip)
+    const sx = lerp(BX[0], BX[1], ease.inOut(prog(t, tFlip + 0.6, tFlip + 1.4))), sy = base - lerp(gA, gB, ease.inOut(prog(t, tFlip + 0.6, tFlip + 1.4))) * per - 150;
+    const wA = t < tFlip + 0.6 ? gA : lerp(gA, gB, 0); // star hovers over the taller bar
+    const taller = Math.max(gA, gB); star.setAttribute('transform', `translate(${sx + 135} ${base - taller * per - 40})`); star.setAttribute('opacity', (prog(t, tE75 + 0.8, tE75 + 1.1)).toFixed(3)); star.style.display = t < tE75 + 0.8 ? 'none' : '';
+    // felt surest: the same gauge as before, above the re-read bar
+    const gv = prog(t, tE5 - 0.1, tE5 + 0.5); gaugeD.setAttribute('opacity', gv.toFixed(3)); gaugeD.style.display = gv <= 0 ? 'none' : ''; gaugeD.set(0.9 * ease.out(prog(t, tFelt - 0.1, tFelt + 0.7)) + 0.02);
+    gLab.setAttribute('opacity', gv.toFixed(3)); gLab.style.display = gv <= 0 ? 'none' : '';
+  });
+}
+
+// ================================================================= PANEL E — what to do: close it, recall it, come back at growing gaps (FSRS automates)
+{ const P = PE.g;
+  const xs = [905, 1260, 1615];
+  const step = (cx) => { const s = g(P); rect(s, cx - 150, 150, 300, 300, { rx: 26, fill: '#F7F6F2' }); return s; };
+  const s1 = step(xs[0]), s2 = step(xs[1]), s3 = step(xs[2]);
+  // 1: the answer, then the lid
+  rect(s1, xs[0] - 110, 190, 220, 56, { rx: 16, fill: '#2F6FE0' });
+  for (let i = 0; i < 3; i++) rect(s1, xs[0] - 110, 270 + i * 40, i === 2 ? 130 : 220, 16, { rx: 8, fill: '#C9C5BA' });
+  const lid = g(s1); rect(lid, xs[0] - 150, 150, 300, 300, { rx: 26, fill: '#33415C' }); icon(lid, 'eye-off', { x: xs[0], y: 300, size: 110, color: '#F7F6F2', sw: 2 });
+  // 2: from memory
+  const brain = icon(s2, 'brain', { x: xs[1], y: 300, size: 150, color: '#2F6FE0', sw: 1.8 });
+  const dots = [0, 1, 2].map(i => el('circle', { cx: xs[1] - 36 + i * 36, cy: 215, r: 10, fill: '#7A8499' }, s2));
+  // 3: later
+  icon(s3, 'calendar-clock', { x: xs[2], y: 300, size: 150, color: '#2F6FE0', sw: 1.8 });
+  const l1 = text(P, 'CLOSE', { x: xs[0], y: 520, size: 54, fill: C.blue }), l2 = text(P, 'RECALL', { x: xs[1], y: 520, size: 54, fill: C.green }), l3 = text(P, 'RETURN', { x: xs[2], y: 520, size: 54, fill: C.yellow });
+  // timeline with growing gaps
+  const ty = 700, tl = el('path', { d: 'M 720 700 L 1800 700 M 1778 682 L 1800 700 L 1778 718', fill: 'none', stroke: C.chalk, 'stroke-width': 7, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, P);
+  const gaps = [0, 1, 2.3, 4.2, 7.0]; const gx = i => 770 + gaps[i] / 7 * 880;
+  const arcs = [], pts = gaps.map((_, i) => { const c = el('circle', { cx: gx(i), cy: ty, r: 20, fill: i === 0 ? C.blue : C.green }, P); return c; });
+  for (let i = 1; i < gaps.length; i++) arcs.push(el('path', { d: `M ${gx(i - 1)} ${ty - 28} Q ${(gx(i - 1) + gx(i)) / 2} ${ty - 28 - 40 - i * 12} ${gx(i)} ${ty - 28}`, fill: 'none', stroke: C.dim, 'stroke-width': 5, 'stroke-linecap': 'round' }, P));
+  const chip = g(P); rect(chip, 1100, 770, 440, 84, { rx: 42, fill: C.blue }); text(chip, 'FSRS', { x: 1320, y: 830, size: 56, fill: '#12304F' });
+  const tA = L('P1a').start, tB = L('P1b').start, tC = L('P1c').start, tF = W('P2', 'FSRS');
+  on(t => { show(s1, t, tA - 0.1, 1e9, 0.3); show(s2, t, tB - 0.15, 1e9, 0.3); show(s3, t, tC - 0.15, 1e9, 0.3);
+    show(l1, t, tA + 0.5); show(l2, t, tB + 0.3); show(l3, t, tC + 0.4);
+    const cl = ease.out(prog(t, W('P1a', 'close') - 0.05, W('P1a', 'close') + 0.45)); lid.setAttribute('transform', `translate(0 ${(-1 + cl) * 300})`); lid.setAttribute('opacity', cl); lid.style.display = cl <= 0 ? 'none' : '';
+    dots.forEach((d, i) => { const a = W('P1b', 'memory') - 0.4 + i * 0.22; d.setAttribute('opacity', (0.35 + 0.65 * Math.abs(Math.sin((t - a) * 5))).toFixed(2) * (t > a ? 1 : 0)); });
+    show(tl, t, tC - 0.1, 1e9, 0.3);
+    pts.forEach((p, i) => { const a = lerp(tC + 0.25, tC + 1.9, i / 4); const k = ease.outBack(prog(t, a, a + 0.3)); p.setAttribute('transform', `translate(${gx(i)} ${ty}) scale(${Math.max(0.001, k)}) translate(${-gx(i)} ${-ty})`); p.style.display = k <= 0 ? 'none' : '';
+      if (i) { arcs[i - 1].setAttribute('pathLength', 1); arcs[i - 1].setAttribute('stroke-dasharray', '1 1'); arcs[i - 1].setAttribute('stroke-dashoffset', (1 - prog(t, a - 0.2, a + 0.15)).toFixed(3)); arcs[i - 1].style.display = t < a - 0.2 ? 'none' : ''; }
+      if (i) p.setAttribute('fill', t > tF + 0.2 + i * 0.12 ? C.blue : C.green); });
+    pop(chip, t, tF - 0.05, 1320, 812);
+  });
+}
+
+// ================================================================= PANEL F — recap: every recall lifts the curve and flattens it
+{ const P = PF.g; const AX = { x0: 800, x1: 1790, yb: 720, yt: 220 };
+  const TOT = 10.6; const px = x => AX.x0 + x / TOT * (AX.x1 - AX.x0), py = v => AX.yb - v * (AX.yb - AX.yt);
+  el('path', { d: `M ${AX.x0} ${AX.yt - 20} L ${AX.x0} ${AX.yb} L ${AX.x1 + 10} ${AX.yb}`, fill: 'none', stroke: C.chalk, 'stroke-width': 7, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, P);
+  const segs = [[0, 1.3, 0.5], [1.3, 3.6, 1.3], [3.6, 7.5, 3.2], [7.5, TOT, 9]]; // start, end, tau (decay slows each time)
+  const val = (s, x) => 0.12 + 0.88 * Math.exp(-(x - s[0]) / s[2]);
+  const segPaths = segs.map((s, i) => { let d = ''; for (let k = 0; k <= 40; k++) { const x = lerp(s[0], s[1], k / 40); d += `${k ? 'L' : 'M'} ${px(x).toFixed(1)} ${py(val(s, x)).toFixed(1)} `; }
+    return el('path', { d, fill: 'none', stroke: i === 0 ? C.pink : C.green, 'stroke-width': 11, 'stroke-linecap': 'round' }, P); });
+  const jumps = [1, 2, 3].map(i => { const x = segs[i][0]; const j = g(P); el('line', { x1: px(x), y1: py(val(segs[i - 1], x)), x2: px(x), y2: py(1), stroke: C.yellow, 'stroke-width': 7, 'stroke-dasharray': '10 10' }, j);
+    el('circle', { cx: px(x), cy: py(1), r: 18, fill: C.yellow }, j); icon(j, 'brain', { x: px(x), y: py(1) - 62, size: 64, color: C.yellow, sw: 2 }); return j; });
+  const start = g(P); el('circle', { cx: px(0), cy: py(1), r: 18, fill: C.blue }, start); icon(start, 'eye', { x: px(0) + 62, y: py(1) - 12, size: 64, color: C.blue, sw: 2 });
+  text(P, 'time', { x: 1290, y: 800, size: 46, fill: C.blue }); text(P, 'schematic curve', { x: 1800, y: 840, size: 34, fill: '#D9E3DE', anchor: 'end', cls: 'ui', weight: 600 });
+  const lg1 = text(P, 'read', { x: px(0) + 120, y: py(1) + 62, size: 40, fill: C.blue, anchor: 'start' }), lg2 = text(P, 'recall', { x: px(segs[1][0]) + 30, y: py(1) + 130, size: 40, fill: C.yellow, anchor: 'start' });
+  const t0 = L('R1').start, tR = [W('R2', 'Pulling'), W('R2', 'little'), W('R2', 'each')], tEnd = L('R2').end;
+  on(t => { show(start, t, t0 - 0.1, 1e9, 0.25); show(lg1, t, t0 + 0.1, 1e9, 0.25); show(lg2, t, tR[0] + 0.2, 1e9, 0.25);
+    lineReveal(segPaths[0], t, t0 + 0.1, t0 + 1.25);
+    [1, 2, 3].forEach(i => { const a = tR[i - 1]; pop(jumps[i - 1], t, a, px(segs[i][0]), py(1)); lineReveal(segPaths[i], t, a + 0.15, i === 3 ? tEnd - 0.15 : a + 1.0); });
+  });
+}
+
+// ================================================================= END CARD
+const end = g(svg); const tCard = T.duration - 3.6;
+rect(end, 0, 0, 1920, 1080, { fill: C.navy });
+{ const gg = g(end); el('circle', { cx: 1500, cy: 250, r: 360, fill: '#1B2E4D', opacity: 0.6 }, gg); el('circle', { cx: 1650, cy: 820, r: 240, fill: '#1B2E4D', opacity: 0.5 }, gg); }
+text(end, 'Made from one note in Obsidian,', { x: 720, y: 480, size: 64, fill: '#FFFFFF', cls: 'ui', weight: 700, anchor: 'start' });
+text(end, 'by Claude Code.', { x: 720, y: 565, size: 64, fill: '#FFFFFF', cls: 'ui', weight: 700, anchor: 'start' });
+rect(end, 720, 612, 220, 6, { rx: 3, fill: C.gold });
+text(end, 'EngramQuest: an Obsidian plugin', { x: 720, y: 700, size: 48, fill: C.gold, cls: 'ui', weight: 600, anchor: 'start' });
+
+// ================================================================= the teacher (Nico, glossy-bot) on top
+const st = await makeStage({ card: false, transparent: true });
+const skinMod = await import((await import('/lib/cast/skin-url.js')).skinUrl('glossy-bot'));
+const cast = await skinMod.create(st.env, { variant: 'classic' });
+st.adopt(cast);
+st.place(cast.student, -3000, 0, 10, { visible: false }); st.place(cast.embodiment, -3000, 0, 10, { visible: false });
+const NICO = { x: 330, y: 880, px: 560 }, NICO_END = { x: 420, y: 930, px: 700 };
+const win = (t, a, b, e = 0.2) => Math.min(prog(t, a, a + e), 1 - prog(t, b - e, b));
+// what Nico does when (point at the board / think / doubt / aha)
+const POINTS = [[L('I1b').start, L('I1b').end], [W('I4a', 'Memory'), L('I4a').end], [L('E2a').start, L('E2b').end], [L('E3').start, L('E4b').end], [L('P1a').start, L('P1c').end], [L('R2').start, L('R2').end]];
+const STATES = [['think', L('Q2').start - 0.1, L('Q2').end + 0.5], ['doubt', W('I3', 'exact') - 0.2, L('I4a').start], ['aha', L('E4a').start + 0.2, L('E4a').end + 1.0], ['doubt', L('E5b').start - 0.2, L('E5b').end + 0.3], ['aha', W('R2', 'stick') - 0.4, L('R2').end + 0.8]];
+window.DURATION = T.duration;
+window.renderAt = t => {
+  layoutPanels(t);
+  for (const f of UPD) f(t);
+  const sh = prog(t, tCard - 0.4, tCard);                       // end card fades in
+  end.setAttribute('opacity', sh.toFixed(3)); end.style.display = sh <= 0 ? 'none' : '';
+  const lay = sh > 0 ? { x: lerp(NICO.x, 330, ease.inOut(sh)), y: lerp(NICO.y, 930, ease.inOut(sh)), px: lerp(NICO.px, 640, ease.inOut(sh)) } : NICO;
+  const p = { t, blink: ((t + 0.7) % 3.3) < 0.13 ? Math.sin(((t + 0.7) % 3.3) / 0.13 * Math.PI) : 0, lookX: 0.35, lookY: 0, talk: S.mouth(T, 'teacher', t), armL: 0, armR: 0, point: 0, wave: 0, hop: 0, squash: 0.012 * Math.sin(t * 2.1), tilt: 0, turn: 0.12, state: 'idle', stateK: 0 };
+  let pt = 0; for (const [a, b] of POINTS) pt = Math.max(pt, win(t, a - 0.15, b + 0.1, 0.3)); p.point = pt * 0.95; p.lookX = 0.35 + 0.45 * pt; p.turn = 0.12 + 0.2 * pt; p.talk = Math.min(1, p.talk * 1.1);
+  for (const [s, a, b] of STATES) { const k = win(t, a, b, 0.35); if (k > (p.stateK || 0)) { p.state = s; p.stateK = k; } }
+  if (p.state === 'aha') p.hop = 0.25 * p.stateK * Math.max(0, Math.sin((t - T.duration) * 7)) * 0;
+  if (sh > 0.01) { p.state = 'aha'; p.stateK = sh; p.wave = sh; p.armR = Math.max(p.armR, sh); p.point = 0; p.lookX = 0; p.turn = 0.0; p.talk = 0.1; }
+  st.place(cast.teacher, lay.x, lay.y, lay.px); cast.teacher.pose(p);
+  st.render();
+};
+window.studioReady = Promise.resolve();
+</script></body></html>

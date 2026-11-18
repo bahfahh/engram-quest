@@ -1,0 +1,9 @@
+Your AI second brain remembers everything. Do you?
+
+You ask your AI something hard, and the answer is crystal clear. It all makes sense. You feel like you've learned it. But a week later, you ask the exact same question. Memory fades fast at first, then slowly. Researchers measured that curve in 1885, and a 2015 replication found a similar curve.
+
+In a classic experiment, students studied short passages. Then they re-read one passage. For another, they closed it and wrote down what they remembered. Five minutes later, re-reading won, eighty-one percent to seventy-five. But after a week, it flipped. Recalling beat re-reading, fifty-six percent to forty-two. In a second experiment, re-readers felt surest they'd remember, yet remembered less.
+
+So after your AI explains something, close the answer, say it from memory, then come back at gaps that keep growing. Spaced repetition tools like FSRS schedule those gaps for you.
+
+Reading feels like learning. Pulling it from memory, a little later each time, makes it stick.

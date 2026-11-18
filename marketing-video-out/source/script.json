@@ -1,0 +1,235 @@
+{
+ "voices": {
+  "teacher": {
+   "voice": "en-US-BrianMultilingualNeural",
+   "rate": "+4%",
+   "pitch": "+0Hz"
+  }
+ },
+ "leadIn": 0.15,
+ "tail": 4.2,
+ "defaultPause": 0.25,
+ "lines": [
+  {
+   "id": "Q1",
+   "speaker": "teacher",
+   "text": "Your AI second brain remembers everything.",
+   "pauseAfter": 0.22,
+   "pitch": "+4Hz"
+  },
+  {
+   "id": "Q2",
+   "speaker": "teacher",
+   "text": "Do you?",
+   "pauseAfter": 0.9,
+   "pitch": "+12Hz",
+   "rate": "-6%"
+  },
+  {
+   "id": "I1a",
+   "speaker": "teacher",
+   "text": "You ask your AI something hard,",
+   "pauseAfter": 0.1,
+   "group": "g1"
+  },
+  {
+   "id": "I1b",
+   "speaker": "teacher",
+   "text": "and the answer is crystal clear.",
+   "pauseAfter": 0.3,
+   "group": "g1"
+  },
+  {
+   "id": "I2a",
+   "speaker": "teacher",
+   "text": "It all makes sense.",
+   "pauseAfter": 0.18
+  },
+  {
+   "id": "I2b",
+   "speaker": "teacher",
+   "text": "You feel like you've learned it.",
+   "pauseAfter": 1.0
+  },
+  {
+   "id": "I3",
+   "speaker": "teacher",
+   "text": "But a week later, you ask the exact same question.",
+   "pauseAfter": 1.0
+  },
+  {
+   "id": "I4a",
+   "speaker": "teacher",
+   "text": "Memory fades fast at first, then slowly.",
+   "pauseAfter": 0.35
+  },
+  {
+   "id": "I4b",
+   "speaker": "teacher",
+   "text": "Researchers measured that curve in 1885,",
+   "pauseAfter": 0.1,
+   "group": "g4"
+  },
+  {
+   "id": "I4c",
+   "speaker": "teacher",
+   "text": "and a 2015 replication found a similar curve.",
+   "pauseAfter": 1.0,
+   "group": "g4"
+  },
+  {
+   "id": "E1",
+   "speaker": "teacher",
+   "text": "In a classic experiment, students studied short passages.",
+   "pauseAfter": 0.3
+  },
+  {
+   "id": "E2a",
+   "speaker": "teacher",
+   "text": "Then they re-read one passage.",
+   "pauseAfter": 0.2
+  },
+  {
+   "id": "E2b",
+   "speaker": "teacher",
+   "text": "For another, they closed it and wrote down what they remembered.",
+   "pauseAfter": 1.0
+  },
+  {
+   "id": "E3",
+   "speaker": "teacher",
+   "text": "Five minutes later, re-reading won, eighty-one percent to seventy-five.",
+   "pauseAfter": 1.0,
+   "sub": "Five minutes later, re-reading won: 81% to 75%."
+  },
+  {
+   "id": "E4a",
+   "speaker": "teacher",
+   "text": "But after a week, it flipped.",
+   "pauseAfter": 1.3,
+   "rate": "-4%"
+  },
+  {
+   "id": "E4b",
+   "speaker": "teacher",
+   "text": "Recalling beat re-reading, fifty-six percent to forty-two.",
+   "pauseAfter": 0.7,
+   "sub": "Recalling beat re-reading: 56% to 42%.",
+   "rate": "-4%"
+  },
+  {
+   "id": "E5a",
+   "speaker": "teacher",
+   "text": "In a second experiment, re-readers felt surest they'd remember,",
+   "pauseAfter": 0.1,
+   "group": "g5"
+  },
+  {
+   "id": "E5b",
+   "speaker": "teacher",
+   "text": "yet remembered less.",
+   "pauseAfter": 1.1,
+   "group": "g5"
+  },
+  {
+   "id": "P1a",
+   "speaker": "teacher",
+   "text": "So after your AI explains something, close the answer,",
+   "pauseAfter": 0.1,
+   "group": "g6"
+  },
+  {
+   "id": "P1b",
+   "speaker": "teacher",
+   "text": "say it from memory,",
+   "pauseAfter": 0.1,
+   "group": "g6"
+  },
+  {
+   "id": "P1c",
+   "speaker": "teacher",
+   "text": "then come back at gaps that keep growing.",
+   "pauseAfter": 0.45,
+   "group": "g6"
+  },
+  {
+   "id": "P2",
+   "speaker": "teacher",
+   "text": "Spaced repetition tools like FSRS schedule those gaps for you.",
+   "pauseAfter": 1.1
+  },
+  {
+   "id": "R1",
+   "speaker": "teacher",
+   "text": "Reading feels like learning.",
+   "pauseAfter": 0.3,
+   "rate": "-4%"
+  },
+  {
+   "id": "R2",
+   "speaker": "teacher",
+   "text": "Pulling it from memory, a little later each time, makes it stick.",
+   "pauseAfter": 0.0,
+   "rate": "-6%"
+  }
+ ],
+ "sfx": [
+  {
+   "file": "sfx/whoosh.wav",
+   "line": "I1a",
+   "offset": -0.5,
+   "gain": 0.12
+  },
+  {
+   "file": "sfx/whoosh.wav",
+   "line": "I4a",
+   "offset": -0.45,
+   "gain": 0.12
+  },
+  {
+   "file": "sfx/whoosh.wav",
+   "line": "E1",
+   "offset": -0.4,
+   "gain": 0.12
+  },
+  {
+   "file": "sfx/whoosh.wav",
+   "line": "P1a",
+   "offset": -0.45,
+   "gain": 0.12
+  },
+  {
+   "file": "sfx/whoosh.wav",
+   "line": "R1",
+   "offset": -0.35,
+   "gain": 0.12
+  },
+  {
+   "file": "sfx/pop.wav",
+   "line": "I1b",
+   "word": "crystal",
+   "offset": 0.05,
+   "gain": 0.14
+  },
+  {
+   "file": "sfx/ding.wav",
+   "line": "E4a",
+   "offset": 0.1,
+   "gain": 0.12
+  },
+  {
+   "file": "sfx/pop.wav",
+   "line": "P2",
+   "word": "FSRS",
+   "offset": -0.05,
+   "gain": 0.14
+  },
+  {
+   "file": "sfx/ding.wav",
+   "line": "R2",
+   "word": "stick",
+   "offset": 0.0,
+   "gain": 0.12
+  }
+ ]
+}

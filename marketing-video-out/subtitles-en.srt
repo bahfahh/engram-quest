@@ -1,0 +1,110 @@
+1
+00:00:00,110 --> 00:00:02,880
+Your AI second brain
+remembers everything.
+
+2
+00:00:02,880 --> 00:00:04,180
+Do you?
+
+3
+00:00:04,320 --> 00:00:06,395
+You ask your AI something hard,
+
+4
+00:00:06,464 --> 00:00:08,560
+and the answer is crystal clear.
+
+5
+00:00:08,560 --> 00:00:09,850
+It all makes sense.
+
+6
+00:00:09,850 --> 00:00:11,552
+You feel like you've learned it.
+
+7
+00:00:12,212 --> 00:00:15,342
+But a week later, you ask
+the exact same question.
+
+8
+00:00:16,002 --> 00:00:19,322
+Memory fades fast at
+first, then slowly.
+
+9
+00:00:19,332 --> 00:00:22,249
+Researchers measured
+that curve in 1885,
+
+10
+00:00:22,249 --> 00:00:25,692
+and a 2015 replication
+found a similar curve.
+
+11
+00:00:26,352 --> 00:00:30,372
+In a classic experiment,
+students studied short passages.
+
+12
+00:00:30,372 --> 00:00:32,462
+Then they re-read one passage.
+
+13
+00:00:32,462 --> 00:00:35,932
+For another, they closed it and
+wrote down what they remembered.
+
+14
+00:00:36,592 --> 00:00:41,922
+Five minutes later,
+re-reading won: 81% to 75%.
+
+15
+00:00:42,582 --> 00:00:45,112
+But after a week, it flipped.
+
+16
+00:00:46,072 --> 00:00:50,532
+Recalling beat
+re-reading: 56% to 42%.
+
+17
+00:00:50,892 --> 00:00:54,966
+In a second experiment, re-readers
+felt surest they'd remember,
+
+18
+00:00:55,047 --> 00:00:56,702
+yet remembered less.
+
+19
+00:00:57,462 --> 00:01:00,266
+So after your AI explains
+something, close the answer,
+
+20
+00:01:00,266 --> 00:01:01,615
+say it from memory,
+
+21
+00:01:01,768 --> 00:01:04,192
+then come back at gaps
+that keep growing.
+
+22
+00:01:04,302 --> 00:01:08,582
+Spaced repetition tools like
+FSRS schedule those gaps for you.
+
+23
+00:01:09,342 --> 00:01:11,292
+Reading feels like learning.
+
+24
+00:01:11,292 --> 00:01:15,862
+Pulling it from memory, a little
+later each time, makes it stick.
+
