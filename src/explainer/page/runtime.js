@@ -4,7 +4,7 @@
   var S = window.__SPEC__, L = window.__LIVE__ || { notes: {} };
   function T(zh, en) { return L.lang === "en" ? en : zh; }
   var SVG = "http://www.w3.org/2000/svg";
-  var root = document.querySelector(".eq"), NARROW = root.clientWidth < 520, FIT = root.clientWidth - 32;
+  var root = document.querySelector(".eq");
   function h(tag, attrs, kids) {
     var e = document.createElement(tag);
     for (var k in attrs || {}) { if (k === "text") e.textContent = attrs[k]; else if (k === "on") e.addEventListener("click", attrs[k]); else if (attrs[k] != null) e.setAttribute(k, attrs[k]); }
@@ -94,7 +94,8 @@
     zoom.addEventListener("click", function () { zoom.setAttribute("aria-pressed", fig.classList.toggle("zoom") ? "true" : "false"); });
     // A file that is not really an image would leave a broken icon above a caption about nothing.
     img.addEventListener("error", function () { fig.remove(); });
-    fig.appendChild(h("div", { class: "ps" }, [zoom])); fig.appendChild(h("figcaption", { text: im.caption }));
+    fig.appendChild(h("div", { class: "ps" }, [zoom]));
+    if (im.caption) fig.appendChild(h("figcaption", { text: im.caption }));
     return fig;
   }
 
@@ -188,8 +189,8 @@
     return { W: W, H: H, nodes: nodes, parts: parts };
   }
 
-  function sequence(m) {
-    var n = m.actors.length, W = NARROW ? FIT : 678, M = NARROW ? 42 : 76, step = (W - 2 * M) / Math.max(n - 1, 1), X = {}, parts = {}, nodes = [], AH = 40, y = 14 + AH + 34;
+  function sequence(m, narrow, fit) {
+    var n = m.actors.length, W = narrow ? fit : 678, M = narrow ? 42 : 76, step = (W - 2 * M) / Math.max(n - 1, 1), X = {}, parts = {}, nodes = [], AH = 40, y = 14 + AH + 34;
     m.actors.forEach(function (a, i) { X[a.id] = M + i * step; });
     var rows = m.messages.map(function (msg) {
       var self = msg.from === msg.to, room = self ? 150 : Math.max(Math.abs(X[msg.from] - X[msg.to]) - 16, 120);
@@ -210,12 +211,12 @@
       kids.push(s("circle", { class: "nb", cx: bx, cy: r.ry, r: 8.5 }), s("text", { class: "nt", x: bx, y: r.ry }));
       nodes.push(s("g", { class: "part msg", "data-k": r.msg.id }, kids));
     });
-    m.actors.forEach(function (a) { var bw = NARROW ? Math.min(step - 6, 84) : Math.min(Math.max(width(a.label, 13.5) + 26, 96), step - 8 < 96 ? 96 : Math.min(step - 8, 148)); parts[a.id] = { cx: X[a.id], cy: 14 + AH / 2 }; nodes.push(box(a.id, X[a.id] - bw / 2, 14, bw, AH, a.label, null, "actor")); });
+    m.actors.forEach(function (a) { var bw = narrow ? Math.min(step - 6, 84) : Math.min(Math.max(width(a.label, 13.5) + 26, 96), step - 8 < 96 ? 96 : Math.min(step - 8, 148)); parts[a.id] = { cx: X[a.id], cy: 14 + AH / 2 }; nodes.push(box(a.id, X[a.id] - bw / 2, 14, bw, AH, a.label, null, "actor")); });
     return { W: W, H: H, nodes: nodes, parts: parts, rows: rows, top: 14 + AH + 34 };
   }
 
-  function pipelineColumn(m) {
-    var W = FIT, BH = 62, GAP = 30, hasExit = (m.exits || []).length > 0, BW = hasExit ? Math.round(W * 0.56) : W - 4, x = 2, exits = {}, parts = {}, nodes = [];
+  function pipelineColumn(m, fit) {
+    var W = fit, BH = 62, GAP = 30, hasExit = (m.exits || []).length > 0, BW = hasExit ? Math.round(W * 0.56) : W - 4, x = 2, exits = {}, parts = {}, nodes = [];
     (m.exits || []).forEach(function (e) { exits[e.from] = e; });
     m.stations.forEach(function (st, i) { parts[st.id] = { x: x, y: 6 + i * (BH + GAP), cx: x + BW / 2, cy: 6 + i * (BH + GAP) + BH / 2 }; });
     m.stations.forEach(function (st, i) { if (i === m.stations.length - 1) return; var a = parts[st.id], b = parts[m.stations[i + 1].id]; nodes.push(edge(st.id, m.stations[i + 1].id, "M" + a.cx + " " + (a.y + BH) + " V" + (b.y - 3))); });
@@ -229,8 +230,8 @@
     return { W: W, H: 6 + m.stations.length * (BH + GAP) - GAP + 8, nodes: nodes, parts: parts };
   }
 
-  function pipeline(m) {
-    if (NARROW) return pipelineColumn(m);
+  function pipeline(m, narrow, fit) {
+    if (narrow) return pipelineColumn(m, fit);
     var n = m.stations.length, cols = Math.min(n, n > 5 ? Math.ceil(n / 2) : n), W = 678, cell = W / cols, BW = cell - 34, BH = 62, exits = {}, parts = {}, nodes = [];
     (m.exits || []).forEach(function (e) { exits[e.from] = e; });
     var rowCount = Math.ceil(n / cols), hasExit = (m.exits || []).length > 0, ROW = BH + (hasExit ? 112 : 44);
@@ -256,8 +257,8 @@
     return { W: W, H: 14 + rowCount * ROW - (hasExit ? 30 : 34) + (rowCount > 0 && hasExit ? 16 : 0), nodes: nodes, parts: parts };
   }
 
-  function states(m) {
-    var n = m.states.length, W = NARROW ? FIT : 678, H = NARROW ? 340 : 396, CX = W / 2, CY = H / 2, RX = NARROW ? W / 2 - 52 : 240, RY = NARROW ? 134 : 142, BW = NARROW ? 96 : 124, BH = 46, parts = {}, nodes = [], pair = {};
+  function states(m, narrow, fit) {
+    var n = m.states.length, W = narrow ? fit : 678, H = narrow ? 340 : 396, CX = W / 2, CY = H / 2, RX = narrow ? W / 2 - 52 : 240, RY = narrow ? 134 : 142, BW = narrow ? 96 : 124, BH = 46, parts = {}, nodes = [], pair = {};
     m.states.forEach(function (st, i) { var t = -Math.PI / 2 + i * 2 * Math.PI / n; parts[st.id] = { cx: CX + RX * Math.cos(t), cy: CY + RY * Math.sin(t) }; });
     m.transitions.forEach(function (tr) {
       var a = parts[tr.from], b = parts[tr.to], dx = b.cx - a.cx, dy = b.cy - a.cy, L = Math.hypot(dx, dy) || 1, ux = dx / L, uy = dy / L;
@@ -276,7 +277,7 @@
         if (oy < ox) { var dy = (pa.cy <= pb.cy ? -1 : 1) * oy / 2; pa.cy += dy; pb.cy -= dy; } else { var dx = (pa.cx <= pb.cx ? -1 : 1) * ox / 2; pa.cx += dx; pb.cx -= dx; }
       });
     });
-    m.transitions.forEach(function (tr) { var q = parts[tr.id]; nodes.push(s("g", { class: "part msg", "data-k": tr.id }, [s("path", { class: "ms", fill: "none", d: tr.path, "marker-end": "url(#ah)" }), label(q.cx, q.cy, tr.label, NARROW ? 104 : 130, "m", 12.5)])); });
+    m.transitions.forEach(function (tr) { var q = parts[tr.id]; nodes.push(s("g", { class: "part msg", "data-k": tr.id }, [s("path", { class: "ms", fill: "none", d: tr.path, "marker-end": "url(#ah)" }), label(q.cx, q.cy, tr.label, narrow ? 104 : 130, "m", 12.5)])); });
     m.states.forEach(function (st) { var p = parts[st.id]; nodes.push(box(st.id, p.cx - BW / 2, p.cy - BH / 2, BW, BH, st.label)); });
     return { W: W, H: H, nodes: nodes, parts: parts };
   }
@@ -291,9 +292,14 @@
     return Object.assign({}, m, { messages: messages, actors: m.actors.filter(function (a) { return used[a.id]; }) });
   }
   function machine(m) {
-    var cur = 0, idx = 0, single = m.layout === "states", perScenario = NARROW && (m.layout === "sequence" || single), lay, svg, dot, fig = h("div", { class: "fig" });
+    var cur = 0, idx = 0, single = m.layout === "states", perScenario, lay, svg, dot, fig = h("div", { class: "fig" });
+    var measuredWidth = 0;
     function build() {
-      lay = { tree: tree, sequence: sequence, pipeline: pipeline, states: states }[m.layout](perScenario ? scoped(m, m.scenarios[cur]) : m);
+      var pageWidth = root.clientWidth, narrow = pageWidth > 0 && pageWidth < 520;
+      measuredWidth = fig.clientWidth;
+      var fit = Math.max(240, measuredWidth || pageWidth - 32);
+      perScenario = narrow && (m.layout === "sequence" || single);
+      lay = { tree: tree, sequence: sequence, pipeline: pipeline, states: states }[m.layout](perScenario ? scoped(m, m.scenarios[cur]) : m, narrow, fit);
       dot = s("circle", { class: "dot", r: 6, cx: 0, cy: 0 });
       svg = s("svg", { viewBox: "0 0 " + lay.W + " " + lay.H, style: "min-width:" + Math.min(lay.W, 560) + "px", role: "img", "aria-label": S.title }, [
         s("defs", {}, [["ah", "af"], ["ah2", "af2"], ["ah3", "af3"]].map(function (a) { return s("marker", { id: a[0], viewBox: "0 0 8 8", refX: "7", refY: "4", markerWidth: "9", markerHeight: "9", orient: "auto-start-reverse", markerUnits: "userSpaceOnUse" }, [s("path", { class: a[1], d: "M0 0 L8 4 L0 8 Z" })]); }))
@@ -350,6 +356,10 @@
     });
     var wrapEl = h("div", {}, [fig, h("div", { class: "say" },[m.counter ? cnt : null, say, h("div", { class: "nav" }, [pos, next])]), lnk, bar, m.assumption ? h("p", { class: "cap", text: m.assumption }) : null]);
     apply();
+    // The iframe can start hidden or be resized after it opens. Keep the current scenario and step.
+    new ResizeObserver(function () {
+      if (fig.clientWidth > 0 && fig.clientWidth !== measuredWidth) { build(); apply(); }
+    }).observe(fig);
     return wrapEl;
   }
 

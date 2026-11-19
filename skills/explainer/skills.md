@@ -57,7 +57,8 @@ which may be a note, a card, a folder, or a bare topic, and write one page.
    page (see below) becomes `"skipped"` with a one-line `reason`, so it does not come back on every run.
 4. Change only the entries you processed. The plugin can add entries while you work, so re-read the file
    immediately before writing it back.
-5. Report how many pages were created and rewritten.
+5. Report how many pages were created and rewritten, with a picture line for each page (defined under
+   "Find what becomes clearer, then write").
 
 An entry with `regenerate: true` already names its page in `explainerId`: rewrite that page under the
 same id. Its `a` may be empty, in which case take the card from the page's meta and source note; a page
@@ -102,10 +103,18 @@ where this sits in it, watching a mechanism run, setting it beside what it gets 
 one case, learning why it exists: these are examples, not a menu, and a term with nothing around it needs
 none of them. The form is whatever carries that choice.
 
-Ask the same of a picture. The plugin's forms show structure it can lay out from words; what a thing
-looks like, how parts sit in space, or how it resembles something familiar is beyond them. When seeing
-that would give this owner understanding the words leave them to assemble, read `references/picture.md`
-and make one. Most pages need none, and a decorative picture is worse than none.
+Decide on a picture now, before the form tests in the guide, because a picture and a form do different
+work and share a page. A form walks the reader through structure and process one step at a time; what a
+thing looks like, how parts sit in space, how several amounts or limits relate, or how it resembles
+something familiar is beyond it. So the form you will choose does not settle this question. Ask what the
+reader would still have to assemble in their head after the words and the form, and whether seeing it all
+at once would do that work. When it would, read `references/picture.md` and make one, even if the page
+already holds together without it. When no picture has a job to do, a plain page is right: a decorative
+picture is worse than none.
+
+Every page ends with this decision, written in your report as one line, either
+`Picture: <what it lets the reader see>` or `Picture: none, <why>`. The line lets the owner tell a
+considered "no" from a skipped step.
 
 Then read `references/spec-guide.md`, which sets out how to choose among the four forms and every field of
 the spec. `assets/examples/` holds one finished spec per form; they show the expected finish, and their note
@@ -206,5 +215,7 @@ done: report them as written and add `Synapse: not updated (<reason>)`.
 - Does every point advance understanding rather than repeat the figure?
 - Could the reader rebuild the card's answer from the page?
 - Does every `note` name a real note, or a note genuinely worth writing?
-- If the page has a picture, did you look at the finished image and judge both whether it is correct and
-  whether it reads, and is the file where the spec says?
+- Does your report carry a picture line for every page, either what the picture shows or `none` with the
+  reason?
+- If the page has a picture, did you look at the finished image and judge whether it is correct, whether it
+  reads, and whether it still explains with the caption covered, and is the file where the spec says?

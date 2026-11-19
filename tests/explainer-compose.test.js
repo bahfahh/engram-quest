@@ -273,6 +273,11 @@ describe("a page's picture", () => {
     expect(validateSpec({ ...reading(), image: { file: "p.png" } }).join()).toContain("image.alt");
   });
 
+  it("accepts a self-explanatory image without a caption", () => {
+    expect(validateSpec({ ...reading(), image: { file: image.file, alt: image.alt } })).toEqual([]);
+    expect(validateSpec({ ...reading(), image: { ...image, caption: "圖".repeat(100) } }).join()).toContain("image.caption");
+  });
+
   it("hands the file to the page as a data URL", async () => {
     const app = withSpec({ ...reading(), image }, {}, { [imageFile]: new Uint8Array([137, 80, 78, 71]).buffer });
     const out = await composeSpecPage(app, "p", { page });

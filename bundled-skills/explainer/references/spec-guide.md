@@ -7,6 +7,9 @@ The spec holds words and structure. A renderer computes the layout and injects l
 
 ## Step 1: choose the form that carries the explanation
 
+Whether the page also carries a picture was settled before this step, in the main skill file, and does not
+depend on the form chosen here; any form can carry one.
+
 Start at `reading`. Leave it only when another form's test produces the evidence it asks for. Being able
 to imagine a diagram proves nothing: almost any idea can be given parts and a way to misuse it.
 
@@ -203,11 +206,14 @@ plates; `image` is for what that vocabulary cannot show.
 "image": {
   "file": "the file name inside engram-quest/explainer/images/, such as https-basics-1785489701.webp",
   "alt": "what the picture shows, for a reader who cannot see it, at most 60 characters",
-  "caption": "what to read from it, beyond what its labels say, at most 70 characters"
+  "caption": "optional: only what the picture cannot hold itself, such as a condition it assumes, at most 70 characters"
 }
 ```
 
 `file` is a name, not a path, ending in `png`, `jpg`, `jpeg`, `webp`, or `svg`.
+
+The picture's own labels carry its meaning, so omit `caption` unless the picture cannot hold something the
+reader needs.
 
 ## Conventions
 

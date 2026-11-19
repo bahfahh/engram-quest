@@ -219,7 +219,7 @@ function checkShapes(f, c) {
 function checkImage(im, c) {
   if (!isImageFile(im.file)) c.fail(`image.file: "${im.file}" must be a file name ending in ${Object.keys(IMAGE_TYPES).join(", ")}`);
   c.text(im.alt, 60, "image.alt");
-  c.text(im.caption, 70, "image.caption");
+  c.optionalText(im.caption, 70, "image.caption");
 }
 
 /** Everything the page runtime relies on. Returns a list of problems; empty means it can be drawn. */
