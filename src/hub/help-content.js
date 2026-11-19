@@ -213,7 +213,7 @@ module.exports = {
       {
         id: "pro", icon: "star", title: "Pro", tag: `${PRICE} 一次買斷`,
         body: [
-          { p: "一次買斷，之後的 Pro 功能更新都包含。不升級也能繼續使用所有免費功能。Pro 加的是這四件事：" },
+          { p: "一次買斷，之後的 Pro 功能更新都包含。同一組 key 可以用在你自己的電腦和手機上，不限裝置數量。不升級也能繼續使用所有免費功能。Pro 加的是這四件事：" },
           { list: [
             "<strong>Synapse 記憶錨點</strong>：複習時把難記的卡連到你學過的相關內容。第一次先對 AI 說一句話建立關聯，之後做內容時會自動更新；做法寫在上面的 Review Deck。",
             "<strong>深入解析</strong>：難卡加入佇列，用 engram-explainer skill 生成白話圖解，在「深入解析」分頁閱讀。",
@@ -225,6 +225,7 @@ module.exports = {
             "電腦：Hub 側邊欄最下方的 Pro 按鈕（未啟用時是「看看 Pro」，啟用後顯示「Pro 已啟用」）。",
             "手機：Hub「記憶」首頁最下方的 Pro 那一列。",
             "付款完成不會自動開通：從付款成功頁或 Polar 寄來的信複製 key，在 Pro 視窗按「輸入 key」貼上（或到 <strong>設定 → EngramQuest → EngramQuest Pro</strong>）按啟用，Hub 會馬上更新。",
+            "換一台裝置時，在那台的 Pro 視窗輸入同一組 key 就好，不用再付款。",
           ] },
           { p: "啟用時只傳授權 key 與商品識別碼給 Polar，不傳筆記內容；驗證成功後最多可離線使用 14 天。移除本機授權不會刪除任何學習資料。" },
           { action: "pro" },
@@ -534,7 +535,7 @@ module.exports = {
       {
         id: "pro", icon: "star", title: "Pro", tag: `${PRICE} one-time`,
         body: [
-          { p: "One purchase, with future Pro feature updates included. Every free feature keeps working without it. Pro adds four things:" },
+          { p: "One purchase, with future Pro feature updates included. The same key works on all your own devices, desktop and mobile, with no limit on how many. Every free feature keeps working without it. Pro adds four things:" },
           { list: [
             "<strong>Synapse memory anchors</strong>: during review, link a hard card to related things you have already learned. Say one sentence to your AI the first time to build the links; after that they update as you build content. The Review Deck section above shows how.",
             "<strong>Deep Dive</strong>: queue a hard card, generate a plain-language, illustrated page with the engram-explainer skill, and read it in the Deep Dive tab.",
@@ -546,6 +547,7 @@ module.exports = {
             "Desktop: the Pro button at the bottom of the Hub sidebar (Explore Pro, or Pro is active once activated).",
             "Phone: the Pro row at the bottom of the Hub's Memory home page.",
             "Paying does not unlock Pro by itself: copy the key from the success page or the email from Polar, paste it in the Pro window under <strong>Enter a key</strong> (or <strong>Settings → EngramQuest → EngramQuest Pro</strong>) and press Activate. The Hub updates right away.",
+            "On another device, enter the same key in that device's Pro window. There is nothing more to pay.",
           ] },
           { p: "Activation sends only your licence key and product identifiers to Polar, never note content. After a successful check it works offline for up to 14 days. Removing the local licence keeps all your learning data." },
           { action: "pro" },

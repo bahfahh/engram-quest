@@ -310,7 +310,7 @@ Mark key answers with `==highlight==` or `**bold**`, then add a rule to your AI 
 
 ## Pro: four ways to learn
 
-**US$11.99 one-time purchase. Future Pro feature updates included.** All existing free features stay available without upgrading. Applicable taxes appear at checkout.
+**US$11.99 one-time purchase. Future Pro feature updates included.** One key works on all your own devices, desktop and mobile, with no limit on how many. All existing free features stay available without upgrading. Applicable taxes appear at checkout.
 
 | Pro feature | What it adds | Availability |
 | --- | --- | --- |
@@ -650,7 +650,7 @@ engram-quest/custom/
 
 ## Pro：四種學習方式
 
-**US$11.99 一次買斷，後續 Pro 功能更新皆包含。** 不升級，也能繼續正常使用既有免費功能。適用稅額於結帳顯示。
+**US$11.99 一次買斷，後續 Pro 功能更新皆包含。** 同一組 key 可以用在你自己的電腦和手機上，不限裝置數量。不升級，也能繼續正常使用既有免費功能。適用稅額於結帳顯示。
 
 | Pro 功能 | 提供什麼 | 狀態 |
 | --- | --- | --- |

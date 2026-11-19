@@ -59,6 +59,7 @@ function renderUpgradeContent(container, plugin, { close, checkout } = {}) {
   priceTop.createEl("strong", { text: PRICE });
   priceTop.createEl("span", { cls: "eq-pro-buyout", text: tr("PRO_BUYOUT") });
   price.createEl("p", { text: `✓ ${tr("PRO_FUTURE")}` });
+  price.createEl("p", { text: `✓ ${tr("PRO_DEVICES")}` });
   price.createEl("p", { text: `✓ ${tr("PRO_FREE_PROMISE")}` });
   body.createEl("p", { cls: "eq-pro-tax", text: tr("PRO_TAX") });
   const actions = body.createEl("div", { cls: "eq-pro-actions" });
