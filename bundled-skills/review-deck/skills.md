@@ -52,7 +52,7 @@ For full scanning logic, see `references/plugin-architecture.md`.
 | AI-generated cards | `engram-review/ai-cards/{note-key}.md` |
 | SR schedules | `engram-review/sr/{card-file path with / replaced by __, no .md}.json` (written by the plugin) |
 
-`{note-key}` is the source note's vault path with `/` replaced by `__` and `.md` dropped (`Study/Azure Notes.md` → `Study__Azure Notes`), the same key `sr/` uses. Two notes with the same name in different folders therefore never share a file. Files written before this rule are named `{note-name}` only; the plugin still reads them, so when looking for a note's hints or ai-cards file, try `{note-key}` first, then `{note-name}`, and write back under `{note-key}`.
+`{note-key}` is the source note's vault path with `/` replaced by `__` and `.md` dropped (`Study/Azure Notes.md` → `Study__Azure Notes`), the same key `sr/` uses. Two notes with the same name in different folders therefore never share a file. Files written before this rule are named `{note-name}` only; the plugin still reads them, so when looking for a note's hints or ai-cards file, try `{note-key}` first, then `{note-name}`, and write back under `{note-key}`. `{note-key}` applies to cards made from one note; a deck built from a course or several notes takes a name of its own (e.g. `{course-title}`), and its hints file uses that same name.
 
 ## Output Scope
 

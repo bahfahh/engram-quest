@@ -1,7 +1,7 @@
 # Plugin Architecture — Review Deck
 
 Read this file when you need to understand how the plugin scans and displays cards.
-This is reference material; the execution steps are in `skills.md`.
+This is reference material; the execution steps are in `SKILL.md`.
 
 ## Terminology
 

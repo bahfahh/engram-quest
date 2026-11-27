@@ -278,7 +278,8 @@ A lesson is a document the user will revisit. Before calling one done, read it a
 When the user finishes a course (or asks), offer to:
 - **Generate review-deck flashcards** from the lessons' key facts — create an
   `engram-review/ai-cards/{course-title}.md` per the review-deck skill's card format
-  (`question :: answer` lines, if that skill is installed).
+  (`question :: answer` lines, with the flashcard tag in the file's frontmatter; if that
+  skill is installed).
 - **Build a quest map** from the course — hand off to the quest-map skill if installed.
 
 Don't auto-generate these; lessons alone are the deliverable unless asked.

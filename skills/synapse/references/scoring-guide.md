@@ -94,7 +94,7 @@ Synapse's "correct linking" guarantee rests on four mechanisms:
 The 7+ cutoff is the primary filter. It runs inside the AI prompt — no post-processing
 needed.
 
-### 2. Pool size gate (in skills.md, Step 2)
+### 2. Pool size gate (in SKILL.md, Step 2)
 If the user's mastered pool is < 10 cards, the entire feature is disabled. Prevents AI
 from straining to find anchors when the pool is too small.
 

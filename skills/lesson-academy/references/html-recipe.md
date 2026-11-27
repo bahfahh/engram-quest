@@ -38,7 +38,7 @@ Violations look fine in a normal browser and break inside Obsidian.
 Every lesson is built on two shared files, so lessons across all courses look like one
 publisher's work:
 
-- `assets/lesson-base.css` — colour tokens for light and dark, the five course colour schemes,
+- `assets/lesson-base.css` — colour tokens for light and dark, the twelve course colour schemes,
   type, the page frame, the surfaces a figure sits on, controls, tables.
 - `assets/lesson-base.js` — theme, and a few behaviours a figure can use (section 5).
 
