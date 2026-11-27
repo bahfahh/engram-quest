@@ -1,6 +1,6 @@
 {
   "name": "engram-quest",
-  "version": "2.0.6",
+  "version": "2.0.7",
   "private": true,
   "description": "Standalone source repo for the EngramQuest Obsidian plugin",
   "main": "main.js",
