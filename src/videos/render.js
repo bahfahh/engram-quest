@@ -6,7 +6,7 @@
 // View state lives on the hub: hub._vTopic = { slug, videoId, autoplay } | null.
 
 const I = require("obsidian");
-const { t: c, interpolate: K } = require("../i18n");
+const { t: c, tn, interpolate: K } = require("../i18n");
 const data = require("./data");
 const { openNewVideoModal } = require("./new-modal");
 const { openVideoSettingsModal } = require("./settings-modal");
@@ -298,13 +298,13 @@ function renderSeriesCard(card, hub, t, { slug, meta }, open) {
   const poster = meta.videos.find((v) => v.file && v.poster);
   if (poster) cover.createEl("img", { attr: { src: fileUrl(hub, slug, poster.poster), alt: "", loading: "lazy" } });
   ui.rawIcon(cover.createSpan({ cls: "lh-vid-thumb-play" }), ui.PLAY);
-  cover.createSpan({ cls: "lh-vid-thumb-dur", text: K(c(t, "VIDEO_COUNT"), { count: prog.total }) });
+  cover.createSpan({ cls: "lh-vid-thumb-dur", text: tn(t, "VIDEO_COUNT", prog.total) });
   const pct = prog.total ? Math.round((prog.completed / prog.total) * 100) : 0;
   cover.createSpan({ cls: "lh-vid-thumb-bar" }).createSpan({ cls: "lh-vid-thumb-fill", attr: { style: `width:${pct}%` } });
   const badge = seriesBadge(t, meta);
   if (badge) cover.createSpan({ cls: "lh-vid-badge-pending lh-vid-cover-badge" + badgeTone(meta), text: badge });
   card.createSpan({ cls: "lh-vid-scard-title", text: meta.title });
-  card.createSpan({ cls: "lh-vid-scard-meta", text: K(c(t, "VIDEO_TOPIC_META"), { count: prog.total, done: prog.completed }) });
+  card.createSpan({ cls: "lh-vid-scard-meta", text: tn(t, "VIDEO_TOPIC_META", prog.total, { done: prog.completed }) });
   const taught = meta.videos.find((v) => v.cast);
   if (taught) teacherTag(card, t, teacherOfVideo(taught.cast.teacher, hub._vCustomTeachers), taught.cast.variant);
   card.addEventListener("click", open);
@@ -374,7 +374,7 @@ function confirmDelete(hub, t, slug, meta, refresh) {
   const count = meta.videos.filter((v) => v.file).length;
   deleteDialog(hub, t, {
     name: meta.title,
-    body: count ? K(c(t, "VIDEO_DELETE_READY_BODY"), { count }) : c(t, "VIDEO_DELETE_BODY"),
+    body: count ? tn(t, "VIDEO_DELETE_READY_BODY", count) : c(t, "VIDEO_DELETE_BODY"),
     run: () => deleteAfterRelease(`${data.VIDEOS_DIR}/${slug}`, () => queueWrite(slug, () => data.deleteTopic(hub.app.vault.adapter, slug))),
     kept: "VIDEO_DELETE_KEPT",
     refresh,
@@ -503,7 +503,7 @@ function renderTopic(body, hub, t, topic, refresh) {
   const side = layout.createDiv({ cls: "lh-vid-side" });
   const prog = data.topicProgress(meta);
   const others = topic.othersOnPhone && phone;
-  side.createDiv({ cls: "lh-vid-side-head", text: others ? c(t, "EPISODIC_OTHERS") : `${c(t, "VIDEO_PLAYLIST")} · ${K(c(t, "VIDEO_TOPIC_META"), { count: prog.total, done: prog.completed })}` });
+  side.createDiv({ cls: "lh-vid-side-head", text: others ? c(t, "EPISODIC_OTHERS") : `${c(t, "VIDEO_PLAYLIST")} · ${tn(t, "VIDEO_TOPIC_META", prog.total, { done: prog.completed })}` });
   const shelf = side.createDiv({ cls: "lh-vid-side-list" });
   let current = null;
   for (const v of playable) {

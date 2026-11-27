@@ -467,9 +467,11 @@ const DICT = {
     VIDEO_RESUME_AT: "Resume at {time}",
     VIDEO_BACK: "‹ Back to shelf",
     VIDEO_TOPIC_META: "{count} videos · {done} watched",
+    VIDEO_TOPIC_META_ONE: "{count} video · {done} watched",
     VIDEO_PENDING: "In the queue",
     VIDEO_PENDING_HINT: "Generated the next time you run the video skill in your AI tool.",
     VIDEO_DELETE_BODY: "Its video files are moved to the trash too.",
+    VIDEO_DELETE_READY_BODY_ONE: "Its {count} video, cover, subtitles and watch history go to the trash. Review cards made from it stay in your decks, but the video stills on them go to the trash too.",
     VIDEO_DELETE_READY_BODY: "Its {count} videos, covers, subtitles and watch history go to the trash. Review cards made from it stay in your decks, but the video stills on them go to the trash too.",
     VIDEO_DELETE_KEPT: "Nothing was deleted: a file in this series is in use or can't be moved (a video open in another app, for example), so the whole series is just as it was. Close it, then delete again.",
     VIDEO_DELETE_ONE_BODY: "This video, its cover, subtitles and watch history go to the trash. The series' other videos stay, and so do review cards made from it.",
@@ -510,6 +512,7 @@ const DICT = {
     VIDEO_PENDING_EDIT: "click to edit",
     VIDEO_REFS_COUNT: "{count} notes chosen",
     VIDEO_COUNT: "{count} videos",
+    VIDEO_COUNT_ONE: "{count} video",
     VIDEO_F_ALL: "All",
     VIDEO_F_WATCHING: "Watching",
     VIDEO_F_NEW: "Not started",
@@ -1195,9 +1198,11 @@ const DICT = {
     VIDEO_RESUME_AT: "從 {time} 繼續",
     VIDEO_BACK: "‹ 返回書架",
     VIDEO_TOPIC_META: "{count} 支 · 已看完 {done}",
+    VIDEO_TOPIC_META_ONE: "{count} 支 · 已看完 {done}",
     VIDEO_PENDING: "待製作",
     VIDEO_PENDING_HINT: "下次在 AI 工具執行影片 skill 時製作。",
     VIDEO_DELETE_BODY: "它的影片檔也會一起移到垃圾桶。",
+    VIDEO_DELETE_READY_BODY_ONE: "這個系列的 {count} 支影片、封面、字幕和觀看紀錄都會移到垃圾桶。用它做的複習卡會留在牌組裡，但卡片上的影片截圖也會移到垃圾桶。",
     VIDEO_DELETE_READY_BODY: "這個系列的 {count} 支影片、封面、字幕和觀看紀錄都會移到垃圾桶。用它做的複習卡會留在牌組裡，但卡片上的影片截圖也會移到垃圾桶。",
     VIDEO_DELETE_KEPT: "沒有刪除：這個系列有檔案正在使用中或無法移動（例如影片開在別的程式裡），所以整個系列都原封不動。關掉它之後再按一次刪除。",
     VIDEO_DELETE_ONE_BODY: "這支影片和它的封面、字幕、觀看紀錄會移到垃圾桶。系列裡的其他影片不受影響，用它做的複習卡也會留著。",
@@ -1238,6 +1243,7 @@ const DICT = {
     VIDEO_PENDING_EDIT: "點開可編輯",
     VIDEO_REFS_COUNT: "指定 {count} 份筆記",
     VIDEO_COUNT: "{count} 支",
+    VIDEO_COUNT_ONE: "{count} 支",
     VIDEO_F_ALL: "全部",
     VIDEO_F_WATCHING: "觀看中",
     VIDEO_F_NEW: "未開始",
@@ -1515,10 +1521,24 @@ function t(settings, key, vars, momentLocale) {
 }
 
 /**
+ * Translate a string that counts something. Exactly one takes the `<key>_ONE` string (the English noun is
+ * singular); any other count, zero included, takes `<key>`. `{count}` is filled in; `vars` adds the rest.
+ * @param {object|null} settings
+ * @param {string} key
+ * @param {number} count
+ * @param {object|null} [vars]
+ * @param {string} [momentLocale]
+ * @returns {string}
+ */
+function tn(settings, key, count, vars, momentLocale) {
+  return t(settings, count === 1 ? `${key}_ONE` : key, { count, ...vars }, momentLocale);
+}
+
+/**
  * Alternate arg order: t(key, settings, vars) — kept for back-compat.
  */
 function tAlt(key, settings, vars, momentLocale) {
   return t(settings, key, vars, momentLocale);
 }
 
-module.exports = { DICT, normalizeLocale, getLocale, interpolate, t, tAlt };
+module.exports = { DICT, normalizeLocale, getLocale, interpolate, t, tn, tAlt };

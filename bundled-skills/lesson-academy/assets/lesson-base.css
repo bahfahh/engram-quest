@@ -37,6 +37,8 @@
 
 *{box-sizing:border-box}
 html{scroll-padding-top:64px}
+/* the window scrollbar takes its colour from <html>; the shared script marks <html> while the theme is dark */
+html.lz-dark{color-scheme:dark}
 body.lz{margin:0;background:var(--bg);color:var(--body);font:17px/1.9 var(--sans);-webkit-text-size-adjust:100%;overflow-wrap:break-word}
 .wrap{max-width:880px;margin:0 auto;padding:4px 28px 90px}
 p{margin:0 0 14px}

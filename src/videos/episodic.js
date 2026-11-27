@@ -4,7 +4,7 @@
 // only records the request. View state is shared with the Video Academy (hub._vTopic).
 
 const I = require("obsidian");
-const { t: c, interpolate: K } = require("../i18n");
+const { t: c, tn, interpolate: K } = require("../i18n");
 const { ProUpgradeModal } = require("../license/upgrade");
 const { estimate } = require("./episodic-length");
 const data = require("./data");
@@ -58,7 +58,7 @@ async function renderEpisodicTab(el, hub) {
   const root = el.createDiv({ cls: "lh-vid" });
   hub.setHero(!open);
   hub.setWatching(open);
-  hub._entryHints = { ...hub._entryHints, episodic: K(c(t, "VIDEO_COUNT"), { count: films.length }) };
+  hub._entryHints = { ...hub._entryHints, episodic: tn(t, "VIDEO_COUNT", films.length) };
   // Wait for this series' pending writes (a star just pressed on the player page) before re-reading it.
   const toList = () => queueWrite(data.EPISODIC_SLUG, () => null).then(() => { hub._vTopic = null; refresh(); });
   ui.setPhoneNav(hub, open ? { label: c(t, "EPISODIC_BACK"), title: "", onBack: toList } : null);

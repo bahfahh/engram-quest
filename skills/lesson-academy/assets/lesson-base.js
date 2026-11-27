@@ -9,7 +9,7 @@ var LZ = (function () {
   function each(sel, fn) { $$(sel).forEach(function (el) { try { fn(el); } catch (err) { if (window.console) console.error("lesson-base:", sel, err); } }); }
 
   // Theme: the plugin sends it from the parent window; alone in a browser, follow the system.
-  function dark(on) { body.classList.toggle("dark", !!on); }
+  function dark(on) { body.classList.toggle("dark", !!on); document.documentElement.classList.toggle("lz-dark", !!on); }
   window.addEventListener("message", function (e) { if (e.source === window.parent && e.data && e.data.type === "engram-quest-theme") dark(e.data.dark); });
   if (window.matchMedia && matchMedia("(prefers-color-scheme: dark)").matches) dark(true);
 

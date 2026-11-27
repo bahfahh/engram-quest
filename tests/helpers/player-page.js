@@ -64,9 +64,10 @@ export function vault({ subtitles = "l01.vtt", vtt = VTT, settings } = {}) {
 
 /**
  * Draws the page and waits for the reads it starts (subtitle file, settings).
- * `phone` draws it as a phone does; `whileReading(body)` runs right after drawing, before those reads answer.
+ * `phone` draws it as a phone does; `whileReading(body)` runs right after drawing, before those reads answer;
+ * `language` is the plugin language ("zh-tw" unless a test says otherwise).
  */
-export async function drawPlayer(adapter, { phone = false, whileReading } = {}) {
+export async function drawPlayer(adapter, { phone = false, whileReading, language = "zh-tw" } = {}) {
   const body = new FakeEl();
   const classes = obsidian.activeDocument.body.classList;
   const contains = classes.contains;
@@ -76,7 +77,7 @@ export async function drawPlayer(adapter, { phone = false, whileReading } = {}) 
   obsidian.setIcon = () => {};
   globalThis.ResizeObserver = class { observe() {} disconnect() {} };
   try {
-    const hub = { app: { vault: { adapter }, showInFolder: async () => {} }, plugin: { settings: { language: "zh-tw" } }, _vTopic: null };
+    const hub = { app: { vault: { adapter }, showInFolder: async () => {} }, plugin: { settings: { language } }, _vTopic: null };
     const [topic] = await listTopics(adapter);
     renderTopic(body, hub, hub.plugin.settings, topic, () => {});
     if (whileReading) whileReading(body);

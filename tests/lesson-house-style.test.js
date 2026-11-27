@@ -50,4 +50,39 @@ describe("lesson house style assets", () => {
     const missing = names.filter((n) => n !== "indigo" && !(css.includes(`.c-${n}{`) && css.includes(`.c-${n}.dark{`)));
     expect(missing).toEqual([]);
   });
+
+  // The window scrollbar takes its colour from <html>'s color-scheme, not from the page's own colours
+  // (ticket-022). The shared script marks <html> while the theme is dark and the stylesheet answers that
+  // mark; a light lesson gets no rule, so it is unchanged. The stylesheet avoids :has because the Obsidian
+  // automated review flags it (the quest stylesheet keeps the same promise).
+  describe("window scrollbar follows the theme", () => {
+    const read = (file) => fs.readFileSync(path.join(root, "skills/lesson-academy/assets", file), "utf8");
+
+    // Runs the shared script on a page with nothing in it and lets the plugin (the parent window) send a theme.
+    function runShared() {
+      const classes = () => { const on = new Set(); return { on, toggle: (name, force) => (force ? on.add(name) : on.delete(name)) }; };
+      const body = { classList: classes() }, root = { classList: classes() }, parent = {};
+      const handlers = {};
+      const document = { body, documentElement: root, querySelector: () => null, querySelectorAll: () => [], addEventListener() {} };
+      const window = { parent, addEventListener: (type, fn) => { handlers[type] = fn; } };
+      new Function("window", "document", `${read("lesson-base.js")}\nreturn LZ;`)(window, document);
+      const send = (dark) => handlers.message({ source: parent, data: { type: "engram-quest-theme", dark } });
+      return { send, body: body.classList.on, root: root.classList.on };
+    }
+
+    it("the script marks <html> together with <body>, and clears both for a light theme", () => {
+      const page = runShared();
+      page.send(true);
+      expect([[...page.body], [...page.root]]).toEqual([["dark"], ["lz-dark"]]);
+      page.send(false);
+      expect([[...page.body], [...page.root]]).toEqual([[], []]);
+    });
+
+    it("the stylesheet's only colour-scheme rule answers that mark, so light is unchanged", () => {
+      const css = read("lesson-base.css").replace(/\/\*[\s\S]*?\*\//g, "");
+      const rules = (css.match(/[^{}]*\{[^{}]*color-scheme\s*:[^{}]*\}/g) || []).map((rule) => rule.replace(/\s+/g, "").replace(/;?\}$/, "}"));
+      expect(rules).toEqual(["html.lz-dark{color-scheme:dark}"]);
+      expect(css).not.toMatch(/:has\(/);
+    });
+  });
 });
